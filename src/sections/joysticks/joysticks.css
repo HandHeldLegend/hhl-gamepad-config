@@ -40,7 +40,7 @@
   .js-visual .cv-surface { max-width: 240px; }
 }
 
-.js-legend { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; font-size: 0.8125rem; color: var(--text-muted); }
+.js-legend { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; font-size: var(--text-sm); color: var(--text-muted); }
 .js-key { display: inline-flex; align-items: center; gap: 5px; cursor: help; }
 /* Marker shapes match the canvas: input = hollow ring, output = filled dot, trace = filled square. */
 .js-swatch { width: 11px; height: 11px; border-radius: 50%; display: inline-block; flex: none; }
@@ -56,22 +56,22 @@
 }
 .js-rtable th, .js-rtable td { padding: 3px var(--space-2); }
 .js-rtable thead th {
-  font-size: 0.8125rem; font-weight: 600; color: var(--text-muted); text-align: right; white-space: nowrap; cursor: help;
+  font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); text-align: right; white-space: nowrap; cursor: help;
 }
 .js-rtable thead th .js-swatch { margin-inline-end: 5px; vertical-align: -1px; }
-.js-rtable tbody th { font-size: 0.8125rem; font-weight: 600; color: var(--text-muted); text-align: left; overflow-wrap: anywhere; }
+.js-rtable tbody th { font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); text-align: left; overflow-wrap: anywhere; }
 .js-rtable tbody td {
-  font-family: var(--font-mono); font-size: 0.9375rem; font-weight: 600; color: var(--text);
+  font-family: var(--font-mono); font-size: var(--text-md); font-weight: 600; color: var(--text);
   font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap;
 }
 .js-rtable tbody tr + tr > * { border-top: 1px solid var(--border); }
 .js-rtable tr > :first-child { width: 32%; }
-.js-units { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
+.js-units { margin: 0; font-size: var(--text-xs); color: var(--text-muted); }
 
 .js-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 .js-controls .seg { flex: 1 1 100%; }
 .js-controls .seg button { min-height: 32px; }
-.js-trace { display: inline-flex; align-items: center; gap: var(--space-2); font-size: 0.875rem; font-weight: 600; }
+.js-trace { display: inline-flex; align-items: center; gap: var(--space-2); font-size: calc((var(--text-sm) + var(--text-md)) / 2); font-weight: 600; }
 .js-announce { margin-inline-start: auto; }
 .js-announce[aria-pressed="true"] { --btn-bg: var(--tone-soft, var(--accent-soft)); --btn-fg: var(--text); --btn-border: var(--tone, var(--accent)); }
 
@@ -80,8 +80,8 @@
 .js-cal-card .cal-steps { gap: var(--space-1); }
 .js-cal-card > p { margin: 0; }
 .js-centers { border-top: 1px dashed var(--border); padding-top: var(--space-2); }
-.js-centers-title { font-size: 0.8125rem; color: var(--text-muted); margin-bottom: var(--space-1); }
-.js-centers-table { border-collapse: collapse; font-size: 0.875rem; }
+.js-centers-title { font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-1); }
+.js-centers-table { border-collapse: collapse; font-size: calc((var(--text-sm) + var(--text-md)) / 2); }
 .js-centers-table th { text-align: start; font-weight: 600; padding: 2px var(--space-4) 2px 0; }
 .js-centers-table td { padding: 2px var(--space-4) 2px 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
@@ -94,8 +94,8 @@
 .js-fields { display: flex; flex-direction: column; min-width: 0; }
 .js-sens .field { grid-template-columns: minmax(0, 1fr); gap: 2px var(--space-4); min-height: 0; padding: var(--space-1) 0 var(--space-2); }
 .js-sens .field + .field { padding-top: var(--space-2); border-top: 1px dashed var(--border); }
-.js-sens .field-label { font-size: 0.9375rem; }
-.js-sens .field-desc { font-size: 0.8125rem; margin-top: 0; }
+.js-sens .field-label { font-size: var(--text-md); }
+.js-sens .field-desc { font-size: var(--text-sm); margin-top: 0; }
 .js-sens .field-control { justify-self: stretch; }
 .js-sens .slider { width: 100%; gap: var(--space-1); }
 .js-sens .slider input[type="range"] { flex: 1 1 auto; min-width: 0; min-height: 36px; }
@@ -107,13 +107,13 @@
   .js-sens .field { grid-template-columns: minmax(10rem, 0.9fr) minmax(16rem, 1.1fr); align-items: center; }
 }
 .js-curve-wrap { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; width: 100%; max-width: 240px; justify-self: center; }
-.js-curve-legend { font-size: 0.75rem; color: var(--text-muted); }
+.js-curve-legend { font-size: var(--text-xs); color: var(--text-muted); }
 
 /* ---- Angle map: one explainer for the tab ------------------------------------------ */
 .am-explain { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); }
 .am-explain > summary {
   cursor: pointer; display: flex; align-items: center; gap: var(--space-2); min-height: 40px;
-  padding: var(--space-1) var(--space-3); font-weight: 600; font-size: 0.9375rem;
+  padding: var(--space-1) var(--space-3); font-weight: 600; font-size: var(--text-md);
 }
 .am-explain > summary::-webkit-details-marker { display: none; }
 .am-explain > summary::after {
@@ -123,7 +123,7 @@
 }
 .am-explain[open] > summary::after { transform: rotate(-135deg); }
 .am-explain-body { display: flex; gap: var(--space-4); align-items: flex-start; padding: 0 var(--space-3) var(--space-3); }
-.am-explain-text { flex: 1; min-width: 0; font-size: 0.875rem; }
+.am-explain-text { flex: 1; min-width: 0; font-size: calc((var(--text-sm) + var(--text-md)) / 2); }
 .am-explain-text > p { margin: 0 0 var(--space-2); }
 .am-defs { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px var(--space-3); margin: 0; }
 .am-defs dt { font-weight: 600; display: flex; align-items: center; gap: 6px; white-space: nowrap; align-self: start; line-height: 1.45; }
@@ -154,13 +154,13 @@
 /* ---- Angle map editor -------------------------------------------------------------- */
 .am { container: am / inline-size; display: flex; flex-direction: column; gap: var(--space-2); }
 .am[aria-busy="true"] .am-list { opacity: 0.6; pointer-events: none; transition: opacity var(--dur-med); }
-.am-help { font-size: 0.8125rem; color: var(--text-muted); margin: 0; }
+.am-help { font-size: var(--text-sm); color: var(--text-muted); margin: 0; }
 .am-tools { display: flex; gap: var(--space-3); align-items: center; }
 .am-figure { flex: none; width: 72px; }
 .am-figure .cv-surface { width: 72px; }
 .am-actions { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
 .am-btns { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
-.am-count { font-size: 0.8125rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.am-count { font-size: var(--text-sm); color: var(--text-muted); font-variant-numeric: tabular-nums; }
 
 /* Slot rows, like hoja2: one plain line per slot —
      #  use  in∠ → out∠  in dist → out dist  snap  [capture][delete]
@@ -185,32 +185,32 @@
 .am-head { padding: 0 0 2px; }
 .am-head > span {
   display: block; min-width: 0; align-self: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  font-size: 0.75rem; font-weight: 600; color: var(--text-muted); line-height: 1.25;
+  font-size: var(--text-xs); font-weight: 600; color: var(--text-muted); line-height: 1.25;
 }
 .am-head .am-c-on { cursor: help; }
 .am-num {
   width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center;
-  background: var(--tone-soft, var(--surface-2)); color: var(--text); font-size: 0.75rem; font-weight: 700;
+  background: var(--tone-soft, var(--surface-2)); color: var(--text); font-size: var(--text-xs); font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 /* Cells: [input][unit] then an arrow toward the paired output cell. */
 .am-row > [class^="am-c-"] { min-width: 0; }
 .am-row .am-c-ia, .am-row .am-c-id { display: flex; align-items: center; gap: 2px; }
 .am-field { display: flex; align-items: center; gap: 1px; min-width: 0; flex: 1 1 auto; }
-.am-arrow { flex: none; width: 10px; text-align: center; color: var(--text-muted); font-weight: 700; font-size: 0.8125rem; }
+.am-arrow { flex: none; width: 10px; text-align: center; color: var(--text-muted); font-weight: 700; font-size: var(--text-sm); }
 .am-row .input.num {
   width: 100%; min-width: 0; min-height: 32px; padding: 0 3px;
-  font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--text); text-align: right;
+  font-size: var(--text-sm); font-variant-numeric: tabular-nums; color: var(--text); text-align: right;
   -moz-appearance: textfield; appearance: textfield;
 }
 .am-row .input.num::-webkit-inner-spin-button, .am-row .input.num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-.am-unit { font-size: 0.8125rem; color: var(--text-muted); width: 0.6em; flex: none; }
+.am-unit { font-size: var(--text-sm); color: var(--text-muted); width: 0.6em; flex: none; }
 .am-c-act .btn { min-height: 32px; width: 32px; padding: 0; }
 /* Smaller switch inside rows. */
 .am-row .switch .track { width: 36px; height: 22px; }
 .am-row .switch .track::after { width: 16px; height: 16px; top: 2px; left: 2px; }
 .am-row .switch input:checked + .track::after { transform: translateX(14px); }
-.am-unused > summary { cursor: pointer; font-size: 0.8125rem; font-weight: 600; color: var(--text-muted); padding: var(--space-1) 0; min-height: 32px; }
+.am-unused > summary { cursor: pointer; font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); padding: var(--space-1) 0; min-height: 32px; }
 .am-unused > .am-help { margin: 0 0 var(--space-1); }
 @container am (min-width: 500px) {
   .am-row {
