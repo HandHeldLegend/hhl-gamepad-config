@@ -243,6 +243,9 @@ export class InputManager extends EventTarget {
     this.missedTaps = 0;                    // Gamepad API source: taps seen over USB that fell between polls
     this.recoveredTaps = 0;                 // … of which were handed to the game
     this.usbDown = new Map();               // mapper code → time it went down (Gamepad API source)
+    this.usbActivityAt = 0;                 // last USB report showing the player pressing/moving something
+    this.padChange = new Map();             // pad index → {ts, at}: last time its Gamepad.timestamp changed
+    this.padStale = false;                  // matched pad looks frozen while the USB stream shows input
     this.#readLabels();
     // Bindings saved before face buttons went by their printed labels (≤ v1) may hold A/B swapped:
     // reset them once; view.js tells the user.
@@ -414,6 +417,7 @@ export class InputManager extends EventTarget {
     this.usb.lastT = t;
     if (r.kind === 'raw') {
       this.usb.raw = r.inputs; this.usb.rawT = t;
+      if (r.inputs.some((x) => x?.pressed || (x?.value ?? 0) > 48)) this.usbActivityAt = t;
       if (this.source === 'gamepad') this.#watchUsbTaps(r.inputs, t);
       else {
         // The USB stream drives the buttons: latch every report, not just the one a frame happens to see.
@@ -563,9 +567,25 @@ export class InputManager extends EventTarget {
   // ---- Poll -----------------------------------------------------------------------------------
 
   /** Read the connected controller once and return the snapshot. Call once per animation frame. */
+  /**
+   * True when a matched Gamepad API pad shows no changes while the HOJA USB stream proves the player is
+   * pressing things (seen on real hardware: the browser can list the pad but never update it while the
+   * config app holds the USB connection). We then drive input from the USB stream instead.
+   */
+  #isStale(gp, now) {
+    if (!gp) return false;
+    const rec = this.padChange.get(gp.index);
+    if (!rec || rec.ts !== gp.timestamp) { this.padChange.set(gp.index, { ts: gp.timestamp, at: now }); return false; }
+    const usbBusy = now - this.usbActivityAt < 250 && now - this.usb.rawT < 300;
+    return usbBusy && now - rec.at > 1000;
+  }
+
   poll(now = performance.now()) {
     const pads = this.#refresh(false);
-    const gp = this.#choose(pads, now);
+    let gp = this.#choose(pads, now);
+    const stale = this.#isStale(gp, now);
+    if (stale !== this.padStale) { this.padStale = stale; this.dispatchEvent(new Event('change')); }
+    if (stale) gp = null; // fall back to the USB stream below
     this.#syncStream(gp);
     this.#checkCapture(gp);
     const s = this.#emptyState();
@@ -658,6 +678,9 @@ export class InputManager extends EventTarget {
           : t('Gamepad API · matched to {name} (pad {i} of {n})', { name, i, n });
       }
       return hi ? t('Gamepad API · matched to {name} + 12-bit USB sticks', { name }) : t('Gamepad API · matched to {name}', { name });
+    }
+    if (this.source === 'usb' && this.padStale) {
+      return t('HOJA USB stream · {name} (the browser’s gamepad view isn’t updating)', { name });
     }
     if (this.source === 'usb') {
       return this.usb.kind === 'sticks' ? t('HOJA USB stream · {name} (12-bit sticks, no buttons)', { name }) : t('HOJA USB stream · {name}', { name });

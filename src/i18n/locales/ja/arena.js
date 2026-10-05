@@ -413,4 +413,5 @@ export default {
     "超軽量級 · 液晶ゲーム風 · 空N・空後・空上は Lキャンセル不可",
   "{move} can’t be L-cancelled · full landing lag":
     "{move} は Lキャンセルできません · 着地隙そのまま",
+  'HOJA USB stream · {name} (the browser’s gamepad view isn’t updating)': 'HOJA USBストリーム · {name}（ブラウザーのゲームパッド情報が更新されていません）',
 };

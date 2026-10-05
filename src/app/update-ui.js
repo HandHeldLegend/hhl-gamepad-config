@@ -3,7 +3,8 @@
  *
  * First visit: a small card shows "Saving for offline use… 42%" and then "Ready to work offline".
  * New version: "Downloading update…" with a progress bar, then "Update ready — Restart".
- * Updates never apply on their own while you're configuring a controller.
+ * Updates apply automatically when no controller is connected; otherwise they wait for Restart so a
+ * configuration session is never interrupted.
  */
 import { h } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
@@ -44,6 +45,9 @@ export function initUpdateUi() {
       c.actions.replaceChildren();
       if (e.first && e.done >= e.total) setTimeout(close, 900);
     } else if (e.state === 'ready') {
+      // Nothing to lose (no controller session, no unsaved changes): apply right away so nobody keeps
+      // running a stale cached version. Otherwise ask, so a configuration session is never interrupted.
+      if (!session.connected && !session.dirty.size) { pwa.applyUpdate(); return; }
       const c = ensureCard();
       c.title.textContent = t('Update ready');
       c.bar.set(100, session.dirty.size ? t('Save your controller changes first, then restart.') : t('Restart to use the new version.'));

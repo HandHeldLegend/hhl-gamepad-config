@@ -413,4 +413,5 @@ export default {
     "Peso pluma · estilo LCD · los aéreos neutral, hacia atrás y hacia arriba no se pueden L-cancelar",
   "{move} can’t be L-cancelled · full landing lag":
     "{move} no se puede L-cancelar · todo el lag de aterrizaje",
+  'HOJA USB stream · {name} (the browser’s gamepad view isn’t updating)': 'Flujo USB de HOJA · {name} (la vista de control del navegador no se actualiza)',
 };
