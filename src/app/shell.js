@@ -25,6 +25,7 @@ import { isDemo, startDemo } from '../device/mock.js';
 import { onRoute, currentRoute, navigate, setParams } from './router.js';
 import { prefs } from './prefs.js';
 import { pwa } from './pwa.js';
+import { isIOS, explainIOS } from './platform.js';
 import { applyFromRoute } from '../settings/apply.js';
 import { t, i18n, LANGUAGES, detectLanguage, setLanguage } from '../i18n/index.js';
 
@@ -80,6 +81,7 @@ export function currentModeLabel() {
 /** Shared connect flow used by the app bar, Home and empty states. */
 export async function connectController() {
   if (!navigator.usb && !isDemo()) {
+    if (isIOS()) { explainIOS(); return false; }
     toast(t('This browser can’t talk to USB devices. Use Chrome or Edge on desktop or Android.'), { tone: 'red', timeout: 6000 });
     return false;
   }

@@ -9,6 +9,7 @@ import { connectController, unavailableReason, currentModeLabel, betaBadge } fro
 import { startDemo, isDemo } from '../../device/mock.js';
 import { firmwareStatus, openUpdateWizard, formatFwVersion } from '../../firmware/updater.js';
 import { t } from '../../i18n/index.js';
+import { isIOS, explainIOS } from '../../app/platform.js';
 
 function tiles(session) {
   return h('div.tiles', SECTIONS.filter((s) => s.id !== 'home').map((s) => {
@@ -33,7 +34,10 @@ function hero() {
       h('div.hero-actions',
         button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg', disabled: !webusb, onClick: connectController }),
         button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', size: 'lg', onClick: () => startDemo() })),
-      !webusb && h('div', { style: { marginTop: '16px' } }, callout({ tone: 'red', title: t('USB isn’t available in this browser.'), text: t('Use Chrome, Edge or another Chromium browser on desktop or Android. iPhone and iPad browsers can’t connect to controllers yet — but the Arena and demo work.') }))),
+      !webusb && h('div', { style: { marginTop: '16px' } }, isIOS()
+        ? callout({ tone: 'yellow', title: t('iPhone and iPad can’t connect to controllers.'), text: t('Use a computer or an Android device to change settings. The demo works here.') },
+          ' ', button({ label: t('Why?'), size: 'sm', variant: 'ghost', icon: 'info', onClick: () => explainIOS() }))
+        : callout({ tone: 'red', title: t('USB isn’t available in this browser.'), text: t('Use Chrome, Edge or another Chromium browser on desktop or Android.') }))),
     h('img.hero-art', { src: 'assets/icons/app/icon-512.png', alt: '' }));
 }
 

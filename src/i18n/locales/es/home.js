@@ -7,7 +7,6 @@ export default {
   "Let’s set up your controller": "Configuremos tu control",
   "Plug your HOJA controller in with a USB data cable, then connect. Everything you change applies instantly — press Save to keep it.": "Conecta tu control HOJA con un cable USB de datos y luego vincúlalo aquí. Todo lo que cambies se aplica al instante; presiona Guardar para conservarlo.",
   "USB isn’t available in this browser.": "USB no está disponible en este navegador.",
-  "Use Chrome, Edge or another Chromium browser on desktop or Android. iPhone and iPad browsers can’t connect to controllers yet — but the Arena and demo work.": "Usa Chrome, Edge u otro navegador basado en Chromium en una computadora o en Android. Los navegadores de iPhone y iPad aún no pueden conectarse a controles, pero la Arena y la demo sí funcionan.",
   "Having trouble connecting?": "¿Problemas para conectar?",
   "Hold {a} (or the {south} button) while plugging in to start the controller in config mode.": "Mantén presionado {a} (o el botón {south}) mientras lo conectas para iniciar el control en modo de configuración.",
   "Use a cable that carries data — many charge-only cables don’t.": "Usa un cable que transmita datos: muchos cables solo de carga no lo hacen.",
