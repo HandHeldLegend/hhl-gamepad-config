@@ -4,7 +4,9 @@
  *
  * Firmware facts (HOJA-LIB-RP2040 utilities/boot.c, device main.c files):
  *   - Holding Start (sync_on_boot_code = INPUT_CODE_START on wireless HHL controllers) while the
- *     controller powers on enters Bluetooth pairing.
+ *     controller powers on enters Bluetooth pairing. Held together with a mode's boot button it picks
+ *     the mode too: A (East) = Switch, B (South on most layouts) = Steam. The same A/B buttons held
+ *     while plugging in start the controller in a config-app mode.
  *   - On battery, Switch and Steam (SInput) modes use Bluetooth; XInput, GameCube, N64 and Slippi use
  *     the WLAN dongle instead. Plugged in, every mode is wired.
  *   - One host per mode is remembered (Paired hosts card); pairing again replaces it.
@@ -30,11 +32,10 @@ export function openConnectGuide(o = {}) {
     t('Plug the controller into the dock or the console in Switch mode (the default unless you changed it on the Gamepad page).'));
   const btSwitch = bt && section(t('Nintendo Switch — Bluetooth'),
     t('On the Switch Home menu, open Controllers → Change Grip/Order and leave that screen open.'),
-    h('span', t('Unplug the controller, then hold'), ' ', h('strong', t('Start (+)')), ' ', t('while you turn it on. It enters pairing mode and connects.')),
+    h('span', t('Unplug the controller, then hold'), ' ', h('strong', t('A (East) + Start (+)')), ' ', t('while you turn it on. It enters pairing mode and connects.')),
     t('Next time, just turn it on (or press a button) and it reconnects to the same Switch.'));
   const btSteam = bt && section(t('PC, Steam Deck, phone — Bluetooth (Steam mode)'),
-    t('Set the Default mode to Steam on the Gamepad page and press Save.'),
-    h('span', t('Unplug the controller, then hold'), ' ', h('strong', t('Start (+)')), ' ', t('while you turn it on.')),
+    h('span', t('Unplug the controller, then hold'), ' ', h('strong', t('B (South) + Start (+)')), ' ', t('while you turn it on.')),
     t('Pair it from the device’s Bluetooth settings.'));
   const notes = h('ul.guide-notes',
     bt && h('li', t('Bluetooth works in Switch and Steam modes. XInput, GameCube, N64 and Slippi modes go wireless through the WLAN dongle instead.')),

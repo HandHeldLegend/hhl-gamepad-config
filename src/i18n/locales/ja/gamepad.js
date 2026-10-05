@@ -9,10 +9,10 @@ export default {
   'Warning.': '警告：',
   'Only {modes} work with the config app. Changing the default mode may require you to hold the {button} button upon plugging in the controller to connect to this configuration app.': '設定アプリで使えるのは{modes}のみです。デフォルトモードを変更すると、この設定アプリに接続するために、コントローラーを接続する際に{button}ボタンを押し続ける必要がある場合があります。',
   'Switch & Steam modes': 'SwitchモードとSteamモード',
-  'A or South': 'Aまたは下',
-  'Hold A (South) while plugging in to reconnect to this app after switching modes.': 'モード変更後にこのアプリへ再接続するには、A（下ボタン）を押しながらコントローラーを接続してください。',
+  "A or B (East or South)": "AまたはB（右または下）",
+  "Hold A or B (East or South) while plugging in to reconnect to this app after switching modes.": "モード変更後にこのアプリへ再接続するには、AまたはB（右または下ボタン）を押しながらコントローラーを接続してください。",
   'Config app': 'アプリ対応',
-  'The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app — after changing it, hold A (South) while plugging in to come back here.': '接続時または電源オン時にコントローラーが起動する出力モードです。この設定アプリで使えるのはSwitchモードとSteamモードのみです。変更後にここへ戻るには、A（下ボタン）を押しながら接続してください。',
+  "The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app — after changing it, hold A or B (East or South) while plugging in to come back here.": "接続時または電源オン時にコントローラーが起動する出力モードです。この設定アプリで使えるのはSwitchモードとSteamモードのみです。変更後にここへ戻るには、AまたはB（右または下ボタン）を押しながら接続してください。",
   // Mode names stay as-is (brands / firmware names).
   'Switch': 'Switch',
   'XInput': 'XInput',

@@ -43,7 +43,7 @@ export default [
   {
     key: 'gamepad.defaultMode',
     label: 'Default mode',
-    description: 'The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app — after changing it, hold A (South) while plugging in to come back here.',
+    description: 'The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app — after changing it, hold A or B (East or South) while plugging in to come back here.',
     block: 'gamepad',
     type: 'enum',
     options: DEFAULT_MODES.map(({ value, label, aliases }) => ({ value, label, aliases })),

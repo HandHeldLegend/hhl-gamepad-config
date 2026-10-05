@@ -107,7 +107,7 @@ export function renderLlmsTxt(cat) {
 Key facts:
 
 - Works in Chromium browsers (Chrome, Edge, Opera, Brave…) on desktop and Android, served over https. Not on iPhone/iPad (no WebUSB); the demo and Arena still work there.
-- Connect with a USB **data** cable. Only **Switch** and **Steam (SInput)** output modes talk to the app; if a controller starts in another mode, unplug it and hold **A** (South) while plugging it back in.
+- Connect with a USB **data** cable. Only **Switch** and **Steam (SInput)** output modes talk to the app; if a controller starts in another mode, unplug it and hold **A** or **B** (East or South) while plugging it back in.
 - Every change applies live; **Save** writes it to the controller’s flash so it survives unplugging.
 - Try it without hardware: ${cat.base}?demo (a simulated controller).
 - Routing is hash-based: ${code(`${cat.base}#/<page>?<param>=<value>`)}.

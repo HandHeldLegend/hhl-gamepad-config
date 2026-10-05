@@ -74,7 +74,7 @@ export function mount(root, { session, navigate }) {
   },
     callout({ tone: 'yellow', title: t('Warning.') },
       ...tNodes(t('Only {modes} work with the config app. Changing the default mode may require you to hold the {button} button upon plugging in the controller to connect to this configuration app.'),
-        { modes: h('strong', t('Switch & Steam modes')), button: h('strong', t('A or South')) })),
+        { modes: h('strong', t('Switch & Steam modes')), button: h('strong', t('A or B (East or South)')) })),
     modePicker);
 
   // ---- 2. Switch colors -----------------------------------------------------------------------

@@ -154,7 +154,7 @@ export function mount(root, ctx) {
   // Pairing is the most common question: a one-line answer on top, the full guide one tap away.
   const hasBt = !!(bt.bluetooth_bdr_supported || bt.bluetooth_ble_supported);
   const pairTip = hasBt && callout({ tone: 'blue', icon: 'wireless', title: t('Pairing over Bluetooth:') },
-    t('unplug the controller, then hold Start (+) while you turn it on.'), ' ',
+    t('unplug the controller, then hold A + Start (+) for Switch or B + Start (+) for Steam while you turn it on.'), ' ',
     button({ label: t('How to connect'), size: 'sm', variant: 'ghost', icon: 'help', onClick: () => openConnectGuide({ focus: 'bluetooth' }) }));
   if (pairTip) { pairTip.style.marginBottom = 'var(--space-4)'; root.append(pairTip); }
 

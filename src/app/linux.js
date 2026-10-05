@@ -78,7 +78,7 @@ export function explainLinux() {
       h('ol.linux-steps',
         h('li', t('Open a terminal, paste this and press Enter. It asks for your password.'),
           codeBlock(installCommand(), t('Command that installs the udev rule'))),
-        h('li', t('Unplug the controller and plug it back in (hold A to start it in config mode), then press Connect again.'))),
+        h('li', t('Unplug the controller and plug it back in (hold A or B to start it in config mode), then press Connect again.'))),
       h('details.linux-notes',
         h('summary', t('Special cases')),
         h('ul',

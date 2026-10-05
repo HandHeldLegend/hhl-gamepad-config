@@ -106,7 +106,7 @@ export async function connectController() {
     }
     toast(err?.message?.includes('Access denied')
       ? t('The controller is busy in another tab or app. Close it and try again.')
-      : t('Couldn’t connect. Unplug the controller, hold A (South) while plugging it back in, then try again.'), { tone: 'red', timeout: 7000 });
+      : t('Couldn’t connect. Unplug the controller, hold A or B (East or South) while plugging it back in, then try again.'), { tone: 'red', timeout: 7000 });
     return false;
   }
 }
