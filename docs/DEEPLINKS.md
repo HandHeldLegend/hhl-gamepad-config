@@ -33,7 +33,7 @@ Add `?demo` before the `#` to try any page with a simulated controller, e.g. <ht
 | `#/gamepad` | Gamepad | Default mode, Switch body colors, MAC address and device info. | Controller | — |
 | `#/user` | User | Your player name stored on the controller. | Controller | — |
 | `#/firmware` | Firmware | Update firmware, install HOJA on a blank board, or recover a controller. | — | `build`: Build id to preselect for install (e.g. gcu_2, progcc_3.2) |
-| `#/arena` | Arena | Gameplay testing arena: try your connected controller in a platform-fighter sandbox. | Controller | `tab`: play \| lab \| help<br>`mode`: free \| targets (lab / help also open those tabs) |
+| `#/arena` | Arena | Gameplay testing arena: try your connected controller in a platform-fighter sandbox. | Controller | `tab`: play \| help<br>`mode`: free \| targets (help also opens that tab) |
 | `#/platformer` | 3D Platformer | Run, jump, long jump, ground pound and wall kick around a small 3D test course with your controller. | Controller | `tab`: play \| help |
 | `#/settings` | App settings | Theme (dark, light or system), motion, install and updates. | — | `theme`: dark \| light \| system |
 | `#/about` | Help & about | Troubleshooting, version info and attributions. | — | — |

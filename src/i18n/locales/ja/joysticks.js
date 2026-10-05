@@ -190,4 +190,7 @@ export default {
   'Flip the right stick’s horizontal (left ↔ right) direction.': '右スティックの横方向（左 ↔ 右）を反転します。',
   'Flip the right stick’s vertical (up ↔ down) direction.': '右スティックの縦方向（上 ↔ 下）を反転します。',
   'Only needed for sticks mounted the other way round (some custom builds). Recalibrate after changing it.': '逆向きに取り付けられたスティック（一部のカスタム機）でのみ必要です。変更後は再キャリブレーションしてください。',
+  "Measured from the output trace. Roundness compares the shortest and longest reach around the edge (100% is a perfect circle). Reach is the average distance from the center. Diagonals compares the reach at 45° with up, down, left and right — above 100% means a squarer shape, below means rounder corners.": "出力の軌跡から測定します。真円度は外周での最短と最長の到達距離を比べた値です（100%で完全な円）。到達度は中心からの平均距離です。斜めは45°方向の到達距離を上下左右と比べた値で、100%を超えると四角に近く、下回ると角が丸い形です。",
+  "Roll the stick slowly around its edge to measure roundness ({coverage} covered).": "スティックを外周に沿ってゆっくり回すと真円度を測定できます（{coverage}測定済み）。",
+  "Roundness {roundness} · reach {reach} · diagonals {diagonals} of cardinals": "真円度 {roundness}・到達度 {reach}・斜めは上下左右の{diagonals}",
 };

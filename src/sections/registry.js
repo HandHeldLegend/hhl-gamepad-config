@@ -111,7 +111,7 @@ export const SECTIONS = [
     id: 'arena', title: 'Arena', icon: 'arena', tone: 'red', group: 'play', device: true, requires: null, beta: true,
     summary: 'Gameplay testing arena: try your connected controller in a platform-fighter sandbox.',
     keywords: ['test', 'play', 'game', 'input display', 'latency', 'wavedash', 'dash', 'melee'],
-    params: { tab: 'play | lab | help', mode: 'free | targets (lab / help also open those tabs)' },
+    params: { tab: 'play | help', mode: 'free | targets (help also opens that tab)' },
     load: () => import('./arena/view.js'),
   },
   {

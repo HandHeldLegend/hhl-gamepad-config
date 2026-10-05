@@ -250,7 +250,6 @@ export class InputManager extends EventTarget {
     this.lastInputAt = 0;
     this.source = 'none';
     this.hiResSticks = !!store.get('hiResSticks'); // gamepad source: use 12-bit USB sticks
-    this.labSticksOnly = false;   // set by the Input lab: USB source uses the joystick stream
     this.usb = { kind: null, raw: null, rawT: 0, sticks: null, sticksT: 0, intervals: [], lastT: 0, stop: null, everSticks: false };
     this.raw = { kind: 'none' };
     this.latch = new PressLatch();          // game buttons, taken once per simulation frame
@@ -419,11 +418,6 @@ export class InputManager extends EventTarget {
     this.dispatchEvent(new Event('change'));
   }
 
-  setLabSticksOnly(on) {
-    this.labSticksOnly = !!on;
-    this.dispatchEvent(new Event('change'));
-  }
-
   // ---- HOJA USB stream ------------------------------------------------------------------------
 
   #onReport(r) {
@@ -485,7 +479,7 @@ export class InputManager extends EventTarget {
   /** Which stream the controller should send right now: 'raw' | 'sticks'. */
   #wantedStream(pad) {
     if (pad) return this.hiResSticks ? 'sticks' : 'raw';
-    return this.labSticksOnly ? 'sticks' : 'raw';
+    return 'raw';
   }
 
   #syncStream(pad) {

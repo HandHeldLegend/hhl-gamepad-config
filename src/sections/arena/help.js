@@ -1,6 +1,6 @@
 /**
  * help.js — The "Controls & help" tab: input source + button mapping, options, controls, a short
- * technique guide and the "About this arena" note. Also exports sourceCard() for the Input lab.
+ * technique guide and the "About this arena" note.
  *
  * The Arena only reads the controller connected to the app (see input.js for how it is found).
  */
@@ -22,9 +22,8 @@ const withKeys = (text, codes) => {
 
 /**
  * Card: how the connected controller is being read.
- * @param {{lab?: boolean}} o  lab: also offer the USB joystick stream (12-bit sticks, no buttons)
  */
-export function sourceCard(app, o = {}) {
+export function sourceCard(app) {
   const { input } = app;
   const body = h('div.stack', { style: { '--gap': '12px' } });
   const live = h('span.arena-live-source');
@@ -33,7 +32,7 @@ export function sourceCard(app, o = {}) {
 
   let lastKey = '';
   function render() {
-    const key = `${input.source}|${input.matched.length}|${input.otherPads}|${input.hiResSticks}|${input.labSticksOnly}`;
+    const key = `${input.source}|${input.matched.length}|${input.otherPads}|${input.hiResSticks}`;
     if (key === lastKey) return;
     lastKey = key;
     const nodes = [];
@@ -58,16 +57,6 @@ export function sourceCard(app, o = {}) {
           ? t('The browser hasn’t exposed {name} as a gamepad yet (it usually appears after a button press), so input comes straight from the controller’s USB data.', { name: input.deviceName() })
           : t('This controller is read straight from its USB data stream.'),
       }));
-      if (o.lab) {
-        nodes.push(field({
-          label: t('USB stream'), stacked: true,
-          description: t('Buttons + sticks gives every button and analog trigger, with sticks at 7 bits per direction. Sticks only gives full 12-bit stick positions but no buttons or triggers. (The Play tab always uses Buttons + sticks.)'),
-          control: segmented({
-            options: [{ value: false, label: t('Buttons + sticks') }, { value: true, label: t('Sticks only (12-bit)') }],
-            value: input.labSticksOnly, tone: 'blue', ariaLabel: t('USB stream'), onChange: (v) => input.setLabSticksOnly(v),
-          }),
-        }));
-      }
     }
     if (input.otherPads) {
       nodes.push(h('p.small.faint', plural(input.otherPads, '{n} other controller is connected to this computer and ignored.',
@@ -116,9 +105,6 @@ export function steamHint(app) {
     // observable here. Re-enable if a WebHID source (which sees every HID report) is added.
     const show = false && !!gp && padMode(gp.id) === 'switch' && !store.get('hideSteamHint');
     if (el.hidden === show) el.hidden = !show;
-    const r = input.lastProbeRate;
-    const txt = r ? t('(Measured here: {hz} Hz.)', { hz: Math.round(r) }) : t('(Measure it with the polling probe in the Input lab.)');
-    if (measured.textContent !== txt) measured.textContent = txt;
   }
   render();
   input.addEventListener('change', render);

@@ -1,6 +1,6 @@
 /**
  * Arena — a gameplay testing sandbox: try your controller in an original, platform-fighter-inspired
- * arena, with frame-accurate feedback on the techniques that stress a controller, plus an input lab.
+ * arena, with frame-accurate feedback on the techniques that stress a controller.
  *
  * It tests OUR controllers only: it needs a HOJA controller connected to the app and reads nothing
  * else (see input.js — Gamepad API pad matched by USB vendor/product, or the HOJA USB stream).
@@ -11,10 +11,11 @@
  *   input.js       matched Gamepad API pad / HOJA USB stream → one snapshot per animation frame
  *   controller.js  per-60 Hz-frame input state: edges, smash detection, tilt-zone frame counts
  *   fighter.js     the fighter's state machine; game.js the simulation; stage.js / movesets.js data
- *   render.js      canvas drawing; hud.js input display; analysis.js lab measurements
- *   play.js / lab.js / help.js   the three tabs; theme.js CSS-token colors; store.js prefs
+ *   render.js      canvas drawing; hud.js input display; analysis.js snapback detection
+ *   play.js / help.js   the two tabs; theme.js CSS-token colors; store.js prefs
  *
- * Deep links: #/arena?mode=targets (or free) opens Play in that mode; ?tab=lab|help opens a tab;
+ * Deep links: #/arena?mode=targets (or free) opens Play in that mode; ?tab=help opens Controls & help
+ * (the old ?tab=lab opens Play — the Input lab was removed; stick tests live on the Joysticks page);
  * ?fighter=<id> picks a fighter (constants.js FIGHTERS).
  */
 import { h, loadStyles } from '../../ui/dom.js';
@@ -27,17 +28,16 @@ import { store } from './store.js';
 import { FIGHTERS } from './constants.js';
 import { readTheme, watchTheme } from './theme.js';
 import { renderPlay } from './play.js';
-import { renderLab } from './lab.js';
 import { renderHelp } from './help.js';
 import { t } from '../../i18n/index.js';
 import { toast } from '../../ui/overlay.js';
 
-const TABS = ['play', 'lab', 'help'];
+const TABS = ['play', 'help'];
 
 function resolveParams(params = {}) {
   const out = {};
   if (params.mode === 'free' || params.mode === 'targets') { out.mode = params.mode; out.tab = 'play'; }
-  if (params.mode === 'lab') out.tab = 'lab';
+  if (params.mode === 'lab' || params.tab === 'lab') out.tab = 'play'; // removed tab: old links land on Play
   if (params.mode === 'help' || params.mode === 'controls') out.tab = 'help';
   if (TABS.includes(params.tab)) out.tab = params.tab;
   if (FIGHTERS.some((f) => f.id === params.fighter)) out.fighter = params.fighter;
@@ -116,7 +116,6 @@ function mountArena(root, ctx) {
     value: initial.tab || store.get('tab') || 'play',
     tabs: [
       { id: 'play', label: t('Play'), icon: 'arena', render: (p) => renderPlay(p, app) },
-      { id: 'lab', label: t('Input lab'), icon: 'joystick', render: (p) => renderLab(p, app) },
       { id: 'help', label: t('Controls & help'), icon: 'help', render: (p) => renderHelp(p, app) },
     ],
     onChange: (id) => { store.set('tab', id); ctx.setParams?.({ tab: id }); },

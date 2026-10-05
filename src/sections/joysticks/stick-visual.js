@@ -66,6 +66,40 @@ function describe(mode, x, y) {
   };
 }
 
+/** Share of the 2° directions the rim trace must cover before roundness is shown. */
+const ROUND_MIN_COVERAGE = 0.9;
+/**
+ * A direction counts as "the rim" once it reaches at least RIM_SHARE of the furthest reach in the trace
+ * (and RIM_MIN absolute): a half-pushed direction isn't the gate. Real gates stay well above 75% —
+ * an octagon's flats are ~92% of its corners, a square's edges ~71–80% of its corners at worst.
+ */
+const RIM_MIN = 0.5 * R;
+const RIM_SHARE = 0.75;
+
+/**
+ * Shape of a max-reach trace (bucket → {d}): coverage of the 180 directions, roundness = shortest /
+ * longest rim reach, reach = mean rim distance / full scale, diagonals = mean reach within ±6° of
+ * the diagonals / the same around the cardinals.
+ */
+export function traceStats(trace) {
+  let far = 0;
+  for (const p of trace.values()) far = Math.max(far, p.d);
+  const floor = Math.max(RIM_MIN, far * RIM_SHARE);
+  const rim = [];
+  for (const [bucket, p] of trace) if (p.d >= floor) rim.push({ angle: bucket * 2 + 1, d: p.d });
+  const coverage = rim.length / 180;
+  if (!rim.length) return { coverage, roundness: 0, reach: 0, diagonals: 0 };
+  let min = Infinity; let max = 0; let sum = 0;
+  for (const p of rim) { min = Math.min(min, p.d); max = Math.max(max, p.d); sum += p.d; }
+  const near = (centers) => {
+    const v = rim.filter((p) => centers.some((c) => Math.abs(((p.angle - c + 540) % 360) - 180) <= 6)).map((p) => p.d);
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : NaN;
+  };
+  const card = near([0, 90, 180, 270]);
+  const diag = near([45, 135, 225, 315]);
+  return { coverage, roundness: min / max, reach: Math.min(1, sum / rim.length / R), diagonals: card && diag ? diag / card : 0 };
+}
+
 /**
  * @param {{tone?: string, stick?: 'left'|'right'}} [o]
  * @returns {{el: HTMLElement, setInput: Function, setDeadzones: Function, setSlots: Function, resetTrace: Function, destroy: Function}}
@@ -144,6 +178,8 @@ export function stickVisual(o = {}) {
     onChange: (on) => { state.tracing = on; state.trace.clear(); surface.invalidate(); },
   });
   const clearBtn = button({ icon: 'refresh', variant: 'ghost', size: 'sm', title: t('Clear trace'), onClick: () => api.resetTrace() });
+  // Roundness of the OUTPUT trace (what the console sees), shown while Trace is on.
+  const roundEl = h('p.js-round', { hidden: true, 'data-tip': t('Measured from the output trace. Roundness compares the shortest and longest reach around the edge (100% is a perfect circle). Reach is the average distance from the center. Diagonals compares the reach at 45° with up, down, left and right — above 100% means a squarer shape, below means rounder corners.') });
 
   const el = h('div.js-visual', h('div.js-vis-grid',
     h('div.js-vis-main',
@@ -157,6 +193,7 @@ export function stickVisual(o = {}) {
       h('div.js-controls',
         modeSeg,
         h('div.js-trace', traceToggle, h('span', { 'aria-hidden': 'true' }, t('Trace')), clearBtn),
+        roundEl,
         announceBtn),
       live)));
 
@@ -164,6 +201,26 @@ export function stickVisual(o = {}) {
     const i = describe(state.mode, state.inX, state.inY);
     const out = describe(state.mode, state.outX, state.outY);
     for (const k of ['x', 'y', 'angle', 'dist']) { put(`in-${k}`, i[k]); put(`out-${k}`, out[k]); }
+    updateRoundness();
+  }
+
+  /** Text for the roundness line; recomputed per frame (180 buckets), written only when it changes. */
+  let roundText = null;
+  function updateRoundness() {
+    let text = '';
+    if (state.tracing) {
+      const s = traceStats(state.trace);
+      const pct = (v) => fmt.percent(v, { maximumFractionDigits: 0 });
+      text = s.coverage < ROUND_MIN_COVERAGE
+        ? t('Roll the stick slowly around its edge to measure roundness ({coverage} covered).', { coverage: pct(s.coverage) })
+        : t('Roundness {roundness} · reach {reach} · diagonals {diagonals} of cardinals', {
+          roundness: pct(s.roundness), reach: pct(s.reach), diagonals: pct(s.diagonals),
+        });
+    }
+    if (text === roundText) return;
+    roundText = text;
+    roundEl.textContent = text;
+    roundEl.hidden = !text;
   }
 
   function draw(ctx, w, hgt, c) {

@@ -190,4 +190,7 @@ export default {
   'Flip the right stick’s horizontal (left ↔ right) direction.': 'Invierte la dirección horizontal (izquierda ↔ derecha) del joystick derecho.',
   'Flip the right stick’s vertical (up ↔ down) direction.': 'Invierte la dirección vertical (arriba ↔ abajo) del joystick derecho.',
   'Only needed for sticks mounted the other way round (some custom builds). Recalibrate after changing it.': 'Solo hace falta en joysticks montados al revés (algunas versiones personalizadas). Vuelve a calibrar después de cambiarlo.',
+  "Measured from the output trace. Roundness compares the shortest and longest reach around the edge (100% is a perfect circle). Reach is the average distance from the center. Diagonals compares the reach at 45° with up, down, left and right — above 100% means a squarer shape, below means rounder corners.": "Se mide a partir del trazo de salida. La redondez compara el alcance más corto y el más largo alrededor del borde (100 % es un círculo perfecto). El alcance es la distancia media desde el centro. Diagonales compara el alcance a 45° con arriba, abajo, izquierda y derecha: más del 100 % indica una forma más cuadrada; menos, esquinas más redondeadas.",
+  "Roll the stick slowly around its edge to measure roundness ({coverage} covered).": "Gira el joystick despacio por todo el borde para medir la redondez ({coverage} cubierto).",
+  "Roundness {roundness} · reach {reach} · diagonals {diagonals} of cardinals": "Redondez {roundness} · alcance {reach} · diagonales al {diagonals} de las cardinales",
 };

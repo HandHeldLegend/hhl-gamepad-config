@@ -72,6 +72,7 @@
 .js-controls .seg { flex: 1 1 100%; }
 .js-controls .seg button { min-height: 32px; }
 .js-trace { display: inline-flex; align-items: center; gap: var(--space-2); font-size: calc((var(--text-sm) + var(--text-md)) / 2); font-weight: 600; }
+.js-round { margin: 0; font-size: var(--text-sm); color: var(--text-muted); font-variant-numeric: tabular-nums; cursor: help; }
 .js-announce { margin-inline-start: auto; }
 .js-announce[aria-pressed="true"] { --btn-bg: var(--tone-soft, var(--accent-soft)); --btn-fg: var(--text); --btn-border: var(--tone, var(--accent)); }
 
