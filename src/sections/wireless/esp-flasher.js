@@ -54,6 +54,22 @@ export function baudFromUrl(params = {}) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * esptool-js 0.4.3's prebuilt bundle decodes its flasher stubs with Node's Buffer
+ * (`Buffer.from(b64, 'base64').toString('binary')`), which browsers don't have; bundlers like the
+ * standalone updater's webpack polyfill it. Provide just that one conversion when Buffer is missing.
+ */
+function installBufferShim() {
+  if (globalThis.Buffer) return;
+  globalThis.Buffer = {
+    from(data, encoding) {
+      if (typeof data !== 'string' || encoding !== 'base64') throw new Error(`Buffer shim: unsupported Buffer.from(${encoding})`);
+      const binary = atob(data);
+      return { toString: (enc) => { if (enc && enc !== 'binary' && enc !== 'latin1') throw new Error(`Buffer shim: unsupported toString(${enc})`); return binary; } };
+    },
+  };
+}
+
 /** ArrayBuffer → "binary string" (one char per byte), the image format esptool-js 0.4 expects. */
 function toBinaryString(buf) {
   const bytes = new Uint8Array(buf);
@@ -139,6 +155,7 @@ export class EspFlasher {
     }
 
     // 2. Load esptool-js lazily (only needed here) and sync with the chip's ROM loader.
+    installBufferShim();
     const { ESPLoader, Transport } = await import(ESPTOOL_URL);
     const terminal = { clean() {}, writeLine: (s) => this.log(s), write: (s) => this.log(s) };
     // Transport(device, tracing, enableSlipReader) — SLIP reader off, as in the standalone updater.
