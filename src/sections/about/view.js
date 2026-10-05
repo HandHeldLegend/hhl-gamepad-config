@@ -12,7 +12,7 @@ import { t, N_ } from '../../i18n/index.js';
 const WHATS_NEW = 'https://docs.handheldlegend.com/s/portal/doc/whats-new-xmtMoBg2Pu';
 
 const FAQ = [
-  [N_('The controller won’t connect'), N_('Hold A or B (East or South) while plugging it in, use a data-capable USB cable, and close other tabs or apps using the controller. Only Switch and Steam modes talk to this app.')],
+  [N_('The controller won’t connect'), N_('Hold A or B while plugging it in, use a data-capable USB cable, and close other tabs or apps using the controller. Only Switch and Steam modes talk to this app.')],
   [N_('My browser says USB isn’t supported'), N_('Use Chrome, Edge, Opera or another Chromium browser on Windows, macOS, Linux, ChromeOS or Android. Safari, Firefox and all iOS browsers don’t support WebUSB.')],
   [N_('My changes disappeared after unplugging'), N_('Changes apply instantly but are only stored when you press Save. The Save button glows yellow while there are unsaved changes.')],
   [N_('The stick drifts or doesn’t reach the corners'), N_('Open Joysticks and run calibration. Then check the deadzone. The Arena’s Input lab shows exactly what the controller reports.')],

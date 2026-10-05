@@ -48,7 +48,7 @@ function hero() {
 function connectTips() {
   return card({ title: t('Having trouble connecting?'), icon: 'help', tone: 'blue' },
     h('ul.tips',
-      h('li', fillNodes(t('Hold {buttons} while plugging in to start the controller in config mode.'), { buttons: h('strong', t('A or B (East or South)')) })),
+      h('li', fillNodes(t('Hold {buttons} while plugging in to start the controller in config mode.'), { buttons: h('strong', t('A or B')) })),
       h('li', t('Use a cable that carries data. Many charge-only cables don’t.')),
       isLinux() && h('li', fillNodes(t('On Linux, “Access denied” means a udev rule is missing. See {setup}.'), { setup: h('a', { href: '#/home', onclick: (e) => { e.preventDefault(); explainLinux(); } }, t('Linux setup')) })),
       h('li', t('Only Switch and Steam modes talk to this app. If you changed the default mode, hold A or B while plugging in.')),

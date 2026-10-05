@@ -16,7 +16,7 @@ provides one).
    `browser-support`).
 2. Plug the controller in with a USB **data** cable (see `data-cables`).
 3. Press **Connect** (top bar or [Home](#/)) and pick the controller in the browser’s device list.
-4. If it isn’t listed or connecting fails: unplug it, hold **A** or **B** (the East or South button) while plugging
+4. If it isn’t listed or connecting fails: unplug it, hold **A** or **B** while plugging
    it back in, then try again (see `config-mode`). Only Switch and Steam modes talk to the app (see `modes`).
 5. “The controller is busy in another tab or app” means something else has it open. Close other tabs of the app
    (or other configuration tools) and try again.
@@ -45,9 +45,10 @@ use the [Arena](#/arena).
 ## Hold A or B while plugging in
 <!-- topic: config-mode; keywords: hold a, hold b, east, south, plug in, boot mode, config mode, start in, recover mode, wrong mode, default mode -->
 
-Holding **A** (the **East** button) starts the controller in Switch mode; holding **B** (the **South** button on
-most layouts) starts it in Steam mode. Both talk to the config app, so hold either while plugging the controller
-in. Use it when:
+The boot buttons follow the **labels** printed on the face buttons, not their position: **A** = Switch,
+**B** = Steam, **X** = XInput, **Y** = Slippi (on GameCube-style controllers the A button is in the middle, and
+it's still A for Switch). Switch and Steam both talk to the config app, so hold **A** or **B** while plugging the
+controller in. Controllers without lettered buttons use position instead (East = Switch, South = Steam). Use it when:
 
 - the controller doesn’t show up or won’t connect;
 - you changed **Default mode** on the [Gamepad](#/gamepad) page to something other than Switch or Steam
@@ -63,7 +64,7 @@ Only **Switch** and **Steam** modes talk to HHL Gamepad Config (Steam mode is al
 **SNES**, are for playing, not configuring.
 
 - **Default mode** ([Gamepad](#/gamepad)) chooses the mode the controller starts in. After changing it to a
-  non-config mode, hold A or B (East or South) while plugging in to get back to the app (see `config-mode`).
+  non-config mode, hold A or B while plugging in to get back to the app (see `config-mode`).
 - Button mapping is stored **per output mode**: on the [Input](#/input) page choose the profile
   (`#/input?mode=switch|xinput|snes|n64|gamecube|sinput`) before remapping.
 - Native GameCube/N64 and SNES output only exist on controllers with that hardware support.
@@ -250,9 +251,9 @@ Press **Save** to keep them.
 Bluetooth works in **Switch** and **Steam** modes (XInput, GameCube, N64 and Slippi go wireless through the WLAN
 dongle). Unplug the controller, then hold the mode button **plus Start (+)** while turning it on:
 
-- **Switch:** hold **A + Start (+)** (A is the East button). On the Switch, open Controllers → Change Grip/Order
+- **Switch:** hold **A + Start (+)**. On the Switch, open Controllers → Change Grip/Order
   first. Next time it reconnects on its own.
-- **Steam (PC, Steam Deck, phone):** hold **B + Start (+)** (B is the South button on most layouts), then pair
+- **Steam (PC, Steam Deck, phone):** hold **B + Start (+)**, then pair
   from the device’s Bluetooth settings.
 
 The controller remembers one Switch and one Steam host; pairing again replaces it ([Wireless](#/wireless) shows

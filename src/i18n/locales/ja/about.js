@@ -12,7 +12,7 @@ export default {
   "Reference for the USB bootloader commands used to flash firmware (src/firmware/picoboot.js)": "ファームウェアの書き込みに使うUSBブートローダーコマンドの参考資料（src/firmware/picoboot.js）",
   "Config/static memory layouts are generated from its headers (src/device/generated/fw-layout.js)": "設定／静的メモリのレイアウトはこのヘッダーから生成しています（src/device/generated/fw-layout.js）",
   "The controller won’t connect": "コントローラーが接続できない",
-  "Hold A or B (East or South) while plugging it in, use a data-capable USB cable, and close other tabs or apps using the controller. Only Switch and Steam modes talk to this app.": "AまたはB（右または下）を押しながら接続し、データ通信対応のUSBケーブルを使い、コントローラーを使用している他のタブやアプリを閉じてください。このアプリと通信できるのはSwitchモードとSteamモードだけです。",
+  "Hold A or B while plugging it in, use a data-capable USB cable, and close other tabs or apps using the controller. Only Switch and Steam modes talk to this app.": "AまたはBを押しながら接続し、データ通信対応のUSBケーブルを使い、コントローラーを使用している他のタブやアプリを閉じてください。このアプリと通信できるのはSwitchモードとSteamモードだけです。",
   "My browser says USB isn’t supported": "ブラウザーにUSB非対応と表示される",
   "Use Chrome, Edge, Opera or another Chromium browser on Windows, macOS, Linux, ChromeOS or Android. Safari, Firefox and all iOS browsers don’t support WebUSB.": "Windows、macOS、Linux、ChromeOS、AndroidでChrome、Edge、OperaなどのChromium系ブラウザーをご利用ください。Safari、Firefox、およびiOSのすべてのブラウザーはWebUSBに対応していません。",
   "My changes disappeared after unplugging": "抜いたら変更が消えた",

@@ -9,10 +9,10 @@ export default {
   "Warning.": "Attention.",
   "Only {modes} work with the config app. Changing the default mode may require you to hold the {button} button upon plugging in the controller to connect to this configuration app.": "Seuls les {modes} fonctionnent avec l’app de configuration. Après un changement de mode par défaut, vous devrez peut-être maintenir le bouton {button} en branchant la manette pour vous connecter à cette app de configuration.",
   "Switch & Steam modes": "modes Switch et Steam",
-  "A or B (East or South)": "A ou B (Est ou Sud)",
-  "Hold A or B (East or South) while plugging in to reconnect to this app after switching modes.": "Après un changement de mode, maintenez A ou B (Est ou Sud) en branchant la manette pour vous reconnecter à cette app.",
+  "A or B": "A ou B",
+  "Hold A or B while plugging in to reconnect to this app after switching modes.": "Après un changement de mode, maintenez A ou B en branchant la manette pour vous reconnecter à cette app.",
   "Config app": "Compatible app",
-  "The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app. After changing it, hold A or B (East or South) while plugging in to come back here.": "Le mode de sortie dans lequel la manette démarre quand elle est branchée ou allumée. Seuls les modes Switch et Steam fonctionnent avec cette app de configuration. Après l’avoir changé, maintenez A ou B (Est ou Sud) en branchant la manette pour revenir ici.",
+  "The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here.": "Le mode de sortie dans lequel la manette démarre quand elle est branchée ou allumée. Seuls les modes Switch et Steam fonctionnent avec cette app de configuration. Après l’avoir changé, maintenez A ou B en branchant la manette pour revenir ici.",
   // Mode names stay as-is (brands / firmware names).
   "Switch": "Switch",
   "XInput": "XInput",

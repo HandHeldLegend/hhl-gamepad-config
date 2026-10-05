@@ -161,7 +161,7 @@ colors (`#rrggbb` or `#rgb`; encode `#` as `%23` in hand-written links), text (U
 
 | Key | Label | Values | Needs | Description |
 |---|---|---|---|---|
-| `gamepad.defaultMode` | Default mode | 0 = Switch (also: switch, swpro, pro, nintendo switch, switch pro); 1 = XInput (also: xinput, xbox, x-input, pc); 2 = Slippi (also: slippi, dolphin, melee); 3 = GCube (also: gamecube, gc, gcube, ngc); 4 = N64 (also: n64, nintendo 64); 5 = SNES (also: snes, sfc, super famicom, super nintendo, nes); 6 = Steam (also: steam, sinput, s-input) | – | The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app. After changing it, hold A or B (East or South) while plugging in to come back here. |
+| `gamepad.defaultMode` | Default mode | 0 = Switch (also: switch, swpro, pro, nintendo switch, switch pro); 1 = XInput (also: xinput, xbox, x-input, pc); 2 = Slippi (also: slippi, dolphin, melee); 3 = GCube (also: gamecube, gc, gcube, ngc); 4 = N64 (also: n64, nintendo 64); 5 = SNES (also: snes, sfc, super famicom, super nintendo, nes); 6 = Steam (also: steam, sinput, s-input) | – | The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here. |
 | `gamepad.bodyColor` | Body color | hex color like #ff8800 | – | Main shell color the Switch shows in its menus and some games. |
 | `gamepad.buttonsColor` | Buttons color | hex color like #ff8800 | – | Color of the buttons as drawn by the Switch. |
 | `gamepad.leftGripColor` | Left grip color | hex color like #ff8800 | – | Left handle color as drawn by the Switch. |

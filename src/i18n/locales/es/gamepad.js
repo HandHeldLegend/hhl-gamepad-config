@@ -9,10 +9,10 @@ export default {
   'Warning.': 'Advertencia.',
   'Only {modes} work with the config app. Changing the default mode may require you to hold the {button} button upon plugging in the controller to connect to this configuration app.': 'Solo los {modes} funcionan con la app de configuración. Cambiar el modo predeterminado puede requerir que mantengas presionado el botón {button} al conectar el control para conectarte a esta app de configuración.',
   'Switch & Steam modes': 'modos Switch y Steam',
-  "A or B (East or South)": "A o B (Este o Sur)",
-  "Hold A or B (East or South) while plugging in to reconnect to this app after switching modes.": "Después de cambiar de modo, mantén presionado A o B (Este o Sur) al conectar el control para volver a conectarte a esta app.",
+  "A or B": "A o B",
+  "Hold A or B while plugging in to reconnect to this app after switching modes.": "Después de cambiar de modo, mantén presionado A o B al conectar el control para volver a conectarte a esta app.",
   'Config app': 'Con la app',
-  "The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app. After changing it, hold A or B (East or South) while plugging in to come back here.": "El modo de salida con el que inicia el control al conectarlo o encenderlo. Solo los modos Switch y Steam funcionan con esta app de configuración; después de cambiarlo, mantén presionado A o B (Este o Sur) al conectarlo para volver aquí.",
+  "The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here.": "El modo de salida con el que inicia el control al conectarlo o encenderlo. Solo los modos Switch y Steam funcionan con esta app de configuración; después de cambiarlo, mantén presionado A o B al conectarlo para volver aquí.",
   // Mode names stay as-is (brands / firmware names).
   'Switch': 'Switch',
   'XInput': 'XInput',

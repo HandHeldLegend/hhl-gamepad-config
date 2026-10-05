@@ -5,14 +5,18 @@
  * The guide shows only what applies to the connected controller:
  *   - Button names come from the controller itself (static input info: the names printed on the
  *     hardware), so it says "A + Plus" or "East + Start" as appropriate. Without a controller it
- *     falls back to "A (East)", "B (South)", "Start (+)".
+ *     falls back to "A", "B", "Start (+)".
  *   - Bluetooth parts appear only on controllers with a radio; USB-cable pairing only on the RPi RM2
  *     module (Switch mode); the WLAN dongle note only when the build supports a dongle.
  *
  * Firmware facts (HOJA-LIB-RP2040 utilities/boot.c, hal/rp2040/bluetooth_hal.c, device main.c files):
  *   - Holding Start (sync_on_boot_code = INPUT_CODE_START) while powering on enters Bluetooth pairing;
- *     held with a mode's boot button it picks the mode too: East = Switch, South = Steam. The same
- *     East/South buttons held while plugging in start a config-app mode.
+ *     held with a mode's boot button it picks the mode too. The boot buttons follow the LABELS on the
+ *     face buttons, whatever their position (boot.c k_face_formats per sewn layout): A = Switch,
+ *     B = Steam, X = XInput, Y = Slippi. E.g. on GameCube-style controllers (GC Ultimate) the button
+ *     on the East side is labeled X, so Switch is still "A + Start", not "East + Start". Without
+ *     A/B labels it falls back to position: East = Switch, South = Steam. The same buttons held
+ *     while plugging in start a config-app mode.
  *   - RM2 (bluetooth part "RPI RM2"): in Switch mode the Switch can pair over the USB cable (the link
  *     key arrives through ns_api_hook_set_usbpair), then the controller reconnects over Bluetooth.
  *   - On battery, Switch and Steam (SInput) modes use Bluetooth; XInput, GameCube, N64 and Slippi use
@@ -28,12 +32,28 @@ import { INPUT_CODES } from '../sections/input/mapping.js';
 import { outputName } from '../sections/input/parts.js';
 import { t } from '../i18n/index.js';
 
-/** The controller's own name for an input code key ('EAST', 'START'…), or null. */
-function inputName(session, key) {
+/** The controller's own (raw) name for an input code key ('EAST', 'START'…), or ''. */
+function rawName(session, key) {
   const code = INPUT_CODES.find((c) => c.key === key)?.code;
   const info = code == null ? null : session?.static?.input?.input_info?.[code];
-  const name = info && info.input_type ? decodeText(info.input_name ?? new Uint8Array()) : '';
+  return info && info.input_type ? decodeText(info.input_name ?? new Uint8Array()).trim() : '';
+}
+
+/** Display name for an input code key, or null. */
+function inputName(session, key) {
+  const name = rawName(session, key);
   return name ? outputName(name) : null;
+}
+
+const FACE_KEYS = ['SOUTH', 'EAST', 'WEST', 'NORTH'];
+
+/**
+ * The face button that boots a mode: the one LABELED `label` ('A' Switch, 'B' Steam), else the
+ * button at `fallbackKey`'s position (controllers without ABXY labels).
+ */
+function modeButton(session, label, fallbackKey) {
+  const key = FACE_KEYS.find((k) => rawName(session, k).toUpperCase() === label);
+  return inputName(session, key || fallbackKey);
 }
 
 /**
@@ -43,8 +63,9 @@ function inputName(session, key) {
  */
 export function connectProfile(session) {
   const known = !!session?.connected;
-  const east = (known && inputName(session, 'EAST')) || t('A (East)');
-  const south = (known && inputName(session, 'SOUTH')) || t('B (South)');
+  // east/south keep their names for the call sites; they are the Switch and Steam boot buttons.
+  const east = (known && modeButton(session, 'A', 'EAST')) || t('A');
+  const south = (known && modeButton(session, 'B', 'SOUTH')) || t('B');
   const start = (known && inputName(session, 'START')) || t('Start (+)');
   let radio = 'unknown';
   if (known) {
