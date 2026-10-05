@@ -1,0 +1,35 @@
+/**
+ * French (France/international) translations — firmware. English source text → translation.
+ * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
+ */
+export default {
+  "Offline — can’t check": "Hors ligne — vérification impossible",
+  "Update your controller": "Mettez à jour votre manette",
+  "Connect to check for new firmware.": "Connectez-la pour rechercher un nouveau firmware.",
+  "Updates are checked automatically every time you connect. Firmware downloads need an internet connection.": "Les mises à jour sont recherchées automatiquement à chaque connexion. Le téléchargement du firmware nécessite une connexion internet.",
+  "Firmware on this controller": "Firmware de cette manette",
+  "Installed build": "Version installée",
+  "Latest build": "Dernière version",
+  "Reinstall firmware": "Réinstaller le firmware",
+  "Check again": "Vérifier à nouveau",
+  "Checked": "Vérifié",
+  "Install HOJA on a blank board": "Installer HOJA sur une carte vierge",
+  "For new builds, or a controller that won’t start.": "Pour les nouveaux montages, ou une manette qui ne démarre plus.",
+  "Unplug the controller (and remove the battery if it has one).": "Débranchez la manette (et retirez la batterie si elle en a une).",
+  "Hold the {bootsel} button (or bridge the boot pads) and plug it in. A drive named {drive} or {drive2} appears.": "Maintenez le bouton {bootsel} (ou reliez les pastilles de boot) et branchez-la. Un lecteur nommé {drive} ou {drive2} apparaît.",
+  "Press {button} and pick the “RP2 Boot” device. The installer opens automatically.": "Appuyez sur {button} et choisissez l’appareil « RP2 Boot ». L’installateur s’ouvre automatiquement.",
+  "Select bootloader": "Sélectionner le bootloader",
+  "Open installer": "Ouvrir l’installateur",
+  "Pick the right build.": "Choisissez la bonne version.",
+  "Installing firmware made for different hardware can stop the controller working until it’s re-flashed from BOOTSEL.": "Installer un firmware prévu pour un autre matériel peut empêcher la manette de fonctionner jusqu’à ce qu’elle soit reflashée depuis BOOTSEL.",
+  "Recovery": "Récupération",
+  "Only needed if something went wrong.": "Uniquement en cas de problème.",
+  "Stuck in the bootloader after an interrupted update? Restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.": "Bloquée dans le bootloader après une mise à jour interrompue ? Redémarrez-la, ou réinstallez depuis l’installateur. Si la carte fonctionne mal même après une réinstallation, réinstallez à nouveau et choisissez « {fresh} » pour d’abord effacer tous les réglages, le calibrage et les appairages.",
+  "Restart from bootloader": "Redémarrer depuis le bootloader",
+  "Restarting…": "Redémarrage…",
+  "Restarted": "Redémarré",
+  "Loading…": "Chargement…",
+  "You’re offline — downloads need an internet connection.": "Vous êtes hors ligne — les téléchargements nécessitent une connexion internet.",
+  "Manual downloads": "Téléchargements manuels",
+  "UF2 files you can copy onto the RPI-RP2 drive yourself.": "Fichiers UF2 que vous pouvez copier vous-même sur le lecteur RPI-RP2.",
+};

@@ -34,12 +34,12 @@ const WIDE = matchMedia('(min-width: 960px)');
 
 /**
  * App bar language picker: a globe with the current language's short name over a native <select>
- * (keyboard, screen reader and phone pickers for free). Its label is in all three languages, so
+ * (keyboard, screen reader and phone pickers for free). Its label is in every supported language, so
  * anyone can find it whatever language the app is showing.
  */
 function languagePicker() {
-  const SHORT = { en: 'EN', es: 'ES', ja: '日本語' };
-  const label = 'Language · Idioma · 言語';
+  const SHORT = { en: 'EN', es: 'ES', ja: '日本語', fr: 'FR' };
+  const label = 'Language · Idioma · 言語 · Langue';
   const auto = LANGUAGES.find((l) => l.code === detectLanguage());
   const sel = h('select.lang-pick-select', { 'aria-label': label, title: label, onchange: (e) => setLanguage(e.target.value) },
     h('option', { value: 'auto' }, t('Automatic ({language})', { language: auto.native })),

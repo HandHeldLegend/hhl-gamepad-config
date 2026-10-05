@@ -87,7 +87,7 @@ column with `data-active`; add `.single` for single-stick builds. Keep the same 
 in both columns so rows line up. Deep links (`?stick=right`) set `data-active` and, on wide layouts, scroll
 to that column and set `data-highlight` briefly.
 
-## Translations (English, Spanish, Japanese)
+## Translations (English, Spanish, Japanese, French)
 
 * Wrap every user-visible string in `t('English text')` from `src/i18n/index.js`; use placeholders for
   values: `t('Connected to {name}', { name })`. Counts: `plural(n, '{n} input', '{n} inputs')`.
@@ -96,9 +96,9 @@ to that column and set `data-highlight` briefly.
   that are translated later (e.g. stored and displayed elsewhere) mark them with `N_('…')`.
 * `settings.js` / `registry.js` stay plain English data — they're translated where rendered (settingField does it).
 * Numbers, percentages and dates: `fmt.number/percent/date` (locale-aware).
-* Translations live in `src/i18n/locales/{es,ja}/<area>.js` (area = section id, or `core`). Use the terms in
+* Translations live in `src/i18n/locales/{es,ja,fr}/<area>.js` (area = section id, or `core`). Use the terms in
   `src/i18n/GLOSSARY.md`. `node tools/test-i18n.mjs --emit es <area>` prints what's missing.
-* Leave room: Spanish runs ~30% longer than English; Japanese is shorter but taller. Avoid fixed widths on text.
+* Leave room: Spanish and French run ~30% longer than English; Japanese is shorter but taller. Avoid fixed widths on text.
 
 ## Style
 

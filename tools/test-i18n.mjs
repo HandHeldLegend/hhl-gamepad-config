@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * test-i18n.mjs — Check that every user-facing string has Spanish and Japanese translations.
+ * test-i18n.mjs — Check that every user-facing string has Spanish, Japanese and French translations.
  *
  *   node tools/test-i18n.mjs                    # summary; exit 1 if anything is missing
  *   node tools/test-i18n.mjs --emit es input    # print missing Spanish strings for the "input" area
@@ -21,7 +21,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const LANGS = ['es', 'ja'];
+const LANGS = ['es', 'ja', 'fr'];
 
 async function walk(dir) {
   const out = [];

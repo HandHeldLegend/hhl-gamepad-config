@@ -1,10 +1,10 @@
-# Translation review checklist (Spanish · Japanese)
+# Translation review checklist (Spanish · Japanese · French)
 
-All Spanish and Japanese text is a machine-drafted first pass. A native speaker should review the dictionaries in
-`src/i18n/locales/{es,ja}/` — start with the items below, which the translators flagged as uncertain. Terminology
+All Spanish, Japanese and French text is a machine-drafted first pass. A native speaker should review the dictionaries in
+`src/i18n/locales/{es,ja,fr}/` — start with the items below, which the translators flagged as uncertain. Terminology
 lives in `src/i18n/GLOSSARY.md`; update it when a decision is made so future strings stay consistent.
 
-Preview any page in a language with `?lang=es` or `?lang=ja` (e.g. `http://localhost:5173/?demo&lang=ja#/rgb`).
+Preview any page in a language with `?lang=es`, `?lang=ja` or `?lang=fr` (e.g. `http://localhost:5173/?demo&lang=ja#/rgb`).
 
 ## Cross-area consistency (decide once, then align every area file)
 
@@ -85,5 +85,27 @@ Japanese
 - [ ] Japanese 絶 (wavedash), Lキャンセル, 小ジャンプ / 大ジャンプ, 急降下, 空中回避 — confirm with a JP Melee player
 - [ ] Spanish keeps English scene terms (wavedash, L-cancel, dash dance…); "L-cancelar" in Sir Retro's text
 - [ ] Sir Retro description: ja 超軽量級 / 液晶ゲーム風
+
+## French
+
+Machine-drafted (France/international French, "vous" form); needs a native review. Normal space (not a no-break
+space) before : ; ? ! — switch to U+00A0/U+202F everywhere at once if the reviewer prefers. Quotes are « … ».
+
+Terminology (core · home · settings · about · firmware · gamepad · input · joysticks)
+- [ ] "manette" for controller (also the Gamepad page title "Manette"); "réglages" for settings (vs "paramètres")
+- [ ] "calibrage" (vs "calibration"); "appairage" / "appairer" for Bluetooth pairing (vs "jumelage")
+- [ ] "gâchette" for trigger; "croix directionnelle" / "Croix haut…" for D-pad; "palette" for back paddles
+- [ ] Page names: Accueil, Entrée, Mouvement, Vibrations (Haptics), Sans fil, Manette, Arène, Réglages de l’app, Aide et infos
+- [ ] "Input" is one key for both the page name and the Input/Output column header → "Entrée" (singular) in both
+- [ ] "version" for firmware "build" (Installed build → Version installée); "carte vierge" for blank board
+- [ ] "Masquer" (Dismiss), "Commencer" (Start nav group), "Commandes" (Controls group), "Lumières et retours"
+- [ ] Joysticks: "cran" (notch), "emplacement" (angle-map slot), "zone d’alignement" / "Aligné" (snap zone / snapped),
+      "guide" (gate), "tracé" (trace), "rondeur" / "portée" (roundness / reach); decimal commas in static text (1,00; ×0,0537)
+- [ ] Gamepad: "Coque" / "Poignée" (Switch body / grip colors), "Compatible app" badge (Config app), "Anthracite" (Charcoal)
+- [ ] Switch menu names quoted from the French console UI: "Paramètres de la console → Manettes et capteurs",
+      "Communication filaire de la manette Pro", "Changer la configuration/l’ordre" — check against a French Switch
+- [ ] iOS "Sur l’écran d’accueil" and Chrome "Installer l’application" menu labels
+- [ ] Gender agreement: status words about the controller are feminine ("Connectée", "Non connectée"); generic ones masculine
+- [ ] "Rapid trigger" kept in English (pill "Rapid"), like Spanish
 
 <!-- More sections are appended as each area's translator reports. -->

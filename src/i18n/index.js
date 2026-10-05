@@ -1,7 +1,7 @@
 /**
  * i18n — translations and locale-aware formatting.
  *
- * Languages: English (source), Spanish (Latin American, neutral), Japanese.
+ * Languages: English (source), Spanish (Latin American, neutral), Japanese, French.
  *
  *   import { t, plural, fmt } from '../i18n/index.js';
  *   t('Connect controller')                         // → 'Conectar control' in Spanish
@@ -16,7 +16,8 @@
  * so several people can translate at once. Terminology: src/i18n/GLOSSARY.md.
  *
  * Detection (preference 'auto'): the browser/OS language list first (navigator.languages); if none
- * of them is supported, the time zone as a hint (e.g. Asia/Tokyo → Japanese); otherwise English.
+ * of them is supported, the time zone as a hint (e.g. Asia/Tokyo → Japanese, Europe/Paris → French); otherwise
+ * English. Regional tags match their base language (fr-CA → fr, es-MX → es).
  * No network lookups. `?lang=es` in the URL overrides for the current visit (handy for support links).
  */
 import { prefs } from '../app/prefs.js';
@@ -25,11 +26,18 @@ export const LANGUAGES = [
   { code: 'en', name: 'English', native: 'English' },
   { code: 'es', name: 'Spanish', native: 'Español' },
   { code: 'ja', name: 'Japanese', native: '日本語' },
+  { code: 'fr', name: 'French', native: 'Français' },
 ];
 const SUPPORTED = LANGUAGES.map((l) => l.code);
 
 /** Time zones whose population mostly reads Spanish (used only when the browser language isn't supported). */
 const SPANISH_TZ = /^(Europe\/Madrid|Atlantic\/Canary|Africa\/Ceuta|America\/(Mexico_City|Monterrey|Merida|Cancun|Chihuahua|Hermosillo|Mazatlan|Tijuana|Matamoros|Bahia_Banderas|Ojinaga|Bogota|Lima|Santiago|Punta_Arenas|Argentina\/.*|Buenos_Aires|Caracas|Guatemala|El_Salvador|Tegucigalpa|Managua|Costa_Rica|Panama|Havana|Santo_Domingo|Puerto_Rico|Montevideo|Asuncion|La_Paz|Guayaquil))$/;
+
+/**
+ * Time zones that are clearly French-speaking: France, Monaco and the French overseas territories. Mixed-language
+ * zones (Montreal, Brussels, Luxembourg, Zurich, West/Central Africa) are left out; their browsers usually say fr anyway.
+ */
+const FRENCH_TZ = /^(Europe\/(Paris|Monaco)|America\/(Martinique|Guadeloupe|Cayenne|Miquelon|St_Barthelemy|Marigot)|Indian\/(Reunion|Mayotte)|Pacific\/(Noumea|Tahiti|Marquesas|Gambier|Wallis))$/;
 
 /** Pick a supported language from the browser/OS, falling back to the time zone, then English. */
 export function detectLanguage(languages = navigator.languages || [navigator.language], timeZone) {
@@ -41,6 +49,7 @@ export function detectLanguage(languages = navigator.languages || [navigator.lan
   try { tz ??= Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { /* ignore */ }
   if (tz === 'Asia/Tokyo') return 'ja';
   if (tz && SPANISH_TZ.test(tz)) return 'es';
+  if (tz && FRENCH_TZ.test(tz)) return 'fr';
   return 'en';
 }
 
@@ -83,7 +92,11 @@ export function t(text, params) {
   return interpolate(dict[s] ?? s, params);
 }
 
-/** Pluralized translation. Spanish/English use one/other; Japanese uses the `other` form. */
+/**
+ * Pluralized translation. English/Spanish use `one` only for 1; French uses `one` for 0 and 1 ("0 réglage"),
+ * which Intl.PluralRules('fr') reports; Japanese always uses the `other` form. French 'many' (1 000 000…)
+ * falls through to `other`, which is correct.
+ */
 export function plural(n, one, other, params = {}) {
   const rule = new Intl.PluralRules(lang).select(n);
   return t(rule === 'one' ? one : other, { n, ...params });
