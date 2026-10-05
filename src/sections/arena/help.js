@@ -111,7 +111,10 @@ export function steamHint(app) {
     close);
   function render() {
     const gp = input.source === 'gamepad' ? input.activePad() : null;
-    const show = !!gp && padMode(gp.id) === 'switch' && !store.get('hideSteamHint');
+    // Disabled: the browser can't show the difference. The config app's USB stream is fixed at 125 Hz
+    // (webusb.c, 8 ms) and Chrome samples the Gamepad API at ~60–250 Hz, so Steam mode's 1000 Hz isn't
+    // observable here. Re-enable if a WebHID source (which sees every HID report) is added.
+    const show = false && !!gp && padMode(gp.id) === 'switch' && !store.get('hideSteamHint');
     if (el.hidden === show) el.hidden = !show;
     const r = input.lastProbeRate;
     const txt = r ? t('(Measured here: {hz} Hz.)', { hz: Math.round(r) }) : t('(Measure it with the polling probe in the Input lab.)');
@@ -197,6 +200,8 @@ function optionsCard(app) {
       control: toggle({ checked: store.get('tapJump'), tone: 'yellow', label: t('Tap jump'), onChange: (v) => { store.set('tapJump', v); app.game.tapJump = v; } }) }),
     field({ label: t('Jump buffer'), description: t('Off: like the classic games, a jump pressed while the fighter can’t act is dropped (a chip explains why). On: it is retried for {n} frames.', { n: FRAMES.JUMP_BUFFER }),
       control: toggle({ checked: !!store.get('jumpBuffer'), tone: 'yellow', label: t('Jump buffer'), onChange: (v) => { store.set('jumpBuffer', v); app.game.jumpBuffer = v; } }) }),
+    field({ label: t('Technique feedback'), description: t('Show short messages about what you just did (wavedash angle, L-cancel timing…). Off by default.'),
+      control: toggle({ checked: !!store.get('techFeedback'), tone: 'yellow', label: t('Technique feedback'), onChange: (v) => store.set('techFeedback', v) }) }),
     field({ label: t('Show hitboxes'), description: t('Draw attack hitboxes (colored by damage), the dummy’s hurtbox, the collision point and ledge-grab boxes.'),
       control: toggle({ checked: store.get('showHitboxes'), tone: 'yellow', label: t('Show hitboxes'), onChange: (v) => store.set('showHitboxes', v) }) }),
     field({ label: t('Target test record'), description: t('Your best time is kept in this browser.'),

@@ -45,6 +45,7 @@ export function isPicoBootloader(device) {
 const EP = 2;
 const ITF = 1;
 const CHUNK_MAX = 32;
+const IN_FLIGHT = 2; // concurrent IN transfers (see #pollLoop)
 
 const REPORT = {
   READ_CONFIG: 1,
@@ -219,7 +220,15 @@ export class HojaDevice extends EventTarget {
     return this.#out(new Uint8Array([reportId, ...data]));
   }
 
-  async #pollLoop() {
+  /**
+   * Keep IN_FLIGHT transfers queued on the IN endpoint so a report never waits for the page to
+   * re-arm a read (WebUSB completes same-endpoint transfers in order, so reports stay ordered).
+   */
+  #pollLoop() {
+    for (let i = 0; i < IN_FLIGHT; i++) this.#readLoop();
+  }
+
+  async #readLoop() {
     while (this.#connected && this.#usb) {
       try {
         const result = await this.#usb.transferIn(EP, 64);

@@ -433,4 +433,6 @@ export default {
   "Aerials · smash attacks (direction)": "Aéreos · smash (dirección)",
   "Smash attacks & the training dummy": "Smash y el muñeco de práctica",
   "Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.": "Mueve el stick de golpe y presiona A dentro de {n} frames (o mueve el C-stick) para un smash; mantén A para cargarlo hasta 60 frames (×1.367 de daño). En Juego libre el muñeco recibe daño y knockback con la fórmula clásica, y cada golpe muestra movimiento · daño · knockback.",
+  'Technique feedback': 'Retroalimentación de técnica',
+  'Show short messages about what you just did (wavedash angle, L-cancel timing…). Off by default.': 'Muestra mensajes breves sobre lo que acabas de hacer (ángulo del wavedash, timing del L-cancel…). Desactivado por defecto.',
 };

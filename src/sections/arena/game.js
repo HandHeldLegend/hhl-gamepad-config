@@ -5,6 +5,7 @@
  * The Game knows nothing about the DOM or the canvas. view/play.js feeds it input snapshots from a
  * fixed-timestep accumulator and render.js draws whatever state it is in.
  */
+import { store } from './store.js';
 import { FRAMES, STEP_MS } from './constants.js';
 import { STAGE, TARGETS, TARGET_R } from './stage.js';
 import { Fighter } from './fighter.js';
@@ -53,6 +54,7 @@ export class Game {
   }
 
   feedback(text, tone = 'lavender') {
+    if (!store.get('techFeedback')) return; // off by default (owner: noisy, and not 1:1 with Melee)
     this.onFeedback({ text, tone, frame: this.frame });
   }
 

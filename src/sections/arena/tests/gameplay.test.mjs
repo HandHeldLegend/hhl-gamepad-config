@@ -13,6 +13,8 @@ globalThis.window ??= globalThis;
 globalThis.addEventListener ??= () => {};
 
 const { Game } = await import('../game.js');
+// Feedback chips are off by default in the app; the tests assert on them, so switch them on.
+(await import('../store.js')).store.set('techFeedback', true);
 const { PressLatch } = await import('../input.js');
 const { STEP_MS, FIGHTERS, fighterPhysics, TRIGGER } = await import('../constants.js');
 const { meleeStick, meleeStickUnits, meleeTrigger } = await import('../melee.js');

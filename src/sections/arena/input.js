@@ -598,6 +598,11 @@ export class InputManager extends EventTarget {
   poll(now = performance.now()) {
     const pads = this.#refresh(false);
     let gp = this.#choose(pads, now);
+    // The Arena reads the controller's config-app USB stream only. While the config app is connected,
+    // HOJA firmware sends that stream *instead of* its normal gameplay HID reports (usb_hal.c,
+    // transport_usb_task), so the browser's Gamepad API view can't add anything — and the stream names
+    // every input exactly in every output mode. The Gamepad API path stays behind an opt-in flag.
+    if (!store.get('useBrowserPad')) gp = null;
     const stale = this.#isStale(gp, now);
     if (stale !== this.padStale) { this.padStale = stale; this.dispatchEvent(new Event('change')); }
     if (stale) gp = null; // fall back to the USB stream below

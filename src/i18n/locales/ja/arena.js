@@ -433,4 +433,6 @@ export default {
   "Aerials · smash attacks (direction)": "空中攻撃 · スマッシュ攻撃（方向）",
   "Smash attacks & the training dummy": "スマッシュ攻撃とトレーニングダミー",
   "Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.": "スティックをはじいて {n} フレーム以内に A を押す（または C スティックをはじく）とスマッシュ攻撃。A を押し続けると最大 60 フレームまでホールドできます（ダメージ ×1.367）。フリープレイではダミーが従来のふっとばし計算式どおりにダメージとふっとばしを受け、ヒットごとに技 · ダメージ · ふっとばしを表示します。",
+  'Technique feedback': 'テクニックのフィードバック',
+  'Show short messages about what you just did (wavedash angle, L-cancel timing…). Off by default.': '直前の操作について短いメッセージを表示します（絶の角度、Lキャンセルのタイミングなど）。初期設定はオフです。',
 };
