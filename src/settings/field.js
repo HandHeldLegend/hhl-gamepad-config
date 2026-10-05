@@ -1,12 +1,12 @@
 /**
- * field.js — Render a SettingDef as a labeled, live-bound control.
+ * field.js: Render a SettingDef as a labeled, live-bound control.
  *
  *   settingField('haptics.intensity')          // by key
  *   settingField(def, { onChange })            // or by definition
  *
  * Changing the control writes the struct via def.set(), pushes the block to the controller
  * (session.commit) and lights up the Save button. The returned row has `.refresh()` to re-read
- * the struct (e.g. after a block was re-requested) — refreshSettings(root) does it for a subtree.
+ * the struct (e.g. after a block was re-requested); refreshSettings(root) does it for a subtree.
  */
 import { session } from '../device/session.js';
 import { getSetting } from './schema.js';

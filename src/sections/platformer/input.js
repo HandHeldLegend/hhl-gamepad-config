@@ -1,5 +1,5 @@
 /**
- * input.js — Reads the connected HOJA controller's USB input stream (the same source the Arena's Play
+ * input.js: Reads the connected HOJA controller's USB input stream (the same source the Arena's Play
  * tab uses; no other gamepad is ever read). Reuses the Arena's mapper-code table and press latch.
  *
  * The raw stream (device.setInputMode(false)) carries every button, the analog triggers and both sticks

@@ -1,9 +1,9 @@
 /**
- * Japanese translations — firmware. English source text → translation.
+ * Japanese translations (firmware). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
-  "Offline — can’t check": "オフライン — 確認できません",
+  "Offline: can’t check": "オフライン：確認できません",
   "Update your controller": "コントローラーをアップデート",
   "Connect to check for new firmware.": "接続すると新しいファームウェアを確認できます。",
   "Updates are checked automatically every time you connect. Firmware downloads need an internet connection.": "アップデートは接続するたびに自動で確認されます。ファームウェアのダウンロードにはインターネット接続が必要です。",
@@ -29,7 +29,7 @@ export default {
   "Restarting…": "再起動中…",
   "Restarted": "再起動しました",
   "Loading…": "読み込み中…",
-  "You’re offline — downloads need an internet connection.": "オフラインです — ダウンロードにはインターネット接続が必要です。",
+  "You’re offline. Downloads need an internet connection.": "オフラインです。ダウンロードにはインターネット接続が必要です。",
   "Manual downloads": "手動ダウンロード",
   "UF2 files you can copy onto the RPI-RP2 drive yourself.": "RPI-RP2ドライブに自分でコピーできるUF2ファイル。",
 };

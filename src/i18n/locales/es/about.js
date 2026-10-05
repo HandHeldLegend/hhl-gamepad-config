@@ -1,5 +1,5 @@
 /**
- * Spanish (neutral Latin American) translations — about. English source text → translation.
+ * Spanish (neutral Latin American) translations (about). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -8,7 +8,7 @@ export default {
   "3D rendering on the Motion and 3D Platformer pages (vendor/three/)": "Renderizado 3D en las páginas Movimiento y Plataformas 3D (vendor/three/)",
   "Updating the ESP32 wireless module from the Wireless page (vendor/esptool-js/)": "Actualización del módulo inalámbrico ESP32 desde la página Inalámbrico (vendor/esptool-js/)",
   "Compression while writing ESP32 firmware (vendor/esptool-js/)": "Compresión al escribir el firmware del ESP32 (vendor/esptool-js/)",
-  "The “Full reset — erase flash” recovery image (firmware/universal_flash_nuke.uf2)": "La imagen de recuperación “Restablecimiento total — borrar la flash” (firmware/universal_flash_nuke.uf2)",
+  "The “Full reset: erase flash” recovery image (firmware/universal_flash_nuke.uf2)": "La imagen de recuperación “Restablecimiento total: borrar la flash” (firmware/universal_flash_nuke.uf2)",
   "Reference for the USB bootloader commands used to flash firmware (src/firmware/picoboot.js)": "Referencia de los comandos USB del bootloader que se usan para escribir el firmware (src/firmware/picoboot.js)",
   "Config/static memory layouts are generated from its headers (src/device/generated/fw-layout.js)": "Las estructuras de memoria de configuración y estática se generan a partir de sus encabezados (src/device/generated/fw-layout.js)",
   "The controller won’t connect": "El control no se conecta",

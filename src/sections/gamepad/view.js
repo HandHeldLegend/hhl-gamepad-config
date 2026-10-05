@@ -1,5 +1,5 @@
 /**
- * Gamepad view — port of hoja2/modules/gamepad-md.js (+ mac-address-selector, group-rgb-picker).
+ * Gamepad view: port of hoja2/modules/gamepad-md.js (+ mac-address-selector, group-rgb-picker).
  *
  * Cards:
  *   1. Default mode       gamepad_default_mode (core_reportformat_t) + hoja2's config-app warning
@@ -10,7 +10,7 @@
  *   5. Device             name, maker, firmware build
  *   6. Support            reboot into the bootloader (firmware update mode), behind a confirmation
  *
- * All writes go through session.commit('gamepad') — live on the controller, persisted by Save.
+ * All writes go through session.commit('gamepad'): live on the controller, persisted by Save.
  */
 import { h, loadStyles } from '../../ui/dom.js';
 import { card, callout, field, button, badge, kv, infoTip } from '../../ui/controls.js';
@@ -106,7 +106,7 @@ export function mount(root, { session, navigate }) {
     t(p.name))));
 
   const colorCard = card({
-    title: [t('Switch device colors'), ' ', infoTip(t('Colors which determine how the Switch displays the controller in menus and some games. They don’t change the LEDs — see the RGB page for those.'))],
+    title: [t('Switch device colors'), ' ', infoTip(t('Colors which determine how the Switch displays the controller in menus and some games. They don’t change the LEDs (see the RGB page for those).'))],
     icon: 'palette', tone: TONE,
     subtitle: t('How the Switch draws your controller in its menus and some games.'),
   },
@@ -132,12 +132,12 @@ export function mount(root, { session, navigate }) {
       }
       cfg().gamepad_mac_address = bytes;
       session.commit('gamepad');
-      macNote.textContent = note || t('Saved as {mac} — press Save to keep it.', { mac: formatMac(bytes) });
+      macNote.textContent = note || t('Saved as {mac}. Press Save to keep it.', { mac: formatMac(bytes) });
     },
   });
   const macField = field({
       label: t('Base address'),
-      description: t('Each connection mode uses its own address, counting up from this one, so your devices see each mode as a separate controller. Only change this if two controllers clash — you may need to pair again afterwards.'),
+      description: t('Each connection mode uses its own address, counting up from this one, so your devices see each mode as a separate controller. Only change this if two controllers clash. You may need to pair again afterwards.'),
       tip: t('A MAC address is the hardware ID other devices use to recognize the controller over Bluetooth and USB. The first byte must be even.'),
       control: mac,
       stacked: true,
@@ -162,7 +162,7 @@ export function mount(root, { session, navigate }) {
     onClick: async () => {
       const ok = await confirmDialog({
         title: t('Reboot into update mode?'),
-        message: t('The controller will disconnect and restart in its bootloader so new firmware can be installed — this app offers to install it when the controller reappears. Unsaved changes will be lost. Only do this if you are updating the firmware.'),
+        message: t('The controller will disconnect and restart in its bootloader so new firmware can be installed. This app offers to install it when the controller reappears. Unsaved changes will be lost. Only do this if you are updating the firmware.'),
         confirmLabel: t('Reboot'), danger: true,
       });
       if (!ok) return;

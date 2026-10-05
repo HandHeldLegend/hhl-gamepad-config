@@ -1,12 +1,12 @@
 /**
- * Motion view — port of hoja2/modules/motion-md.js (+ components sensor-visualization.js and
+ * Motion view: port of hoja2/modules/motion-md.js (+ components sensor-visualization.js and
  * imu-data-display.js).
  *
  * Cards:
- *   1. Motion controls — on/off (imu_disabled) and gyro calibration (IMU_CMD_CALIBRATE_START).
- *   2. Live view       — 3D controller model (three.js, lazy-loaded) + gyro/accel bars from the
+ *   1. Motion controls: on/off (imu_disabled) and gyro calibration (IMU_CMD_CALIBRATE_START).
+ *   2. Live view:       3D controller model (three.js, lazy-loaded) + gyro/accel bars from the
  *                        input stream (bytes 3–14 of every report, either stream mode).
- *   3. Sensitivity     — per-axis gyro/accel multipliers (imu_gyro_sensitivity / imu_accel_sensitivity)
+ *   3. Sensitivity:     per-axis gyro/accel multipliers (imu_gyro_sensitivity / imu_accel_sensitivity)
  *                        with hoja2's "Reset to defaults".
  *
  * Every write goes through session.commit('imu') (hoja2 wrote the block after each change).
@@ -58,7 +58,7 @@ export function mount(root, { session, device }) {
 
   const controls = card({
     title: t('Motion controls'), icon: 'motion', tone: TONE,
-    subtitle: t('Gyro aiming and tilt for games that support motion. Changes apply instantly — press Save to keep them.'),
+    subtitle: t('Gyro aiming and tilt for games that support motion. Changes apply instantly. Press Save to keep them.'),
   }, enabledRow, calibrateRow);
 
   // ---- 2. Live view -----------------------------------------------------------------------
@@ -75,7 +75,7 @@ export function mount(root, { session, device }) {
   const liveBadge = badge(t('Waiting…'));
   const live = card({
     title: t('Live view'), icon: 'play', tone: TONE,
-    subtitle: t('Move the controller — the model tilts with how fast you turn it, and the bars show the raw sensors.'),
+    subtitle: t('Move the controller. The model tilts with how fast you turn it, and the bars show the raw sensors.'),
     actions: liveBadge,
   },
   offNote,
@@ -149,7 +149,7 @@ export function mount(root, { session, device }) {
     const steps = h('ol.motion-steps',
       h('li', t('Place the controller on a flat, solid surface (a desk, not your lap or a sofa).')),
       h('li', t('Let go and don\'t touch the controller or the table.')),
-      h('li', t('Press Start. It takes about {n} seconds — the LEDs pulse yellow while it works.', { n: Math.round(CALIBRATION_MS / 1000) })));
+      h('li', t('Press Start. It takes about {n} seconds, and the LEDs pulse yellow while it works.', { n: Math.round(CALIBRATION_MS / 1000) })));
 
     const dlg = openDialog({
       title: t('Calibrate gyro'), icon: 'calibrate', tone: TONE, dismissible: false,

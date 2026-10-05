@@ -1,18 +1,18 @@
 # Translation review checklist (Spanish · Japanese · French)
 
 All Spanish, Japanese and French text is a machine-drafted first pass. A native speaker should review the dictionaries in
-`src/i18n/locales/{es,ja,fr}/` — start with the items below, which the translators flagged as uncertain. Terminology
+`src/i18n/locales/{es,ja,fr}/`. Start with the items below, which the translators flagged as uncertain. Terminology
 lives in `src/i18n/GLOSSARY.md`; update it when a decision is made so future strings stay consistent.
 
 Preview any page in a language with `?lang=es`, `?lang=ja` or `?lang=fr` (e.g. `http://localhost:5173/?demo&lang=ja#/rgb`).
 
 ## Cross-area consistency (decide once, then align every area file)
 
-- [ ] **Idle glow** — RGB uses es "Brillo en reposo" / ja "待機中の発光"?; Battery uses es "luz en reposo". Pick one.
-- [ ] **Charger chip / PMIC** — es "Chip cargador"; ja 充電チップ vs core's 充電器（PMIC）.
-- [ ] **Fuel gauge** — es "medidor de carga"; ja 残量計 (tip: フューエルゲージ).
-- [ ] **Japanese spacing around Latin words** — standardizing on no spaces (Bluetoothの…).
-- [ ] **Page names used inside sentences** — Save = Guardar / 保存, Wireless = Inalámbrico / ワイヤレス, Input = Entrada / 入力.
+- [ ] **Idle glow**: RGB uses es "Brillo en reposo" / ja "待機中の発光"?; Battery uses es "luz en reposo". Pick one.
+- [ ] **Charger chip / PMIC**: es "Chip cargador"; ja 充電チップ vs core's 充電器（PMIC）.
+- [ ] **Fuel gauge**: es "medidor de carga"; ja 残量計 (tip: フューエルゲージ).
+- [ ] **Japanese spacing around Latin words**: standardizing on no spaces (Bluetoothの…).
+- [ ] **Page names used inside sentences**: Save = Guardar / 保存, Wireless = Inalámbrico / ワイヤレス, Input = Entrada / 入力.
 
 ## Gamepad · RGB · User · Haptics
 
@@ -45,7 +45,7 @@ Japanese
 Spanish
 - [ ] "Compilación" for "build" (installed/latest build, loading builds…)
 - [ ] "Ocultar" (Dismiss), "Luces y respuesta" (Lights & feedback group), "Vibración" (Haptics title)
-- [ ] "Restablecimiento total — borrar la flash (nuke)"
+- [ ] "Restablecimiento total: borrar la flash (nuke)"
 
 Japanese
 - [ ] "操作" (Controls group), "A（下）" / "{south}ボタン" (South), "見てみる" (Explore), "このアプリについて" (About)
@@ -53,7 +53,7 @@ Japanese
 
 Both
 - [ ] Text naming OS/browser menus: iOS "Agregar a inicio", Chrome "Instalar app", folder dialog "Select / Open"
-      (Seleccionar / Abrir, 「選択」「開く」) — real labels vary by OS version
+      (Seleccionar / Abrir, 「選択」「開く」); real labels vary by OS version
 - [ ] Setting-validation errors in the apply dialog stay English on purpose (they include setting keys and are shared with AI assistants)
 
 ## Joysticks · Snapback
@@ -80,16 +80,16 @@ Japanese
 
 ## Arena
 
-- [ ] Japanese scene terms: ウェーブランド (waveland), レッジダッシュ (ledgedash — maybe 崖絶), ダッシュバック (dash back),
+- [ ] Japanese scene terms: ウェーブランド (waveland), レッジダッシュ (ledgedash, maybe 崖絶), ダッシュバック (dash back),
       ステップ (dash dance), シールドドロップ (shield drop), 傾け入力ゾーン (tilt zone), 盾 ("Sh" light), スティックジャンプ (tap jump)
-- [ ] Japanese 絶 (wavedash), Lキャンセル, 小ジャンプ / 大ジャンプ, 急降下, 空中回避 — confirm with a JP Melee player
+- [ ] Japanese 絶 (wavedash), Lキャンセル, 小ジャンプ / 大ジャンプ, 急降下, 空中回避: confirm with a JP Melee player
 - [ ] Spanish keeps English scene terms (wavedash, L-cancel, dash dance…); "L-cancelar" in Sir Retro's text
 - [ ] Sir Retro description: ja 超軽量級 / 液晶ゲーム風
 
 ## French
 
 Machine-drafted (France/international French, "vous" form); needs a native review. Normal space (not a no-break
-space) before : ; ? ! — switch to U+00A0/U+202F everywhere at once if the reviewer prefers. Quotes are « … ».
+space) before : ; ? !. Switch to U+00A0/U+202F everywhere at once if the reviewer prefers. Quotes are « … ».
 
 Terminology (core · home · settings · about · firmware · gamepad · input · joysticks)
 - [ ] "manette" for controller (also the Gamepad page title "Manette"); "réglages" for settings (vs "paramètres")
@@ -103,7 +103,7 @@ Terminology (core · home · settings · about · firmware · gamepad · input �
       "guide" (gate), "tracé" (trace), "rondeur" / "portée" (roundness / reach); decimal commas in static text (1,00; ×0,0537)
 - [ ] Gamepad: "Coque" / "Poignée" (Switch body / grip colors), "Compatible app" badge (Config app), "Anthracite" (Charcoal)
 - [ ] Switch menu names quoted from the French console UI: "Paramètres de la console → Manettes et capteurs",
-      "Communication filaire de la manette Pro", "Changer la configuration/l’ordre" — check against a French Switch
+      "Communication filaire de la manette Pro", "Changer la configuration/l’ordre": check against a French Switch
 - [ ] iOS "Sur l’écran d’accueil" and Chrome "Installer l’application" menu labels
 - [ ] Gender agreement: status words about the controller are feminine ("Connectée", "Non connectée"); generic ones masculine
 - [ ] "Rapid trigger" kept in English (pill "Rapid"), like Spanish

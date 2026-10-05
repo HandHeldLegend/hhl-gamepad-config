@@ -1,7 +1,7 @@
 # Attributions
 
 Third-party work used by HHL Gamepad Config. This list is mirrored in the app (*Help & about*) from
-`src/sections/about/attributions.js` — update both when adding a dependency or asset.
+`src/sections/about/attributions.js`. Update both when adding a dependency or asset.
 
 | Work | Author | License | Used for |
 |---|---|---|---|
@@ -10,7 +10,7 @@ Third-party work used by HHL Gamepad Config. This list is mirrored in the app (*
 | [three.js](https://threejs.org) r128 + STLLoader | three.js authors | MIT (`vendor/three/LICENSE`) | 3D rendering on the Motion and 3D Platformer pages (`vendor/three/`) |
 | [esptool-js](https://github.com/espressif/esptool-js) 0.4.3 | Espressif Systems | Apache-2.0 (`vendor/esptool-js/LICENSE`) | ESP32 wireless module updates (`vendor/esptool-js/`) |
 | [pako](https://github.com/nodeca/pako) 2.1.0 (bundled in esptool-js) | Andrei Tuputcyn, Vitaly Puzrin | MIT AND Zlib (`vendor/esptool-js/LICENSE-pako`, `NOTICE.txt`) | Compression while writing ESP32 firmware |
-| CH340 WebUSB serial driver | ported from `hoja_esptool/src/plugin/niceSerial.js` (Hand Held Legend) | — | Android ESP32 updates without Web Serial (`src/sections/wireless/ch34x-webusb.js`) |
+| CH340 WebUSB serial driver | ported from `hoja_esptool/src/plugin/niceSerial.js` (Hand Held Legend) | n/a | Android ESP32 updates without Web Serial (`src/sections/wireless/ch34x-webusb.js`) |
 | [pico-universal-flash-nuke](https://github.com/Gadgetoid/pico-universal-flash-nuke) | Phil Howard | BSD 3-Clause (below) | Recovery image (`firmware/universal_flash_nuke.uf2`) |
 | [PICOBOOT protocol](https://github.com/raspberrypi/pico-bootrom-rp2040) | Raspberry Pi Ltd | BSD 3-Clause | Reference for the USB bootloader commands (`src/firmware/picoboot.js`) |
 | [HOJA-LIB-RP2040](https://github.com/HandHeldLegend/HOJA-LIB-RP2040) | Hand Held Legend | see repository | Memory layouts generated from its headers (`src/device/generated/fw-layout.js`) |
@@ -19,10 +19,10 @@ The Super Famicom-inspired palette is a tribute; this project is not affiliated 
 The Gameplay Arena is original work inspired by classic platform fighters and contains no game code or assets.
 The 3D Platformer is original work: its hero, course, art and code were written for this app. Its movement
 (speeds, jump heights, frame windows) was tuned using the [n64decomp/sm64](https://github.com/n64decomp/sm64)
-decompilation and public movement write-ups as a **behaviour reference only** — no code, comments, data tables or
+decompilation and public movement write-ups as a **behaviour reference only**; no code, comments, data tables or
 assets were copied (see `src/sections/platformer/constants.js`).
 
-## pico-universal-flash-nuke — BSD 3-Clause License
+## pico-universal-flash-nuke (BSD 3-Clause License)
 
 Copyright 2024 Phil Howard
 

@@ -1,5 +1,5 @@
 /**
- * hoja-device.js — WebUSB protocol driver for HOJA-firmware controllers.
+ * hoja-device.js: WebUSB protocol driver for HOJA-firmware controllers.
  *
  * This is a faithful port of hoja2's js/gamepad.js. The wire protocol is unchanged; what changed:
  *   - memory blocks come from the firmware layout (struct.js) instead of per-struct parser files;
@@ -18,12 +18,12 @@
  *   0xAF                     in/out: legacy firmware version probe
  *
  * Events (all CustomEvent; read `event.detail`):
- *   'connect'     { device: this }                 — blocks + statics loaded
+ *   'connect'     { device: this }                   blocks + statics loaded
  *   'disconnect'  {}
- *   'input'       DataView                          — live input report (0xFE/0xFF)
- *   'snapback'    DataView                          — analog dump (0xFA)
- *   'legacy'      { deviceId, url }                 — pre-HOJA2 firmware detected
- *   'bootloader'  {}                                — user picked a bare RP2040/RP2350 bootloader
+ *   'input'       DataView                            live input report (0xFE/0xFF)
+ *   'snapback'    DataView                            analog dump (0xFA)
+ *   'legacy'      { deviceId, url }                   pre-HOJA2 firmware detected
+ *   'bootloader'  {}                                  user picked a bare RP2040/RP2350 bootloader
  */
 import { LAYOUT, createStruct } from './struct.js';
 import { legacyFirmwareUrl } from './legacy.js';
@@ -157,7 +157,7 @@ export class HojaDevice extends EventTarget {
 
   /**
    * Show the browser device picker and connect. Resolves:
-   *   true            connected (or legacy device detected — see 'legacy' event)
+   *   true            connected (or legacy device detected; see 'legacy' event)
    *   'bootloader'    user chose a bare bootloader ('bootloader' event fired)
    *   false           canceled / failed
    */

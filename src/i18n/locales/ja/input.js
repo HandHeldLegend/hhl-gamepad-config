@@ -1,5 +1,5 @@
 /**
- * Japanese translations — input. English source text → translation.
+ * Japanese translations (input). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -21,8 +21,8 @@ export default {
     '6つの配置すべてがこのコントローラーのデフォルトに戻ります。すべてのモードでの変更は失われます。',
   'Every input in {mode} mode goes back to this controller\'s default layout and settings. Other modes are not affected.':
     '{mode}モードのすべての入力が、このコントローラーのデフォルトの配置と設定に戻ります。他のモードには影響しません。',
-  'All modes reset to defaults — press Save to keep it.': 'すべてのモードをデフォルトに戻しました。保持するには「保存」を押してください。',
-  '{mode} mode reset to defaults — press Save to keep it.': '{mode}モードをデフォルトに戻しました。保持するには「保存」を押してください。',
+  'All modes reset to defaults. Press Save to keep it.': 'すべてのモードをデフォルトに戻しました。保持するには「保存」を押してください。',
+  '{mode} mode reset to defaults. Press Save to keep it.': '{mode}モードをデフォルトに戻しました。保持するには「保存」を押してください。',
   'The controller did not confirm the reset. Try again.': 'コントローラーがリセットを確認しませんでした。もう一度お試しください。',
   'Reset': 'リセット',
   'Done': '完了',
@@ -50,7 +50,7 @@ export default {
   'Stick directions': 'スティック方向',
   'Inputs that measure how far they are pressed, such as analog triggers (the sensor type depends on your controller). They can act as a button with an adjustable activation point, as rapid trigger, or as a full analog output.':
     'アナログトリガーなど、押し込み量を測定する入力です（センサーの種類はコントローラーによって異なります）。作動ポイントを調整できるボタン、ラピッドトリガー、またはフルアナログ出力として使えます。',
-  'Each stick direction can be sent somewhere else too — for example to the d-pad or a button.':
+  'Each stick direction can be sent somewhere else too, for example to the d-pad or a button.':
     'スティックの各方向も、十字キーやボタンなど別の出力に割り当てられます。',
   'This controller did not report any remappable inputs.': 'このコントローラーから割り当て変更できる入力が報告されませんでした。',
   '{input} sends {output} in {mode} mode.': '{input}は{mode}モードで{output}を送信します。',
@@ -87,7 +87,7 @@ export default {
   'Released': '未入力',
   'Mode': 'モード',
   'Analog mode': 'アナログモード',
-  'Presses as soon as it moves down, and releases as soon as it starts coming back up — great for fast repeated presses.':
+  'Presses as soon as it moves down, and releases as soon as it starts coming back up. Great for fast repeated presses.':
     '押し下げ始めた瞬間にオンになり、戻り始めた瞬間にオフになります。すばやい連打に最適です。',
   'Counts as pressed once it passes the activation point, like a normal button with an adjustable trigger point.':
     '作動ポイントを超えると押下と判定されます。作動位置を調整できる通常のボタンのように動作します。',
@@ -109,9 +109,9 @@ export default {
   'Paste settings': '設定を貼り付け',
   'Copy this input\'s mode and values, then paste them onto another analog input.':
     'この入力のモードと値をコピーして、別のアナログ入力に貼り付けられます。',
-  'Settings copied — open another analog input and press Paste.': '設定をコピーしました。別のアナログ入力を開いて「設定を貼り付け」を押してください。',
+  'Settings copied. Open another analog input and press Paste.': '設定をコピーしました。別のアナログ入力を開いて「設定を貼り付け」を押してください。',
   'Settings copied inside the app (clipboard access was blocked).': 'アプリ内に設定をコピーしました（クリップボードへのアクセスがブロックされました）。',
-  'Nothing to paste — copy an analog input\'s settings first.': '貼り付ける内容がありません。先にアナログ入力の設定をコピーしてください。',
+  'Nothing to paste. Copy an analog input\'s settings first.': '貼り付ける内容がありません。先にアナログ入力の設定をコピーしてください。',
   'Settings pasted.': '設定を貼り付けました。',
   'Calibration': 'キャリブレーション',
   'Calibrate': 'キャリブレーション',
@@ -191,6 +191,6 @@ export default {
   'Not calibrated': '未キャリブレーション',
   'This controller has no analog inputs to calibrate.': 'このコントローラーにはキャリブレーションするアナログ入力がありません。',
   'The controller did not start calibrating. Try again.': 'コントローラーがキャリブレーションを開始しませんでした。もう一度お試しください。',
-  'Calibration finished — press Save to keep it.': 'キャリブレーションが完了しました。保持するには「保存」を押してください。',
+  'Calibration finished. Press Save to keep it.': 'キャリブレーションが完了しました。保持するには「保存」を押してください。',
   'The controller did not confirm the calibration.': 'コントローラーがキャリブレーションを確認しませんでした。',
 };

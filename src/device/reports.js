@@ -1,5 +1,5 @@
 /**
- * reports.js — Decode (and, for the demo controller, encode) the live WebUSB input report.
+ * reports.js: Decode (and, for the demo controller, encode) the live WebUSB input report.
  *
  * Layout from HOJA-LIB-RP2040 src/usb/webusb.c `webusb_send_rawinput()` (64 bytes, ~125 Hz):
  *   [0]      report id: 0xFF raw/hover stream, 0xFE joystick stream (choose with device.setInputMode)

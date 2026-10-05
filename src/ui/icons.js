@@ -1,5 +1,5 @@
 /**
- * icons.js — Line icons from the SVG sprite at assets/icons/ui.svg.
+ * icons.js: Line icons from the SVG sprite at assets/icons/ui.svg.
  *
  *   icon('gamepad')            -> <svg class="icon"><use href="assets/icons/ui.svg#i-gamepad"/></svg>
  *   icon('warning', 'icon-lg')

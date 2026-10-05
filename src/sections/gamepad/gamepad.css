@@ -1,5 +1,5 @@
 /*
- * gamepad.css — Gamepad page: mode tiles, Switch color preview + presets, MAC editor.
+ * gamepad.css (Gamepad page): mode tiles, Switch color preview + presets, MAC editor.
  * Theme tokens only; the controller preview's fills are the user's colors (set inline as
  * --pv-* custom properties by pad-preview.js).
  */

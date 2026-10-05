@@ -1,5 +1,5 @@
 /**
- * overlay.js — Toasts, dialogs, confirmations and the global tooltip handler.
+ * overlay.js: Toasts, dialogs, confirmations and the global tooltip handler.
  *
  *   toast('Saved to controller', { tone: 'green' });
  *   const ok = await confirmDialog({ title: 'Reset mappings?', message: '...', danger: true });

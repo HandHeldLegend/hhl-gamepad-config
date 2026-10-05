@@ -1,5 +1,5 @@
 /**
- * 3D Platformer — a small 3D test course: run, jump, flip, long jump, ground pound and wall kick with
+ * 3D Platformer: a small 3D test course: run, jump, flip, long jump, ground pound and wall kick with
  * the connected controller, to feel how its sticks and buttons behave in a 3D game.
  *
  * Like the Arena it reads only the HOJA controller connected to the app (its USB input stream). The

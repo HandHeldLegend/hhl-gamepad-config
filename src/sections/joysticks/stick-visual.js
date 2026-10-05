@@ -1,5 +1,5 @@
 /**
- * stick-visual.js — Live joystick visualizer (port of hoja2/components/joystick-visual.js).
+ * stick-visual.js: Live joystick visualizer (port of hoja2/components/joystick-visual.js).
  *
  * Fed from the 0xFE joystick stream (src/device/reports.js), both values centered, ±2048 = full:
  *   input  = r.sticks.snapback   stick after calibration/angle mapping + snapback filter, before deadzones
@@ -8,7 +8,7 @@
  *
  * Draws: travel circle, inner/outer deadzone bands, angle-map spokes (with their "sticky" angular
  * deadzone wedges), the optional max-reach trace (180 × 2° buckets, keeps the furthest point), and both dots.
- * Readouts convert the output into what a console would see — the "Full / GC / Melee / N64" modes and
+ * Readouts convert the output into what a console would see: the "Full / GC / Melee / N64" modes and
  * the scaling constants are exactly hoja2's.
  */
 import { h } from '../../ui/dom.js';
@@ -70,7 +70,7 @@ function describe(mode, x, y) {
 const ROUND_MIN_COVERAGE = 0.9;
 /**
  * A direction counts as "the rim" once it reaches at least RIM_SHARE of the furthest reach in the trace
- * (and RIM_MIN absolute): a half-pushed direction isn't the gate. Real gates stay well above 75% —
+ * (and RIM_MIN absolute): a half-pushed direction isn't the gate. Real gates stay well above 75%:
  * an octagon's flats are ~92% of its corners, a square's edges ~71–80% of its corners at worst.
  */
 const RIM_MIN = 0.5 * R;
@@ -120,7 +120,7 @@ export function stickVisual(o = {}) {
   // ---- Readout panel: real text (the canvas is only a picture of it) --------------------------
   // Values update at most once per animation frame (from draw) and only when their text changed.
   const cells = {};
-  const cell = (key) => (cells[key] = h('td', '—'));
+  const cell = (key) => (cells[key] = h('td', '–'));
   const marker = (kind) => h('i.js-swatch', { class: kind, 'aria-hidden': 'true' });
   const row = (key, label) => h('tr', h('th', { scope: 'row' }, label), cell(`in-${key}`), cell(`out-${key}`));
   const unitsNote = h('p.js-units');
@@ -179,7 +179,7 @@ export function stickVisual(o = {}) {
   });
   const clearBtn = button({ icon: 'refresh', variant: 'ghost', size: 'sm', title: t('Clear trace'), onClick: () => api.resetTrace() });
   // Roundness of the OUTPUT trace (what the console sees), shown while Trace is on.
-  const roundEl = h('p.js-round', { hidden: true, 'data-tip': t('Measured from the output trace. Roundness compares the shortest and longest reach around the edge (100% is a perfect circle). Reach is the average distance from the center. Diagonals compares the reach at 45° with up, down, left and right — above 100% means a squarer shape, below means rounder corners.') });
+  const roundEl = h('p.js-round', { hidden: true, 'data-tip': t('Measured from the output trace. Roundness compares the shortest and longest reach around the edge (100% is a perfect circle). Reach is the average distance from the center. Diagonals compares the reach at 45° with up, down, left and right. Above 100% means a squarer shape, below means rounder corners.') });
 
   const el = h('div.js-visual', h('div.js-vis-grid',
     h('div.js-vis-main',

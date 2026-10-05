@@ -1,5 +1,5 @@
 /*
- * rgb.css — RGB page: LED preview strip, group color tiles and preset palettes.
+ * rgb.css (RGB page): LED preview strip, group color tiles and preset palettes.
  * Theme tokens only; LED colors are the user's data, set inline as --led by led-preview.js.
  */
 

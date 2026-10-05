@@ -1,5 +1,5 @@
 /**
- * editor.js — The per-input editor (port of hoja2's input-config-panel + button-grid popups).
+ * editor.js: The per-input editor (port of hoja2's input-config-panel + button-grid popups).
  *
  * Shows what one physical input sends in the selected output mode and lets the customer change it:
  *   - output picker (grouped by kind, "None" disables the input, shows which input already uses each);
@@ -32,7 +32,7 @@ const PICKER_GROUPS = [
 ];
 
 const MODE_HELP = {
-  [OUTPUT_MODE.RAPID]: N_('Presses as soon as it moves down, and releases as soon as it starts coming back up — great for fast repeated presses.'),
+  [OUTPUT_MODE.RAPID]: N_('Presses as soon as it moves down, and releases as soon as it starts coming back up. Great for fast repeated presses.'),
   [OUTPUT_MODE.THRESHOLD]: N_('Counts as pressed once it passes the activation point, like a normal button with an adjustable trigger point.'),
   [OUTPUT_MODE.PASSTHROUGH]: N_('Sends the full analog travel, so games see exactly how far it is pressed.'),
 };
@@ -131,7 +131,7 @@ export function createEditor(o) {
     memoryClip = data;
     try {
       await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-      toast(t('Settings copied — open another analog input and press Paste.'), { tone: 'green' });
+      toast(t('Settings copied. Open another analog input and press Paste.'), { tone: 'green' });
     } catch {
       toast(t('Settings copied inside the app (clipboard access was blocked).'), { tone: 'blue' });
     }
@@ -141,7 +141,7 @@ export function createEditor(o) {
     let data = null;
     try { data = JSON.parse(await navigator.clipboard.readText()); } catch { data = memoryClip; }
     if (!data || data.header !== CLIPBOARD_HEADER) {
-      toast(t('Nothing to paste — copy an analog input\'s settings first.'), { tone: 'yellow' });
+      toast(t('Nothing to paste. Copy an analog input\'s settings first.'), { tone: 'yellow' });
       return;
     }
     const out = outputOf(modeId, slot().output_code);

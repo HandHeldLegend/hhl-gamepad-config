@@ -1,5 +1,5 @@
 /**
- * French translations — snapback. English source text → translation.
+ * French translations (snapback). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -13,10 +13,10 @@ export default {
   'View': 'Afficher',
 
   // ---- View ----
-  'Auto watches for the moment you let go and holds back only the rebound — there is no cutoff to tune.': 'Auto détecte le moment où vous relâchez le joystick et ne freine que le rebond ; aucune fréquence de coupure à régler.',
+  'Auto watches for the moment you let go and holds back only the rebound. There is no cutoff to tune.': 'Auto détecte le moment où vous relâchez le joystick et ne freine que le rebond ; aucune fréquence de coupure à régler.',
   'Filter off: the stick reports its raw output. Use this to see your stick’s natural snapback.': 'Filtre désactivé : le joystick transmet sa sortie brute. Utilisez ce mode pour voir le snapback naturel de votre joystick.',
   'Snapback filter': 'Filtre anti-snapback',
-  'Changes apply instantly — press Save to keep them.': 'Les modifications s’appliquent immédiatement ; appuyez sur Enregistrer pour les conserver.',
+  'Changes apply instantly. Press Save to keep them.': 'Les modifications s’appliquent immédiatement ; appuyez sur Enregistrer pour les conserver.',
   '{stick}: snapback waveform': '{stick} : forme d’onde du snapback',
   'Flick the right stick…': 'Lâchez d’un coup le joystick droit…',
   'Flick the left stick…': 'Lâchez d’un coup le joystick gauche…',
@@ -39,7 +39,7 @@ export default {
   'What the right stick does in the 31 ms after you let go.': 'Ce que fait le joystick droit dans les 31 ms qui suivent le relâchement.',
   'What the left stick does in the 31 ms after you let go.': 'Ce que fait le joystick gauche dans les 31 ms qui suivent le relâchement.',
   'Captured': 'Capturé',
-  'Flick again to compare — the last few captures stay below the plot.': 'Recommencez pour comparer ; les dernières captures restent sous le graphique.',
+  'Flick again to compare. The last few captures stay below the plot.': 'Recommencez pour comparer ; les dernières captures restent sous le graphique.',
   'New right stick capture': 'Nouvelle capture du joystick droit',
   'New left stick capture': 'Nouvelle capture du joystick gauche',
   'How to test:': 'Comment tester :',
@@ -57,7 +57,7 @@ export default {
   'Filter mode': 'Mode de filtre',
   'How the left stick suppresses the rebound past center after you let go.': 'Comment le joystick gauche supprime le rebond au-delà du centre après le relâchement.',
   'How the right stick suppresses the rebound past center after you let go.': 'Comment le joystick droit supprime le rebond au-delà du centre après le relâchement.',
-  'Low-pass: smooths fast movement near the center (adjust with the cutoff). Auto: detects a release and holds back the rebound only when it happens. Off: raw stick output — use this to see your stick’s natural snapback.': 'Passe-bas : lisse les mouvements rapides près du centre (réglable avec la fréquence de coupure). Auto : détecte un relâchement et ne freine le rebond que lorsqu’il se produit. Désactivé : sortie brute du joystick ; utilisez ce mode pour voir le snapback naturel de votre joystick.',
+  'Low-pass: smooths fast movement near the center (adjust with the cutoff). Auto: detects a release and holds back the rebound only when it happens. Off: raw stick output. Use this to see your stick’s natural snapback.': 'Passe-bas : lisse les mouvements rapides près du centre (réglable avec la fréquence de coupure). Auto : détecte un relâchement et ne freine le rebond que lorsqu’il se produit. Désactivé : sortie brute du joystick ; utilisez ce mode pour voir le snapback naturel de votre joystick.',
   'Low-pass': 'Passe-bas',
   'Auto': 'Auto',
   'Filter cutoff': 'Fréquence de coupure',

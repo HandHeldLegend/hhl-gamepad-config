@@ -1,11 +1,11 @@
 /**
- * Joysticks view — port of hoja2/modules/analog-md.js (+ joystick-visual, angle-modifier, number-selector).
+ * Joysticks view: port of hoja2/modules/analog-md.js (+ joystick-visual, angle-modifier, number-selector).
  *
  * Layout (shared left/right pattern, see "Left/right layouts" in docs/SECTIONS.md):
  *   notice      "needs calibrating" callout
  *   check note  after a successful calibration the dialog closes and a non-blocking "move the sticks to
  *               check" note (with Save) appears here while the live cards pulse briefly
- *   live split  .lr-split — one compact live visualizer card per stick (+ the Left/Right switch on narrow
+ *   live split  .lr-split: one compact live visualizer card per stick (+ the Left/Right switch on narrow
  *               pages); each card has a Snap nearest action (analog.js snapNearestSlot, write → push → re-read)
  *   tabs        a single tab strip; each panel holds any shared content plus another .lr-split whose
  *               columns hold the same card for each stick, so left and right line up row by row:
@@ -18,7 +18,7 @@
  * shows both columns side by side on wide pages (≥ 640px) and only the active one, picked with the switch,
  * on narrow pages. Single-stick builds get .single: one full-width column and no switch.
  *
- * Deep links: #/joysticks?stick=right&tab=sensitivity — reflected back with ctx.setParams. On wide pages
+ * Deep links: #/joysticks?stick=right&tab=sensitivity, reflected back with ctx.setParams. On wide pages
  * ?stick= scrolls to that stick's column (its editor card when ?tab= is given too) and highlights it.
  *
  * Live data: device.setInputMode(true) switches the controller to the 0xFE joystick stream; reports
@@ -139,8 +139,8 @@ export function mount(root, ctx) {
     if (cfg().analog_calibration_set) return;
     notice.append(callout({ tone: 'red', title: sticks.length > 1 ? t('Your sticks need calibrating.') : t('Your stick needs calibrating.') },
       sticks.length > 1
-        ? t('Follow the guided steps — it takes about a minute. Both sticks are calibrated at once.')
-        : t('Follow the guided steps — it takes about a minute.'),
+        ? t('Follow the guided steps (it takes about a minute). Both sticks are calibrated at once.')
+        : t('Follow the guided steps (it takes about a minute).'),
       h('div.row', { style: { marginTop: 'var(--space-2)' } },
         button({ label: t('Calibrate now'), icon: 'calibrate', variant: 'danger', size: 'sm', onClick: calibrate }))));
   }
@@ -173,7 +173,7 @@ export function mount(root, ctx) {
         return saved;
       },
     });
-    checkNote.append(callout({ tone: 'green', icon: 'check', title: single ? t('Calibrated — move the stick to check.') : t('Calibrated — move the sticks to check.') },
+    checkNote.append(callout({ tone: 'green', icon: 'check', title: single ? t('Calibrated. Move the stick to check.') : t('Calibrated. Move the sticks to check.') },
       single
         ? t('It should reach the edge of the circle in every direction and rest in the center.')
         : t('They should reach the edge of the circle in every direction and rest in the center.'),
@@ -224,7 +224,7 @@ export function mount(root, ctx) {
     renderCalibrateTab = () => {
       const c = cfg();
       const set = !!c.analog_calibration_set;
-      const center = (s, axis) => (axes[s][axis] ? fmt.number(c[`${prefix(s)}${axis}_center`], { useGrouping: false }) : '—');
+      const center = (s, axis) => (axes[s][axis] ? fmt.number(c[`${prefix(s)}${axis}_center`], { useGrouping: false }) : '–');
       status.replaceChildren(
         h('div.row',
           set ? badge(t('Calibrated'), 'green') : badge(t('Not calibrated'), 'red'),
@@ -307,7 +307,7 @@ export function mount(root, ctx) {
           .map((a) => settingField(`joysticks.${s}Invert${a.toUpperCase()}`, { tone: TONE }));
         return stickCard(s, t('Axis direction'), rows.length ? rows : h('p.muted', t('This stick has no adjustable axes.')));
       }),
-      callout({ tone: 'yellow', text: t('Inverting an axis changes the raw stick direction — calibrate again afterwards.') })));
+      callout({ tone: 'yellow', text: t('Inverting an axis changes the raw stick direction, so calibrate again afterwards.') })));
   }
 
   const tabs = tabView({

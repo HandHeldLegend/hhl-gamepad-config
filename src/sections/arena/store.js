@@ -1,5 +1,5 @@
 /**
- * store.js — Arena preferences, kept per browser in localStorage under 'hhl-config:arena'.
+ * store.js: Arena preferences, kept per browser in localStorage under 'hhl-config:arena'.
  * (Arena prefs are deliberately not part of the controller settings schema.)
  *
  *   store.get('tapJump')          read
@@ -19,7 +19,7 @@ const DEFAULTS = {
   speed: 1,
   hiResSticks: false,    // Gamepad API source: take stick values from the 12-bit HOJA USB stream
   bindings: {},
-  bindingsVersion: 0,    // see BINDINGS_VERSION in input.js          // { [Gamepad.id | 'usb']: binding table } — see input.js
+  bindingsVersion: 0,    // see BINDINGS_VERSION in input.js          // { [Gamepad.id | 'usb']: binding table }, see input.js
   bestTime: null,        // target test record, ms
   labStick: 'main',
 };

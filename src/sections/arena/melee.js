@@ -1,5 +1,5 @@
 /**
- * melee.js — What a classic GameCube platform fighter (Melee) would see from your controller.
+ * melee.js: What a classic GameCube platform fighter (Melee) would see from your controller.
  *
  * Pipeline, every simulation frame (original code; behaviour described in the sources listed in
  * constants.js → "Input pipeline sources"):

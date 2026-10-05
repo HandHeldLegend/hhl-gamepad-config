@@ -1,13 +1,13 @@
 /**
- * Snapback settings (analogConfig_s) — the filter that removes stick "bounce" when you let go.
- * Pure data + pure functions only — this file is imported by Node for the MCP server.
+ * Snapback settings (analogConfig_s): the filter that removes stick "bounce" when you let go.
+ * Pure data + pure functions only; this file is imported by Node for the MCP server.
  *
  * Fields (HOJA-LIB-RP2040 src/input/snapback.c, snapback/snapback_lpf.c):
- *   l/r_snapback_type       u8 — how snapback.c actually dispatches it (and what hoja2 showed):
+ *   l/r_snapback_type       u8: how snapback.c actually dispatches it (and what hoja2 showed):
  *                             0 = low-pass filter (default), 1 = auto (rebound detection), 2 = off.
  *                           NOTE: the header enum `snapback_type_t` names these DISABLED/ZERO/POST, which does
  *                           not match the runtime switch; we follow the runtime behavior, like hoja2 did.
- *   l/r_snapback_intensity  u16 — low-pass cutoff in tenths of a Hz (600 = 60.0 Hz). The firmware clamps it
+ *   l/r_snapback_intensity  u16: low-pass cutoff in tenths of a Hz (600 = 60.0 Hz). The firmware clamps it
  *                           to 300..1500 (30–150 Hz). Only used by the low-pass mode.
  */
 import { clampInt } from '../../settings/schema.js';
@@ -31,7 +31,7 @@ function stickSettings(stick) {
       key: `snapback.${stick}Type`,
       label: 'Filter mode',
       description: `How the ${stick} stick suppresses the rebound past center after you let go.`,
-      tip: 'Low-pass: smooths fast movement near the center (adjust with the cutoff). Auto: detects a release and holds back the rebound only when it happens. Off: raw stick output — use this to see your stick’s natural snapback.',
+      tip: 'Low-pass: smooths fast movement near the center (adjust with the cutoff). Auto: detects a release and holds back the rebound only when it happens. Off: raw stick output. Use this to see your stick’s natural snapback.',
       block: 'analog',
       type: 'enum',
       options: SNAPBACK_TYPES,

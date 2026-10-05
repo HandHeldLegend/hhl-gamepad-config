@@ -1,5 +1,5 @@
 /**
- * model-view.js — Live 3D controller model driven by the gyro (port of hoja2's
+ * model-view.js: Live 3D controller model driven by the gyro (port of hoja2's
  * components/sensor-visualization.js).
  *
  *   const view = createModelView({ bodyColor: 0x8e7cc3 });
@@ -12,7 +12,7 @@
  *
  * Behavior copied from hoja2 so the model moves exactly as before:
  *   - gyro dps = raw × 70 mdps/LSB (LSM6DSR at ±2000 dps), with the X axis negated;
- *   - target rotation (deg) = dps × 0.25 + rotation offset (0,0,0) — the model tilts in proportion to
+ *   - target rotation (deg) = dps × 0.25 + rotation offset (0,0,0): the model tilts in proportion to
  *     how fast you turn the controller, it does not integrate an absolute orientation;
  *   - each frame the rotation eases 5 % toward the target and the stored rate decays 1 % toward 0
  *     (both normalized here to a 60 fps frame so 120 Hz displays behave the same as hoja2 at 60 Hz);
@@ -20,7 +20,7 @@
  *     (shininess = reflectivity 0.16 × 100), ambient + four directional lights (dimmed, see
  *     KEY_LIGHT_INTENSITY).
  *
- * Reduced motion: the model has no autonomous animation (no idle spin or auto-rotation) — it only
+ * Reduced motion: the model has no autonomous animation (no idle spin or auto-rotation); it only
  * moves when the physical controller moves, so nothing needs to be switched off.
  *
  * New in hoja3: transparent background, theme-aware lighting/fallback color (re-read on theme
@@ -223,7 +223,7 @@ export function createModelView(o = {}) {
       renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
     } catch (err) {
       console.warn('[motion] WebGL unavailable', err);
-      status.replaceChildren(h('span', '3D view unavailable — your browser or GPU has WebGL turned off.'));
+      status.replaceChildren(h('span', '3D view unavailable: your browser or GPU has WebGL turned off.'));
       return;
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));

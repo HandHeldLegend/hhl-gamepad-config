@@ -1,5 +1,5 @@
 /**
- * prefs.js — App preferences (stored per browser in localStorage).
+ * prefs.js: App preferences (stored per browser in localStorage).
  *
  *   prefs.get('theme')            'dark' | 'light' | 'system'   (default 'dark')
  *   prefs.set('theme', 'light')   applies immediately and notifies subscribers

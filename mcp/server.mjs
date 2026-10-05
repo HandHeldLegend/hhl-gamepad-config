@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * server.mjs — Model Context Protocol server for HHL Gamepad Config (zero dependencies).
+ * server.mjs: Model Context Protocol server for HHL Gamepad Config (zero dependencies).
  *
  *   node hoja3/mcp/server.mjs            (stdio transport: newline-delimited JSON-RPC 2.0)
  *
@@ -43,7 +43,7 @@ class RpcError extends Error {
 
 const ready = loadCatalog().then((cat) => {
   for (const w of cat.warnings) log('warning:', w);
-  log(`ready — ${cat.pages.length} pages, ${cat.settings.length} settings, links → ${cat.base}`);
+  log(`ready: ${cat.pages.length} pages, ${cat.settings.length} settings, links → ${cat.base}`);
   return cat;
 });
 
@@ -55,10 +55,10 @@ const MODES = ['switch', 'xinput', 'snes', 'n64', 'gamecube', 'sinput'];
 const INSTRUCTIONS = `HHL Gamepad Config is Hand Held Legend's web app for configuring HOJA-firmware controllers over USB.
 Use these tools to help customers: find the right page (list_pages, build_page_link), explain settings (list_settings,
 describe_setting), propose changes as a link (build_settings_link) and troubleshoot (troubleshoot).
-This server cannot see or change the controller. Settings links open a confirmation dialog in the app — tell the
+This server cannot see or change the controller. Settings links open a confirmation dialog in the app. Tell the
 customer to open the link in Chrome/Edge (desktop or Android) with the controller plugged in, check the list and press
 Apply (or Apply & save). Never claim a change was made. Calibration, remapping, pairing and firmware installs are done
-by the customer on the page — link them there and walk them through it.`;
+by the customer on the page. Link them there and walk them through it.`;
 
 // ---- Tiny JSON-Schema validator (just what our inputSchemas use) ---------------------------------
 
@@ -87,7 +87,7 @@ function validate(schema, value, path = 'arguments') {
 
 const bullet = (s) => `- ${s}`;
 function settingLine(s) {
-  const needs = s.requires ? ` — needs ${s.requires}` : '';
+  const needs = s.requires ? ` (needs ${s.requires})` : '';
   return `- \`${s.key}\` **${s.label}** (${describeRange(s)})${needs}${s.description ? `: ${s.description}` : ''}`;
 }
 
@@ -106,9 +106,9 @@ const TOOLS = [
       const pages = cat.pages;
       const text = pages.map((p) => {
         const needs = p.needsController ? `needs a connected controller${p.requires ? ` where ${p.requiresNote}` : ''}` : 'works without a controller';
-        const params = p.params.length ? `\n  params: ${p.params.map((x) => `\`${x.name}\` — ${x.description}`).join('; ')}` : '';
+        const params = p.params.length ? `\n  params: ${p.params.map((x) => `\`${x.name}\`: ${x.description}`).join('; ')}` : '';
         const settings = p.settingKeys.length ? `\n  settings: ${p.settingKeys.length} (list_settings section="${p.id}")` : '';
-        return `- **${p.title}** (\`${p.id}\`) — ${p.summary} [${needs}]\n  ${p.url}${params}${settings}`;
+        return `- **${p.title}** (\`${p.id}\`): ${p.summary} [${needs}]\n  ${p.url}${params}${settings}`;
       }).join('\n');
       return { text: `${pages.length} pages:\n${text}`, structured: { base: cat.base, pages } };
     },
@@ -166,7 +166,7 @@ const TOOLS = [
         s.tip && `Tip: ${s.tip}`,
         `Values: ${describeRange(s)}`,
         s.requires ? `Needs: ${capabilityNote(s.requires)} (\`${s.requires}\`)` : 'Available on every controller.',
-        page && `Page: ${page.title} — ${page.url}`,
+        page && `Page: ${page.title}, ${page.url}`,
         'Propose a value with build_settings_link.',
       ].filter(Boolean);
       return { text: lines.join('\n'), structured: { setting: { ...s, values: describeRange(s) }, page: page ? { id: page.id, title: page.title, url: page.url } : null } };
@@ -192,7 +192,7 @@ const TOOLS = [
       const p = r.page;
       const lines = [
         r.url,
-        `Opens **${p.title}** — ${p.summary}`,
+        `Opens **${p.title}**: ${p.summary}`,
         p.needsController && `The customer must connect the controller over USB (Chrome/Edge on desktop or Android)${p.requires ? `; the page only works if ${p.requiresNote}` : ''}.`,
         ...r.warnings.map((w) => `Warning: ${w}`),
       ].filter(Boolean);
@@ -247,7 +247,7 @@ const TOOLS = [
       const hits = searchKnowledge(base, topic);
       if (!hits.length) {
         return {
-          text: `No guide matched "${topic}". Available topics:\n${base.topics.map((t) => `- \`${t.id}\` — ${t.title}`).join('\n')}`,
+          text: `No guide matched "${topic}". Available topics:\n${base.topics.map((t) => `- \`${t.id}\`: ${t.title}`).join('\n')}`,
           structured: { matched: [], topics: base.topics.map(({ id, title }) => ({ id, title })) },
         };
       }
@@ -274,10 +274,10 @@ const TOOLS = [
       const r = await firmwareBuilds({ live, base: cat.base });
       const text = [
         `${r.builds.length} builds (${r.source}):`,
-        ...r.builds.map((b) => `- **${b.label}** (\`${b.id}\`) — install: ${b.installLink}${b.uf2Url ? ` — UF2: ${b.uf2Url}` : ''}`),
+        ...r.builds.map((b) => `- **${b.label}** (\`${b.id}\`): install ${b.installLink}${b.uf2Url ? `, UF2 ${b.uf2Url}` : ''}`),
         '',
-        `Recovery: **${r.nuke.label}** (\`${r.nuke.id}\`) — ${r.nuke.note}`,
-        'Installing the wrong build can stop a controller working until it is re-flashed from BOOTSEL — confirm the exact model first.',
+        `Recovery: **${r.nuke.label}** (\`${r.nuke.id}\`): ${r.nuke.note}`,
+        'Installing the wrong build can stop a controller working until it is re-flashed from BOOTSEL. Confirm the exact model first.',
       ].join('\n');
       return { text, structured: r };
     },
@@ -350,9 +350,9 @@ const PROMPTS = [
 
 Guide me one step at a time and wait for me to confirm each step:
 1. Check I'm on a supported browser and connect the controller (use the troubleshoot tool for "connecting" if it fails).
-2. Check for and install firmware updates (Firmware page — build_page_link page "firmware").
+2. Check for and install firmware updates (Firmware page; build_page_link page "firmware").
 3. Calibrate the sticks and, if it has analog triggers, the triggers.
-4. Offer optional tweaks (default mode, rumble, RGB) — propose them with build_settings_link and explain the confirmation dialog.
+4. Offer optional tweaks (default mode, rumble, RGB). Propose them with build_settings_link and explain the confirmation dialog.
 5. Remind me to press Save.
 
 Reference:
@@ -550,7 +550,7 @@ async function handle(msg) {
   }
   const isRequest = 'id' in msg && msg.id !== null;
   if (typeof msg.method !== 'string') {
-    // A response to something we sent (we never send requests) — or garbage.
+    // A response to something we sent (we never send requests), or garbage.
     return isRequest && !('result' in msg || 'error' in msg) ? errorResponse(msg.id, ERR.INVALID_REQUEST, 'Invalid Request: missing method') : null;
   }
   if (!isRequest) {

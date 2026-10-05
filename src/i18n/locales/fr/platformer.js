@@ -1,5 +1,5 @@
 /**
- * French translations — 3D Platformer. English source text → translation.
+ * French translations (3D Platformer). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  * Move names: saut en longueur (long jump), écrasement au sol (ground pound), saut mural (wall kick),
  * salto arrière (backflip), plongeon (dive), roulade (rollout).
@@ -60,7 +60,7 @@ export default {
   "Climbing up": "Escalade",
 
   // ---- Controls & help ----
-  "Move — push further to run faster": "Se déplacer : poussez plus loin pour courir plus vite",
+  "Move (push further to run faster)": "Se déplacer : poussez plus loin pour courir plus vite",
   "Orbit the camera": "Tourner la caméra",
   "Camera behind the hero": "Caméra derrière le héros",
   "L or right-stick press": "L ou clic du joystick droit",
@@ -118,6 +118,6 @@ export default {
     "Un petit parcours de test en trois dimensions pour votre manette HOJA : la vitesse de marche analogique, les virages rapides, le contrôle de la caméra et les sauts au bon timing montrent le ressenti de vos joysticks et boutons dans un jeu en 3D. Seule la manette connectée à cette application est lue.",
   "Its movement is modelled on the publicly documented physics of classic 30 frames-per-second 3D platformers (speeds, jump heights, frame windows). The hero, the course and the code are original and were written for this app; it contains no game code, data or assets.":
     "Ses déplacements s’inspirent de la physique, documentée publiquement, des jeux de plateforme 3D classiques à 30 images par seconde (vitesses, hauteurs de saut, fenêtres en frames). Le héros, le parcours et le code sont originaux et ont été créés pour cette application ; elle ne contient aucun code, donnée ou ressource de jeu.",
-  "There are no enemies or collectibles — just blocks, ramps, walls and pillars to move around on.":
+  "There are no enemies or collectibles, just blocks, ramps, walls and pillars to move around on.":
     "Pas d’ennemis ni d’objets à collectionner : juste des blocs, des rampes, des murs et des piliers sur lesquels évoluer.",
 };

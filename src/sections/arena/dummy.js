@@ -1,11 +1,11 @@
 /**
- * dummy.js — A training dummy (Free play): no AI, it stands, gets launched and falls. It takes damage
+ * dummy.js: A training dummy (Free play): no AI, it stands, gets launched and falls. It takes damage
  * and knockback with Melee's published formula (see movesets.js → knockback) using the weight of the
  * selected fighter (a mirror match, like a training-mode CPU), and respawns at 0% after a KO.
  *
  * Launch model (SmashWiki "Knockback"): launch speed = KB × 0.03 per frame along the hit angle, losing
  * 0.051 per frame; gravity acts on the dummy's own vertical speed. Sakurai angle (361): 0° on the
- * ground below 32 knockback, otherwise 44°. Direction: away from the attacker (approx. — the game
+ * ground below 32 knockback, otherwise 44°. Direction: away from the attacker (approx.; the game
  * uses the attacker's facing for most hits). Hitlag, DI and teching aren't modelled.
  */
 import { PHYS, FIGHTER_SCALE, fighterPhysics } from './constants.js';

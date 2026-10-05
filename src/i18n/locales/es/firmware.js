@@ -1,9 +1,9 @@
 /**
- * Spanish (neutral Latin American) translations — firmware. English source text → translation.
+ * Spanish (neutral Latin American) translations (firmware). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
-  "Offline — can’t check": "Sin conexión: no se puede comprobar",
+  "Offline: can’t check": "Sin conexión: no se puede comprobar",
   "Update your controller": "Actualiza tu control",
   "Connect to check for new firmware.": "Conéctalo para buscar firmware nuevo.",
   "Updates are checked automatically every time you connect. Firmware downloads need an internet connection.": "Las actualizaciones se buscan automáticamente cada vez que te conectas. Descargar firmware requiere conexión a internet.",
@@ -29,7 +29,7 @@ export default {
   "Restarting…": "Reiniciando…",
   "Restarted": "Reiniciado",
   "Loading…": "Cargando…",
-  "You’re offline — downloads need an internet connection.": "Estás sin conexión: las descargas requieren internet.",
+  "You’re offline. Downloads need an internet connection.": "Estás sin conexión: las descargas requieren internet.",
   "Manual downloads": "Descargas manuales",
   "UF2 files you can copy onto the RPI-RP2 drive yourself.": "Archivos UF2 que puedes copiar tú mismo a la unidad RPI-RP2.",
 };

@@ -1,5 +1,5 @@
 /**
- * Japanese translations — joysticks. English source text → translation.
+ * Japanese translations (joysticks). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -30,8 +30,8 @@ export default {
   'Axes': '軸',
   'Your sticks need calibrating.': 'スティックのキャリブレーションが必要です。',
   'Your stick needs calibrating.': 'スティックのキャリブレーションが必要です。',
-  'Follow the guided steps — it takes about a minute. Both sticks are calibrated at once.': 'ガイドに従ってください（約1分）。両方のスティックを同時にキャリブレーションします。',
-  'Follow the guided steps — it takes about a minute.': 'ガイドに従ってください（約1分）。',
+  'Follow the guided steps (it takes about a minute). Both sticks are calibrated at once.': 'ガイドに従ってください（約1分）。両方のスティックを同時にキャリブレーションします。',
+  'Follow the guided steps (it takes about a minute).': 'ガイドに従ってください（約1分）。',
   'Calibrate now': '今すぐキャリブレーション',
   'Calibrate': 'キャリブレーション',
   'Calibrated': 'キャリブレーション済み',
@@ -56,11 +56,11 @@ export default {
   'Couldn’t start.': '開始できませんでした。',
   'Let go of both sticks.': '両方のスティックから手を離してください。',
   'Let go of the stick.': 'スティックから手を離してください。',
-  'Rest the controller on a table — the stick’s center is recorded the moment you press Start calibration.': 'コントローラーを机に置いてください。「キャリブレーション開始」を押した瞬間にスティックの中心が記録されます。',
+  'Rest the controller on a table. The stick’s center is recorded the moment you press Start calibration.': 'コントローラーを机に置いてください。「キャリブレーション開始」を押した瞬間にスティックの中心が記録されます。',
   'Roll slowly around the edge.': '外周に沿ってゆっくり回します。',
   'Push the stick to the rim and turn it in full circles, about 3 laps, keeping gentle pressure against the gate.': 'スティックを端まで倒し、ゲートに軽く押し当てたまま約3周回してください。',
   'Press Finish.': '「完了」を押します。',
-  'Both sticks are calibrated together — you can roll them one after the other.': '両方のスティックを同時にキャリブレーションします。1本ずつ順番に回してもかまいません。',
+  'Both sticks are calibrated together, and you can roll them one after the other.': '両方のスティックを同時にキャリブレーションします。1本ずつ順番に回してもかまいません。',
   'Calibration also resets the response curve to linear (1.00).': 'キャリブレーションするとレスポンスカーブもリニア（1.00）にリセットされます。',
   'Starting…': '開始中…',
   'The controller didn’t accept the calibration command.': 'コントローラーがキャリブレーションコマンドを受け付けませんでした。',
@@ -69,17 +69,17 @@ export default {
   'Slowly roll each stick around its outer edge…': '各スティックを外周に沿ってゆっくり回してください…',
   'Slowly roll the stick around its outer edge…': 'スティックを外周に沿ってゆっくり回してください…',
   'Keep gentle pressure against the rim and go all the way round, slowly. The green shape grows as each direction is captured.': '端に軽く押し当てたまま、ゆっくり1周させてください。各方向が記録されるにつれて緑の図形が広がります。',
-  'Looks good! A couple more slow laps improves accuracy — then press Finish.': '良好です！あと数周ゆっくり回すと精度が上がります。その後「完了」を押してください。',
+  'Looks good! A couple more slow laps improves accuracy, then press Finish.': '良好です！あと数周ゆっくり回すと精度が上がります。その後「完了」を押してください。',
   'Finishing…': '完了処理中…',
   'Calibration didn’t finish': 'キャリブレーションが完了しませんでした',
   'The controller didn’t confirm. Unplug it, plug it back in and try again.': 'コントローラーから応答がありません。いったん抜いて差し直し、もう一度お試しください。',
   'Calibration is active now. Press Save to keep it after unplugging.': 'キャリブレーションは有効になりました。抜いた後も保持するには「保存」を押してください。',
   'Canceling…': 'キャンセル中…',
-  'Calibration canceled — previous settings restored.': 'キャリブレーションをキャンセルし、以前の設定に戻しました。',
+  'Calibration canceled. Previous settings restored.': 'キャリブレーションをキャンセルし、以前の設定に戻しました。',
 
   'Then check the result in the live view and save.': 'ライブビューで結果を確認してから保存します。',
-  'Calibrated — move the stick to check.': 'キャリブレーション完了 — スティックを動かして確認してください。',
-  'Calibrated — move the sticks to check.': 'キャリブレーション完了 — スティックを動かして確認してください。',
+  'Calibrated. Move the stick to check.': 'キャリブレーション完了。スティックを動かして確認してください。',
+  'Calibrated. Move the sticks to check.': 'キャリブレーション完了。スティックを動かして確認してください。',
   'It should reach the edge of the circle in every direction and rest in the center.': 'どの方向でも円の端まで届き、離すと中央に戻れば OK です。',
   'They should reach the edge of the circle in every direction and rest in the center.': 'どの方向でも円の端まで届き、離すと中央に戻れば OK です。',
   'Dismiss': '閉じる',
@@ -125,7 +125,7 @@ export default {
   'Snap zone in degrees, slot {n}': 'スナップ範囲（度）、スロット {n}',
   'Angular deadzone: stick angles within this many degrees of the output angle snap exactly onto it.': '角度デッドゾーン：出力角度からこの角度以内のスティック入力は、出力角度ちょうどに吸着します。',
   '{stick}: angle map diagram': '{stick}：角度マップの図',
-  'Unused slots are ignored by the controller. Turn one on to add a notch — it starts in the widest gap.': '未使用のスロットはコントローラーに無視されます。オンにするとノッチが追加され、最も広い隙間に配置されます。',
+  'Unused slots are ignored by the controller. Turn one on to add a notch. It starts in the widest gap.': '未使用のスロットはコントローラーに無視されます。オンにするとノッチが追加され、最も広い隙間に配置されます。',
   'Turn a slot off to ignore it without losing its values.': 'スロットをオフにすると、値を残したまま無視されます。',
   'Use': '使用',
   'Add angle': '角度を追加',
@@ -148,7 +148,7 @@ export default {
   'Capture slot {n} from the stick (hold the stick at this notch first)': 'スロット {n} をスティックから取得（先にスティックをこのノッチに当ててください）',
   'Delete slot {n}': 'スロット {n} を削除',
   '{used} of {total} slots used': '{total} 個中 {used} 個のスロットを使用中',
-  'No angles enabled — press Reset to 8-way.': '有効な角度がありません。「8方向にリセット」を押してください。',
+  'No angles enabled. Press Reset to 8-way.': '有効な角度がありません。「8方向にリセット」を押してください。',
   '{n} unused slot': '未使用スロット {n} 個',
   '{n} unused slots': '未使用スロット {n} 個',
 
@@ -166,7 +166,7 @@ export default {
   // ---- Axes tab ----
   'Axis direction': '軸の向き',
   'This stick has no adjustable axes.': 'このスティックには調整できる軸がありません。',
-  'Inverting an axis changes the raw stick direction — calibrate again afterwards.': '軸を反転するとスティックの生の向きが変わります。その後、再キャリブレーションしてください。',
+  'Inverting an axis changes the raw stick direction, so calibrate again afterwards.': '軸を反転するとスティックの生の向きが変わります。その後、再キャリブレーションしてください。',
 
   // ---- Settings (settings.js) ----
   'Center deadzone': '中央デッドゾーン',
@@ -180,7 +180,7 @@ export default {
   'Response curve': 'レスポンスカーブ',
   'Exponent applied to the left stick’s output. 1.00 is linear.': '左スティックの出力に適用する指数。1.00 でリニア。',
   'Exponent applied to the right stick’s output. 1.00 is linear.': '右スティックの出力に適用する指数。1.00 でリニア。',
-  'Above 1.00 the output rises slowly near the center and catches up at the edge — finer aim for small movements. Below 1.00 the stick is more sensitive near the center. Range 0.50–3.00. Calibrating resets this to 1.00.': '1.00 より大きいと中心付近では出力がゆっくり増え、端で追いつきます（小さな動きで細かく狙えます）。1.00 より小さいと中心付近の感度が上がります。範囲は 0.50〜3.00。キャリブレーションすると 1.00 に戻ります。',
+  'Above 1.00 the output rises slowly near the center and catches up at the edge, for finer aim with small movements. Below 1.00 the stick is more sensitive near the center. Range 0.50–3.00. Calibrating resets this to 1.00.': '1.00 より大きいと中心付近では出力がゆっくり増え、端で追いつきます（小さな動きで細かく狙えます）。1.00 より小さいと中心付近の感度が上がります。範囲は 0.50〜3.00。キャリブレーションすると 1.00 に戻ります。',
   'Invert LX': 'LX を反転',
   'Invert LY': 'LY を反転',
   'Invert RX': 'RX を反転',
@@ -190,7 +190,7 @@ export default {
   'Flip the right stick’s horizontal (left ↔ right) direction.': '右スティックの横方向（左 ↔ 右）を反転します。',
   'Flip the right stick’s vertical (up ↔ down) direction.': '右スティックの縦方向（上 ↔ 下）を反転します。',
   'Only needed for sticks mounted the other way round (some custom builds). Recalibrate after changing it.': '逆向きに取り付けられたスティック（一部のカスタム機）でのみ必要です。変更後は再キャリブレーションしてください。',
-  "Measured from the output trace. Roundness compares the shortest and longest reach around the edge (100% is a perfect circle). Reach is the average distance from the center. Diagonals compares the reach at 45° with up, down, left and right — above 100% means a squarer shape, below means rounder corners.": "出力の軌跡から測定します。真円度は外周での最短と最長の到達距離を比べた値です（100%で完全な円）。到達度は中心からの平均距離です。斜めは45°方向の到達距離を上下左右と比べた値で、100%を超えると四角に近く、下回ると角が丸い形です。",
+  "Measured from the output trace. Roundness compares the shortest and longest reach around the edge (100% is a perfect circle). Reach is the average distance from the center. Diagonals compares the reach at 45° with up, down, left and right. Above 100% means a squarer shape, below means rounder corners.": "出力の軌跡から測定します。真円度は外周での最短と最長の到達距離を比べた値です（100%で完全な円）。到達度は中心からの平均距離です。斜めは45°方向の到達距離を上下左右と比べた値で、100%を超えると四角に近く、下回ると角が丸い形です。",
   "Roll the stick slowly around its edge to measure roundness ({coverage} covered).": "スティックを外周に沿ってゆっくり回すと真円度を測定できます（{coverage}測定済み）。",
   "Roundness {roundness} · reach {reach} · diagonals {diagonals} of cardinals": "真円度 {roundness}・到達度 {reach}・斜めは上下左右の{diagonals}",
 };

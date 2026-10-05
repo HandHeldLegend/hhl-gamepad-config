@@ -1,5 +1,5 @@
 /**
- * registry.js — Every page in the app, as plain data.
+ * registry.js: Every page in the app, as plain data.
  *
  * This file must stay free of DOM code: the MCP server (mcp/server.mjs) imports it in Node to
  * describe the app to AI assistants and build deep links.

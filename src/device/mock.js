@@ -1,9 +1,9 @@
 /**
- * mock.js — A simulated HOJA controller for demos, UI development and automated testing.
+ * mock.js: A simulated HOJA controller for demos, UI development and automated testing.
  *
  * Enable with `?demo` in the URL (e.g. index.html?demo#/joysticks) or the "Try the demo controller"
- * button on Home. It patches the shared `device` instance so the whole app — session, sections,
- * deep links — runs exactly as with real hardware: blocks read/write in memory, commands succeed,
+ * button on Home. It patches the shared `device` instance so the whole app (session, sections,
+ * deep links) runs exactly as with real hardware: blocks read/write in memory, commands succeed,
  * and live input reports stream at ~60 Hz (sticks orbit, buttons blink, IMU wobbles).
  *
  * Nothing here talks to USB. Writes are logged to the console with the [demo] prefix.

@@ -1,5 +1,5 @@
 /**
- * popover.js — Light, non-modal popover that holds the input editor next to the tile that opened it.
+ * popover.js: Light, non-modal popover that holds the input editor next to the tile that opened it.
  *
  *   - No backdrop: the page stays visible and usable; the tile stays highlighted (aria-current).
  *   - Wide screens: anchored beside the tile (right, else left), else below/above it. It shifts and
@@ -97,7 +97,7 @@ export function createPopover(o) {
   }
 
   /**
-   * Scroll the page so the tile is on screen — above the sheet on phones (padding at the bottom of the
+   * Scroll the page so the tile is on screen: above the sheet on phones (padding at the bottom of the
    * page makes room to scroll the last tiles up).
    */
   function reveal(smooth) {

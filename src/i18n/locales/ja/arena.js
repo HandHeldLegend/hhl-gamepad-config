@@ -1,5 +1,5 @@
 /**
- * Japanese translations — arena. English source text → translation.
+ * Japanese translations (arena). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  *
  * Scene terms (JP platform-fighter community): wavedash = 絶, L-cancel = Lキャンセル, short hop = 小ジャンプ,
@@ -11,7 +11,7 @@
 export default {
   // ---- Page / tabs / connect prompt ----
   "Connect your controller to use the Arena": "アリーナを使うにはコントローラーを接続してください",
-  "The Arena tests the HOJA controller connected to this app — it doesn’t read any other gamepad. Plug it in with a USB data cable, then press Connect.":
+  "The Arena tests the HOJA controller connected to this app and doesn’t read any other gamepad. Plug it in with a USB data cable, then press Connect.":
     "アリーナはこのアプリに接続された HOJA コントローラーをテストします。ほかのゲームパッドは読み取りません。USB データケーブルで接続してから「接続」を押してください。",
   "Connect controller": "コントローラーを接続",
   "Try the demo": "デモを試す",
@@ -37,10 +37,10 @@ export default {
   "Targets {left}/{total}": "ターゲット {left}/{total}",
   "Paused · {status}": "一時停止中 · {status}",
   "Paused · Start / P resumes · D-pad → / . steps one frame": "一時停止中 · Start / P で再開 · 十字キー → / . で 1F 進む",
-  "Target test — the clock starts when you move": "ターゲットテスト：動いた瞬間にタイマーが始まります",
+  "Target test: the clock starts when you move": "ターゲットテスト：動いた瞬間にタイマーが始まります",
   "Waiting for input from {name}…": "{name} からの入力を待っています…",
   "Press any button on {name}": "{name} のいずれかのボタンを押してください",
-  "The Arena reads only the controller connected to this app — through the browser’s gamepad support when it can see it, otherwise straight over USB.":
+  "The Arena reads only the controller connected to this app. It uses the browser’s gamepad support when it can see the controller, otherwise it reads straight over USB.":
     "アリーナはこのアプリに接続されたコントローラーだけを読み取ります。ブラウザーのゲームパッド機能で認識できればそれを使い、できなければ USB から直接読み取ります。",
   "Cleared in {time}": "クリアタイム {time}",
   "New personal best!": "自己ベスト更新！",
@@ -103,7 +103,7 @@ export default {
   "Short hop ✓ · tap jump": "小ジャンプ ✓ · スティックジャンプ",
   "Short hop ✓ · jump held {n}f": "小ジャンプ ✓ · ジャンプ押下 {n}F",
   "Full hop · held {n}f+ (short hop: release within {window}f)": "大ジャンプ · {n}F 以上押下（小ジャンプは {window}F 以内に離す）",
-  "Airdodge {n}f too early — press it after lift-off": "空中回避が {n}F 早すぎます。離陸後に押してください",
+  "Airdodge {n}f too early: press it after lift-off": "空中回避が {n}F 早すぎます。離陸後に押してください",
   "neutral, no slide": "ニュートラル、滑りなし",
   "Ledgedash · {angle} · landed {n}f after letting go": "レッジダッシュ · {angle} · 崖を離して {n}F で着地",
   "frame-perfect": "最速",
@@ -124,7 +124,7 @@ export default {
   "Ledge grab": "崖つかまり",
   "Out of bounds! Respawning…": "場外！復帰中…",
   "All targets cleared in {time}": "全ターゲット破壊：{time}",
-  "All targets cleared in {time} — new best!": "全ターゲット破壊：{time}、ベスト更新！",
+  "All targets cleared in {time}. New best!": "全ターゲット破壊：{time}、ベスト更新！",
   "right → left": "右 → 左",
   "left → right": "左 → 右",
   "up → down": "上 → 下",
@@ -145,7 +145,7 @@ export default {
 
   // ---- Input source / bindings (input.js, help.js) ----
   "Input source": "入力ソース",
-  "Only {name} is read — other controllers are ignored.": "{name} だけを読み取ります。ほかのコントローラーは無視されます。",
+  "Only {name} is read. Other controllers are ignored.": "{name} だけを読み取ります。ほかのコントローラーは無視されます。",
   "Reading:": "読み取り元：",
   "The browser sees this controller as “{name}” (USB {ids}).": "ブラウザーはこのコントローラーを「{name}」（USB {ids}）として認識しています。",
   "The browser sees this controller as “{name}”.": "ブラウザーはこのコントローラーを「{name}」として認識しています。",
@@ -166,7 +166,7 @@ export default {
   "{n} other controller is connected to this computer and ignored.": "このコンピューターにはほかに {n} 台のコントローラーが接続されていますが、無視されます。",
   "{n} other controllers are connected to this computer and ignored.": "このコンピューターにはほかに {n} 台のコントローラーが接続されていますが、無視されます。",
   "Button mapping": "ボタン割り当て",
-  "Saved per output mode in this browser — Switch and Steam modes report buttons differently.": "出力モードごとにこのブラウザーに保存されます。Switch モードと Steam モードではボタンの報告方法が異なります。",
+  "Saved per output mode in this browser, since Switch and Steam modes report buttons differently.": "出力モードごとにこのブラウザーに保存されます。Switch モードと Steam モードではボタンの報告方法が異なります。",
   "Add": "追加",
   "Add another input for this action": "このアクションに別の入力を追加",
   "Axis {i}": "軸 {i}",
@@ -233,7 +233,7 @@ export default {
   "Your best time is kept in this browser.": "ベストタイムはこのブラウザーに保存されます。",
 
   // ---- Controls & help: controls ----
-  "Defaults — change them under Button mapping. The keyboard only pauses, frame-advances and resets; your controller does all the playing.":
+  "Default bindings, which you can change under Button mapping. The keyboard only pauses, frame-advances and resets; your controller does all the playing.":
     "デフォルトの設定です。「ボタン割り当て」で変更できます。キーボードは一時停止・コマ送り・リセットのみで、プレイはすべてコントローラーで行います。",
   "Move · walk · dash": "移動 · 歩き · ダッシュ",
   "Attack · special": "攻撃 · 必殺ワザ",
@@ -253,22 +253,22 @@ export default {
   "Push the stick slowly to walk (speed follows how far you push). Flick it past {threshold} within {n} frames of leaving the center to dash.":
     "スティックをゆっくり倒すと歩きます（倒した量で速度が変わります）。中央を離れてから {n}F 以内に {threshold} を越えるようにはじくとダッシュします。",
   "Dash back / dash dance": "ダッシュバック / ステップ（ダッシュダンス）",
-  "During the first {n} frames of a dash, flick the other way. The feedback counts how many frames the stick was seen in the \"tilt zone\" on the way — 2 or more and it reads as a slow turn instead. Stick bounce (snapback) shows up here too.":
+  "During the first {n} frames of a dash, flick the other way. The feedback counts how many frames the stick was seen in the \"tilt zone\" on the way. At 2 or more, it reads as a slow turn instead. Stick bounce (snapback) shows up here too.":
     "ダッシュの最初の {n}F の間に反対方向へはじきます。フィードバックでは、その途中でスティックが「傾け入力ゾーン」に何フレームいたかを数えます。2F 以上だとゆっくりした振り向きと判定されます。スティックの跳ね返り（スナップバック）もここに表れます。",
   "Short hop vs full hop": "小ジャンプと大ジャンプ",
   "Release jump within {n} frames (≈{ms} ms) of pressing it for a short hop; hold it for a full hop.":
     "ジャンプを押してから {n}F（約 {ms} ms）以内に離すと小ジャンプ、押し続けると大ジャンプになります。",
   "Double jump & fast fall": "空中ジャンプと急降下",
-  "Jump again in the air. At or after the top of a jump, flick down to fall faster — the feedback shows how many frames after the peak you were.":
+  "Jump again in the air. At or after the top of a jump, flick down to fall faster. The feedback shows how many frames after the peak you were.":
     "空中でもう一度ジャンプできます。ジャンプの頂点以降に下へはじくと急降下します。フィードバックには頂点から何フレーム後だったかが表示されます。",
   "Airdodge, wavedash & waveland": "空中回避・絶・ウェーブランド",
-  "Press shield in the air; the stick picks the direction. Jump and airdodge diagonally into the ground on the first airborne frame to wavedash — the angle is shown (shallower = longer slide). Airdodging onto a platform from a fall is a waveland; letting go of the ledge, double jumping and airdodging onto the stage is a ledgedash.":
+  "Press shield in the air; the stick picks the direction. Jump and airdodge diagonally into the ground on the first airborne frame to wavedash. The angle is shown (shallower = longer slide). Airdodging onto a platform from a fall is a waveland; letting go of the ledge, double jumping and airdodging onto the stage is a ledgedash.":
     "空中でシールドを押すと空中回避です。方向はスティックで決まります。ジャンプして空中に出た最初のフレームで斜め下の地面に向けて空中回避すると絶（ウェーブダッシュ）になり、角度が表示されます（浅いほど長く滑ります）。落下中に足場へ空中回避するのがウェーブランド、崖を離して空中ジャンプし、ステージへ空中回避するのがレッジダッシュです。",
   "L-cancel": "Lキャンセル",
   "Press shield or Z within {n} frames before an aerial lands to halve the landing lag.":
     "空中攻撃の着地前 {n}F 以内にシールドまたは Z を押すと、着地隙が半分になります。",
   "Shield & light shield": "シールドとライトシールド",
-  "Press a trigger past {threshold} to shield. A lighter press gives a bigger shield. The shield shrinks as it wears down — hold too long and it breaks.":
+  "Press a trigger past {threshold} to shield. A lighter press gives a bigger shield. The shield shrinks as it wears down, and if you hold it too long it breaks.":
     "トリガーを {threshold} より深く押すとシールドします。軽く押すほどシールドが大きくなります。シールドは削れるほど小さくなり、張りすぎると割れます。",
   "Shield drop": "シールドドロップ",
   "Shield on a platform, then push the stick down at {min}–{max}° from straight down (a down-diagonal notch is ideal). Straight down flicks spot dodge instead.":
@@ -279,9 +279,9 @@ export default {
 
   // ---- Controls & help: about ----
   "About this arena": "このアリーナについて",
-  "The Arena is a place to put your HOJA controller through its paces. It reads only the controller connected to this app — never other gamepads — so what you see is exactly what your controller sends.":
+  "The Arena is a place to put your HOJA controller through its paces. It reads only the controller connected to this app (never other gamepads), so what you see is exactly what your controller sends.":
     "アリーナは HOJA コントローラーの実力を試すための場所です。このアプリに接続されたコントローラーだけを読み取り、ほかのゲームパッドは一切読まないので、表示される内容はコントローラーが送っているそのままの値です。",
-  "Frame windows and thresholds are tuned to feel familiar and to demand a lot of a controller, so it’s a good place to try a new stick module, gate or setting — but results won’t exactly match any particular game.":
+  "Frame windows and thresholds are tuned to feel familiar and to demand a lot of a controller, so it’s a good place to try a new stick module, gate or setting, but results won’t exactly match any particular game.":
     "受付フレームやしきい値は、なじみのある操作感とコントローラーへの高い要求を両立するよう調整されています。新しいスティックモジュールやゲート、設定を試すのに最適ですが、結果が特定のゲームと完全に一致するわけではありません。",
 
   // ---- Input lab ----
@@ -299,11 +299,11 @@ export default {
   "Histogram of update intervals": "更新間隔のヒストグラム",
   "Measuring…": "計測中…",
   "Measure poll rate": "ポーリングレートを計測",
-  "The probe measures the browser’s gamepad data, and {name} isn’t visible there yet — press a button on it. (Over USB, the report rate is shown below.)":
+  "The probe measures the browser’s gamepad data, and {name} isn’t visible there yet. Press a button on it. (Over USB, the report rate is shown below.)":
     "このプローブはブラウザーのゲームパッドデータを計測しますが、{name} はまだそこに表示されていません。ボタンを押してください。（USB のレポートレートは下に表示されます。）",
   "Keep moving the stick in circles…": "スティックを回し続けてください…",
   "Not enough updates.": "更新が足りません。",
-  "Most browsers only report new data when something changes — keep moving the stick in circles while measuring.":
+  "Most browsers only report new data when something changes, so keep moving the stick in circles while measuring.":
     "多くのブラウザーは変化があったときだけ新しいデータを報告します。計測中はスティックを回し続けてください。",
   "Estimated rate": "推定レート",
   "Median interval": "間隔の中央値",
@@ -319,7 +319,7 @@ export default {
     "メインスティックを端まではじいて離してください。中心を越えて反対側に跳ね返ると、ここに記録されます。（ゲームと同じく、画面のフレームごとに 1 回読み取ります。）",
   "Snapback watch": "スナップバック監視",
   "Catches stick rebound after release.": "離したあとのスティックの跳ね返りを検出します。",
-  "The sticks-only USB stream carries no buttons — switch the USB stream back to Buttons + sticks.":
+  "The sticks-only USB stream carries no buttons. Switch the USB stream back to Buttons + sticks.":
     "「スティックのみ」の USB ストリームにはボタンが含まれません。USB ストリームを「ボタン + スティック」に戻してください。",
   "No axes reported.": "軸は報告されていません。",
   "Over USB the sticks arrive as the LX/LY/RX/RY direction inputs above (7 bits per direction), or as 12-bit values in the sticks-only stream.":
@@ -328,7 +328,6 @@ export default {
   "Buttons (Gamepad API)": "ボタン（Gamepad API）",
   "Axes (Gamepad API)": "軸（Gamepad API）",
   "{ms} ms (median, while moving)": "{ms} ms（操作中の中央値）",
-  "— (Gamepad API only)": "—（Gamepad API のみ）",
   "Not receiving": "受信していません",
   "{n} reports/s (joystick stream)": "{n} レポート/秒（スティックストリーム）",
   "{n} reports/s (raw stream)": "{n} レポート/秒（生ストリーム）",
@@ -387,7 +386,7 @@ export default {
   "Y raw": "Y（生）",
   "L raw": "L（生）",
   "R raw": "R（生）",
-  "Past the 80-unit circle — the game pulls it back to 100%.": "80 ユニットの円を超えています。ゲームでは 100% に戻されます。",
+  "Past the 80-unit circle: the game pulls it back to 100%.": "80 ユニットの円を超えています。ゲームでは 100% に戻されます。",
   "Melee processing": "Melee の処理",
   "Raw": "生の値",
   "Stick and trigger values": "スティックとトリガーの値",

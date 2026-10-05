@@ -1,4 +1,4 @@
-/* input.css — Input section (remap grid, editor, analog calibration). Theme tokens only. */
+/* input.css: Input section (remap grid, editor, analog calibration). Theme tokens only. */
 
 /* ---- Glyphs ------------------------------------------------------------------------------ */
 /* Glyph PNGs are white on transparent; drawn as a mask so they take the current text color. */
@@ -60,7 +60,7 @@
 .inp-groups { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-5); align-items: flex-start; }
 .inp-group { flex: var(--n, 1) 1 calc(min(var(--n, 1), 4) * 124px - 8px); min-width: min(100%, 240px); }
 
-/* ---- Editor popover (anchored to the tile; bottom sheet on phones) — see popover.js ---------- */
+/* ---- Editor popover (anchored to the tile; bottom sheet on phones), see popover.js ---------- */
 .inp-pop {
   position: fixed; inset: auto; margin: 0; padding: 0; z-index: 900;
   display: flex; flex-direction: column;
@@ -220,5 +220,5 @@
 }
 
 /* The open editor tracks its tile's position every frame, so the tile it belongs to must not lift on
-   hover or squash on press — otherwise the whole popover jiggles as the pointer crosses the tile. */
+   hover or squash on press, otherwise the whole popover jiggles as the pointer crosses the tile. */
 .inp-tile[aria-current="true"], .inp-tile[aria-current="true"]:hover, .inp-tile[aria-current="true"]:active { transform: none; }

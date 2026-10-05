@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * test-mcp.mjs — End-to-end test of mcp/server.mjs over stdio.
+ * test-mcp.mjs: End-to-end test of mcp/server.mjs over stdio.
  *
  *   node tools/test-mcp.mjs
  *
@@ -61,7 +61,7 @@ const failures = [];
 let passed = 0;
 function ok(cond, label, extra) {
   if (cond) { passed++; return true; }
-  failures.push(label + (extra !== undefined ? ` — ${typeof extra === 'string' ? extra : JSON.stringify(extra).slice(0, 400)}` : ''));
+  failures.push(label + (extra !== undefined ? `: ${typeof extra === 'string' ? extra : JSON.stringify(extra).slice(0, 400)}` : ''));
   return false;
 }
 const text = (r) => (r?.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('\n');
@@ -128,7 +128,7 @@ async function main() {
   ok((await call('list_settings', { section: 'nope' })).isError, 'list_settings rejects unknown section');
   ok((await call('list_settings', { bogus: 1 })).isError, 'list_settings rejects unknown argument');
 
-  // describe_setting — every key
+  // describe_setting: every key
   for (const s of cat.settings) {
     const r = await call('describe_setting', { key: s.key });
     ok(!r.isError && r.structuredContent?.setting?.key === s.key && text(r).includes(s.label), `describe_setting ${s.key}`);
@@ -136,7 +136,7 @@ async function main() {
   ok((await call('describe_setting', { key: 'haptics.nope' })).isError, 'describe_setting rejects unknown key');
   ok((await call('describe_setting', {})).isError, 'describe_setting requires key');
 
-  // build_page_link — every page, with every documented param
+  // build_page_link: every page, with every documented param
   for (const p of cat.pages) {
     const params = Object.fromEntries(p.params.map((x) => [x.name, x.choices?.[0] ?? 'x']));
     const r = await call('build_page_link', { page: p.id, params });
@@ -152,7 +152,7 @@ async function main() {
   const warn = await call('build_page_link', { page: 'joysticks', params: { stick: 'middle' } });
   ok(!warn.isError && warn.structuredContent.warnings.length === 1, 'build_page_link warns on undocumented value');
 
-  // build_settings_link — one valid value per setting, and checks the link decodes to the same values
+  // build_settings_link: one valid value per setting, and checks the link decodes to the same values
   const sample = (s) => {
     switch (s.type) {
       case 'number': return s.max ?? s.min ?? 1;
@@ -278,6 +278,6 @@ main()
       if (stderr.trim()) console.error(`\nserver stderr:\n${stderr}`);
       process.exitCode = 1;
     } else {
-      console.log(`MCP server OK — ${passed} checks passed`);
+      console.log(`MCP server OK: ${passed} checks passed`);
     }
   });

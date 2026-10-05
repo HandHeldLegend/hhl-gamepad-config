@@ -2,7 +2,7 @@
 /**
  * 3D Platformer gameplay tests (Node, no dependencies):  node src/sections/platformer/tests/gameplay.test.mjs
  *
- * Drives the real Game / Hero / Course with scripted 30 Hz input frames — no rendering, no DOM.
+ * Drives the real Game / Hero / Course with scripted 30 Hz input frames: no rendering, no DOM.
  * Stick up with camYaw 0 moves toward +z.
  */
 const { Game } = await import('../game.js');

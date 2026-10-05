@@ -1,5 +1,5 @@
 /**
- * module-updater.js — Stepped dialog that updates the ESP32 wireless module ("baseband").
+ * module-updater.js: Stepped dialog that updates the ESP32 wireless module ("baseband").
  *
  * hoja2 did this in two places: the Wireless page sent GAMEPAD_CMD_ENABLE_BLUETOOTH_UPLOAD
  * ("Enter Update Mode"), then the user opened a separate esptool page (hoja_baseband/) to
@@ -13,7 +13,7 @@
  *   3 Connect      user picks the CH340 (Web Serial, or WebUSB on Android) → esptool syncs
  *   4 Install      erase → write → done; unplug the controller to leave update mode
  *
- * Page lifecycle: the shell unmounts device pages when the controller disconnects — which is
+ * Page lifecycle: the shell unmounts device pages when the controller disconnects, which is
  * exactly what step 2 causes. hoja2 special-cased this (keepWirelessModuleForExternalUpdate in
  * js/app.js). Here the dialog is a module-level singleton appended to <body>, so it simply keeps
  * running after view.js is destroyed; nothing in it depends on the page or a connected session.
@@ -172,7 +172,7 @@ function errorText(err) {
   if (err?.name === 'NotFoundError') return t('No device was selected.');
   if (err?.name === 'SecurityError') return t('The browser blocked access to the device.');
   if (err?.name === 'NetworkError' || /failed to open/i.test(err?.message || '')) {
-    return t('Couldn’t open the port — close other apps or tabs using it (e.g. the standalone updater) and try again.');
+    return t('Couldn’t open the port. Close other apps or tabs using it (e.g. the standalone updater) and try again.');
   }
   return err?.message || String(err); // our own errors are already translated; esptool's stay English
 }
@@ -186,7 +186,7 @@ function showIntro(errorMsg) {
   run.mode = 'intro';
   const upToDate = run.latest && run.installed >= run.latest;
   paint(upToDate ? t('Reinstall wireless firmware') : t('Update wireless module'),
-    t('The wireless module (ESP32) has its own firmware. The controller restarts into a special update mode (its lights pulse orange), then the new firmware is written over USB. It takes about a minute — keep it plugged in.'));
+    t('The wireless module (ESP32) has its own firmware. The controller restarts into a special update mode (its lights pulse orange), then the new firmware is written over USB. It takes about a minute, so keep it plugged in.'));
   setVersions();
   run.ui.versions.hidden = false;
 
@@ -346,7 +346,7 @@ function showDone() {
   setNotice(null);
   const p = run.ui.progress;
   p.indeterminate(false);
-  p.set(100, t('Done — unplug the controller to finish'));
+  p.set(100, t('Done: unplug the controller to finish'));
   p.busy(false);
   actions({
     primary: {

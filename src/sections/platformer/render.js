@@ -1,5 +1,5 @@
 /**
- * render.js — three.js view of the course and the hero, plus the follow camera.
+ * render.js: three.js view of the course and the hero, plus the follow camera.
  *
  * three.js (r128, classic UMD build, vendored in /vendor/three) is loaded lazily with a <script> tag
  * the first time this page opens; it defines window.THREE. Nothing here runs in the simulation: the

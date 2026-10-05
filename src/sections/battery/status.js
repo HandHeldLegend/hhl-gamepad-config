@@ -1,5 +1,5 @@
 /**
- * status.js — Pure decoding of the battery static block and live charge state into what the
+ * status.js: Pure decoding of the battery static block and live charge state into what the
  * Battery page shows. Port of the logic in hoja2/modules/battery-md.js (no DOM here).
  *
  * batteryInfoStatic_s (firmware include/utilities/static_config.h):
@@ -50,7 +50,7 @@ export function decodePmicStatus(value) {
       // Soft fault: also covers boot modes that skip battery setup, so not necessarily broken hardware.
       return {
         badge: { text: t('Not responding'), tone: 'yellow' }, pack: PACK.NA,
-        explain: t('The charger chip didn\'t answer when the controller started. Some connection modes skip battery setup, so this isn\'t always a fault — unplug the controller and reconnect it. If it keeps happening, contact support.'),
+        explain: t('The charger chip didn\'t answer when the controller started. Some connection modes skip battery setup, so this isn\'t always a fault. Unplug the controller and reconnect it. If it keeps happening, contact support.'),
       };
     case PMIC_STATUS.OK_PACK:
       return {
@@ -84,7 +84,7 @@ export function describePack(pack) {
     case PACK.PRESENT:
       return { badge: { text: t('Detected'), tone: 'green' }, explain: t('A battery pack is fitted.') };
     case PACK.ABSENT:
-      return { badge: { text: t('Not detected'), tone: null }, explain: t('No battery pack was found. That\'s fine — the controller runs from USB power. If you did fit a battery, check its connector.') };
+      return { badge: { text: t('Not detected'), tone: null }, explain: t('No battery pack was found. That\'s fine: the controller runs from USB power. If you did fit a battery, check its connector.') };
     case PACK.UNKNOWN:
       return { badge: { text: t('Unconfirmed'), tone: 'yellow' }, explain: t('The controller couldn\'t tell whether a battery is fitted, and doesn\'t guess. The charging state shown above may still be correct.') };
     default:
@@ -100,7 +100,7 @@ export function decodeFuelGauge(status) {
   const present = status !== 0;
   const active = status === 2;
   if (!present) {
-    return { present, active, badge: { text: t('Not present'), tone: null }, explain: t('No fuel gauge is fitted, so the battery level can\'t be measured — only whether it\'s charging.') };
+    return { present, active, badge: { text: t('Not present'), tone: null }, explain: t('No fuel gauge is fitted, so the battery level can\'t be measured, only whether it\'s charging.') };
   }
   if (!active) {
     return { present, active, badge: { text: t('Inactive'), tone: 'yellow' }, explain: t('A fuel gauge is fitted but isn\'t responding, so the battery percentage may be wrong.') };

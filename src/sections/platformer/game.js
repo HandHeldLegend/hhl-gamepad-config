@@ -1,5 +1,5 @@
 /**
- * game.js — The simulation: one hero on one course, stepped at a fixed 30 Hz. No DOM.
+ * game.js (The simulation): one hero on one course, stepped at a fixed 30 Hz. No DOM.
  *
  *   const game = new Game();                 // default course (course.js)
  *   game.step({ sx, sy, camYaw, jump, attack, crouch, jumpPressed, attackPressed, crouchPressed });

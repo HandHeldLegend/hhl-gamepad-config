@@ -1,5 +1,5 @@
 /**
- * main.js — Boot sequence.
+ * main.js: Boot sequence.
  *
  *   1. apply theme prefs (index.html already did a pre-paint pass) and load the active language
  *   2. build the shell and route to the current page

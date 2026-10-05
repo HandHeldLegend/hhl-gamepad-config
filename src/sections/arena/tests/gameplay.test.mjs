@@ -128,7 +128,7 @@ console.log('IASA & actionability');
 {
   const { movesetFor } = await import('../movesets.js');
   const dsm = movesetFor('vix').dsmash;
-  check(dsm.iasa === 46 && dsm.total === 50, `Vix down smash: IASA frame 46 of 50 (meleeframedata) — got ${dsm.iasa}/${dsm.total}`);
+  check(dsm.iasa === 46 && dsm.total === 50, `Vix down smash: IASA frame 46 of 50 (meleeframedata), got ${dsm.iasa}/${dsm.total}`);
   // Jump pressed on move frame `at` of a C-stick down smash (buffer 0 = strict).
   const jumpAt = (at, buffer = 0) => {
     const { game } = newGame({ fighter: 'vix', inputBuffer: buffer });

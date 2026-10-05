@@ -1,8 +1,8 @@
-# HHL Gamepad Config — troubleshooting knowledge base
+# HHL Gamepad Config troubleshooting knowledge base
 
 Customer-facing answers for HOJA-firmware controllers and the HHL Gamepad Config app. Each `##` section is one
 topic; the comment under the heading gives its id (used by the MCP `troubleshoot` tool and
-`hhl://knowledge/<id>` resources) and search keywords. Links like `#/joysticks` are app deep links — the MCP
+`hhl://knowledge/<id>` resources) and search keywords. Links like `#/joysticks` are app deep links; the MCP
 server expands them to full URLs.
 
 Writing rules: only state what the app and firmware actually do. If a step depends on the specific controller,
@@ -12,19 +12,19 @@ provides one).
 ## Connecting a controller
 <!-- topic: connecting; keywords: connect, connection, picker, not showing, not found, no device, access denied, busy, can't connect, won't connect, usb -->
 
-1. Use a supported browser — Chrome, Edge, Opera or another Chromium browser on desktop or Android (see
+1. Use a supported browser: Chrome, Edge, Opera or another Chromium browser on desktop or Android (see
    `browser-support`).
 2. Plug the controller in with a USB **data** cable (see `data-cables`).
 3. Press **Connect** (top bar or [Home](#/)) and pick the controller in the browser’s device list.
 4. If it isn’t listed or connecting fails: unplug it, hold **A** or **B** (the East or South button) while plugging
    it back in, then try again (see `config-mode`). Only Switch and Steam modes talk to the app (see `modes`).
-5. “The controller is busy in another tab or app” means something else has it open — close other tabs of the app
+5. “The controller is busy in another tab or app” means something else has it open. Close other tabs of the app
    (or other configuration tools) and try again.
 
 When connected, the top bar shows the controller name and Home shows its firmware build and anything that needs
 attention (for example “Joysticks need calibration”). The app also checks for a firmware update on every connect.
 
-A controller that appears as **RP2 Boot** / **RPI-RP2** / **RP2350** is in its bootloader, not running HOJA — see
+A controller that appears as **RP2 Boot** / **RPI-RP2** / **RP2350** is in its bootloader, not running HOJA; see
 `firmware-update` or `install-hoja`.
 
 ## Browser support (WebUSB)
@@ -51,16 +51,16 @@ in. Use it when:
 
 - the controller doesn’t show up or won’t connect;
 - you changed **Default mode** on the [Gamepad](#/gamepad) page to something other than Switch or Steam
-  (XInput, Slippi, GameCube, N64, SNES) — those modes don’t talk to the app.
+  (XInput, Slippi, GameCube, N64, SNES); those modes don’t talk to the app.
 
 Keep holding the button until the controller has powered up, then press **Connect**.
 
 ## Which modes work with the app
 <!-- topic: modes; keywords: mode, output mode, switch, steam, sinput, xinput, slippi, gamecube, n64, snes, default mode, which modes -->
 
-Only **Switch** and **Steam** modes talk to HHL Gamepad Config (Steam mode is also called SInput in firmware and older docs). The other output modes — **XInput**
+Only **Switch** and **Steam** modes talk to HHL Gamepad Config (Steam mode is also called SInput in firmware and older docs). The other output modes, **XInput**
 (Xbox-style for Windows PCs), **Slippi** (GameCube adapter mode for Slippi/Dolphin), **GameCube**, **N64** and
-**SNES** — are for playing, not configuring.
+**SNES**, are for playing, not configuring.
 
 - **Default mode** ([Gamepad](#/gamepad)) chooses the mode the controller starts in. After changing it to a
   non-config mode, hold A or B (East or South) while plugging in to get back to the app (see `config-mode`).
@@ -94,7 +94,7 @@ offered when the firmware allows it.
 ## Stick drift
 <!-- topic: stick-drift; keywords: drift, drifting, moving on its own, deadzone, center, center, jitter, not centered, stick drift -->
 
-1. **Recalibrate first** (see `stick-calibration`) — most drift is a stale calibration.
+1. **Recalibrate first** (see `stick-calibration`). Most drift is a stale calibration.
 2. If the stick still creeps when untouched, raise the **inner deadzone** for that stick on
    [Joysticks](#/joysticks) a little at a time (`joysticks.leftDeadzone` / `joysticks.rightDeadzone`). Too much
    deadzone makes small movements feel dead.
@@ -114,7 +114,7 @@ per stick:
   lower removes more bounce but adds a touch of delay to fast flicks; higher feels snappier but lets more
   rebound through.
 - **Auto**: detects a release and holds back the rebound only when it happens.
-- **Off**: raw stick output — useful to see the stick’s natural snapback.
+- **Off**: raw stick output, useful to see the stick’s natural snapback.
 
 Calibrate the sticks first, then tune snapback while watching the live analyzer, and **Save**.
 
@@ -143,14 +143,14 @@ available**. Downloads need an internet connection. Keep the controller plugged 
 2. Flashing usually starts by itself. If the browser asks, press **Update** and allow access to the Pico
    bootloader (shown as **RP2 Boot**).
 3. If direct USB flashing is blocked (common on Windows), the app switches to the **RPI-RP2 drive** method: press
-   **Select RPI-RP2**, and in the folder dialog open the drive named **RPI-RP2** (or **RP2350**) — you should see
-   `INFO_UF2.TXT` inside — and choose it. Don’t pick Downloads or Documents.
+   **Select RPI-RP2**, and in the folder dialog open the drive named **RPI-RP2** (or **RP2350**; you should see
+   `INFO_UF2.TXT` inside) and choose it. Don’t pick Downloads or Documents.
 4. Last resort (no folder picker): **Download UF2**, then copy the file onto the RPI-RP2/RP2350 drive in your file
-   manager. The controller reboots when the copy finishes and the drive disappears — that’s normal.
+   manager. The controller reboots when the copy finishes and the drive disappears. That’s normal.
 5. When it says **Update complete**, give the controller a moment to restart and press **Connect**.
 
 Older controllers whose firmware the app can’t configure are prompted to update before settings unlock.
-If an update is interrupted, see `nuke-recovery` — boards are very hard to permanently brick.
+If an update is interrupted, see `nuke-recovery`. Boards are very hard to permanently brick.
 
 ## Installing HOJA on a blank board
 <!-- topic: install-hoja; keywords: install, blank board, new build, diy, pico, bootsel, boot pads, rp2 boot, choose build, wrong build, brick -->
@@ -160,7 +160,7 @@ From [Firmware](#/firmware) (`#/firmware?build=<id>` preselects a build):
 1. Unplug the controller (and remove the battery if it has one).
 2. Hold the **BOOTSEL** button (or bridge the boot pads) and plug it in. A drive named **RPI-RP2** or **RP2350**
    appears.
-3. Press **Select bootloader** and pick the **RP2 Boot** device — the installer opens.
+3. Press **Select bootloader** and pick the **RP2 Boot** device and the installer opens.
 4. Choose your exact controller build, tick the warning box, then **Install**. The same RPI-RP2 drive steps as an
    update may follow (see `firmware-update`).
 
@@ -173,7 +173,7 @@ also on the Firmware page for copying onto the drive yourself.
 
 - **Stuck in the bootloader** after an interrupted update: on [Firmware](#/firmware) press **Restart from
   bootloader**, or reinstall from the installer (see `install-hoja`). If restarting fails, unplug and replug.
-- **Still misbehaving after reinstalling:** in the installer choose **Full reset — erase flash (nuke)**. It wipes
+- **Still misbehaving after reinstalling:** in the installer choose **Full reset: erase flash (nuke)**. It wipes
   the whole flash, including all settings and calibration. Then enter BOOTSEL again and install your build, and
   recalibrate sticks and triggers.
 - Controllers running legacy firmware the app doesn’t recognize are recovered the same way: Firmware → Install
@@ -183,7 +183,7 @@ also on the Firmware page for copying onto the drive yourself.
 <!-- topic: wireless-pairing; keywords: wireless, bluetooth, pair, pairing, esp32, baseband, wireless module, dongle, wlan, pin, mac address -->
 
 The [Wireless](#/wireless) page appears for controllers with Bluetooth hardware. It shows the wireless chip
-status and, on controllers with an updatable external wireless module (ESP32), its firmware version — Home flags
+status and, on controllers with an updatable external wireless module (ESP32), its firmware version. Home flags
 “Wireless module update available” when a newer one exists.
 
 - **WLAN dongle PIN** (`wireless.dongleKey`, 0000–9999): the controller and the WLAN dongle must use the **same**
@@ -201,11 +201,11 @@ The [Battery](#/battery) page appears when the controller reports a battery.
 
 - **Charging state:** Discharging (on battery), Charging, or Fully charged.
 - **Charger (PMIC):**
-  - *Active* — working with a battery present.
-  - *Active · No battery* — the charger works but no pack is attached. **Not an error** (e.g. running on USB).
-  - *Active · Battery unconfirmed* — the charger can’t confirm the pack.
-  - *Not responding* — the charger didn’t answer. Also expected in boot modes that skip battery setup.
-  - *Not present* — this build has no charger driver.
+  - *Active*: working with a battery present.
+  - *Active · No battery*: the charger works but no pack is attached. **Not an error** (e.g. running on USB).
+  - *Active · Battery unconfirmed*: the charger can’t confirm the pack.
+  - *Not responding*: the charger didn’t answer. Also expected in boot modes that skip battery setup.
+  - *Not present*: this build has no charger driver.
   - The battery pack is checked once at power-up; replug after connecting a battery.
 - **Fuel gauge:** Active, Inactive or Not present. The percentage only shows with an active fuel gauge (otherwise
   N/A).
@@ -215,7 +215,7 @@ The [Battery](#/battery) page appears when the controller reports a battery.
 <!-- topic: saving; keywords: save, saved, lost settings, reset after unplug, changes disappeared, not saving, persist, flash, apply -->
 
 Every change is sent to the controller **immediately** so you can feel it right away, but it lives in the
-controller’s memory only until you press **Save** — that writes everything to flash. The Save button glows while
+controller’s memory only until you press **Save**, which writes everything to flash. The Save button glows while
 there are unsaved changes. Unplugging or powering off without saving loses them (the app warns before
 disconnecting).
 
@@ -225,7 +225,7 @@ them live (press Save later), **Apply & save** also writes them to flash, **Canc
 ## iPhone and iPad
 <!-- topic: ios; keywords: ios, iphone, ipad, safari, apple, mobile, phone, add to home screen -->
 
-iPhone and iPad browsers (including Chrome on iOS) can’t connect to USB controllers — Apple doesn’t provide
+iPhone and iPad browsers (including Chrome on iOS) can’t connect to USB controllers, because Apple doesn’t provide
 WebUSB. On iOS you can still install the app (Share → **Add to Home Screen**), try the demo controller and use
 the [Arena](#/arena). To configure or update the controller, use a computer or an Android device with a Chromium
 browser (see `browser-support`).
@@ -241,8 +241,8 @@ adjustable per axis (0.5×–2×). **Save** afterwards.
 <!-- topic: haptics; keywords: rumble, vibration, haptics, hd rumble, too strong, too weak, no rumble, test feedback -->
 
 On [Haptics](#/haptics): **Intensity** (`haptics.intensity`, 0–100 %) sets rumble strength; **Test feedback**
-plays a pulse so you can feel it. HD-haptics controllers also offer **Trigger haptics**. Changes apply instantly —
-press **Save** to keep them.
+plays a pulse so you can feel it. HD-haptics controllers also offer **Trigger haptics**. Changes apply instantly.
+Press **Save** to keep them.
 
 ## Pairing over Bluetooth
 <!-- topic: bluetooth-pairing; keywords: bluetooth, pair, pairing, sync, wireless, switch, steam, change grip, pro controller wired communication -->

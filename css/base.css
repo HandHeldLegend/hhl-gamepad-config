@@ -1,4 +1,4 @@
-/* base.css — reset, typography and layout primitives. Theme values come from tokens.css. */
+/* base.css: reset, typography and layout primitives. Theme values come from tokens.css. */
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -80,7 +80,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .rise-in { animation: rise-in var(--dur-slow) var(--ease-out) both; }
 @media (prefers-reduced-motion: reduce) {
-  /* Loading indicators (.motion-ok) keep animating — they communicate state, not decoration. */
+  /* Loading indicators (.motion-ok) keep animating, since they communicate state, not decoration. */
   *:not(.motion-ok), *:not(.motion-ok)::before, *:not(.motion-ok)::after {
     animation-duration: 0ms !important; animation-iteration-count: 1 !important; transition-duration: 0ms !important;
   }

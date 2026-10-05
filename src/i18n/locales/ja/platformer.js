@@ -1,5 +1,5 @@
 /**
- * Japanese translations — 3D Platformer. English source text → translation.
+ * Japanese translations (3D Platformer). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  * Button names printed on hardware (A, L, ZL, ZR, Z, Start, Select) stay in Latin letters.
  */
@@ -59,7 +59,7 @@ export default {
   "Climbing up": "よじ登り",
 
   // ---- Controls & help ----
-  "Move — push further to run faster": "移動（深く倒すほど速く走る）",
+  "Move (push further to run faster)": "移動（深く倒すほど速く走る）",
   "Orbit the camera": "カメラを回す",
   "Camera behind the hero": "カメラをキャラクターの後ろへ",
   "L or right-stick press": "L または右スティック押し込み",
@@ -117,6 +117,6 @@ export default {
     "HOJA コントローラーを3次元で試す小さなテストコースです。アナログの歩行速度、素早い方向転換、カメラ操作、タイミングの厳しいジャンプで、3Dゲームでのスティックとボタンの感触がわかります。このアプリに接続したコントローラーだけを読み取ります。",
   "Its movement is modelled on the publicly documented physics of classic 30 frames-per-second 3D platformers (speeds, jump heights, frame windows). The hero, the course and the code are original and were written for this app; it contains no game code, data or assets.":
     "動きは、毎秒30フレームで動く往年の3Dアクションゲームについて公開されている物理の資料（速度、ジャンプの高さ、受付フレーム）をもとにしています。キャラクター、コース、コードはこのアプリのために作ったオリジナルで、ゲームのコード・データ・素材は一切含みません。",
-  "There are no enemies or collectibles — just blocks, ramps, walls and pillars to move around on.":
+  "There are no enemies or collectibles, just blocks, ramps, walls and pillars to move around on.":
     "敵や収集アイテムはありません。動き回るためのブロック、坂、壁、柱だけです。",
 };

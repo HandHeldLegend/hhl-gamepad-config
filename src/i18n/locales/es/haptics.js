@@ -1,10 +1,10 @@
 /**
- * Spanish (neutral Latin American) translations — haptics. English source text → translation.
+ * Spanish (neutral Latin American) translations (haptics). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
   'Rumble': 'Vibración',
-  'Changes apply instantly — press Save to keep them.': 'Los cambios se aplican al instante; presiona Guardar para conservarlos.',
+  'Changes apply instantly. Press Save to keep them.': 'Los cambios se aplican al instante; presiona Guardar para conservarlos.',
   'Test feedback': 'Probar vibración',
   'Testing…': 'Probando…',
   'Done': 'Listo',

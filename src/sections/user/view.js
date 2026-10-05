@@ -1,5 +1,5 @@
 /**
- * User view — port of hoja2/modules/user-md.js.
+ * User view: port of hoja2/modules/user-md.js.
  */
 import { card } from '../../ui/controls.js';
 import { settingField } from '../../settings/field.js';

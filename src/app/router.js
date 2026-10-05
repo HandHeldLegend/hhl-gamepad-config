@@ -1,5 +1,5 @@
 /**
- * router.js — Hash routes and deep links.
+ * router.js: Hash routes and deep links.
  *
  *   #/                                    Home
  *   #/<section>[/<sub>...][?k=v&...]      A page, e.g. #/joysticks?stick=left&tab=calibrate

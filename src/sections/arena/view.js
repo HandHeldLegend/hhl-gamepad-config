@@ -1,9 +1,9 @@
 /**
- * Arena — a gameplay testing sandbox: try your controller in an original, platform-fighter-inspired
+ * Arena: a gameplay testing sandbox: try your controller in an original, platform-fighter-inspired
  * arena, with frame-accurate feedback on the techniques that stress a controller.
  *
  * It tests OUR controllers only: it needs a HOJA controller connected to the app and reads nothing
- * else (see input.js — Gamepad API pad matched by USB vendor/product, or the HOJA USB stream).
+ * else (see input.js: Gamepad API pad matched by USB vendor/product, or the HOJA USB stream).
  * While disconnected a connect prompt is shown (and the page re-renders on session state changes).
  *
  * Module map:
@@ -15,7 +15,7 @@
  *   play.js / help.js   the two tabs; theme.js CSS-token colors; store.js prefs
  *
  * Deep links: #/arena?mode=targets (or free) opens Play in that mode; ?tab=help opens Controls & help
- * (the old ?tab=lab opens Play — the Input lab was removed; stick tests live on the Joysticks page);
+ * (the old ?tab=lab opens Play, since the Input lab was removed; stick tests live on the Joysticks page);
  * ?fighter=<id> picks a fighter (constants.js FIGHTERS).
  */
 import { h, loadStyles } from '../../ui/dom.js';
@@ -67,7 +67,7 @@ export function mount(root, ctx) {
 function mountConnectPrompt(root) {
   root.append(emptyState({
     icon: 'usb', tone: 'red', title: t('Connect your controller to use the Arena'),
-    text: t('The Arena tests the HOJA controller connected to this app — it doesn’t read any other gamepad. Plug it in with a USB data cable, then press Connect.'),
+    text: t('The Arena tests the HOJA controller connected to this app and doesn’t read any other gamepad. Plug it in with a USB data cable, then press Connect.'),
     action: h('div.row', { style: { justifyContent: 'center' } },
       button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg', disabled: !navigator.usb, onClick: connectController }),
       button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() })),

@@ -1,5 +1,5 @@
 /**
- * Japanese translations — wireless. English source text → translation.
+ * Japanese translations (wireless). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -49,9 +49,9 @@ export default {
   "Couldn’t check (offline?)": "確認できませんでした（オフライン？）",
   "No device was selected.": "デバイスが選択されませんでした。",
   "The browser blocked access to the device.": "ブラウザーがデバイスへのアクセスをブロックしました。",
-  "Couldn’t open the port — close other apps or tabs using it (e.g. the standalone updater) and try again.": "ポートを開けませんでした。ポートを使用している他のアプリやタブ（単体版アップデーターなど）を閉じてから、もう一度お試しください。",
+  "Couldn’t open the port. Close other apps or tabs using it (e.g. the standalone updater) and try again.": "ポートを開けませんでした。ポートを使用している他のアプリやタブ（単体版アップデーターなど）を閉じてから、もう一度お試しください。",
   "Reinstall wireless firmware": "ワイヤレスファームウェアを再インストール",
-  "The wireless module (ESP32) has its own firmware. The controller restarts into a special update mode (its lights pulse orange), then the new firmware is written over USB. It takes about a minute — keep it plugged in.": "ワイヤレスモジュール（ESP32）には専用のファームウェアがあります。コントローラーが特別なアップデートモードで再起動し（ランプがオレンジ色に点滅します）、新しいファームウェアがUSB経由で書き込まれます。約1分かかります。接続したままにしてください。",
+  "The wireless module (ESP32) has its own firmware. The controller restarts into a special update mode (its lights pulse orange), then the new firmware is written over USB. It takes about a minute, so keep it plugged in.": "ワイヤレスモジュール（ESP32）には専用のファームウェアがあります。コントローラーが特別なアップデートモードで再起動し（ランプがオレンジ色に点滅します）、新しいファームウェアがUSB経由で書き込まれます。約1分かかります。接続したままにしてください。",
   "Update didn’t start.": "アップデートを開始できませんでした。",
   "Unsaved changes.": "未保存の変更があります。",
   "The controller restarts during the update and anything not saved is lost.": "アップデート中にコントローラーが再起動するため、保存していない内容は失われます。",
@@ -94,7 +94,7 @@ export default {
   "Flashing is complete. Please unplug your controller to finish the update.": "書き込みが完了しました。アップデートを完了するには、コントローラーを取り外してください。",
   "Wireless module updated": "ワイヤレスモジュールをアップデートしました",
   "Unplug the controller, wait a moment, plug it back in, then press Connect.": "コントローラーを取り外し、少し待ってから接続し直して、「接続」を押してください。",
-  "Done — unplug the controller to finish": "完了 — コントローラーを取り外して終了します",
+  "Done: unplug the controller to finish": "完了：コントローラーを取り外して終了します",
   "If the lights are pulsing orange, unplug the controller to leave update mode.": "ランプがオレンジ色に点滅している場合は、コントローラーを取り外してアップデートモードを終了してください。",
   "Supported": "対応",
   "Not supported": "非対応",
@@ -104,7 +104,7 @@ export default {
   "Status": "状態",
   "Active: the wireless hardware answered when the controller started. Not responding: it’s fitted but didn’t answer (try a restart; if it persists the module may need its firmware reinstalled). Inactive / Not present: nothing was detected.": "動作中：コントローラーの起動時にワイヤレスハードウェアが応答しました。応答なし：搭載されていますが応答しませんでした（再起動してみてください。改善しない場合は、モジュールのファームウェアの再インストールが必要な場合があります）。非アクティブ／未搭載：何も検出されませんでした。",
   "Bluetooth Classic": "Bluetooth Classic",
-  "Bluetooth BR/EDR — used for Switch and most console/PC pairing.": "Bluetooth BR/EDR。Switchや、ほとんどのゲーム機・PCとのペアリングに使われます。",
+  "Bluetooth BR/EDR, used for Switch and most console/PC pairing.": "Bluetooth BR/EDR。Switchや、ほとんどのゲーム機・PCとのペアリングに使われます。",
   "Bluetooth LE": "Bluetooth LE",
   "Bluetooth Low Energy.": "Bluetooth Low Energy（低消費電力）。",
   "WLAN dongle": "WLANドングル",

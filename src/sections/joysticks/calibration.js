@@ -1,7 +1,7 @@
 /**
- * calibration.js — Guided stick calibration dialog (replaces hoja2's Calibrate/Stop tristate button).
+ * calibration.js: Guided stick calibration dialog (replaces hoja2's Calibrate/Stop tristate button).
  *
- * Firmware sequence (HOJA-LIB-RP2040 src/input/analog.c, stick_scaling.c) — same commands as hoja2:
+ * Firmware sequence (HOJA-LIB-RP2040 src/input/analog.c, stick_scaling.c), same commands as hoja2:
  *   1. ANALOG_CMD_CALIBRATE_START  captures both sticks' resting centers (lx/ly/rx/ry_center) on the next
  *      poll, sets every slot's in_distance to 256, resets the response curves to linear and pulses the LEDs red.
  *      While calibrating, stick output is held at center, so the live stream can't show the stick moving.
@@ -129,11 +129,11 @@ export function openCalibration({ session, sticks, onFinished }) {
       error && callout({ tone: 'red', title: t('Couldn’t start.'), text: error }),
       h('ol.cal-steps',
         h('li', h('strong', sticks.length > 1 ? t('Let go of both sticks.') : t('Let go of the stick.')),
-          ' ', t('Rest the controller on a table — the stick’s center is recorded the moment you press Start calibration.')),
+          ' ', t('Rest the controller on a table. The stick’s center is recorded the moment you press Start calibration.')),
         h('li', h('strong', t('Roll slowly around the edge.')),
           ' ', t('Push the stick to the rim and turn it in full circles, about 3 laps, keeping gentle pressure against the gate.')),
         h('li', h('strong', t('Press Finish.')), ' ', t('Then check the result in the live view and save.'))),
-      sticks.length > 1 && callout({ tone: 'blue', text: t('Both sticks are calibrated together — you can roll them one after the other.') }),
+      sticks.length > 1 && callout({ tone: 'blue', text: t('Both sticks are calibrated together, and you can roll them one after the other.') }),
       callout({ tone: 'yellow', text: t('Calibration also resets the response curve to linear (1.00).') }),
     );
     dlg.setActions([
@@ -183,7 +183,7 @@ export function openCalibration({ session, sticks, onFinished }) {
       const all = progress.every((x) => x >= 1);
       status.className = `cal-status ${all ? 'ok' : 'muted'}`;
       status.replaceChildren(all
-        ? h('span', icon('check'), ' ', t('Looks good! A couple more slow laps improves accuracy — then press Finish.'))
+        ? h('span', icon('check'), ' ', t('Looks good! A couple more slow laps improves accuracy, then press Finish.'))
         : rollText);
     };
     previews.forEach((p) => p.update());
@@ -239,7 +239,7 @@ export function openCalibration({ session, sticks, onFinished }) {
     phase = 'done';
     onFinished?.(false);
     if (!closing) {
-      toast(t('Calibration canceled — previous settings restored.'), { tone: 'blue' });
+      toast(t('Calibration canceled. Previous settings restored.'), { tone: 'blue' });
       dlg.close(false);
     }
   }

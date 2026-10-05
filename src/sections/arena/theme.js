@@ -1,5 +1,5 @@
 /**
- * theme.js — Canvas colors come from the app's CSS tokens (css/tokens.css), so the arena follows the
+ * theme.js: Canvas colors come from the app's CSS tokens (css/tokens.css), so the arena follows the
  * dark / light / system theme. watchTheme() re-reads them when the theme or motion preference changes.
  */
 const TOKENS = {

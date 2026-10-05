@@ -1,5 +1,5 @@
 /**
- * moves.js — Which attack a direction picks. The attacks themselves (frame data, hitboxes, damage)
+ * moves.js: Which attack a direction picks. The attacks themselves (frame data, hitboxes, damage)
  * are per fighter in movesets.js; specials are archetypes in specials.js.
  */
 

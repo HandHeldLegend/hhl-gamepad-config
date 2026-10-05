@@ -1,5 +1,5 @@
 /**
- * Spanish (neutral Latin American) translations — gamepad. English source text → translation.
+ * Spanish (neutral Latin American) translations (gamepad). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -12,7 +12,7 @@ export default {
   "A or B (East or South)": "A o B (Este o Sur)",
   "Hold A or B (East or South) while plugging in to reconnect to this app after switching modes.": "Después de cambiar de modo, mantén presionado A o B (Este o Sur) al conectar el control para volver a conectarte a esta app.",
   'Config app': 'Con la app',
-  "The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app — after changing it, hold A or B (East or South) while plugging in to come back here.": "El modo de salida con el que inicia el control al conectarlo o encenderlo. Solo los modos Switch y Steam funcionan con esta app de configuración; después de cambiarlo, mantén presionado A o B (Este o Sur) al conectarlo para volver aquí.",
+  "The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app. After changing it, hold A or B (East or South) while plugging in to come back here.": "El modo de salida con el que inicia el control al conectarlo o encenderlo. Solo los modos Switch y Steam funcionan con esta app de configuración; después de cambiarlo, mantén presionado A o B (Este o Sur) al conectarlo para volver aquí.",
   // Mode names stay as-is (brands / firmware names).
   'Switch': 'Switch',
   'XInput': 'XInput',
@@ -32,7 +32,7 @@ export default {
   // Switch colors
   'Switch device colors': 'Colores del control en Switch',
   'How the Switch draws your controller in its menus and some games.': 'Cómo muestra la Switch tu control en sus menús y en algunos juegos.',
-  'Colors which determine how the Switch displays the controller in menus and some games. They don’t change the LEDs — see the RGB page for those.': 'Colores que determinan cómo la Switch muestra el control en los menús y en algunos juegos. No cambian los LED; para eso, ve a la página RGB.',
+  'Colors which determine how the Switch displays the controller in menus and some games. They don’t change the LEDs (see the RGB page for those).': 'Colores que determinan cómo la Switch muestra el control en los menús y en algunos juegos. No cambian los LED; para eso, ve a la página RGB.',
   'Controller color preview': 'Vista previa de los colores del control',
   'Body': 'Carcasa',
   'Buttons': 'Botones',
@@ -69,10 +69,10 @@ export default {
   'MAC address base': 'Dirección MAC base',
   'The hardware address used for USB and Bluetooth modes.': 'La dirección de hardware que se usa en los modos USB y Bluetooth.',
   'Base address': 'Dirección base',
-  'Each connection mode uses its own address, counting up from this one, so your devices see each mode as a separate controller. Only change this if two controllers clash — you may need to pair again afterwards.': 'Cada modo de conexión usa su propia dirección, contando hacia arriba a partir de esta, para que tus dispositivos vean cada modo como un control distinto. Cámbiala solo si dos controles entran en conflicto; es posible que después tengas que volver a emparejarlos.',
+  'Each connection mode uses its own address, counting up from this one, so your devices see each mode as a separate controller. Only change this if two controllers clash. You may need to pair again afterwards.': 'Cada modo de conexión usa su propia dirección, contando hacia arriba a partir de esta, para que tus dispositivos vean cada modo como un control distinto. Cámbiala solo si dos controles entran en conflicto; es posible que después tengas que volver a emparejarlos.',
   'A MAC address is the hardware ID other devices use to recognize the controller over Bluetooth and USB. The first byte must be even.': 'Una dirección MAC es el identificador de hardware con el que otros dispositivos reconocen el control por Bluetooth y USB. El primer byte debe ser par.',
   'The first byte must be even, so it was changed to {byte}.': 'El primer byte debe ser par, así que se cambió a {byte}.',
-  'Saved as {mac} — press Save to keep it.': 'Se estableció como {mac}; presiona Guardar para conservarla.',
+  'Saved as {mac}. Press Save to keep it.': 'Se estableció como {mac}; presiona Guardar para conservarla.',
   'MAC address': 'Dirección MAC',
   'MAC byte {n} of 6': 'Byte {n} de 6 de la MAC',
 
@@ -91,7 +91,7 @@ export default {
   'Pressing the button below will reboot your controller into a firmware update mode. This is only necessary if you are updating the firmware.': 'Al presionar el botón de abajo, tu control se reiniciará en un modo de actualización de firmware. Esto solo es necesario si vas a actualizar el firmware.',
   'Reboot to bootloader': 'Reiniciar en bootloader',
   'Reboot into update mode?': '¿Reiniciar en modo de actualización?',
-  'The controller will disconnect and restart in its bootloader so new firmware can be installed — this app offers to install it when the controller reappears. Unsaved changes will be lost. Only do this if you are updating the firmware.': 'El control se desconectará y se reiniciará en su bootloader para que se pueda instalar firmware nuevo; esta app te ofrecerá instalarlo cuando el control vuelva a aparecer. Se perderán los cambios sin guardar. Hazlo solo si vas a actualizar el firmware.',
+  'The controller will disconnect and restart in its bootloader so new firmware can be installed. This app offers to install it when the controller reappears. Unsaved changes will be lost. Only do this if you are updating the firmware.': 'El control se desconectará y se reiniciará en su bootloader para que se pueda instalar firmware nuevo; esta app te ofrecerá instalarlo cuando el control vuelva a aparecer. Se perderán los cambios sin guardar. Hazlo solo si vas a actualizar el firmware.',
   'Reboot': 'Reiniciar',
   'Rebooting…': 'Reiniciando…',
   'Rebooting into the bootloader…': 'Reiniciando en el bootloader…',

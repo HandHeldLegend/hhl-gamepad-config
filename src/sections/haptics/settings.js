@@ -1,6 +1,6 @@
 /**
  * Haptics settings (hapticConfig_s). Reference example of a settings.js file.
- * Pure data + pure functions only — imported by Node for the MCP server.
+ * Pure data + pure functions only; imported by Node for the MCP server.
  */
 import { clampInt } from '../../settings/schema.js';
 

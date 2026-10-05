@@ -1,5 +1,5 @@
 /**
- * led-preview.js — A small animated approximation of the selected RGB effect, one "LED" per
+ * led-preview.js: A small animated approximation of the selected RGB effect, one "LED" per
  * group. It mimics the firmware animations (src/devices/animations/anm_*.c) closely enough to
  * show what each mode does; it is not a pixel-exact simulation.
  *
@@ -54,7 +54,7 @@ export function ledPreview(o) {
   let t0 = performance.now();
   let lastMode = -1;
 
-  /** Color of LED i at time t (ms) as [r,g,b,on?] — `on` (0–1, default 1) dims a single LED; global brightness is applied in CSS. */
+  /** Color of LED i at time t (ms) as [r,g,b,on?]; `on` (0–1, default 1) dims a single LED; global brightness is applied in CSS. */
   function colorAt(i, t, s, still) {
     const user = (k) => hexToRgb(s.colors[k] || '#000000');
     const speed = Math.max(300, s.speed || 1000);

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * serve.mjs — Zero-dependency dev server for the app.
+ * serve.mjs: Zero-dependency dev server for the app.
  *
  *   node tools/serve.mjs            # http://localhost:5173/
  *   node tools/serve.mjs --port 8080

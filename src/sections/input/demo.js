@@ -28,7 +28,7 @@ const STICKS = {
 };
 const DPAD = { UP: 'UP', DOWN: 'DOWN', LEFT: 'LEFT', RIGHT: 'RIGHT' };
 
-/** Default mapping per mode: { INPUT_KEY: OUTPUT_SUFFIX } — like a board's defaults_<mode> table. */
+/** Default mapping per mode: { INPUT_KEY: OUTPUT_SUFFIX }, like a board's defaults_<mode> table. */
 const DEFAULTS = {
   switch: {
     SOUTH: 'B', EAST: 'A', WEST: 'Y', NORTH: 'X', ...DPAD, LB: 'L', RB: 'R', LT: 'ZL', LT_ANALOG: 'ZL', RT: 'ZR', RT_ANALOG: 'ZR',

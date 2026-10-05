@@ -1,23 +1,23 @@
 /**
- * Snapback view — port of hoja2/modules/snapback-md.js (+ components/waveform-display.js).
+ * Snapback view: port of hoja2/modules/snapback-md.js (+ components/waveform-display.js).
  *
  * "Snapback" is the rebound past center when you let go of a stick: the spring flings it to the other
  * side for a few milliseconds, which games can read as a flick in the opposite direction.
  *
  * Layout: the shared left/right split (docs/SECTIONS.md "Left/right layouts"). Each stick gets a column
  * with the same two cards in the same order, so they line up side by side on wide pages:
- *   1. Snapback filter — filter mode (l/r_snapback_type: Low-pass / Auto / Off) and the low-pass cutoff
+ *   1. Snapback filter: filter mode (l/r_snapback_type: Low-pass / Auto / Off) and the low-pass cutoff
  *      (l/r_snapback_intensity, tenths of a Hz), written live through settingField (settings.js).
- *   2. Analyzer — that stick's latest capture (X or Y axis), its stats and a short capture history.
+ *   2. Analyzer: that stick's latest capture (X or Y axis), its stats and a short capture history.
  * Narrow pages show one column at a time with a Left/Right switch; single-stick builds show one column.
  *
  * Analyzer: the controller sends an analog dump (report 0xFA → device 'snapback' event) on its own
  * whenever an axis is pushed to the edge and released; see waveform.js for the format. Nothing has to be
- * requested — like hoja2 we just listen. Each capture goes to its stick's column (LX/LY → left,
+ * requested; like hoja2 we just listen. Each capture goes to its stick's column (LX/LY → left,
  * RX/RY → right), which keeps the last few so they can be compared. The filter and the result it
  * produces sit together, and on wide pages the two sticks can be compared directly.
  *
- * Deep link: #/snapback?stick=right — selects that column (narrow) or scrolls to and highlights it (wide).
+ * Deep link: #/snapback?stick=right selects that column (narrow) or scrolls to and highlights it (wide).
  */
 import { h, loadStyles } from '../../ui/dom.js';
 import { card, segmented, callout, badge, dot } from '../../ui/controls.js';
@@ -37,7 +37,7 @@ const STICK_NAME = { left: N_('Left stick'), right: N_('Right stick') };
 
 /** Short explanation shown in place of the cutoff when it does not apply (keeps both columns aligned). */
 const MODE_NOTE = {
-  1: N_('Auto watches for the moment you let go and holds back only the rebound — there is no cutoff to tune.'),
+  1: N_('Auto watches for the moment you let go and holds back only the rebound. There is no cutoff to tune.'),
   2: N_('Filter off: the stick reports its raw output. Use this to see your stick’s natural snapback.'),
 };
 
@@ -66,7 +66,7 @@ function stickColumn(stick) {
   syncMode(type.control.value);
 
   const filterCard = card({
-    title: t('Snapback filter'), subtitle: t('Changes apply instantly — press Save to keep them.'),
+    title: t('Snapback filter'), subtitle: t('Changes apply instantly. Press Save to keep them.'),
     icon: 'snapback', tone: TONE, class: 'sb-filter',
   }, type, cutoff, note);
 
@@ -131,7 +131,7 @@ function stickColumn(stick) {
       captures.length = Math.min(captures.length, HISTORY);
       show(c);
       status.replaceChildren(dot(TONE, true), t('Captured'));
-      status.dataset.tip = t('Flick again to compare — the last few captures stay below the plot.');
+      status.dataset.tip = t('Flick again to compare. The last few captures stay below the plot.');
     },
     destroy() { wave.destroy(); },
   };

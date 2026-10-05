@@ -1,5 +1,5 @@
 /**
- * French (France/international) translations — about. English source text → translation.
+ * French (France/international) translations (about). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -8,7 +8,7 @@ export default {
   "3D rendering on the Motion and 3D Platformer pages (vendor/three/)": "Rendu 3D sur les pages Mouvement et Plateforme 3D (vendor/three/)",
   "Updating the ESP32 wireless module from the Wireless page (vendor/esptool-js/)": "Mise à jour du module sans fil ESP32 depuis la page Sans fil (vendor/esptool-js/)",
   "Compression while writing ESP32 firmware (vendor/esptool-js/)": "Compression lors de l’écriture du firmware ESP32 (vendor/esptool-js/)",
-  "The “Full reset — erase flash” recovery image (firmware/universal_flash_nuke.uf2)": "L’image de récupération « Réinitialisation complète — effacer la flash » (firmware/universal_flash_nuke.uf2)",
+  "The “Full reset: erase flash” recovery image (firmware/universal_flash_nuke.uf2)": "L’image de récupération « Réinitialisation complète : effacer la flash » (firmware/universal_flash_nuke.uf2)",
   "Reference for the USB bootloader commands used to flash firmware (src/firmware/picoboot.js)": "Référence des commandes USB du bootloader utilisées pour écrire le firmware (src/firmware/picoboot.js)",
   "Config/static memory layouts are generated from its headers (src/device/generated/fw-layout.js)": "Les structures mémoire de configuration et statiques sont générées à partir de ses en-têtes (src/device/generated/fw-layout.js)",
   "The controller won’t connect": "La manette ne se connecte pas",

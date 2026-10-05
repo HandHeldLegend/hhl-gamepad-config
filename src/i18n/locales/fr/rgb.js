@@ -1,5 +1,5 @@
 /**
- * French translations — rgb. English source text → translation.
+ * French translations (rgb). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 
@@ -16,7 +16,7 @@ export default {
 
   // Lighting
   'Lighting': 'Éclairage',
-  'Pick an effect — the preview shows roughly how it looks.': 'Choisissez un effet ; l’aperçu montre à peu près son rendu.',
+  'Pick an effect. The preview shows roughly how it looks.': 'Choisissez un effet ; l’aperçu montre à peu près son rendu.',
   'Preview of the selected lighting effect': 'Aperçu de l’effet d’éclairage sélectionné',
   'Effect': 'Effet',
   'Lighting effect: Authentic (classic face-button colors for the output mode; called Chroma in older apps), Static (your colors), Rainbow, React (flash on press) or Fairy (blend between your first six colors).': 'Effet d’éclairage : Authentique (couleurs classiques des boutons de façade selon le mode de sortie ; appelé Chroma dans les anciennes applications), Fixe (vos couleurs), Arc-en-ciel, Réactif (flash à l’appui) ou Féerie (fondu entre vos six premières couleurs).',
@@ -34,7 +34,7 @@ export default {
 
   // Brightness & timing
   'Brightness & timing': 'Luminosité et durée',
-  'Changes apply instantly — press Save to keep them.': 'Les modifications s’appliquent immédiatement ; appuyez sur Enregistrer pour les conserver.',
+  'Changes apply instantly. Press Save to keep them.': 'Les modifications s’appliquent immédiatement ; appuyez sur Enregistrer pour les conserver.',
   'Brightness': 'Luminosité',
   'How bright the LEDs are, from off to full.': 'La luminosité des LED, d’éteintes à maximale.',
   'To save battery, the controller limits brightness to about a third while connected wirelessly.': 'Pour économiser la batterie, la manette limite la luminosité à environ un tiers en connexion sans fil.',

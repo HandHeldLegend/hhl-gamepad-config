@@ -1,5 +1,5 @@
 /**
- * platform.js — Which devices can't use WebUSB, and the explainer shown to iPhone/iPad visitors.
+ * platform.js: Which devices can't use WebUSB, and the explainer shown to iPhone/iPad visitors.
  *
  * Every browser on iPhone and iPad must use Apple's WebKit engine, and WebKit doesn't implement
  * WebUSB (Apple has declined it over privacy/fingerprinting concerns). So no iOS browser can connect
@@ -22,7 +22,7 @@ export function explainIOS() {
     title: t('Why iPhone and iPad can’t connect'), icon: 'info', tone: 'blue',
     body: [
       h('p', t('This app talks to your controller through WebUSB, a browser feature that lets a web page connect to a USB device you pick.')),
-      h('p', t('Apple has chosen not to support WebUSB, citing privacy and security. Every browser on iPhone and iPad — Chrome, Edge and Firefox included — has to use Apple’s Safari engine, so none of them can offer it.')),
+      h('p', t('Apple has chosen not to support WebUSB, citing privacy and security. Every browser on iPhone and iPad (Chrome, Edge and Firefox included) has to use Apple’s Safari engine, so none of them can offer it.')),
       h('p', h('strong', t('This is out of our hands.')), ' ', t('It’s Apple’s decision, and they haven’t announced any plans to change it. If that changes, this app will work on iPhone and iPad without an update on your side.')),
       h('p', t('To change your controller’s settings:')),
       h('ul',

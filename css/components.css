@@ -1,5 +1,5 @@
 /*
- * components.css — Styles for the shared UI kit (src/ui/*.js).
+ * components.css: Styles for the shared UI kit (src/ui/*.js).
  * Every class here is produced by a factory in src/ui/controls.js or src/ui/overlay.js;
  * sections should compose those factories rather than invent new one-off styles.
  */
@@ -410,7 +410,7 @@ dialog.dialog::backdrop { background: var(--scrim); backdrop-filter: blur(3px); 
  *         </div>
  * Wide container (≥ 640px of page width): both columns side by side, switch hidden.
  * Narrow: only the [data-active] column shows; the switch picks it.
- * One column only (single-stick build): add .single to .lr-split — full width, no switch. */
+ * One column only (single-stick build): add .single to .lr-split (full width, no switch). */
 .lr-split { container-type: inline-size; display: flex; flex-direction: column; gap: var(--space-4); }
 .lr-cols { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); align-items: start; }
 .lr-col { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }

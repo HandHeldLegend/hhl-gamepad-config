@@ -1,5 +1,5 @@
 /**
- * French translations — wireless. English source text → translation.
+ * French translations (wireless). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -46,9 +46,9 @@ export default {
   "Couldn’t check (offline?)": "Vérification impossible (hors ligne ?)",
   "No device was selected.": "Aucun périphérique n’a été sélectionné.",
   "The browser blocked access to the device.": "Le navigateur a bloqué l’accès au périphérique.",
-  "Couldn’t open the port — close other apps or tabs using it (e.g. the standalone updater) and try again.": "Impossible d’ouvrir le port : fermez les autres applications ou onglets qui l’utilisent (p. ex. l’outil de mise à jour autonome) et réessayez.",
+  "Couldn’t open the port. Close other apps or tabs using it (e.g. the standalone updater) and try again.": "Impossible d’ouvrir le port : fermez les autres applications ou onglets qui l’utilisent (p. ex. l’outil de mise à jour autonome) et réessayez.",
   "Reinstall wireless firmware": "Réinstaller le firmware sans fil",
-  "The wireless module (ESP32) has its own firmware. The controller restarts into a special update mode (its lights pulse orange), then the new firmware is written over USB. It takes about a minute — keep it plugged in.": "Le module sans fil (ESP32) a son propre firmware. La manette redémarre dans un mode de mise à jour spécial (ses lumières clignotent en orange), puis le nouveau firmware est écrit via USB. Cela prend environ une minute ; laissez-la branchée.",
+  "The wireless module (ESP32) has its own firmware. The controller restarts into a special update mode (its lights pulse orange), then the new firmware is written over USB. It takes about a minute, so keep it plugged in.": "Le module sans fil (ESP32) a son propre firmware. La manette redémarre dans un mode de mise à jour spécial (ses lumières clignotent en orange), puis le nouveau firmware est écrit via USB. Cela prend environ une minute ; laissez-la branchée.",
   "Update didn’t start.": "La mise à jour n’a pas démarré.",
   "Unsaved changes.": "Modifications non enregistrées.",
   "The controller restarts during the update and anything not saved is lost.": "La manette redémarre pendant la mise à jour et tout ce qui n’est pas enregistré sera perdu.",
@@ -91,7 +91,7 @@ export default {
   "Flashing is complete. Please unplug your controller to finish the update.": "Le flashage est terminé. Débranchez votre manette pour finaliser la mise à jour.",
   "Wireless module updated": "Module sans fil mis à jour",
   "Unplug the controller, wait a moment, plug it back in, then press Connect.": "Débranchez la manette, patientez un instant, rebranchez-la, puis appuyez sur Connecter.",
-  "Done — unplug the controller to finish": "Terminé : débranchez la manette pour finir",
+  "Done: unplug the controller to finish": "Terminé : débranchez la manette pour finir",
   "If the lights are pulsing orange, unplug the controller to leave update mode.": "Si les lumières clignotent en orange, débranchez la manette pour quitter le mode mise à jour.",
   "Supported": "Pris en charge",
   "Not supported": "Non pris en charge",
@@ -101,7 +101,7 @@ export default {
   "Status": "État",
   "Active: the wireless hardware answered when the controller started. Not responding: it’s fitted but didn’t answer (try a restart; if it persists the module may need its firmware reinstalled). Inactive / Not present: nothing was detected.": "Active : le matériel sans fil a répondu au démarrage de la manette. Ne répond pas : il est installé mais n’a pas répondu (essayez de redémarrer ; si cela persiste, il faudra peut-être réinstaller le firmware du module). Inactive / Absent : rien n’a été détecté.",
   "Bluetooth Classic": "Bluetooth Classic",
-  "Bluetooth BR/EDR — used for Switch and most console/PC pairing.": "Bluetooth BR/EDR : utilisé pour la Switch et la plupart des appairages avec console ou PC.",
+  "Bluetooth BR/EDR, used for Switch and most console/PC pairing.": "Bluetooth BR/EDR : utilisé pour la Switch et la plupart des appairages avec console ou PC.",
   "Bluetooth LE": "Bluetooth LE",
   "Bluetooth Low Energy.": "Bluetooth basse consommation.",
   "WLAN dongle": "Dongle WLAN",

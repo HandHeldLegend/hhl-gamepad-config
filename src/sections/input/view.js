@@ -1,14 +1,14 @@
 /**
- * Input view — button remapping per output mode, analog trigger modes and analog calibration.
+ * Input view: button remapping per output mode, analog trigger modes and analog calibration.
  * Port of hoja2/modules/input-md.js (+ components input-mapping-display, input-config-panel,
  * button-grid, multi-position-button, tristate-button, single-shot-button).
  *
  * Data (see mapping.js for field-level details):
- *   static  `input`  inputInfoStatic_s — which of the 36 input slots this build has (type + name).
+ *   static  `input`  inputInfoStatic_s: which of the 36 input slots this build has (type + name).
  *                    Only those are shown: every custom build has its own layout.
- *   config  `input`  inputConfig_s — one remap profile per output mode (Switch, XInput, SNES, N64,
+ *   config  `input`  inputConfig_s: one remap profile per output mode (Switch, XInput, SNES, N64,
  *                    GameCube, SInput), 36 inputConfigSlot_s each, indexed by input code.
- *   config  `hover`  hoverConfig_s — analog input calibration; hover_calibration_set == 0 makes the
+ *   config  `hover`  hoverConfig_s: analog input calibration; hover_calibration_set == 0 makes the
  *                    app show an attention badge (session.refreshAttention()).
  *
  * Protocol / order of operations (same as hoja2):
@@ -47,7 +47,7 @@ const GROUPS = [
   { type: INPUT_TYPE.HOVER, title: N_('Analog inputs'),
     tip: N_('Inputs that measure how far they are pressed, such as analog triggers (the sensor type depends on your controller). They can act as a button with an adjustable activation point, as rapid trigger, or as a full analog output.') },
   { type: INPUT_TYPE.JOYSTICK, title: N_('Stick directions'),
-    tip: N_('Each stick direction can be sent somewhere else too — for example to the d-pad or a button.') },
+    tip: N_('Each stick direction can be sent somewhere else too, for example to the d-pad or a button.') },
 ];
 
 export function mount(root, ctx) {

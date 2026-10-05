@@ -1,5 +1,5 @@
 /**
- * builds.js — The catalog of HOJA device firmware builds (github.com/HandHeldLegend/hoja-device-fw).
+ * builds.js: The catalog of HOJA device firmware builds (github.com/HandHeldLegend/hoja-device-fw).
  *
  * Builds are listed live from GitHub's contents API. The last successful list is kept in
  * localStorage so the picker still shows names offline (flashing itself needs a download).
@@ -41,7 +41,7 @@ const visible = (ids) => ids.filter((id) => !HIDDEN_BUILDS.has(id));
 /** Special entry: wipes the whole flash (recovery for badly corrupted boards). Label: t() it where shown. */
 export const NUKE_BUILD = {
   id: 'full-reset-nuke',
-  label: N_('Full reset — erase flash (nuke)'),
+  label: N_('Full reset: erase flash (nuke)'),
   uf2Url: new URL('../../firmware/universal_flash_nuke.uf2', import.meta.url).href,
   manifestUrl: null,
   danger: true,

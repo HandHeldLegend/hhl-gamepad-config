@@ -1,5 +1,5 @@
 /**
- * Japanese translations — battery. English source text → translation.
+ * Japanese translations (battery). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -7,7 +7,7 @@ export default {
   "Not present": "未搭載",
   "This controller has no charger chip, so it doesn't charge a battery. That's normal for wired-only builds.": "このコントローラーには充電チップがないため、バッテリーを充電しません。有線専用モデルでは正常です。",
   "Not responding": "応答なし",
-  "The charger chip didn't answer when the controller started. Some connection modes skip battery setup, so this isn't always a fault — unplug the controller and reconnect it. If it keeps happening, contact support.": "コントローラーの起動時に充電チップが応答しませんでした。接続モードによってはバッテリーの初期化を省略するため、必ずしも故障ではありません。コントローラーを外して接続し直してください。繰り返し発生する場合は、サポートにお問い合わせください。",
+  "The charger chip didn't answer when the controller started. Some connection modes skip battery setup, so this isn't always a fault. Unplug the controller and reconnect it. If it keeps happening, contact support.": "コントローラーの起動時に充電チップが応答しませんでした。接続モードによってはバッテリーの初期化を省略するため、必ずしも故障ではありません。コントローラーを外して接続し直してください。繰り返し発生する場合は、サポートにお問い合わせください。",
   "Active": "動作中",
   "The charger chip is working and manages charging for the battery.": "充電チップは正常に動作し、バッテリーの充電を管理しています。",
   "The charger chip is working, but there is no battery to charge.": "充電チップは正常に動作していますが、充電するバッテリーがありません。",
@@ -17,11 +17,11 @@ export default {
   "Detected": "検出済み",
   "A battery pack is fitted.": "バッテリーパックが装着されています。",
   "Not detected": "未検出",
-  "No battery pack was found. That's fine — the controller runs from USB power. If you did fit a battery, check its connector.": "バッテリーパックが見つかりませんでした。問題ありません。コントローラーはUSB給電で動作します。バッテリーを取り付けた場合は、コネクターを確認してください。",
+  "No battery pack was found. That's fine: the controller runs from USB power. If you did fit a battery, check its connector.": "バッテリーパックが見つかりませんでした。問題ありません。コントローラーはUSB給電で動作します。バッテリーを取り付けた場合は、コネクターを確認してください。",
   "Unconfirmed": "未確認",
   "The controller couldn't tell whether a battery is fitted, and doesn't guess. The charging state shown above may still be correct.": "コントローラーはバッテリーの有無を判別できず、推測もしません。上に表示されている充電状態は正しい可能性があります。",
   "Without a working charger chip nothing checks for a battery pack.": "充電チップが動作していないため、バッテリーパックの有無は確認されません。",
-  "No fuel gauge is fitted, so the battery level can't be measured — only whether it's charging.": "残量計が搭載されていないため、バッテリー残量は測定できません。充電中かどうかのみ分かります。",
+  "No fuel gauge is fitted, so the battery level can't be measured, only whether it's charging.": "残量計が搭載されていないため、バッテリー残量は測定できません。充電中かどうかのみ分かります。",
   "Inactive": "非アクティブ",
   "A fuel gauge is fitted but isn't responding, so the battery percentage may be wrong.": "残量計は搭載されていますが応答しないため、バッテリー残量の表示が正しくない可能性があります。",
   "Measures how much charge is left in the battery.": "バッテリーの残量を測定します。",
@@ -43,7 +43,7 @@ export default {
   "Fuel gauge": "残量計",
   "battery meter": "フューエルゲージ",
   "Battery pack": "バッテリーパック",
-  "Checked once at power-on — reconnect the controller to check again.": "電源投入時に一度だけ確認されます。再確認するには、コントローラーを接続し直してください。",
+  "Checked once at power-on. Reconnect the controller to check again.": "電源投入時に一度だけ確認されます。再確認するには、コントローラーを接続し直してください。",
   "No battery": "バッテリーなし",
   "No battery pack is fitted, so there is nothing to charge. The controller runs from USB power.": "バッテリーパックが装着されていないため、充電するものはありません。コントローラーはUSB給電で動作します。",
   "Waiting for the controller to report its battery…": "コントローラーからのバッテリー情報を待っています…",
@@ -51,8 +51,8 @@ export default {
   "Level not available": "残量を取得できません",
   "{state} · battery unconfirmed": "{state}・バッテリー未確認",
   "Plugged in and charging. Keep it connected until the light turns green.": "接続されて充電中です。ランプが緑色になるまで接続したままにしてください。",
-  "Fully charged — you can unplug whenever you like.": "充電が完了しました。いつでもケーブルを外せます。",
-  "Battery is low — plug in a charging cable soon.": "バッテリー残量が少なくなっています。早めに充電ケーブルを接続してください。",
+  "Fully charged. You can unplug whenever you like.": "充電が完了しました。いつでもケーブルを外せます。",
+  "Battery is low. Plug in a charging cable soon.": "バッテリー残量が少なくなっています。早めに充電ケーブルを接続してください。",
   "The battery isn't being charged right now.": "現在、バッテリーは充電されていません。",
   "The fuel gauge didn't give a valid reading, so the level isn't shown.": "残量計から有効な値が得られなかったため、残量は表示されません。",
   "This controller can't measure its charge level (it has no fuel gauge), so only the charging state is shown.": "このコントローラーは残量を測定できない（残量計がない）ため、充電状態のみ表示されます。",

@@ -1,5 +1,5 @@
 /**
- * User settings (userConfig_s). Pure data + pure functions only — imported by Node.
+ * User settings (userConfig_s). Pure data + pure functions only; imported by Node.
  */
 import { decodeText, encodeText } from '../../device/struct.js';
 

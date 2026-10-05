@@ -1,5 +1,5 @@
 /**
- * Spanish (neutral Latin American) translations — wireless. English source text → translation.
+ * Spanish (neutral Latin American) translations (wireless). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -46,9 +46,9 @@ export default {
   "Couldn’t check (offline?)": "No se pudo comprobar (¿sin conexión?)",
   "No device was selected.": "No se seleccionó ningún dispositivo.",
   "The browser blocked access to the device.": "El navegador bloqueó el acceso al dispositivo.",
-  "Couldn’t open the port — close other apps or tabs using it (e.g. the standalone updater) and try again.": "No se pudo abrir el puerto: cierra otras apps o pestañas que lo estén usando (p. ej., el actualizador independiente) e inténtalo de nuevo.",
+  "Couldn’t open the port. Close other apps or tabs using it (e.g. the standalone updater) and try again.": "No se pudo abrir el puerto: cierra otras apps o pestañas que lo estén usando (p. ej., el actualizador independiente) e inténtalo de nuevo.",
   "Reinstall wireless firmware": "Reinstalar firmware inalámbrico",
-  "The wireless module (ESP32) has its own firmware. The controller restarts into a special update mode (its lights pulse orange), then the new firmware is written over USB. It takes about a minute — keep it plugged in.": "El módulo inalámbrico (ESP32) tiene su propio firmware. El control se reinicia en un modo de actualización especial (sus luces parpadean en naranja) y luego se escribe el nuevo firmware por USB. Tarda alrededor de un minuto; mantenlo conectado.",
+  "The wireless module (ESP32) has its own firmware. The controller restarts into a special update mode (its lights pulse orange), then the new firmware is written over USB. It takes about a minute, so keep it plugged in.": "El módulo inalámbrico (ESP32) tiene su propio firmware. El control se reinicia en un modo de actualización especial (sus luces parpadean en naranja) y luego se escribe el nuevo firmware por USB. Tarda alrededor de un minuto; mantenlo conectado.",
   "Update didn’t start.": "La actualización no se inició.",
   "Unsaved changes.": "Cambios sin guardar.",
   "The controller restarts during the update and anything not saved is lost.": "El control se reinicia durante la actualización y se perderá todo lo que no hayas guardado.",
@@ -91,7 +91,7 @@ export default {
   "Flashing is complete. Please unplug your controller to finish the update.": "La grabación terminó. Desconecta el control para finalizar la actualización.",
   "Wireless module updated": "Módulo inalámbrico actualizado",
   "Unplug the controller, wait a moment, plug it back in, then press Connect.": "Desconecta el control, espera un momento, vuelve a conectarlo y luego pulsa Conectar.",
-  "Done — unplug the controller to finish": "Listo: desconecta el control para terminar",
+  "Done: unplug the controller to finish": "Listo: desconecta el control para terminar",
   "If the lights are pulsing orange, unplug the controller to leave update mode.": "Si las luces parpadean en naranja, desconecta el control para salir del modo de actualización.",
   "Supported": "Compatible",
   "Not supported": "No compatible",
@@ -101,7 +101,7 @@ export default {
   "Status": "Estado",
   "Active: the wireless hardware answered when the controller started. Not responding: it’s fitted but didn’t answer (try a restart; if it persists the module may need its firmware reinstalled). Inactive / Not present: nothing was detected.": "Activo: el hardware inalámbrico respondió cuando el control se encendió. No responde: está instalado, pero no respondió (prueba a reiniciar; si persiste, puede que haya que reinstalar el firmware del módulo). Inactivo / No presente: no se detectó nada.",
   "Bluetooth Classic": "Bluetooth clásico",
-  "Bluetooth BR/EDR — used for Switch and most console/PC pairing.": "Bluetooth BR/EDR: se usa con Switch y para emparejar con la mayoría de consolas y PC.",
+  "Bluetooth BR/EDR, used for Switch and most console/PC pairing.": "Bluetooth BR/EDR: se usa con Switch y para emparejar con la mayoría de consolas y PC.",
   "Bluetooth LE": "Bluetooth LE",
   "Bluetooth Low Energy.": "Bluetooth de bajo consumo.",
   "WLAN dongle": "Dongle WLAN",

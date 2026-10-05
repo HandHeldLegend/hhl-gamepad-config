@@ -1,5 +1,5 @@
 /**
- * canvas-surface.js — A crisp, theme-aware, self-sizing <canvas> for visualizers (shared UI kit).
+ * canvas-surface.js: A crisp, theme-aware, self-sizing <canvas> for visualizers (shared UI kit).
  *
  * Used by the Joysticks visualizers and the Snapback waveform. (If more sections need it, it could be
  * promoted to src/ui/; until then it lives here per docs/SECTIONS.md.)

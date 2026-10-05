@@ -1,5 +1,5 @@
 /**
- * store.js — 3D Platformer preferences, kept per browser in localStorage under 'hhl-config:platformer'.
+ * store.js: 3D Platformer preferences, kept per browser in localStorage under 'hhl-config:platformer'.
  * (Not part of the controller settings schema.)
  */
 import { STORAGE_KEY } from './constants.js';

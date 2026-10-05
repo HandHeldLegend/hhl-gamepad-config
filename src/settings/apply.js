@@ -1,5 +1,5 @@
 /**
- * apply.js — Apply settings from a deep link or an assistant, always with a confirmation step.
+ * apply.js: Apply settings from a deep link or an assistant, always with a confirmation step.
  *
  *   #/apply?haptics.intensity=80&gamepad.defaultMode=xinput&then=haptics
  *
@@ -39,7 +39,7 @@ export function planChanges(params) {
 
 /**
  * Apply already-validated changes to the connected controller. Returns a report.
- * Callers must have obtained the user's consent first — use confirmAndApply() for that.
+ * Callers must have obtained the user's consent first; use confirmAndApply() for that.
  */
 export async function applyChanges(changes, { save = false } = {}) {
   const applied = [];
@@ -71,7 +71,7 @@ function waitForConnection() {
 
 const SOURCE_TEXT = {
   link: N_('A link wants to change these settings on your controller. Review them before applying.'),
-  assistant: N_('An assistant suggested these changes for your controller. Review them before applying — nothing changes unless you press Apply.'),
+  assistant: N_('An assistant suggested these changes for your controller. Review them before applying. Nothing changes unless you press Apply.'),
 };
 
 /** formatValue() in the active language (schema.js stays English for Node/assistants). */
@@ -89,7 +89,7 @@ function displayValue(def, value) {
  * @param {Array<{def: object, value: any}>} changes  validated changes (from planChanges)
  * @param {string[]} [errors]                         entries that were rejected (shown as a warning)
  * @param {{ source?: 'link'|'assistant', save?: boolean }} [opts]
- *        source — wording of the dialog; save — make "Apply & save" the primary button (default true)
+ *        source: wording of the dialog; save: make "Apply & save" the primary button (default true)
  * @returns {Promise<{ confirmed: boolean, choice: 'apply'|'save'|null, applied: Array, skipped: Array, saved: boolean, error?: string }>}
  */
 export async function confirmAndApply(changes, errors = [], { source = 'link', save = true } = {}) {
@@ -103,7 +103,7 @@ export async function confirmAndApply(changes, errors = [], { source = 'link', s
   const renderList = () => {
     list.replaceChildren(...changes.map(({ def, value }) => {
       const unsupported = session.connected && def.requires && !session.caps[def.requires];
-      const before = session.connected ? displayValue(def, def.get(session)) : '—';
+      const before = session.connected ? displayValue(def, def.get(session)) : '–';
       return h('li', { class: unsupported ? 'unsupported' : null },
         h('span.change-label', t(def.label), h('span.faint.xs', ` ${def.key}`)),
         h('span.change-values', h('span.muted', before), ' → ', h('strong', displayValue(def, value))),
@@ -148,7 +148,7 @@ export async function confirmAndApply(changes, errors = [], { source = 'link', s
   wait.cancel();
   if (!choice) return none;
   if (!session.connected) {
-    toast(t('The controller disconnected — nothing was changed.'), { tone: 'red', timeout: 6000 });
+    toast(t('The controller disconnected, so nothing was changed.'), { tone: 'red', timeout: 6000 });
     return { ...none, error: 'Controller disconnected' };
   }
   try {
@@ -156,11 +156,11 @@ export async function confirmAndApply(changes, errors = [], { source = 'link', s
     const n = report.applied.length;
     toast(report.saved
       ? plural(n, '{n} setting applied and saved', '{n} settings applied and saved')
-      : plural(n, '{n} setting applied — press Save to keep them', '{n} settings applied — press Save to keep them'), { tone: 'green' });
+      : plural(n, '{n} setting applied. Press Save to keep it.', '{n} settings applied. Press Save to keep them.'), { tone: 'green' });
     return { confirmed: true, choice, ...report };
   } catch (err) {
     console.error('[apply] failed', err);
-    toast(t('Couldn’t apply the settings — check the connection and try again.'), { tone: 'red', timeout: 6000 });
+    toast(t('Couldn’t apply the settings. Check the connection and try again.'), { tone: 'red', timeout: 6000 });
     return { ...none, confirmed: true, choice, error: err?.message || String(err) };
   }
 }

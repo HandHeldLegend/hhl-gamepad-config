@@ -1,5 +1,5 @@
 /**
- * parts.js — Small widgets used across the Input section: glyphs and live meters.
+ * parts.js (Small widgets used across the Input section): glyphs and live meters.
  */
 import { h, clamp } from '../../ui/dom.js';
 import { t } from '../../i18n/index.js';
@@ -25,7 +25,7 @@ export function rich(text, nodes) {
 
 /**
  * A button glyph for a label. Glyph PNGs are white-on-transparent, so they are drawn as a CSS mask
- * filled with `currentColor` — that way they follow the theme (and tone) instead of vanishing in
+ * filled with `currentColor`. That way they follow the theme (and tone) instead of vanishing in
  * light mode. Labels without a glyph render as a text chip of the same size.
  * @param {string} label
  * @param {{shape?: 'circle'|'square', size?: number, off?: boolean}} [o]

@@ -1,5 +1,5 @@
 /**
- * esp-flasher.js — Writes HOJA ESP32 baseband firmware with esptool-js.
+ * esp-flasher.js: Writes HOJA ESP32 baseband firmware with esptool-js.
  *
  * Port of the flashing half of hoja_esptool/src/app.js (the standalone "HOJA Baseband Updater"
  * hoja2 opened in a new tab). Same files, offsets, USB filter, baud and flash options:
@@ -158,7 +158,7 @@ export class EspFlasher {
     installBufferShim();
     const { ESPLoader, Transport } = await import(ESPTOOL_URL);
     const terminal = { clean() {}, writeLine: (s) => this.log(s), write: (s) => this.log(s) };
-    // Transport(device, tracing, enableSlipReader) — SLIP reader off, as in the standalone updater.
+    // Transport(device, tracing, enableSlipReader): SLIP reader off, as in the standalone updater.
     this.transport = new Transport(this.port, TRACE, false);
     const loader = new ESPLoader({ transport: this.transport, baudrate: this.baud, terminal, enableTracing: false });
     try {

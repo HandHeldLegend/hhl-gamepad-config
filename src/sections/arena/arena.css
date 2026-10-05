@@ -1,4 +1,4 @@
-/* arena.css — Gameplay testing arena. Theme tokens only (see css/tokens.css). */
+/* arena.css: Gameplay testing arena. Theme tokens only (see css/tokens.css). */
 
 /* ---- Play tab ------------------------------------------------------------------------------- */
 .arena-play { display: flex; flex-direction: column; gap: var(--space-4); }

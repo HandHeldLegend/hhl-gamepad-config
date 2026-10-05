@@ -1,6 +1,6 @@
 /**
  * Scalar settings for the "wireless" section (see src/settings/schema.js for the SettingDef format).
- * Pure data + pure functions only — this file is imported by Node for the MCP server.
+ * Pure data + pure functions only; this file is imported by Node for the MCP server.
  *
  * The Wireless page is the authoritative editor for the WLAN dongle PIN. Its view renders a
  * 4-digit PIN box bound to this definition (a 0–9999 slider would be awkward for a PIN), while

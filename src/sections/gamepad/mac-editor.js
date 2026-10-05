@@ -1,5 +1,5 @@
 /**
- * mac-editor.js — Six hex-byte boxes for the controller's base MAC address
+ * mac-editor.js: Six hex-byte boxes for the controller's base MAC address
  * (port of hoja2/components/mac-address-selector.js).
  *
  *   const ed = macEditor({ value: [0x7c, 0xbb, ...], onChange: (bytes) => ... });

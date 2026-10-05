@@ -1,5 +1,5 @@
 /**
- * hud.js — Canvas drawing helpers for the live input display (Play tab) and the Input lab.
+ * hud.js: Canvas drawing helpers for the live input display (Play tab) and the Input lab.
  *
  * Stick plots show the stick inside an octagonal gate outline (corners at the 8 notch directions),
  * dashed rings at the gameplay thresholds (neutral and smash), a fading trail of recent positions and
@@ -45,7 +45,7 @@ export function readout(title, fields, o = {}) {
   const el = h('div.arena-readout', { role: 'group', 'aria-label': title, 'data-shape': o.shape || 'none' },
     o.showTitle === false ? null : h('div.arena-readout-title', o.shape && o.shape !== 'none' ? h('span.arena-mark', { 'aria-hidden': 'true' }) : null, title),
     h('dl.arena-readout-grid', fields.map(([id, label, width]) => {
-      cells[id] = h('dd', { class: width || 'w-num' }, '—');
+      cells[id] = h('dd', { class: width || 'w-num' }, '–');
       return h('div.arena-readout-cell', h('dt', label), cells[id]);
     })));
   return {
@@ -65,7 +65,7 @@ export function stickValues(x, y, digits = 3) {
   const m = Math.hypot(x, y);
   return {
     x: signed(x, digits), y: signed(y, digits),
-    angle: m > 0.05 ? `${angleDeg(x, y).toFixed(1)}°` : '—',
+    angle: m > 0.05 ? `${angleDeg(x, y).toFixed(1)}°` : '–',
     mag: pctText(m, 1),
     m,
   };
@@ -110,7 +110,7 @@ export function announcer(label = t('Announce position')) {
 
 /**
  * Octagonal gate outline + axes + Melee's stick thresholds. Coordinates in CSS pixels.
- * k: where Melee's 1.0 (80 units) sits as a fraction of R — 1 when plotting what the game sees,
+ * k: where Melee's 1.0 (80 units) sits as a fraction of R: 1 when plotting what the game sees,
  * 80 / 110 when plotting raw controller output (then the 80-unit clamp circle is drawn too).
  * Overlay: the per-axis deadzone cross (|x| or |y| < 0.2875), dash lines (x = ±0.8) and the tap-jump /
  * fast-fall lines (y = ±0.6625).
@@ -220,7 +220,7 @@ export function drawTrigger(ctx, x, y, w, hgt, v, color, t, label) {
     ctx.fillRect(x, y + hgt - fill, w, fill);
     ctx.restore();
   }
-  // Light-shield band (43..140 of 140) — everything below doesn't shield.
+  // Light-shield band (43..140 of 140); everything below doesn't shield.
   ctx.fillStyle = alpha(t.muted, 0.12);
   ctx.fillRect(x, y, w, hgt * (1 - TRIGGER.SHIELD_MIN));
   for (const [th, c] of [[TRIGGER.SHIELD_MIN, t.muted], [TRIGGER.HARD, t.text]]) {

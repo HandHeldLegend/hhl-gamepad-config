@@ -1,5 +1,5 @@
 /**
- * rich-text.js — Translate a whole sentence that contains inline elements (e.g. bold button names).
+ * rich-text.js: Translate a whole sentence that contains inline elements (e.g. bold button names).
  *
  *   richText('Press {finish}, then check the result.', { finish: h('strong', t('Finish')) })
  *

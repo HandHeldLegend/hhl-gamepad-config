@@ -1,5 +1,5 @@
 /**
- * Spanish (neutral Latin American) translations — motion. English source text → translation.
+ * Spanish (neutral Latin American) translations (motion). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -26,19 +26,19 @@ export default {
   "Removes slow drift. Put the controller on a flat, solid surface first.": "Elimina la deriva lenta. Primero coloca el control sobre una superficie plana y firme.",
   "The controller measures the gyro while it is perfectly still and stores that as \"zero\". Recalibrate if the camera slowly drifts in games when you are not moving.": "El control mide el giroscopio mientras está completamente quieto y lo guarda como \"cero\". Vuelve a calibrar si la cámara se desplaza lentamente en los juegos cuando no te mueves.",
   "Motion controls": "Controles de movimiento",
-  "Gyro aiming and tilt for games that support motion. Changes apply instantly — press Save to keep them.": "Apuntado con giroscopio e inclinación para juegos compatibles con movimiento. Los cambios se aplican al instante; pulsa Guardar para conservarlos.",
+  "Gyro aiming and tilt for games that support motion. Changes apply instantly. Press Save to keep them.": "Apuntado con giroscopio e inclinación para juegos compatibles con movimiento. Los cambios se aplican al instante; pulsa Guardar para conservarlos.",
   "Motion is off.": "El movimiento está desactivado.",
   "The controller is not sending motion data, so the view stays still. Turn Motion controls on to see it move.": "El control no está enviando datos de movimiento, así que la vista no se mueve. Activa Controles de movimiento para verla moverse.",
   "\"{title}\" by {author}, {license}": "\"{title}\" de {author}, {license}",
   "Waiting…": "Esperando…",
-  "Move the controller — the model tilts with how fast you turn it, and the bars show the raw sensors.": "Mueve el control: el modelo se inclina según la rapidez con que lo giras y las barras muestran los datos sin procesar de los sensores.",
+  "Move the controller. The model tilts with how fast you turn it, and the bars show the raw sensors.": "Mueve el control: el modelo se inclina según la rapidez con que lo giras y las barras muestran los datos sin procesar de los sensores.",
   "Sensitivity reset (gyro {gyro}, accelerometer {accel})": "Sensibilidad restablecida (giroscopio {gyro}, acelerómetro {accel})",
   "Multiply the motion games receive, per axis. 1.00× is the sensor's natural response.": "Multiplica el movimiento que reciben los juegos, por eje. 1,00× es la respuesta natural del sensor.",
   "Gyro": "Giroscopio",
   "default {value}": "predeterminado: {value}",
   "Place the controller on a flat, solid surface (a desk, not your lap or a sofa).": "Coloca el control sobre una superficie plana y firme (un escritorio, no tus piernas ni un sofá).",
   "Let go and don't touch the controller or the table.": "Suéltalo y no toques el control ni la mesa.",
-  "Press Start. It takes about {n} seconds — the LEDs pulse yellow while it works.": "Pulsa “Iniciar calibración”. Tarda unos {n} segundos; mientras tanto, los LED parpadean en amarillo.",
+  "Press Start. It takes about {n} seconds, and the LEDs pulse yellow while it works.": "Pulsa “Iniciar calibración”. Tarda unos {n} segundos; mientras tanto, los LED parpadean en amarillo.",
   "Calibration teaches the controller what \"perfectly still\" looks like, which stops slow drift in games.": "La calibración le enseña al control cómo es estar \"perfectamente quieto\", lo que evita la deriva lenta en los juegos.",
   "{calibrating} Keep the controller completely still.": "{calibrating} Mantén el control completamente quieto.",
   "This finishes on its own; the window updates when the controller reports back.": "Termina por sí sola; la ventana se actualiza cuando el control responde.",
@@ -47,7 +47,7 @@ export default {
   "Calibration failed": "La calibración falló",
   "The controller didn't confirm the calibration. Check the USB connection, keep the controller still and try again.": "El control no confirmó la calibración. Revisa la conexión USB, mantén el control quieto e inténtalo de nuevo.",
   "Turn the gyro and accelerometer on or off for every game.": "Activa o desactiva el giroscopio y el acelerómetro para todos los juegos.",
-  "When off, the controller reports no motion at all — handy for games that use gyro aiming you don't want.": "Si está desactivado, el control no envía ningún movimiento; útil en juegos con apuntado por giroscopio que no quieres usar.",
+  "When off, the controller reports no motion at all. That's handy for games that use gyro aiming you don't want.": "Si está desactivado, el control no envía ningún movimiento; útil en juegos con apuntado por giroscopio que no quieres usar.",
   "X axis": "Eje X",
   "Gyro X-axis multiplier (default 1.20×).": "Multiplicador del eje X del giroscopio (predeterminado: 1,20×).",
   "Scales how far the in-game camera or cursor turns when you rotate the controller. 1.00× is the sensor's natural response; higher feels faster.": "Ajusta cuánto gira la cámara o el cursor del juego al rotar el control. 1,00× es la respuesta natural del sensor; un valor mayor se siente más rápido.",

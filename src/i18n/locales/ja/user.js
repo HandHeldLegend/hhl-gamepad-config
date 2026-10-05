@@ -1,5 +1,5 @@
 /**
- * Japanese translations — user. English source text → translation.
+ * Japanese translations (user). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {

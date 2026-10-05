@@ -1,11 +1,11 @@
 /**
- * calibration.js — Analog ("hover") input calibration for the Input section (any analog sensor type).
+ * calibration.js: Analog ("hover") input calibration for the Input section (any analog sensor type).
  *
  * Protocol (config block `hover`, hoverConfig_s; command encoding in mapping.js HOVER_CMD):
  *   start  → firmware sets hover_calibration_set = 0, resets min/max of the channel(s) and then
  *            widens them while the user presses each input through its full travel;
  *   stop   → firmware sets hover_calibration_set = 1 and reloads the scalers (hover_init()).
- * Both only change RAM. We then re-read the block, mark it unsaved (so Save lights up — the user must
+ * Both only change RAM. We then re-read the block, mark it unsaved (so Save lights up; the user must
  * Save to keep the calibration) and refresh the app's "needs attention" badge.
  */
 import { h } from '../../ui/dom.js';

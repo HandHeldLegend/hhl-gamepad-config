@@ -1,5 +1,5 @@
 /**
- * Spanish (neutral Latin American) translations — battery. English source text → translation.
+ * Spanish (neutral Latin American) translations (battery). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -7,7 +7,7 @@ export default {
   "Not present": "No presente",
   "This controller has no charger chip, so it doesn't charge a battery. That's normal for wired-only builds.": "Este control no tiene chip cargador, así que no carga ninguna batería. Es normal en modelos solo con cable.",
   "Not responding": "No responde",
-  "The charger chip didn't answer when the controller started. Some connection modes skip battery setup, so this isn't always a fault — unplug the controller and reconnect it. If it keeps happening, contact support.": "El chip cargador no respondió cuando el control se encendió. Algunos modos de conexión omiten la configuración de la batería, así que no siempre es una falla: desconecta el control y vuelve a conectarlo. Si sigue pasando, contacta a soporte.",
+  "The charger chip didn't answer when the controller started. Some connection modes skip battery setup, so this isn't always a fault. Unplug the controller and reconnect it. If it keeps happening, contact support.": "El chip cargador no respondió cuando el control se encendió. Algunos modos de conexión omiten la configuración de la batería, así que no siempre es una falla: desconecta el control y vuelve a conectarlo. Si sigue pasando, contacta a soporte.",
   "Active": "Activo",
   "The charger chip is working and manages charging for the battery.": "El chip cargador funciona y gestiona la carga de la batería.",
   "The charger chip is working, but there is no battery to charge.": "El chip cargador funciona, pero no hay batería que cargar.",
@@ -17,12 +17,12 @@ export default {
   "Detected": "Detectado",
   "A battery pack is fitted.": "Hay una batería instalada.",
   "Not detected": "No detectado",
-  "No battery pack was found. That's fine — the controller runs from USB power. If you did fit a battery, check its connector.": "No se encontró ninguna batería. No pasa nada: el control funciona con la alimentación USB. Si instalaste una batería, revisa su conector.",
+  "No battery pack was found. That's fine: the controller runs from USB power. If you did fit a battery, check its connector.": "No se encontró ninguna batería. No pasa nada: el control funciona con la alimentación USB. Si instalaste una batería, revisa su conector.",
   "Unconfirmed": "Sin confirmar",
   "The controller couldn't tell whether a battery is fitted, and doesn't guess. The charging state shown above may still be correct.": "El control no pudo determinar si hay una batería instalada y no lo adivina. El estado de carga que se muestra arriba aún puede ser correcto.",
   "Not checked": "Sin comprobar",
   "Without a working charger chip nothing checks for a battery pack.": "Sin un chip cargador que funcione, nada comprueba si hay una batería.",
-  "No fuel gauge is fitted, so the battery level can't be measured — only whether it's charging.": "No hay medidor de carga instalado, así que no se puede medir el nivel de batería, solo si se está cargando.",
+  "No fuel gauge is fitted, so the battery level can't be measured, only whether it's charging.": "No hay medidor de carga instalado, así que no se puede medir el nivel de batería, solo si se está cargando.",
   "Inactive": "Inactivo",
   "A fuel gauge is fitted but isn't responding, so the battery percentage may be wrong.": "Hay un medidor de carga instalado, pero no responde, así que el porcentaje de batería podría ser incorrecto.",
   "Measures how much charge is left in the battery.": "Mide cuánta carga le queda a la batería.",
@@ -44,7 +44,7 @@ export default {
   "Fuel gauge": "Medidor de carga",
   "battery meter": "indicador de batería",
   "Battery pack": "Paquete de batería",
-  "Checked once at power-on — reconnect the controller to check again.": "Se comprueba una vez al encender; vuelve a conectar el control para comprobarlo de nuevo.",
+  "Checked once at power-on. Reconnect the controller to check again.": "Se comprueba una vez al encender; vuelve a conectar el control para comprobarlo de nuevo.",
   "No battery": "Sin batería",
   "No battery pack is fitted, so there is nothing to charge. The controller runs from USB power.": "No hay batería instalada, así que no hay nada que cargar. El control funciona con la alimentación USB.",
   "Waiting for the controller to report its battery…": "Esperando a que el control informe el estado de su batería…",
@@ -52,8 +52,8 @@ export default {
   "Level not available": "Nivel no disponible",
   "{state} · battery unconfirmed": "{state} · batería sin confirmar",
   "Plugged in and charging. Keep it connected until the light turns green.": "Conectado y cargando. Mantenlo conectado hasta que la luz se ponga verde.",
-  "Fully charged — you can unplug whenever you like.": "Carga completa: puedes desconectarlo cuando quieras.",
-  "Battery is low — plug in a charging cable soon.": "Batería baja: conecta pronto un cable de carga.",
+  "Fully charged. You can unplug whenever you like.": "Carga completa: puedes desconectarlo cuando quieras.",
+  "Battery is low. Plug in a charging cable soon.": "Batería baja: conecta pronto un cable de carga.",
   "The battery isn't being charged right now.": "La batería no se está cargando en este momento.",
   "The fuel gauge didn't give a valid reading, so the level isn't shown.": "El medidor de carga no dio una lectura válida, así que no se muestra el nivel.",
   "This controller can't measure its charge level (it has no fuel gauge), so only the charging state is shown.": "Este control no puede medir su nivel de carga (no tiene medidor de carga), así que solo se muestra el estado de carga.",

@@ -1,5 +1,5 @@
 /**
- * French translations — battery. English source text → translation.
+ * French translations (battery). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -7,7 +7,7 @@ export default {
   "Not present": "Absent",
   "This controller has no charger chip, so it doesn't charge a battery. That's normal for wired-only builds.": "Cette manette n’a pas de puce de charge, elle ne recharge donc aucune batterie. C’est normal pour les modèles filaires uniquement.",
   "Not responding": "Ne répond pas",
-  "The charger chip didn't answer when the controller started. Some connection modes skip battery setup, so this isn't always a fault — unplug the controller and reconnect it. If it keeps happening, contact support.": "La puce de charge n’a pas répondu au démarrage de la manette. Certains modes de connexion ignorent la configuration de la batterie, ce n’est donc pas toujours une panne : débranchez la manette puis rebranchez-la. Si le problème persiste, contactez l’assistance.",
+  "The charger chip didn't answer when the controller started. Some connection modes skip battery setup, so this isn't always a fault. Unplug the controller and reconnect it. If it keeps happening, contact support.": "La puce de charge n’a pas répondu au démarrage de la manette. Certains modes de connexion ignorent la configuration de la batterie, ce n’est donc pas toujours une panne : débranchez la manette puis rebranchez-la. Si le problème persiste, contactez l’assistance.",
   "Active": "Active",
   "The charger chip is working and manages charging for the battery.": "La puce de charge fonctionne et gère la recharge de la batterie.",
   "The charger chip is working, but there is no battery to charge.": "La puce de charge fonctionne, mais il n’y a aucune batterie à recharger.",
@@ -17,12 +17,12 @@ export default {
   "Detected": "Détectée",
   "A battery pack is fitted.": "Une batterie est installée.",
   "Not detected": "Non détectée",
-  "No battery pack was found. That's fine — the controller runs from USB power. If you did fit a battery, check its connector.": "Aucune batterie n’a été trouvée. Ce n’est pas grave : la manette fonctionne sur l’alimentation USB. Si vous avez installé une batterie, vérifiez son connecteur.",
+  "No battery pack was found. That's fine: the controller runs from USB power. If you did fit a battery, check its connector.": "Aucune batterie n’a été trouvée. Ce n’est pas grave : la manette fonctionne sur l’alimentation USB. Si vous avez installé une batterie, vérifiez son connecteur.",
   "Unconfirmed": "Non confirmée",
   "The controller couldn't tell whether a battery is fitted, and doesn't guess. The charging state shown above may still be correct.": "La manette n’a pas pu déterminer si une batterie est installée et ne fait pas de supposition. L’état de charge affiché ci-dessus peut tout de même être correct.",
   "Not checked": "Non vérifié",
   "Without a working charger chip nothing checks for a battery pack.": "Sans puce de charge fonctionnelle, rien ne vérifie la présence d’une batterie.",
-  "No fuel gauge is fitted, so the battery level can't be measured — only whether it's charging.": "Aucune jauge de batterie n’est installée : le niveau ne peut pas être mesuré, seulement l’état de charge.",
+  "No fuel gauge is fitted, so the battery level can't be measured, only whether it's charging.": "Aucune jauge de batterie n’est installée : le niveau ne peut pas être mesuré, seulement l’état de charge.",
   "Inactive": "Inactive",
   "A fuel gauge is fitted but isn't responding, so the battery percentage may be wrong.": "Une jauge de batterie est installée mais ne répond pas : le pourcentage peut être inexact.",
   "Measures how much charge is left in the battery.": "Mesure la charge restante de la batterie.",
@@ -44,7 +44,7 @@ export default {
   "Fuel gauge": "Jauge de batterie",
   "battery meter": "indicateur de batterie",
   "Battery pack": "Batterie",
-  "Checked once at power-on — reconnect the controller to check again.": "Vérifié une fois à la mise sous tension ; reconnectez la manette pour vérifier à nouveau.",
+  "Checked once at power-on. Reconnect the controller to check again.": "Vérifié une fois à la mise sous tension ; reconnectez la manette pour vérifier à nouveau.",
   "No battery": "Pas de batterie",
   "No battery pack is fitted, so there is nothing to charge. The controller runs from USB power.": "Aucune batterie n’est installée, il n’y a donc rien à recharger. La manette fonctionne sur l’alimentation USB.",
   "Waiting for the controller to report its battery…": "En attente des informations de batterie de la manette…",
@@ -52,8 +52,8 @@ export default {
   "Level not available": "Niveau non disponible",
   "{state} · battery unconfirmed": "{state} · batterie non confirmée",
   "Plugged in and charging. Keep it connected until the light turns green.": "Branchée et en charge. Laissez-la connectée jusqu’à ce que le voyant passe au vert.",
-  "Fully charged — you can unplug whenever you like.": "Chargée : vous pouvez la débrancher quand vous voulez.",
-  "Battery is low — plug in a charging cable soon.": "Batterie faible : branchez bientôt un câble de charge.",
+  "Fully charged. You can unplug whenever you like.": "Chargée : vous pouvez la débrancher quand vous voulez.",
+  "Battery is low. Plug in a charging cable soon.": "Batterie faible : branchez bientôt un câble de charge.",
   "The battery isn't being charged right now.": "La batterie n’est pas en charge pour le moment.",
   "The fuel gauge didn't give a valid reading, so the level isn't shown.": "La jauge de batterie n’a pas fourni de mesure valide, le niveau n’est donc pas affiché.",
   "This controller can't measure its charge level (it has no fuel gauge), so only the charging state is shown.": "Cette manette ne peut pas mesurer son niveau de charge (elle n’a pas de jauge de batterie), seul l’état de charge est donc affiché.",

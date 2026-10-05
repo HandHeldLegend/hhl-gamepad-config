@@ -1,5 +1,5 @@
 /**
- * Firmware — update the connected controller, install HOJA on a blank board, and recovery tools.
+ * Firmware: update the connected controller, install HOJA on a blank board, and recovery tools.
  *
  * The flashing itself lives in src/firmware/ (updater.js state machine + picoboot.js protocol);
  * this page is the friendly front door to it. Deep link: #/firmware?build=<id> preselects a build
@@ -20,7 +20,7 @@ const STATUS_TEXT = {
   checking: [N_('Checking…'), 'lavender'],
   current: [N_('Up to date'), 'green'],
   available: [N_('Update available'), 'blue'],
-  offline: [N_('Offline — can’t check'), 'yellow'],
+  offline: [N_('Offline: can’t check'), 'yellow'],
 };
 
 function controllerCard(session) {
@@ -60,7 +60,7 @@ function installCard(params) {
 
 function recoveryCard() {
   return card({ title: t('Recovery'), icon: 'warning', tone: 'red', subtitle: t('Only needed if something went wrong.') },
-    h('p.muted.small', t('Stuck in the bootloader after an interrupted update? Restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.', { fresh: t('Start fresh — erase everything first') })),
+    h('p.muted.small', t('Stuck in the bootloader after an interrupted update? Restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.', { fresh: t('Start fresh: erase everything first') })),
     h('div.row', asyncButton({ label: t('Restart from bootloader'), icon: 'refresh', variant: 'tonal', busyLabel: t('Restarting…'), okLabel: t('Restarted'), run: exitBootloader })));
 }
 
@@ -68,7 +68,7 @@ function downloadsCard() {
   const list = h('div.build-list', h('span.muted.small', t('Loading…')));
   listBuilds().then(({ builds, offline }) => {
     replace(list,
-      offline && callout({ tone: 'yellow', text: t('You’re offline — downloads need an internet connection.') }),
+      offline && callout({ tone: 'yellow', text: t('You’re offline. Downloads need an internet connection.') }),
       h('div.build-grid', builds.map((b) => h('a.build-link', { href: b.uf2Url, download: '', rel: 'noopener' }, icon('download'), h('span', b.label)))));
   });
   return card({ title: t('Manual downloads'), icon: 'download', tone: 'green', subtitle: t('UF2 files you can copy onto the RPI-RP2 drive yourself.') }, list);

@@ -1,15 +1,15 @@
 /**
- * constants.js — Every tunable number of the 3D Platformer.
+ * constants.js: Every tunable number of the 3D Platformer.
  *
  * Units and rate
  *   Distances are "course units": the hero is 160 units tall (≈ 1.6 m; the renderer draws 100 units per
  *   metre). Speeds are units per simulation frame, accelerations units per frame². The simulation runs at a
- *   fixed 30 Hz — the rate classic N64-era 3D platformers ran their physics at — so the frame windows below
+ *   fixed 30 Hz (the rate classic N64-era 3D platformers ran their physics at), so the frame windows below
  *   (landing chains, wall-kick timing, ground-pound spin) are counted in the same 30 Hz frames as the
  *   behaviour they're modelled on. Rendering interpolates between frames at the display rate.
  *
- * Behaviour reference (no code, comments or tables copied — values were read, then re-expressed here):
- *   - n64decomp/sm64 https://github.com/n64decomp/sm64 — src/game/mario.c (jump velocities per action,
+ * Behaviour reference (no code, comments or tables copied; values were read, then re-expressed here):
+ *   - n64decomp/sm64 https://github.com/n64decomp/sm64: src/game/mario.c (jump velocities per action,
  *     landing chains, stick → intended magnitude), mario_step.c (gravity, quarter steps, ledge probe),
  *     mario_actions_moving.c (walking acceleration, turning, skid, crouch slide, dive), and
  *     mario_actions_airborne.c (air drag/steering, ground pound, wall contact and kick window).

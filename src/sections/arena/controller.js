@@ -1,10 +1,10 @@
 /**
- * controller.js — Per-simulation-frame view of the input, with the frame-counting that techniques need.
+ * controller.js: Per-simulation-frame view of the input, with the frame-counting that techniques need.
  *
  * The fighter never looks at raw values directly; it asks questions like "was this a smash?" which
  * are answered here, once per 60 Hz frame, exactly like a game reads a controller once per frame.
  *
- * Smash detection: each axis side has an "entry frame" — the frame the stick left neutral on that
+ * Smash detection: each axis side has an "entry frame": the frame the stick left neutral on that
  * side (|v| ≥ STICK.NEUTRAL). When the stick first reaches the smash threshold we record the latency
  * (frames since entry). Latency 0 = reached the threshold on the very frame it left neutral
  * ("frame-perfect"), 1 = it was seen once in the tilt zone, ≥ 2 = too slow, reads as a tilt.

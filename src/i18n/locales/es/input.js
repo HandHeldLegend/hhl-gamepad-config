@@ -1,5 +1,5 @@
 /**
- * Spanish (neutral Latin American) translations — input. English source text → translation.
+ * Spanish (neutral Latin American) translations (input). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -21,8 +21,8 @@ export default {
     'Las seis distribuciones vuelven a los valores predeterminados de este control. Se perderán tus cambios en todos los modos.',
   'Every input in {mode} mode goes back to this controller\'s default layout and settings. Other modes are not affected.':
     'Todas las entradas del modo {mode} vuelven a la distribución y los ajustes predeterminados de este control. Los demás modos no cambian.',
-  'All modes reset to defaults — press Save to keep it.': 'Todos los modos se restablecieron. Presiona Guardar para conservar el cambio.',
-  '{mode} mode reset to defaults — press Save to keep it.': 'El modo {mode} se restableció. Presiona Guardar para conservar el cambio.',
+  'All modes reset to defaults. Press Save to keep it.': 'Todos los modos se restablecieron. Presiona Guardar para conservar el cambio.',
+  '{mode} mode reset to defaults. Press Save to keep it.': 'El modo {mode} se restableció. Presiona Guardar para conservar el cambio.',
   'The controller did not confirm the reset. Try again.': 'El control no confirmó el restablecimiento. Inténtalo de nuevo.',
   'Reset': 'Restablecer',
   'Done': 'Listo',
@@ -50,7 +50,7 @@ export default {
   'Stick directions': 'Direcciones del joystick',
   'Inputs that measure how far they are pressed, such as analog triggers (the sensor type depends on your controller). They can act as a button with an adjustable activation point, as rapid trigger, or as a full analog output.':
     'Entradas que miden qué tanto se presionan, como los gatillos analógicos (el tipo de sensor depende de tu control). Pueden funcionar como un botón con punto de activación ajustable, como rapid trigger o como salida analógica completa.',
-  'Each stick direction can be sent somewhere else too — for example to the d-pad or a button.':
+  'Each stick direction can be sent somewhere else too, for example to the d-pad or a button.':
     'Cada dirección del joystick también se puede enviar a otro lugar, por ejemplo a la cruceta o a un botón.',
   'This controller did not report any remappable inputs.': 'Este control no informó ninguna entrada que se pueda reasignar.',
   '{input} sends {output} in {mode} mode.': '{input} envía {output} en el modo {mode}.',
@@ -87,7 +87,7 @@ export default {
   'Released': 'Suelto',
   'Mode': 'Modo',
   'Analog mode': 'Modo analógico',
-  'Presses as soon as it moves down, and releases as soon as it starts coming back up — great for fast repeated presses.':
+  'Presses as soon as it moves down, and releases as soon as it starts coming back up. Great for fast repeated presses.':
     'Se activa en cuanto empieza a bajar y se suelta en cuanto empieza a subir. Ideal para pulsaciones rápidas y repetidas.',
   'Counts as pressed once it passes the activation point, like a normal button with an adjustable trigger point.':
     'Cuenta como presionado al pasar el punto de activación, como un botón normal con un punto de activación ajustable.',
@@ -109,9 +109,9 @@ export default {
   'Paste settings': 'Pegar ajustes',
   'Copy this input\'s mode and values, then paste them onto another analog input.':
     'Copia el modo y los valores de esta entrada y luego pégalos en otra entrada analógica.',
-  'Settings copied — open another analog input and press Paste.': 'Ajustes copiados. Abre otra entrada analógica y presiona Pegar ajustes.',
+  'Settings copied. Open another analog input and press Paste.': 'Ajustes copiados. Abre otra entrada analógica y presiona Pegar ajustes.',
   'Settings copied inside the app (clipboard access was blocked).': 'Ajustes copiados dentro de la app (se bloqueó el acceso al portapapeles).',
-  'Nothing to paste — copy an analog input\'s settings first.': 'No hay nada que pegar. Primero copia los ajustes de una entrada analógica.',
+  'Nothing to paste. Copy an analog input\'s settings first.': 'No hay nada que pegar. Primero copia los ajustes de una entrada analógica.',
   'Settings pasted.': 'Ajustes pegados.',
   'Calibration': 'Calibración',
   'Calibrate': 'Calibrar',
@@ -191,6 +191,6 @@ export default {
   'Not calibrated': 'Sin calibrar',
   'This controller has no analog inputs to calibrate.': 'Este control no tiene entradas analógicas que calibrar.',
   'The controller did not start calibrating. Try again.': 'El control no inició la calibración. Inténtalo de nuevo.',
-  'Calibration finished — press Save to keep it.': 'Calibración finalizada. Presiona Guardar para conservarla.',
+  'Calibration finished. Press Save to keep it.': 'Calibración finalizada. Presiona Guardar para conservarla.',
   'The controller did not confirm the calibration.': 'El control no confirmó la calibración.',
 };

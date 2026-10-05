@@ -1,5 +1,5 @@
 /**
- * App settings — theme, motion, update behavior, install, offline status and app reset.
+ * App settings: theme, motion, update behavior, install, offline status and app reset.
  * Deep link: #/settings?theme=dark|light|system applies the theme.
  */
 import { h } from '../../ui/dom.js';
@@ -28,7 +28,7 @@ function appearanceCard() {
     onChange: (v) => setLanguage(v),
   });
   const el = card({ title: t('Appearance'), icon: 'palette', tone: 'lavender' },
-    field({ label: t('Language'), description: t('Automatic uses your device’s language. Translations are new — tell us if something reads oddly.'), control: language }),
+    field({ label: t('Language'), description: t('Automatic uses your device’s language. Translations are new, so tell us if something reads oddly.'), control: language }),
     field({ label: t('Theme'), description: t('Dark is the default. System follows your device’s setting.'), control: theme }),
     field({ label: t('Reduce motion'), description: t('Turns off decorative animation. Your device’s reduced-motion setting is always respected.'), control: motion }));
   el.cleanup = off;
@@ -41,7 +41,7 @@ function behaviorCard() {
   return card({ title: t('Controller'), icon: 'gamepad', tone: 'blue' },
     field({ label: t('Check for firmware updates'), description: t('When a controller connects, look online for newer firmware.'),
       control: toggle({ checked: prefs.get('autoUpdateCheck') !== false, label: t('Check for firmware updates'), onChange: (v) => prefs.set('autoUpdateCheck', v) }) }),
-    field({ label: t('Demo controller'), description: t('Explore every page with a simulated controller — nothing is sent to hardware.'),
+    field({ label: t('Demo controller'), description: t('Explore every page with a simulated controller. Nothing is sent to hardware.'),
       control: demoBtn }),
     DEBUG && field({ label: t('Debug: force update prompt'), description: t('Shows the firmware update flow on connect even when up to date.'),
       control: toggle({ checked: debugForceUpdate.get(), onChange: (v) => debugForceUpdate.set(v) }) }));

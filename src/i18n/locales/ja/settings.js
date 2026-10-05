@@ -1,5 +1,5 @@
 /**
- * Japanese translations — settings. English source text → translation.
+ * Japanese translations (settings). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -11,14 +11,14 @@ export default {
   "Automatic ({language})": "自動（{language}）",
   "Language": "言語",
   "Appearance": "外観",
-  "Automatic uses your device’s language. Translations are new — tell us if something reads oddly.": "「自動」ではデバイスの言語を使います。翻訳は新しいため、不自然な表現があればお知らせください。",
+  "Automatic uses your device’s language. Translations are new, so tell us if something reads oddly.": "「自動」ではデバイスの言語を使います。翻訳は新しいため、不自然な表現があればお知らせください。",
   "Dark is the default. System follows your device’s setting.": "デフォルトはダークです。「システム」はデバイスの設定に従います。",
   "Turns off decorative animation. Your device’s reduced-motion setting is always respected.": "装飾的なアニメーションをオフにします。デバイスの「視差効果を減らす」などの設定は常に反映されます。",
   "Stop demo": "デモを停止",
   "Start demo": "デモを開始",
   "Check for firmware updates": "ファームウェアのアップデートを確認",
   "When a controller connects, look online for newer firmware.": "コントローラーの接続時に、新しいファームウェアをオンラインで確認します。",
-  "Explore every page with a simulated controller — nothing is sent to hardware.": "シミュレーションのコントローラーですべてのページを試せます — ハードウェアには何も送信されません。",
+  "Explore every page with a simulated controller. Nothing is sent to hardware.": "シミュレーションのコントローラーですべてのページを試せます。ハードウェアには何も送信されません。",
   "Debug: force update prompt": "デバッグ：アップデート通知を強制",
   "Shows the firmware update flow on connect even when up to date.": "最新の場合でも、接続時にファームウェアのアップデート手順を表示します。",
   "You’re using the installed app. It works offline and updates itself.": "インストール済みのアプリを使用中です。オフラインで動作し、自動でアップデートされます。",

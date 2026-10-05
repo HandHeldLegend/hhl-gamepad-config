@@ -1,5 +1,5 @@
 /**
- * French (France/international) translations — joysticks. English source text → translation.
+ * French (France/international) translations (joysticks). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -30,8 +30,8 @@ export default {
   "Axes": "Axes",
   "Your sticks need calibrating.": "Vos joysticks doivent être calibrés.",
   "Your stick needs calibrating.": "Votre joystick doit être calibré.",
-  "Follow the guided steps — it takes about a minute. Both sticks are calibrated at once.": "Suivez les étapes guidées — cela prend environ une minute. Les deux joysticks sont calibrés en même temps.",
-  "Follow the guided steps — it takes about a minute.": "Suivez les étapes guidées — cela prend environ une minute.",
+  "Follow the guided steps (it takes about a minute). Both sticks are calibrated at once.": "Suivez les étapes guidées (cela prend environ une minute). Les deux joysticks sont calibrés en même temps.",
+  "Follow the guided steps (it takes about a minute).": "Suivez les étapes guidées (cela prend environ une minute).",
   "Calibrate now": "Calibrer maintenant",
   "Calibrate": "Calibrer",
   "Calibrated": "Calibré",
@@ -56,11 +56,11 @@ export default {
   "Couldn’t start.": "Impossible de démarrer.",
   "Let go of both sticks.": "Relâchez les deux joysticks.",
   "Let go of the stick.": "Relâchez le joystick.",
-  "Rest the controller on a table — the stick’s center is recorded the moment you press Start calibration.": "Posez la manette sur une table — le centre du joystick est enregistré au moment où vous appuyez sur Lancer le calibrage.",
+  "Rest the controller on a table. The stick’s center is recorded the moment you press Start calibration.": "Posez la manette sur une table : le centre du joystick est enregistré au moment où vous appuyez sur Lancer le calibrage.",
   "Roll slowly around the edge.": "Tournez lentement le long du bord.",
   "Push the stick to the rim and turn it in full circles, about 3 laps, keeping gentle pressure against the gate.": "Poussez le joystick jusqu’au bord et faites des cercles complets, environ 3 tours, en appuyant doucement contre le guide.",
   "Press Finish.": "Appuyez sur Terminer.",
-  "Both sticks are calibrated together — you can roll them one after the other.": "Les deux joysticks sont calibrés ensemble — vous pouvez les faire tourner l’un après l’autre.",
+  "Both sticks are calibrated together, and you can roll them one after the other.": "Les deux joysticks sont calibrés ensemble ; vous pouvez les faire tourner l’un après l’autre.",
   "Calibration also resets the response curve to linear (1.00).": "Le calibrage remet aussi la courbe de réponse en linéaire (1,00).",
   "Starting…": "Démarrage…",
   "The controller didn’t accept the calibration command.": "La manette n’a pas accepté la commande de calibrage.",
@@ -69,17 +69,17 @@ export default {
   "Slowly roll each stick around its outer edge…": "Faites lentement tourner chaque joystick le long de son bord extérieur…",
   "Slowly roll the stick around its outer edge…": "Faites lentement tourner le joystick le long de son bord extérieur…",
   "Keep gentle pressure against the rim and go all the way round, slowly. The green shape grows as each direction is captured.": "Appuyez doucement contre le bord et faites le tour complet, lentement. La forme verte s’agrandit à mesure que chaque direction est mesurée.",
-  "Looks good! A couple more slow laps improves accuracy — then press Finish.": "C’est bon ! Encore quelques tours lents améliorent la précision — puis appuyez sur Terminer.",
+  "Looks good! A couple more slow laps improves accuracy, then press Finish.": "C’est bon ! Encore quelques tours lents améliorent la précision, puis appuyez sur Terminer.",
   "Finishing…": "Finalisation…",
   "Calibration didn’t finish": "Le calibrage n’a pas abouti",
   "The controller didn’t confirm. Unplug it, plug it back in and try again.": "La manette n’a pas confirmé. Débranchez-la, rebranchez-la et réessayez.",
   "Calibration is active now. Press Save to keep it after unplugging.": "Le calibrage est maintenant actif. Appuyez sur Enregistrer pour le conserver après avoir débranché la manette.",
   "Canceling…": "Annulation…",
-  "Calibration canceled — previous settings restored.": "Calibrage annulé — réglages précédents restaurés.",
+  "Calibration canceled. Previous settings restored.": "Calibrage annulé, réglages précédents restaurés.",
 
   "Then check the result in the live view and save.": "Vérifiez ensuite le résultat dans la vue en direct et enregistrez.",
-  "Calibrated — move the stick to check.": "Calibré — bougez le joystick pour vérifier.",
-  "Calibrated — move the sticks to check.": "Calibrés — bougez les joysticks pour vérifier.",
+  "Calibrated. Move the stick to check.": "Calibré. Bougez le joystick pour vérifier.",
+  "Calibrated. Move the sticks to check.": "Calibrés. Bougez les joysticks pour vérifier.",
   "It should reach the edge of the circle in every direction and rest in the center.": "Il doit atteindre le bord du cercle dans chaque direction et revenir au centre au repos.",
   "They should reach the edge of the circle in every direction and rest in the center.": "Ils doivent atteindre le bord du cercle dans chaque direction et revenir au centre au repos.",
   "Dismiss": "Masquer",
@@ -125,7 +125,7 @@ export default {
   "Snap zone in degrees, slot {n}": "Zone d’alignement en degrés, emplacement {n}",
   "Angular deadzone: stick angles within this many degrees of the output angle snap exactly onto it.": "Zone morte angulaire : les angles du joystick situés à ce nombre de degrés ou moins de l’angle de sortie s’alignent exactement dessus.",
   "{stick}: angle map diagram": "{stick} : diagramme de la carte des angles",
-  "Unused slots are ignored by the controller. Turn one on to add a notch — it starts in the widest gap.": "La manette ignore les emplacements inutilisés. Activez-en un pour ajouter un cran — il se place dans le plus grand écart.",
+  "Unused slots are ignored by the controller. Turn one on to add a notch. It starts in the widest gap.": "La manette ignore les emplacements inutilisés. Activez-en un pour ajouter un cran : il se place dans le plus grand écart.",
   "Turn a slot off to ignore it without losing its values.": "Désactivez un emplacement pour l’ignorer sans perdre ses valeurs.",
   "Use": "Utiliser",
   "Add angle": "Ajouter un angle",
@@ -148,7 +148,7 @@ export default {
   "Capture slot {n} from the stick (hold the stick at this notch first)": "Capturer l’emplacement {n} depuis le joystick (maintenez d’abord le joystick dans ce cran)",
   "Delete slot {n}": "Supprimer l’emplacement {n}",
   "{used} of {total} slots used": "{used} emplacements utilisés sur {total}",
-  "No angles enabled — press Reset to 8-way.": "Aucun angle activé — appuyez sur Réinitialiser en 8 directions.",
+  "No angles enabled. Press Reset to 8-way.": "Aucun angle activé. Appuyez sur Réinitialiser en 8 directions.",
   "{n} unused slot": "{n} emplacement libre",
   "{n} unused slots": "{n} emplacements libres",
 
@@ -166,7 +166,7 @@ export default {
   // ---- Axes tab ----
   "Axis direction": "Sens des axes",
   "This stick has no adjustable axes.": "Ce joystick n’a aucun axe réglable.",
-  "Inverting an axis changes the raw stick direction — calibrate again afterwards.": "Inverser un axe change la direction brute du joystick — recalibrez ensuite.",
+  "Inverting an axis changes the raw stick direction, so calibrate again afterwards.": "Inverser un axe change la direction brute du joystick : recalibrez ensuite.",
 
   // ---- Settings (settings.js) ----
   "Center deadzone": "Zone morte centrale",
@@ -180,7 +180,7 @@ export default {
   "Response curve": "Courbe de réponse",
   "Exponent applied to the left stick’s output. 1.00 is linear.": "Exposant appliqué à la sortie du joystick gauche. 1,00 est linéaire.",
   "Exponent applied to the right stick’s output. 1.00 is linear.": "Exposant appliqué à la sortie du joystick droit. 1,00 est linéaire.",
-  "Above 1.00 the output rises slowly near the center and catches up at the edge — finer aim for small movements. Below 1.00 the stick is more sensitive near the center. Range 0.50–3.00. Calibrating resets this to 1.00.": "Au-dessus de 1,00, la sortie monte lentement près du centre et rattrape au bord — visée plus fine pour les petits mouvements. En dessous de 1,00, le joystick est plus sensible près du centre. Plage 0,50–3,00. Le calibrage la remet à 1,00.",
+  "Above 1.00 the output rises slowly near the center and catches up at the edge, for finer aim with small movements. Below 1.00 the stick is more sensitive near the center. Range 0.50–3.00. Calibrating resets this to 1.00.": "Au-dessus de 1,00, la sortie monte lentement près du centre et rattrape au bord, pour une visée plus fine sur les petits mouvements. En dessous de 1,00, le joystick est plus sensible près du centre. Plage 0,50–3,00. Le calibrage la remet à 1,00.",
   "Invert LX": "Inverser LX",
   "Invert LY": "Inverser LY",
   "Invert RX": "Inverser RX",
@@ -190,7 +190,7 @@ export default {
   "Flip the right stick’s horizontal (left ↔ right) direction.": "Inverse le sens horizontal (gauche ↔ droite) du joystick droit.",
   "Flip the right stick’s vertical (up ↔ down) direction.": "Inverse le sens vertical (haut ↔ bas) du joystick droit.",
   "Only needed for sticks mounted the other way round (some custom builds). Recalibrate after changing it.": "Utile seulement pour les joysticks montés à l’envers (certains montages personnalisés). Recalibrez après l’avoir modifié.",
-  "Measured from the output trace. Roundness compares the shortest and longest reach around the edge (100% is a perfect circle). Reach is the average distance from the center. Diagonals compares the reach at 45° with up, down, left and right — above 100% means a squarer shape, below means rounder corners.": "Mesuré à partir du tracé de sortie. La rondeur compare la portée la plus courte et la plus longue autour du bord (100 % est un cercle parfait). La portée est la distance moyenne depuis le centre. Diagonales compare la portée à 45° avec le haut, le bas, la gauche et la droite — au-dessus de 100 %, la forme est plus carrée ; en dessous, les coins sont plus arrondis.",
+  "Measured from the output trace. Roundness compares the shortest and longest reach around the edge (100% is a perfect circle). Reach is the average distance from the center. Diagonals compares the reach at 45° with up, down, left and right. Above 100% means a squarer shape, below means rounder corners.": "Mesuré à partir du tracé de sortie. La rondeur compare la portée la plus courte et la plus longue autour du bord (100 % est un cercle parfait). La portée est la distance moyenne depuis le centre. Diagonales compare la portée à 45° avec le haut, le bas, la gauche et la droite. Au-dessus de 100 %, la forme est plus carrée ; en dessous, les coins sont plus arrondis.",
   "Roll the stick slowly around its edge to measure roundness ({coverage} covered).": "Faites tourner lentement le joystick le long du bord pour mesurer la rondeur ({coverage} couvert).",
   "Roundness {roundness} · reach {reach} · diagonals {diagonals} of cardinals": "Rondeur {roundness} · portée {reach} · diagonales à {diagonals} des cardinales",
 };

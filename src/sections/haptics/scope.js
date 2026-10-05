@@ -1,5 +1,5 @@
 /**
- * scope.js — An oscilloscope-style visualizer for haptic feedback.
+ * scope.js: An oscilloscope-style visualizer for haptic feedback.
  *
  *   const scope = hapticScope({ getStrength: () => 0.78 });
  *   scope.startTest(); ... scope.endTest();     // the 1 s test buzz
@@ -18,7 +18,7 @@
 import { canvasSurface, withAlpha, prefersReducedMotion } from '../../ui/canvas-surface.js';
 import { t } from '../../i18n/index.js';
 
-// Trigger clicks: one short pulse up, then down, then back to neutral — like a click.
+// Trigger clicks: one short pulse up, then down, then back to neutral, like a click.
 // Peak heights follow the firmware's click samples (pcm_samples.h): press peaks at 253, release at 191.
 const CLICK = {
   press: { ms: 170, peak: 1 },

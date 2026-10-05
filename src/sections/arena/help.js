@@ -1,5 +1,5 @@
 /**
- * help.js — The "Controls & help" tab: input source + button mapping, options, controls, a short
+ * help.js (The "Controls & help" tab): input source + button mapping, options, controls, a short
  * technique guide and the "About this arena" note.
  *
  * The Arena only reads the controller connected to the app (see input.js for how it is found).
@@ -27,7 +27,7 @@ export function sourceCard(app) {
   const { input } = app;
   const body = h('div.stack', { style: { '--gap': '12px' } });
   const live = h('span.arena-live-source');
-  const c = card({ title: t('Input source'), subtitle: t('Only {name} is read — other controllers are ignored.', { name: input.deviceName() }), icon: 'gamepad', tone: 'blue' },
+  const c = card({ title: t('Input source'), subtitle: t('Only {name} is read. Other controllers are ignored.', { name: input.deviceName() }), icon: 'gamepad', tone: 'blue' },
     h('div.arena-source-line', h('span.muted.small', t('Reading:')), live), body);
 
   let lastKey = '';
@@ -39,7 +39,7 @@ export function sourceCard(app) {
     const ids = input.deviceIdText();
     if (input.source === 'gamepad') {
       const gp = input.activePad();
-      const name = gp ? padName(gp.id) : '—';
+      const name = gp ? padName(gp.id) : '–';
       nodes.push(h('p.small.muted', [
         ids ? t('The browser sees this controller as “{name}” (USB {ids}).', { name, ids }) : t('The browser sees this controller as “{name}”.', { name }),
         input.matched.length > 1 ? t('{n} identical controllers are visible; the one you used last is read.', { n: input.matched.length }) : null,
@@ -118,7 +118,7 @@ function bindingsCard(app) {
   const { input } = app;
   const body = h('div');
   let cancelCapture = null;
-  const c = card({ title: t('Button mapping'), subtitle: t('Saved per output mode in this browser — Switch and Steam modes report buttons differently.'), icon: 'sliders', tone: 'lavender' }, body);
+  const c = card({ title: t('Button mapping'), subtitle: t('Saved per output mode in this browser, since Switch and Steam modes report buttons differently.'), icon: 'sliders', tone: 'lavender' }, body);
 
   let lastKey = '';
   function render(force) {
@@ -209,7 +209,7 @@ function controlsCard() {
     [t('Frame advance (paused)'), withKeys(t('D-pad right, or {keys}'), KEYS.step)],
     [t('Reset / restart run'), withKeys(t('Select / Back, or {keys}'), KEYS.select)],
   ];
-  return card({ title: t('Controls'), subtitle: t('Defaults — change them under Button mapping. The keyboard only pauses, frame-advances and resets; your controller does all the playing.'), icon: 'input', tone: 'green' },
+  return card({ title: t('Controls'), subtitle: t('Default bindings, which you can change under Button mapping. The keyboard only pauses, frame-advances and resets; your controller does all the playing.'), icon: 'input', tone: 'green' },
     kv(rows));
 }
 
@@ -217,12 +217,12 @@ function techCard(app) {
   const P = app.game.fighter.P;
   const tech = [
     [t('Walk vs dash'), t('Push the stick slowly to walk (speed follows how far you push). Flick it past {threshold} within {n} frames of leaving the center to dash.', { threshold: STICK.SMASH_X, n: STICK.SMASH_WINDOW })],
-    [t('Dash back / dash dance'), t('During the first {n} frames of a dash, flick the other way. The feedback counts how many frames the stick was seen in the "tilt zone" on the way — 2 or more and it reads as a slow turn instead. Stick bounce (snapback) shows up here too.', { n: P.DASH })],
+    [t('Dash back / dash dance'), t('During the first {n} frames of a dash, flick the other way. The feedback counts how many frames the stick was seen in the "tilt zone" on the way. At 2 or more, it reads as a slow turn instead. Stick bounce (snapback) shows up here too.', { n: P.DASH })],
     [t('Short hop vs full hop'), t('Release jump within {n} frames (≈{ms} ms) of pressing it for a short hop; hold it for a full hop.', { n: P.JUMPSQUAT, ms: Math.round(P.JUMPSQUAT * 16.7) })],
-    [t('Double jump & fast fall'), t('Jump again in the air. At or after the top of a jump, flick down to fall faster — the feedback shows how many frames after the peak you were.')],
-    [t('Airdodge, wavedash & waveland'), t('Press shield in the air; the stick picks the direction. Jump and airdodge diagonally into the ground on the first airborne frame to wavedash — the angle is shown (shallower = longer slide). Airdodging onto a platform from a fall is a waveland; letting go of the ledge, double jumping and airdodging onto the stage is a ledgedash.')],
+    [t('Double jump & fast fall'), t('Jump again in the air. At or after the top of a jump, flick down to fall faster. The feedback shows how many frames after the peak you were.')],
+    [t('Airdodge, wavedash & waveland'), t('Press shield in the air; the stick picks the direction. Jump and airdodge diagonally into the ground on the first airborne frame to wavedash. The angle is shown (shallower = longer slide). Airdodging onto a platform from a fall is a waveland; letting go of the ledge, double jumping and airdodging onto the stage is a ledgedash.')],
     [t('L-cancel'), t('Press shield or Z within {n} frames before an aerial lands to halve the landing lag.', { n: FRAMES.LCANCEL })],
-    [t('Shield & light shield'), t('Press a trigger past {threshold} to shield. A lighter press gives a bigger shield. The shield shrinks as it wears down — hold too long and it breaks.', { threshold: `${MELEE.TRIGGER_MIN}/${MELEE.TRIGGER_MAX}` })],
+    [t('Shield & light shield'), t('Press a trigger past {threshold} to shield. A lighter press gives a bigger shield. The shield shrinks as it wears down, and if you hold it too long it breaks.', { threshold: `${MELEE.TRIGGER_MIN}/${MELEE.TRIGGER_MAX}` })],
     [t('Shield drop'), t('Shield on a platform, then push the stick down at {min}–{max}° from straight down (a down-diagonal notch is ideal). Straight down flicks spot dodge instead.', { min: STICK.SPOTDODGE_CONE, max: STICK.SHIELD_DROP_MAX })],
     [t('Ledge'), t('Fall next to a ledge to grab it. Then: toward the stage or up to climb, jump to leap off, away or down to let go.')],
     [t('Smash attacks & the training dummy'), t('Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.', { n: STICK.SMASH_ATTACK + app.game.inputBuffer })],
@@ -233,10 +233,10 @@ function techCard(app) {
 
 function aboutCard() {
   return card({ title: t('About this arena'), icon: 'info', tone: 'lavender' },
-    h('p.small', t('The Arena is a place to put your HOJA controller through its paces. It reads only the controller connected to this app — never other gamepads — so what you see is exactly what your controller sends.')),
+    h('p.small', t('The Arena is a place to put your HOJA controller through its paces. It reads only the controller connected to this app (never other gamepads), so what you see is exactly what your controller sends.')),
     h('p.small', t('It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. The fighters are original characters whose movement is modelled on publicly documented attributes of classic platform-fighter characters (speeds, gravity, jumpsquat, traction), and the input handling follows the documented behaviour of the classic GameCube games. It was written from scratch for this app: the characters, stage, art and code are all our own, and it uses no game code, data files or assets of any kind.')),
     h('p.small', t('Not affiliated with or endorsed by Nintendo or HAL Laboratory.')),
-    h('p.small.muted', t('Frame windows and thresholds are tuned to feel familiar and to demand a lot of a controller, so it’s a good place to try a new stick module, gate or setting — but results won’t exactly match any particular game.')));
+    h('p.small.muted', t('Frame windows and thresholds are tuned to feel familiar and to demand a lot of a controller, so it’s a good place to try a new stick module, gate or setting, but results won’t exactly match any particular game.')));
 }
 
 export function renderHelp(panel, app) {

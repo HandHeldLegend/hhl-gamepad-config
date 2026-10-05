@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * sync-firmware.mjs — Generate the app's binary memory layout from the HOJA firmware headers.
+ * sync-firmware.mjs: Generate the app's binary memory layout from the HOJA firmware headers.
  *
  * The firmware (HOJA-LIB-RP2040) is the single source of truth for every config block and
  * static-info block the controller exposes over WebUSB. This tool reads the C headers
@@ -355,7 +355,7 @@ async function main() {
   };
 
   const banner = [
-    '// GENERATED FILE — do not edit by hand.',
+    '// GENERATED FILE: do not edit by hand.',
     '// Source of truth: HOJA-LIB-RP2040 headers (' + HEADERS.join(', ') + ').',
     `// Regenerate with: node tools/sync-firmware.mjs   (source: ${source.kind} ${source.repo}@${source.ref ?? 'unknown'})`,
     `// Validated ${checks.length} size assertion(s) from the firmware headers.`,

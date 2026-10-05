@@ -1,9 +1,9 @@
 /**
- * French (France/international) translations — firmware. English source text → translation.
+ * French (France/international) translations (firmware). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
-  "Offline — can’t check": "Hors ligne — vérification impossible",
+  "Offline: can’t check": "Hors ligne : vérification impossible",
   "Update your controller": "Mettez à jour votre manette",
   "Connect to check for new firmware.": "Connectez-la pour rechercher un nouveau firmware.",
   "Updates are checked automatically every time you connect. Firmware downloads need an internet connection.": "Les mises à jour sont recherchées automatiquement à chaque connexion. Le téléchargement du firmware nécessite une connexion internet.",
@@ -29,7 +29,7 @@ export default {
   "Restarting…": "Redémarrage…",
   "Restarted": "Redémarré",
   "Loading…": "Chargement…",
-  "You’re offline — downloads need an internet connection.": "Vous êtes hors ligne — les téléchargements nécessitent une connexion internet.",
+  "You’re offline. Downloads need an internet connection.": "Vous êtes hors ligne : les téléchargements nécessitent une connexion internet.",
   "Manual downloads": "Téléchargements manuels",
   "UF2 files you can copy onto the RPI-RP2 drive yourself.": "Fichiers UF2 que vous pouvez copier vous-même sur le lecteur RPI-RP2.",
 };

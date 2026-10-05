@@ -1,6 +1,6 @@
 /**
- * Joystick settings (analogConfig_s) — deadzones, response curve and axis inversion per stick.
- * Pure data + pure functions only — this file is imported by Node for the MCP server.
+ * Joystick settings (analogConfig_s): deadzones, response curve and axis inversion per stick.
+ * Pure data + pure functions only; this file is imported by Node for the MCP server.
  *
  * Units on the controller (HOJA-LIB-RP2040 src/input/stick_deadzone.c):
  *   l/r_deadzone, l/r_deadzone_outer   u16 in stick units, where 2048 = full deflection (stick radius).
@@ -82,7 +82,7 @@ function stickSettings(stick) {
       key: `joysticks.${stick}Curve`,
       label: 'Response curve',
       description: `Exponent applied to the ${stick} stick’s output. 1.00 is linear.`,
-      tip: 'Above 1.00 the output rises slowly near the center and catches up at the edge — finer aim for small movements. Below 1.00 the stick is more sensitive near the center. Range 0.50–3.00. Calibrating resets this to 1.00.',
+      tip: 'Above 1.00 the output rises slowly near the center and catches up at the edge, for finer aim with small movements. Below 1.00 the stick is more sensitive near the center. Range 0.50–3.00. Calibrating resets this to 1.00.',
       block: 'analog',
       type: 'number', min: EXP.min, max: EXP.max, step: 0.01, unit: '×',
       requires: CAP[stick],

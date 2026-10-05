@@ -1,5 +1,5 @@
 /**
- * imu-readout.js — Live gyro/accelerometer bars (port of hoja2's components/imu-data-display.js).
+ * imu-readout.js: Live gyro/accelerometer bars (port of hoja2's components/imu-data-display.js).
  *
  *   const readout = createImuReadout();
  *   readout.set(r.gyro, r.accel);   // raw int16 samples from the input report; drawn on the next frame
@@ -7,7 +7,7 @@
  *
  * Each axis is a centered bar: it grows right for positive values and left for negative ones.
  * Bar full-scale is kept identical to hoja2, which converted raw samples with
- * GYRO = raw × 0.7 against ±2000 and ACCEL = raw × 0.00488 against ±16 — i.e. a bar is full at
+ * GYRO = raw × 0.7 against ±2000 and ACCEL = raw × 0.00488 against ±16, i.e. a bar is full at
  * |raw| ≈ 2857 (gyro) and ≈ 3279 (accel). (Note: with the firmware's ±8 g accelerometer range
  * 1 g ≈ 4096 LSB, so gravity alone fills the accel bar, exactly as it did in hoja2.)
  *

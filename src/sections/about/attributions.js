@@ -1,5 +1,5 @@
 /**
- * attributions.js — Third-party work used by the app. Rendered on Help & about and mirrored in
+ * attributions.js: Third-party work used by the app. Rendered on Help & about and mirrored in
  * ATTRIBUTIONS.md. Add an entry whenever you vendor code, fonts, models or images.
  * `usedFor` is marked with N_() and translated where rendered (names, authors and licenses stay as-is).
  */
@@ -45,8 +45,8 @@ export const ATTRIBUTIONS = [
     name: 'pico-universal-flash-nuke',
     author: 'Phil Howard',
     url: 'https://github.com/Gadgetoid/pico-universal-flash-nuke',
-    license: 'BSD 3-Clause — Copyright 2024 Phil Howard',
-    usedFor: N_('The “Full reset — erase flash” recovery image (firmware/universal_flash_nuke.uf2)'),
+    license: 'BSD 3-Clause, Copyright 2024 Phil Howard',
+    usedFor: N_('The “Full reset: erase flash” recovery image (firmware/universal_flash_nuke.uf2)'),
   },
   {
     name: 'PICOBOOT protocol',

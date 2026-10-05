@@ -1,4 +1,4 @@
-// GENERATED FILE — do not edit by hand.
+// GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
 // Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@b840192)
 // Validated 4 size assertion(s) from the firmware headers.

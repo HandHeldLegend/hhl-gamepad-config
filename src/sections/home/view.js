@@ -1,5 +1,5 @@
 /**
- * Home — connect hero (disconnected) or device overview (connected), plus the section grid.
+ * Home: connect hero (disconnected) or device overview (connected), plus the section grid.
  */
 import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
@@ -31,7 +31,7 @@ function hero() {
   return h('section.hero',
     h('div',
       h('h1', t('Let’s set up your controller')),
-      h('p', t('Plug your HOJA controller in with a USB data cable, then connect. Everything you change applies instantly — press Save to keep it.')),
+      h('p', t('Plug your HOJA controller in with a USB data cable, then connect. Everything you change applies instantly. Press Save to keep it.')),
       h('div.hero-actions',
         button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg', disabled: !webusb, onClick: connectController }),
         button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', size: 'lg', onClick: () => startDemo() })),
@@ -49,8 +49,8 @@ function connectTips() {
   return card({ title: t('Having trouble connecting?'), icon: 'help', tone: 'blue' },
     h('ul.tips',
       h('li', fillNodes(t('Hold {buttons} while plugging in to start the controller in config mode.'), { buttons: h('strong', t('A or B (East or South)')) })),
-      h('li', t('Use a cable that carries data — many charge-only cables don’t.')),
-      isLinux() && h('li', fillNodes(t('On Linux, “Access denied” means a udev rule is missing — see {setup}.'), { setup: h('a', { href: '#/home', onclick: (e) => { e.preventDefault(); explainLinux(); } }, t('Linux setup')) })),
+      h('li', t('Use a cable that carries data. Many charge-only cables don’t.')),
+      isLinux() && h('li', fillNodes(t('On Linux, “Access denied” means a udev rule is missing. See {setup}.'), { setup: h('a', { href: '#/home', onclick: (e) => { e.preventDefault(); explainLinux(); } }, t('Linux setup')) })),
       h('li', t('Only Switch and Steam modes talk to this app. If you changed the default mode, hold A or B while plugging in.')),
       h('li', fillNodes(t('Blank board or bricked? Hold BOOTSEL while plugging in, then open {firmware} to install HOJA.'), { firmware: h('a', { href: '#/firmware' }, t('Firmware')) }))));
 }

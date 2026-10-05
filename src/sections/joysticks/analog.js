@@ -1,5 +1,5 @@
 /**
- * analog.js — Small helpers around the analog config block for the Joysticks page.
+ * analog.js: Small helpers around the analog config block for the Joysticks page.
  *
  * Angle maps ("joy_config_l" / "joy_config_r"): 16 × joyConfigSlot_s per stick.
  *   in_angle      degrees (0–360, 0 = right, counter-clockwise) where the physical notch/gate corner sits
@@ -11,7 +11,7 @@
  *                 (stick_scaling_init → _joy_validation_sort_and_count), so we re-read after writing.
  *
  * Capture commands (ANALOG_CMD_CAPTURE_JOYSTICK_LEFT/RIGHT) reply with two little-endian float32s:
- *   [0..3] angle in degrees, [4..7] distance — the stick's current *raw* (center-corrected) position.
+ *   [0..3] angle in degrees, [4..7] distance: the stick's current *raw* (center-corrected) position.
  */
 
 /** @typedef {{in_angle:number,out_angle:number,deadzone:number,in_distance:number,out_distance:number,enabled:number}} Slot */
@@ -22,7 +22,7 @@ export const MIN_ENABLED = 8;
 export const slotField = (stick) => (stick === 'right' ? 'joy_config_r' : 'joy_config_l');
 export const prefix = (stick) => (stick === 'right' ? 'r' : 'l');
 
-/** Copy of a stick's 16 slots (struct copies — mutate then pass to writeSlots). */
+/** Copy of a stick's 16 slots (struct copies; mutate then pass to writeSlots). */
 export function readSlots(session, stick) {
   return session.config.analog[slotField(stick)];
 }

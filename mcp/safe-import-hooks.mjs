@@ -1,5 +1,5 @@
 /**
- * safe-import-hooks.mjs — Node module-resolution hooks used ONLY when the settings catalog fails
+ * safe-import-hooks.mjs: Node module-resolution hooks used ONLY when the settings catalog fails
  * to import (see catalog.mjs → loadCatalog). Registered lazily with `module.register()`.
  *
  * Why: src/settings/schema.js statically imports every src/sections/<id>/settings.js, and those files
@@ -10,8 +10,8 @@
  *
  * Protocol (all carried in the URL query, so no shared state between threads is needed):
  *   schema.js?hhl-safe=<nonce>&hhl-stub=<id>,<id>
- *     hhl-safe  — any value; makes every file: module in the graph a fresh instance for this attempt
- *     hhl-stub  — comma-separated section ids whose settings.js should be stubbed
+ *     hhl-safe:  any value; makes every file: module in the graph a fresh instance for this attempt
+ *     hhl-stub:  comma-separated section ids whose settings.js should be stubbed
  * Both params are propagated from a parent module to every file: module it imports.
  */
 

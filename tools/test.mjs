@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * test.mjs — Fast, dependency-free checks. Run: node tools/test.mjs  (or npm test)
+ * test.mjs: Fast, dependency-free checks. Run: node tools/test.mjs  (or npm test)
  *
  *  1. fw-layout.js matches the firmware headers (skipped when no local firmware checkout)
  *  2. generic struct runtime matches hoja2's generated parsers (skipped when hoja2 is absent)

@@ -1,5 +1,5 @@
 /**
- * struct.js — Typed, little-endian views over firmware memory blocks.
+ * struct.js: Typed, little-endian views over firmware memory blocks.
  *
  * Instead of one generated class per C struct, a single factory builds accessor classes
  * from the layout produced by `tools/sync-firmware.mjs` (src/device/generated/fw-layout.js).
@@ -10,7 +10,7 @@
  *
  * Semantics intentionally match the old generated hoja2 parsers so ported code behaves the same:
  *   - scalar fields read/write in place;
- *   - array fields return a *copy* (typed array, or array of struct copies) — mutate the copy,
+ *   - array fields return a *copy* (typed array, or array of struct copies), so mutate the copy,
  *     then assign it back to write it;
  *   - `buffer` is the backing Uint8Array; `updateBuffer(buf)` swaps it.
  */

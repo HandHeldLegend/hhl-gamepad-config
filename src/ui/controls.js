@@ -1,5 +1,5 @@
 /**
- * controls.js — The shared UI kit. Every factory returns a plain HTMLElement.
+ * controls.js: The shared UI kit. Every factory returns a plain HTMLElement.
  *
  * Conventions:
  *   - Value controls expose `el.value` (get/set without firing callbacks) and call `onChange(value)`

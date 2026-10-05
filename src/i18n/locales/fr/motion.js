@@ -1,5 +1,5 @@
 /**
- * French translations — motion. English source text → translation.
+ * French translations (motion). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -26,19 +26,19 @@ export default {
   "Removes slow drift. Put the controller on a flat, solid surface first.": "Supprime la dérive lente. Posez d’abord la manette sur une surface plane et stable.",
   "The controller measures the gyro while it is perfectly still and stores that as \"zero\". Recalibrate if the camera slowly drifts in games when you are not moving.": "La manette mesure le gyroscope pendant qu’elle est parfaitement immobile et enregistre cette valeur comme « zéro ». Recalibrez si la caméra dérive lentement en jeu alors que vous ne bougez pas.",
   "Motion controls": "Détection de mouvement",
-  "Gyro aiming and tilt for games that support motion. Changes apply instantly — press Save to keep them.": "Visée gyroscopique et inclinaison pour les jeux compatibles. Les modifications s’appliquent immédiatement ; appuyez sur Enregistrer pour les conserver.",
+  "Gyro aiming and tilt for games that support motion. Changes apply instantly. Press Save to keep them.": "Visée gyroscopique et inclinaison pour les jeux compatibles. Les modifications s’appliquent immédiatement ; appuyez sur Enregistrer pour les conserver.",
   "Motion is off.": "La détection de mouvement est désactivée.",
   "The controller is not sending motion data, so the view stays still. Turn Motion controls on to see it move.": "La manette n’envoie aucune donnée de mouvement, la vue reste donc immobile. Activez Détection de mouvement pour la voir bouger.",
   "\"{title}\" by {author}, {license}": "« {title} » par {author}, {license}",
   "Waiting…": "En attente…",
-  "Move the controller — the model tilts with how fast you turn it, and the bars show the raw sensors.": "Bougez la manette : le modèle s’incline selon la vitesse à laquelle vous la tournez, et les barres affichent les données brutes des capteurs.",
+  "Move the controller. The model tilts with how fast you turn it, and the bars show the raw sensors.": "Bougez la manette : le modèle s’incline selon la vitesse à laquelle vous la tournez, et les barres affichent les données brutes des capteurs.",
   "Sensitivity reset (gyro {gyro}, accelerometer {accel})": "Sensibilité réinitialisée (gyroscope {gyro}, accéléromètre {accel})",
   "Multiply the motion games receive, per axis. 1.00× is the sensor's natural response.": "Multiplie le mouvement transmis aux jeux, axe par axe. 1,00× correspond à la réponse naturelle du capteur.",
   "Gyro": "Gyroscope",
   "default {value}": "par défaut : {value}",
   "Place the controller on a flat, solid surface (a desk, not your lap or a sofa).": "Posez la manette sur une surface plane et stable (un bureau, pas vos genoux ni un canapé).",
   "Let go and don't touch the controller or the table.": "Lâchez-la et ne touchez ni la manette ni la table.",
-  "Press Start. It takes about {n} seconds — the LEDs pulse yellow while it works.": "Appuyez sur « Lancer le calibrage ». Cela prend environ {n} secondes ; les LED clignotent en jaune pendant l’opération.",
+  "Press Start. It takes about {n} seconds, and the LEDs pulse yellow while it works.": "Appuyez sur « Lancer le calibrage ». Cela prend environ {n} secondes ; les LED clignotent en jaune pendant l’opération.",
   "Calibration teaches the controller what \"perfectly still\" looks like, which stops slow drift in games.": "Le calibrage apprend à la manette à quoi ressemble l’état « parfaitement immobile », ce qui évite la dérive lente en jeu.",
   "{calibrating} Keep the controller completely still.": "{calibrating} Gardez la manette totalement immobile.",
   "This finishes on its own; the window updates when the controller reports back.": "L’opération se termine toute seule ; la fenêtre se met à jour quand la manette répond.",
@@ -47,7 +47,7 @@ export default {
   "Calibration failed": "Échec du calibrage",
   "The controller didn't confirm the calibration. Check the USB connection, keep the controller still and try again.": "La manette n’a pas confirmé le calibrage. Vérifiez la connexion USB, gardez la manette immobile et réessayez.",
   "Turn the gyro and accelerometer on or off for every game.": "Active ou désactive le gyroscope et l’accéléromètre pour tous les jeux.",
-  "When off, the controller reports no motion at all — handy for games that use gyro aiming you don't want.": "Désactivée, la manette ne transmet aucun mouvement ; pratique pour les jeux dont vous ne voulez pas la visée gyroscopique.",
+  "When off, the controller reports no motion at all. That's handy for games that use gyro aiming you don't want.": "Désactivée, la manette ne transmet aucun mouvement ; pratique pour les jeux dont vous ne voulez pas la visée gyroscopique.",
   "X axis": "Axe X",
   "Gyro X-axis multiplier (default 1.20×).": "Multiplicateur de l’axe X du gyroscope (1,20× par défaut).",
   "Scales how far the in-game camera or cursor turns when you rotate the controller. 1.00× is the sensor's natural response; higher feels faster.": "Règle l’amplitude de rotation de la caméra ou du curseur en jeu quand vous tournez la manette. 1,00× correspond à la réponse naturelle du capteur ; une valeur plus élevée paraît plus rapide.",

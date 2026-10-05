@@ -4,7 +4,7 @@ A *section* is one page of the app (Joysticks, RGB, …). Each lives in `src/sec
 
 | File | Purpose | Rules |
 |---|---|---|
-| `view.js` | `export function mount(root, ctx)` — builds the page | DOM code lives here |
+| `view.js` | `export function mount(root, ctx)` builds the page | DOM code lives here |
 | `settings.js` | Scalar settings as `SettingDef`s (see `src/settings/schema.js`) | **No DOM.** Imported by Node for the MCP server |
 | `demo.js` | Demo-controller hooks: `seed(device)`, `command(block, cmd, device)` (may return a Promise) | Only used with `?demo` |
 | `<id>.css` | Page-specific styles, loaded with `loadStyles(new URL('./<id>.css', import.meta.url))` | Use theme tokens only (`var(--…)`), never raw hex |
@@ -16,13 +16,13 @@ The page is registered in `src/sections/registry.js` (title, icon, tone, capabil
 
 ```js
 export function mount(root, ctx) {
-  // ctx.session  — src/device/session.js (state, caps, info, config, static, commit, save, command, refresh, on)
-  // ctx.device   — src/device/hoja-device.js (raw driver: events 'input' / 'snapback', setInputMode, setFocusedInput…)
-  // ctx.params   — deep-link query params, e.g. { stick: 'left', tab: 'calibrate' }
-  // ctx.sub      — extra path segments (#/joysticks/left → ['left'])
-  // ctx.setParams({ tab: 'sensitivity' }) — reflect UI state into the URL (no re-render) so links are shareable
-  // ctx.navigate('rgb') — go to another page
-  // ctx.header   — element in the page header for small extra actions (e.g. a "Reset" button)
+  // ctx.session:  src/device/session.js (state, caps, info, config, static, commit, save, command, refresh, on)
+  // ctx.device:   src/device/hoja-device.js (raw driver: events 'input' / 'snapback', setInputMode, setFocusedInput…)
+  // ctx.params:   deep-link query params, e.g. { stick: 'left', tab: 'calibrate' }
+  // ctx.sub:      extra path segments (#/joysticks/left → ['left'])
+  // ctx.setParams({ tab: 'sensitivity' }): reflect UI state into the URL (no re-render) so links are shareable
+  // ctx.navigate('rgb'): go to another page
+  // ctx.header:   element in the page header for small extra actions (e.g. a "Reset" button)
   // Escape returns to Home unless a view handles it first and calls event.preventDefault().
   return {
     destroy() { /* stop timers, unsubscribe events, restore input mode */ },
@@ -44,7 +44,7 @@ await ctx.session.refresh('analog');         // re-read a block from the control
 const { status, data } = await ctx.session.command('analog', 'CALIBRATE_START');  // firmware enum names
 ```
 
-* Block names and command names come from the firmware enums (`cfg_block_t`, `analog_cmd_t`, …) — see
+* Block names and command names come from the firmware enums (`cfg_block_t`, `analog_cmd_t`, …); see
   `src/device/generated/fw-layout.js` (`blocks`, `commands`). Never hard-code numbers.
 * Array fields return **copies**: `const a = cfg.joy_config_l; a[0].in_angle = 45; cfg.joy_config_l = a;`
 * Char arrays: `decodeText(bytes)` / `encodeText(str, len)` from `src/device/struct.js`.
@@ -59,7 +59,7 @@ const stop = onInputReport(ctx.device, (r) => { /* r.sticks / r.inputs / r.accel
 // in destroy(): stop();
 ```
 
-Throttle rendering with `requestAnimationFrame` — reports arrive at ~125 Hz.
+Throttle rendering with `requestAnimationFrame`, since reports arrive at ~125 Hz.
 
 ## UI kit (`src/ui/controls.js`)
 
@@ -70,7 +70,7 @@ Overlays (`src/ui/overlay.js`): `toast`, `openDialog`, `confirmDialog`. Any elem
 DOM helper: `h('div.class', props, ...children)` from `src/ui/dom.js`. Canvas visualizers: `canvasSurface()` from `src/ui/canvas-surface.js` (DPR-aware, self-sizing, theme colors). Icons: `icon('name')` (see `assets/icons/preview.html`).
 
 For simple scalar settings, prefer declaring them in `settings.js` and rendering with
-`settingField('section.key')` from `src/settings/field.js` — then deep links and assistants get them for free.
+`settingField('section.key')` from `src/settings/field.js`; then deep links and assistants get them for free.
 
 ## Dense layouts
 
@@ -91,10 +91,10 @@ to that column and set `data-highlight` briefly.
 
 * Wrap every user-visible string in `t('English text')` from `src/i18n/index.js`; use placeholders for
   values: `t('Connected to {name}', { name })`. Counts: `plural(n, '{n} input', '{n} inputs')`.
-* Never build sentences by concatenation — word order differs between languages. One whole sentence per `t()`.
+* Never build sentences by concatenation, because word order differs between languages. One whole sentence per `t()`.
 * Pass literal strings to `t()` (no `${}` templates) so `tools/test-i18n.mjs` can find them. For literals
   that are translated later (e.g. stored and displayed elsewhere) mark them with `N_('…')`.
-* `settings.js` / `registry.js` stay plain English data — they're translated where rendered (settingField does it).
+* `settings.js` / `registry.js` stay plain English data; they're translated where rendered (settingField does it).
 * Numbers, percentages and dates: `fmt.number/percent/date` (locale-aware).
 * Translations live in `src/i18n/locales/{es,ja,fr}/<area>.js` (area = section id, or `core`). Use the terms in
   `src/i18n/GLOSSARY.md`. `node tools/test-i18n.mjs --emit es <area>` prints what's missing.

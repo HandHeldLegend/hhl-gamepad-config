@@ -1,5 +1,5 @@
 /**
- * mapping.js — Pure data + helpers for the Input section (no DOM; also used by demo.js).
+ * mapping.js: Pure data + helpers for the Input section (no DOM; also used by demo.js).
  *
  * The remapper lives in HOJA-LIB-RP2040 src/input/mapper.c. Everything here either comes from the
  * generated firmware layout (enums, struct names, command names) or mirrors something mapper.c keeps
@@ -40,7 +40,7 @@ export const INPUT_TYPE = enumMap('mapper_input_type_t', 'MAPPER_INPUT_TYPE_'); 
 export const OUTPUT_TYPE = enumMap('mapper_output_type_t', 'MAPPER_OUTPUT_');     // DISABLED, DIGITAL, HOVER, JOYSTICK, DPAD
 
 /**
- * mapper_output_mode_t — private to mapper.c, so mirrored here. (The header comment on
+ * mapper_output_mode_t is private to mapper.c, so mirrored here. (The header comment on
  * inputConfigSlot_s.output_mode says "0=default, 1=rapid, 2=threshold"; mapper.c is authoritative.)
  * The firmware treats any unknown value as RAPID for digital/d-pad outputs and PASSTHROUGH for analog.
  */

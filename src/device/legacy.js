@@ -1,5 +1,5 @@
 /**
- * legacy.js — Firmware URLs for controllers still running pre-HOJA2 ("legacy") firmware.
+ * legacy.js: Firmware URLs for controllers still running pre-HOJA2 ("legacy") firmware.
  *
  * Legacy firmware answers the 0xAF version probe with a 16-bit device id. We can't configure
  * those devices, but we can offer the matching modern firmware.

@@ -2,7 +2,7 @@
   "name": "hhl-gamepad-config",
   "private": true,
   "version": "3.0.0",
-  "description": "HHL Gamepad Config (internal name hoja3) — offline-first PWA for configuring HOJA-firmware gamepads.",
+  "description": "HHL Gamepad Config (internal name hoja3), an offline-first PWA for configuring HOJA-firmware gamepads.",
   "type": "module",
   "scripts": {
     "dev": "node tools/serve.mjs",

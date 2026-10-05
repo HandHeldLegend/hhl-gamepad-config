@@ -1,5 +1,5 @@
 /**
- * constants.js — Every tunable number in the Arena, in one place.
+ * constants.js: Every tunable number in the Arena, in one place.
  *
  * Units: positions are "stage units" (the main platform is 136 units wide), velocities are units per
  * frame and every timing is in frames of the fixed 60 Hz simulation (1 frame = 16.67 ms).
@@ -10,8 +10,8 @@
  * this original sandbox. The input pipeline and stick/trigger thresholds follow publicly documented
  * Melee behaviour (see "Input pipeline sources" below); no game code, data tables or assets are used.
  *
- * Input pipeline sources (behaviour reference only; our code is original — see melee.js):
- *   - doldecomp/melee, src/sysdolphin/baselib/controller.c — read for HOW the pad library processes
+ * Input pipeline sources (behaviour reference only; our code is original; see melee.js):
+ *   - doldecomp/melee, src/sysdolphin/baselib/controller.c: read for HOW the pad library processes
  *     input: radial stick clamp that scales both axes together, linear trigger clamp, float scaling.
  *     https://github.com/doldecomp/melee
  *   - SmashWiki "Shield" (Melee light shield: analog factor n / 140 with n from 43 to 140; Z shield 49):
@@ -22,7 +22,7 @@
  *     code): whole units of 1/80 = 0.0125 on an 80-unit circle, per-axis deadzone below 0.2875
  *     (23 units), dash/smash x at 0.8 (64 units), tap jump / fast fall y at 0.6625 (53 units).
  *     These match the thresholds controller modders target (e.g. UCF, notched-gate guides) but we could
- *     not confirm them from a fetchable primary source — NEEDS REVIEW against the game data.
+ *     not confirm them from a fetchable primary source. NEEDS REVIEW against the game data.
  *   - HOJA firmware core_gamecube.c: full-scale stick → ±110 around 128; trigger 12-bit >> 4 → 0..255.
  * Values marked "approx." below are our tuning, not verified game constants.
  */
@@ -61,9 +61,9 @@ export const STICK = {
    *  stick may spend at most ONE sampled frame in the "tilt zone" (between NEUTRAL and SMASH). */
   SMASH_WINDOW: 2,
   /** A pressed within this many frames of a smash flick → smash attack instead of a tilt (Melee: "small
-   *  step forward smash" works during the first 3 frames of a dash — SmashWiki "Dash"). The input buffer
+   *  step forward smash" works during the first 3 frames of a dash; SmashWiki "Dash"). The input buffer
    *  (FRAMES.INPUT_BUFFER) is added on top of this, and A may also come up to that many frames BEFORE
-   *  the flick (fighter.js) — both are deliberate web-latency lenience, Melee has neither. */
+   *  the flick (fighter.js). Both are deliberate web-latency lenience, Melee has neither. */
   SMASH_ATTACK: 3,
   /** Holding the stick at or below this y crouches (approx.). */
   CROUCH_Y: -0.6,
@@ -76,7 +76,7 @@ export const STICK = {
   SHIELD_DROP_MAX: 55,
   /** Airdodge: neutral (no movement) only when BOTH axes are inside this per-axis deadzone; otherwise the
    *  dodge moves at the full airdodge speed along the stick angle, whatever the stick magnitude (doldecomp
-   *  ftCo_EscapeAir: per-axis deadzone, then force × cos/sin(angle) — behaviour reference only).
+   *  ftCo_EscapeAir: per-axis deadzone, then force × cos/sin(angle); behaviour reference only).
    *  Angles come from the quantized stick, so they snap to Melee's 1/80 grid. */
   AIRDODGE_DEADZONE: 0.2875,
   /** C-stick / attack direction threshold. */
@@ -128,13 +128,13 @@ export const PHYS = {
 };
 
 // ---------------------------------------------------------------------------------------------
-// Fighter roster — movement profiles modelled on well-known classic platform-fighter movement
+// Fighter roster: movement profiles modelled on well-known classic platform-fighter movement
 // ---------------------------------------------------------------------------------------------
 /*
  * Original fighters (the round "Dot" body with different colours and accessories) whose MOVEMENT is
  * modelled on publicly documented character attributes from Super Smash Bros. Melee, so players can
  * test their controller with a familiar feel. Not affiliated with or endorsed by Nintendo or HAL
- * Laboratory; no game code, data files or assets are used — only the published attribute numbers.
+ * Laboratory; no game code, data files or assets are used, only the published attribute numbers.
  *
  * Attribute sources (SmashWiki attribute tables, NTSC Melee rows), fetched 2026-10:
  *   gravity          https://www.ssbwiki.com/Gravity
@@ -151,7 +151,7 @@ export const PHYS = {
  *                    and up aerials are special-type moves that can't be L-cancelled) and
  *                    https://www.ssbwiki.com/Weight (weight 60, the second-lightest in Melee)
  * Behaviour reference only (how jumpsquat → airborne, fast fall, airdodge and traction interact):
- *   doldecomp/melee https://github.com/doldecomp/melee — no code or data copied.
+ *   doldecomp/melee https://github.com/doldecomp/melee (no code or data copied).
  * Notes: Rosette's fast fall is listed inconsistently on the wiki table (1.85 vs a +33% column); we
  * use 2.0. Vix's short-hop height isn't in the table; ~10.6 is derived from the commonly quoted
  * short-hop velocity of 2.1 and gravity 0.23. Both NEED REVIEW.
@@ -159,7 +159,7 @@ export const PHYS = {
  * 1.7 / 2.3, jumpsquat 4); what sets him apart is air speed 1.0, a light build (weight 60: the training
  * dummy flies further) and aerials that can't be L-cancelled (noLcancel below).
  * weight (w)       https://www.ssbwiki.com/Weight (Melee: Mario 100, Fox 75, Falco 80, Marth 87, Peach 90,
- *                  Popo 88, Captain Falcon 104, Jigglypuff 60, Mr. Game & Watch 60) — used by the dummy.
+ *                  Popo 88, Captain Falcon 104, Jigglypuff 60, Mr. Game & Watch 60), used by the dummy.
  * initial dash     https://www.ssbwiki.com/Dash (Melee table: "Dash Frames" → dashF, "Max Acceleration" →
  *                  dashAcc; Mario 10 / 0.08, Fox 11 / 0.12, Falco 11 / 0.12, Marth 15 / 0.06, Peach 15 / 0.12,
  *                  Ice Climbers 13 / 0.07, Captain Falcon 15 / 0.16, Jigglypuff 13 / 0.085, G&W 8 / 0.08)
@@ -247,7 +247,7 @@ export const fighterById = (id) => FIGHTERS.find((f) => f.id === id) || FIGHTERS
 /*
  * Frame-count convention: a state entered while handling input on frame 1 (shield release, roll, a ground
  * attack…) with N frames of lag can act again on frame N + 1, and acts ON that frame (the frame the lag
- * ends is also the frame the next input is read — no extra idle frame in between). Landing is entered by
+ * ends is also the frame the next input is read: no extra idle frame in between). Landing is entered by
  * the collision step after the input was handled, so its lag counts from the next frame.
  * Sources: SmashWiki "Shield" (Melee shield drop lag 15 frames, shield stays up at least 8 frames),
  * "Wavedash" / "Air dodge" (airdodge landing = 10 frames of special landing lag), "Dash" (initial dash
@@ -280,7 +280,7 @@ export const FRAMES = {
   RESPAWN_WAIT: 180,
   TARGET_RESPAWN: 180,     // free play: broken targets come back after this long
   /**
-   * Input buffer (a deliberate convenience, NOT Melee behaviour — Melee reads a press only on the frame it
+   * Input buffer (a deliberate convenience, NOT Melee behaviour; Melee reads a press only on the frame it
    * happens). Browser + USB polling adds latency and jitter, so a jump / attack / special / shield /
    * C-stick / dash press made up to this many frames before the fighter can act is carried forward and
    * comes out on the first frame it can. L-cancel timing is never buffered. Set in Controls & help (0–6).
@@ -300,8 +300,8 @@ export const SHIELD = {
 export const LEDGE = { REACH_X: 14, REACH_Y: 24, HANG_X: 5, HANG_Y: 13 };
 
 // ---------------------------------------------------------------------------------------------
-// Keyboard shortcuts (KeyboardEvent.code). The keyboard never drives the character — the Arena is
-// for testing the connected controller — it only pauses, frame-advances and resets.
+// Keyboard shortcuts (KeyboardEvent.code). The keyboard never drives the character. The Arena is
+// for testing the connected controller, so it only pauses, frame-advances and resets.
 // ---------------------------------------------------------------------------------------------
 export const KEYS = {
   start: ['KeyP'],           // pause / resume

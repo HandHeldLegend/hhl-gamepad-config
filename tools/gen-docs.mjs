@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * gen-docs.mjs — Regenerate the assistant/deep-link docs from the app's own registry and settings schema.
+ * gen-docs.mjs: Regenerate the assistant/deep-link docs from the app's own registry and settings schema.
  *
  *   node tools/gen-docs.mjs                 write llms.txt and docs/DEEPLINKS.md
  *   node tools/gen-docs.mjs --check         exit 1 if either file is out of date (for CI)
@@ -38,6 +38,6 @@ for (const [rel, text] of outputs) {
 }
 console.log(`${cat.pages.length} pages, ${cat.settings.length} settings, links → ${cat.base}`);
 if (stale) {
-  console.error('Docs are out of date — run: node tools/gen-docs.mjs');
+  console.error('Docs are out of date. Run: node tools/gen-docs.mjs');
   process.exit(1);
 }

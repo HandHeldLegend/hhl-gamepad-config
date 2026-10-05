@@ -1,10 +1,10 @@
 /**
- * Japanese translations — haptics. English source text → translation.
+ * Japanese translations (haptics). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
   'Rumble': '振動',
-  'Changes apply instantly — press Save to keep them.': '変更はすぐに反映されます。保持するには「保存」を押してください。',
+  'Changes apply instantly. Press Save to keep them.': '変更はすぐに反映されます。保持するには「保存」を押してください。',
   'Test feedback': '振動をテスト',
   'Testing…': 'テスト中…',
   'Done': '完了',

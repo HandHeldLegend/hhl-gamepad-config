@@ -1,9 +1,9 @@
 /*
- * tokens.css — The single source of truth for the visual theme.
+ * tokens.css: The single source of truth for the visual theme.
  *
  * Palette: Super Famicom. The four face-button colors (A red, B yellow, X blue, Y green) plus the
  * lavender of the North-American SNES are used as "splashes" on a vanilla-white (light) or
- * near-black (dark) canvas. Components never use raw hex values — only the semantic tokens below.
+ * near-black (dark) canvas. Components never use raw hex values, only the semantic tokens below.
  *
  * Theme selection: <html data-theme="light|dark"> forces a theme; without the attribute the
  * OS preference decides (system mode). Dark is the default when the OS gives no preference.

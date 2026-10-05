@@ -1,10 +1,10 @@
 /**
- * French translations — haptics. English source text → translation.
+ * French translations (haptics). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
   'Rumble': 'Vibrations',
-  'Changes apply instantly — press Save to keep them.': 'Les modifications s’appliquent immédiatement ; appuyez sur Enregistrer pour les conserver.',
+  'Changes apply instantly. Press Save to keep them.': 'Les modifications s’appliquent immédiatement ; appuyez sur Enregistrer pour les conserver.',
   'Test feedback': 'Tester les vibrations',
   'Testing…': 'Test en cours…',
   'Done': 'Terminé',

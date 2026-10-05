@@ -1,5 +1,5 @@
 /**
- * RGB view — port of hoja2/modules/rgb-md.js (+ group-rgb-picker).
+ * RGB view: port of hoja2/modules/rgb-md.js (+ group-rgb-picker).
  *
  * Cards:
  *   1. Lighting     animated preview of the selected effect + effect picker (rgb_mode)
@@ -65,7 +65,7 @@ export function mount(root, { session }) {
   const modeAbout = h('p.rgb-mode-about');
   const modeRow = settingField('rgb.mode', { tone: TONE, stacked: true, description: '', onChange: () => onModeChange() });
 
-  const lightingCard = card({ title: t('Lighting'), subtitle: t('Pick an effect — the preview shows roughly how it looks.'), icon: 'rgb', tone: TONE },
+  const lightingCard = card({ title: t('Lighting'), subtitle: t('Pick an effect. The preview shows roughly how it looks.'), icon: 'rgb', tone: TONE },
     preview, modeRow, modeAbout);
 
   // ---- 2. Colors ------------------------------------------------------------------------------
@@ -179,7 +179,7 @@ export function mount(root, { session }) {
   brightRow.control.querySelector('input[type="range"]')?.addEventListener('input', (e) => { live.brightness = Number(e.target.value); preview.refresh(); });
   speedRow.control.querySelector('input[type="range"]')?.addEventListener('input', (e) => { live.speed = Number(e.target.value); });
 
-  const tuningCard = card({ title: t('Brightness & timing'), subtitle: t('Changes apply instantly — press Save to keep them.'), icon: 'sliders', tone: TONE },
+  const tuningCard = card({ title: t('Brightness & timing'), subtitle: t('Changes apply instantly. Press Save to keep them.'), icon: 'sliders', tone: TONE },
     brightRow, speedRow, idleGlowField());
 
   /** Idle glow toggle with a small color key (the three status-light colors) under its description. */

@@ -1,5 +1,5 @@
 /**
- * specials.js — Special moves as a handful of archetypes, each parameterized per fighter in
+ * specials.js: Special moves as a handful of archetypes, each parameterized per fighter in
  * movesets.js (no per-character code). A special is a move like any other (frames + hitboxes); the
  * archetype adds what makes it special: travel, a projectile, a reflect/counter/absorb window.
  *

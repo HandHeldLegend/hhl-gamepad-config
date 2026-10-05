@@ -1,5 +1,5 @@
 /**
- * linux.js — Linux setup guide: one udev rule file that lets the signed-in user open the controller.
+ * linux.js (Linux setup guide): one udev rule file that lets the signed-in user open the controller.
  *
  * Linux only lets ordinary users open USB/HID devices that a udev rule allows. Without it, the
  * browser lists the controller but opening it fails with "Access denied". One file covers:
@@ -74,7 +74,7 @@ export function explainLinux() {
     title: t('Set up Linux for your controller'), icon: 'usb', tone: 'blue', wide: true,
     body: [
       h('p', t('Linux only lets your account open USB devices that a udev rule allows. Without one, the controller shows up in the browser’s list but won’t connect (“Access denied”).')),
-      h('p', t('This one-time rule covers this app and the controller’s Steam (SInput) and Switch modes in games and Steam. Browsers can’t tell which Linux distribution you use, so it’s written to work on all the common ones — Ubuntu, Fedora, Arch, SteamOS, Mint, Pop!_OS, openSUSE and more.')),
+      h('p', t('This one-time rule covers this app and the controller’s Steam (SInput) and Switch modes in games and Steam. Browsers can’t tell which Linux distribution you use, so it’s written to work on all the common ones: Ubuntu, Fedora, Arch, SteamOS, Mint, Pop!_OS, openSUSE and more.')),
       h('ol.linux-steps',
         h('li', t('Open a terminal, paste this and press Enter. It asks for your password.'),
           codeBlock(installCommand(), t('Command that installs the udev rule'))),

@@ -1,5 +1,5 @@
 /**
- * updater.js — Controller firmware updates, HOJA installs on bare boards, and recovery.
+ * updater.js: Controller firmware updates, HOJA installs on bare boards, and recovery.
  *
  * This is hoja2's firmware state machine (js/app.js) moved into its own module with a stepped
  * dialog UI. Modes:
@@ -71,7 +71,7 @@ const st = {
   pendingLegacy: false,
   fresh: false,          // "Start fresh": erase with NUKE_BUILD before writing pendingUrl
   erased: false,         // the nuke has been written in this run
-  stagedImage: null,     // 'nuke' | 'firmware' — which image picoboot.js staged for the drive picker
+  stagedImage: null,     // 'nuke' | 'firmware': which image picoboot.js staged for the drive picker
   manualUrl: undefined,  // UF2 offered as a manual download in uf2-drive-select
   status: { state: 'unknown', latest: null, url: null },
 };
@@ -138,7 +138,7 @@ function ensureUi() {
     h('ol', { style: { margin: '6px 0 0', paddingLeft: '1.2em' } },
       h('li', fillNodes(t('Open the drive named {drive} or {drive2}'), { drive: h('strong', 'RPI-RP2'), drive2: h('strong', 'RP2350') })),
       h('li', fillNodes(t('Select that drive (you’ll see {file} inside)'), { file: h('strong', 'INFO_UF2.TXT') })),
-      h('li', t('Click Select / Open — not Downloads or Documents'))));
+      h('li', t('Click Select / Open, not Downloads or Documents'))));
   tips.hidden = true;
 
   // Keep my settings / Start fresh (Reinstall + installer). Start fresh needs an explicit danger confirm.
@@ -146,7 +146,7 @@ function ensureUi() {
   const freshRadio = h('input', { type: 'radio', name: 'fw-fresh', value: 'fresh' });
   const eraseConfirm = h('input', { type: 'checkbox' });
   const eraseWarn = callout({ tone: 'red', title: t('This erases all settings, calibration and pairings.') },
-    h('p.small', { style: { margin: '4px 0 8px' } }, t('The whole flash is wiped first, then the firmware is written. The controller restarts in between — keep it plugged in. Afterwards, calibrate the sticks and pair again.')),
+    h('p.small', { style: { margin: '4px 0 8px' } }, t('The whole flash is wiped first, then the firmware is written. The controller restarts in between, so keep it plugged in. Afterwards, calibrate the sticks and pair again.')),
     h('label.row.small', { style: { flexWrap: 'nowrap', alignItems: 'flex-start', '--gap': '10px' } }, eraseConfirm,
       h('span', t('Yes, erase everything on this controller'))));
   eraseWarn.hidden = true;
@@ -155,7 +155,7 @@ function ensureUi() {
   const freshChoice = h('fieldset.fw-fresh',
     h('legend.field-label', t('Your settings')),
     option(keepRadio, t('Keep my settings'), t('Write the firmware over the current one. Settings, calibration and pairings stay.')),
-    option(freshRadio, t('Start fresh — erase everything first'), t('Wipe the controller completely, then write the firmware. Try this if it misbehaves even after a reinstall.'), 'danger'),
+    option(freshRadio, t('Start fresh: erase everything first'), t('Wipe the controller completely, then write the firmware. Try this if it misbehaves even after a reinstall.'), 'danger'),
     eraseWarn);
   freshChoice.hidden = true;
   const stepCaption = h('p.small.muted.fw-step-caption');
@@ -269,14 +269,14 @@ function actions({ primary, restart = false, dismiss = true }) {
 
 /**
  * "Restart controller" in the wizard: on success the board leaves BOOTSEL, so there's nothing left to
- * do here — close the wizard (state → hidden, so a later bootloader appearance starts over) and leave
+ * do here: close the wizard (state → hidden, so a later bootloader appearance starts over) and leave
  * one calm toast. On failure the dialog stays open with picoboot.js's error in the progress line.
  */
 async function restartFromBootloader() {
   const ok = await pico_exit_bootloader_attempt();
   if (ok === true) {
     hide();
-    toast(t('Controller restarting — press Connect when it’s back'), { icon: 'refresh', timeout: 4500 });
+    toast(t('Controller restarting: press Connect when it’s back'), { icon: 'refresh', timeout: 4500 });
   }
   return false;
 }
@@ -326,7 +326,7 @@ function updateAvailableActions() {
 
 async function enterBootloader() {
   st.mode = 'awaiting-bootloader';
-  paint(t('Entering update mode'), t('Restarting into update mode. When the bootloader appears, flashing starts automatically — or press Update if your browser asks for permission.'));
+  paint(t('Entering update mode'), t('Restarting into update mode. When the bootloader appears, flashing starts automatically. If your browser asks for permission, press Update.'));
   setUpdateStatus(t('Sending reboot to bootloader…'), 10, true);
   panels();
   actions({ primary: { label: t('Update'), icon: 'download', run: () => flashNext({ allowRequestDevice: true }) } });
@@ -334,7 +334,7 @@ async function enterBootloader() {
     if (st.pendingLegacy) device.rebootToBootloaderLegacy().catch(() => {});
     else await device.rebootToBootloader();
   } catch (err) {
-    // The device often drops off USB mid-transfer — that's success for us.
+    // The device often drops off USB mid-transfer; that's success for us.
     console.warn('[fw] reboot command:', err?.message || err);
   }
   setUpdateStatus(t('Waiting for the bootloader…'), 30, true);
@@ -353,10 +353,10 @@ function showUf2DriveStep() {
   st.manualUrl = undefined;
   panels({ tips: true });
   paint(t('Select the RPI-RP2 drive'), erasing()
-    ? t('The erase tool is copied onto the RPI-RP2 drive. Read the steps, then press the button — a folder dialog will open on top of this window.')
-    : t('Direct USB flashing isn’t available on this system. Read the steps, then press the button — a folder dialog will open on top of this window.'),
+    ? t('The erase tool is copied onto the RPI-RP2 drive. Read the steps, then press the button. A folder dialog will open on top of this window.')
+    : t('Direct USB flashing isn’t available on this system. Read the steps, then press the button. A folder dialog will open on top of this window.'),
   { icon: erasing() ? 'trash' : 'download', tone: erasing() ? 'red' : 'blue' });
-  setUpdateStatus(t('Ready — pick RPI-RP2 in the next dialog'), 100, false);
+  setUpdateStatus(t('Ready: pick RPI-RP2 in the next dialog'), 100, false);
   actions({ primary: { label: t('Select RPI-RP2'), icon: 'upload', run: completeUf2Step }, restart: true });
 }
 
@@ -379,9 +379,9 @@ function showUpdateComplete() {
   const u = ensureUi();
   panels();
   paint(t('Update complete'), st.fresh
-    ? t('The controller was erased and the firmware was written. Give it a moment to restart, then press Connect — then calibrate the sticks and pair again.')
+    ? t('The controller was erased and the firmware was written. Give it a moment to restart, then press Connect. After that, calibrate the sticks and pair again.')
     : t('Firmware was written successfully. Give the controller a moment to restart, then press Connect.'), { tone: 'green', icon: 'check' });
-  setUpdateStatus(t('Done — connect when ready'), 100, true);
+  setUpdateStatus(t('Done: connect when ready'), 100, true);
   u.progress.busy(false);
   actions({ primary: { label: t('Connect'), icon: 'usb', run: async () => { hide(); const { connectController } = await import('../app/shell.js'); connectController(); } } });
   setStatus({ state: 'unknown' });
@@ -409,7 +409,7 @@ async function showBootloaderInstall(preselect) {
     { value: NUKE_BUILD.id, label: t(NUKE_BUILD.label) }];
   u.select = select({ options, value: preselect || '', ariaLabel: t('Controller build'), onChange: refreshInstallState });
   u.select.style.width = '100%';
-  replace(u.buildSelect, u.select, offline && h('p.small.muted', { style: { marginTop: '6px' } }, t('Offline — showing the last known list. Installing needs an internet connection.')));
+  replace(u.buildSelect, u.select, offline && h('p.small.muted', { style: { marginTop: '6px' } }, t('Offline: showing the last known list. Installing needs an internet connection.')));
   u.builds = [...builds, NUKE_BUILD];
   refreshInstallState();
 }
@@ -489,7 +489,7 @@ async function startBootloaderFlash({ allowRequestDevice = true } = {}) {
 function showEraseFlash() {
   st.mode = 'erase-flash';
   panels();
-  paint(t('Erasing the controller'), t('Wiping settings, calibration and pairings. Don’t unplug the controller — when the erase finishes it restarts into the bootloader on its own.'), { tone: 'red', icon: 'trash' });
+  paint(t('Erasing the controller'), t('Wiping settings, calibration and pairings. Don’t unplug the controller. When the erase finishes, it restarts into the bootloader on its own.'), { tone: 'red', icon: 'trash' });
   setUpdateStatus(t('Preparing the erase…'), 0, true);
   actions({ primary: { label: t('Erase'), icon: 'trash', variant: 'danger', run: () => startEraseFlash({ allowRequestDevice: true }) }, restart: true });
 }
@@ -507,7 +507,7 @@ function showEraseWait() {
   st.stagedImage = null;
   st.manualUrl = undefined;
   panels();
-  paint(t('Erasing — waiting for the bootloader'), t('The controller is wiping itself and comes back as {drive} in a few seconds. Writing the firmware then starts automatically. If nothing happens, press Continue.', { drive: 'RPI-RP2' }));
+  paint(t('Erasing: waiting for the bootloader'), t('The controller is wiping itself and comes back as {drive} in a few seconds. Writing the firmware then starts automatically. If nothing happens, press Continue.', { drive: 'RPI-RP2' }));
   setUpdateStatus(t('Waiting for the bootloader…'), null, true);
   actions({ primary: { label: t('Continue'), icon: 'download', run: () => startBootloaderFlash({ allowRequestDevice: true }) } });
 }
@@ -562,7 +562,7 @@ async function onBootloaderConnect() {
 }
 
 function onBootloaderDisconnect() {
-  if (st.mode === 'hidden') return; // e.g. the board leaving BOOTSEL after "Restart controller" — nothing to do
+  if (st.mode === 'hidden') return; // e.g. the board leaving BOOTSEL after "Restart controller": nothing to do
   if (ACTIVE.includes(st.mode)) return; // keep the dialog through reboots
   hide();
 }
@@ -613,7 +613,7 @@ export function initFirmware() {
 
 /**
  * Open the update flow for the connected controller (from Home / Firmware page).
- * reinstall: offer "Keep my settings" / "Start fresh — erase everything first".
+ * reinstall: offer "Keep my settings" / "Start fresh: erase everything first".
  */
 export async function openUpdateWizard({ reinstall = false } = {}) {
   if (!session.connected) { toast(t('Connect your controller first.'), { tone: 'yellow' }); return; }

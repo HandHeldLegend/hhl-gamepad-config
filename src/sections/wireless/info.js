@@ -1,5 +1,5 @@
 /**
- * info.js — Pure helpers that interpret the wireless static/config fields (no DOM).
+ * info.js: Pure helpers that interpret the wireless static/config fields (no DOM).
  *
  * Sources of truth (HOJA-LIB-RP2040):
  *   bluetoothInfoStatic_s   include/utilities/static_config.h

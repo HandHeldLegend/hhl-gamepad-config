@@ -1,10 +1,10 @@
 /**
- * pwa.js — Service worker registration, offline readiness, app updates and install prompts.
+ * pwa.js: Service worker registration, offline readiness, app updates and install prompts.
  *
  * Update flow (no silent swaps mid-session):
  *   1. A new sw.js is found → it precaches the new version in the background and posts
  *      { type: 'precache-progress', done, total } messages → we show a progress toast/dialog.
- *   2. When it's installed and waiting, we show "Update ready — Restart".
+ *   2. When it's installed and waiting, we show "Update ready: Restart".
  *   3. Restart → postMessage('skip-waiting') → controllerchange → reload.
  *
  * The service worker is skipped on localhost unless the URL has ?sw, so edits show up on a

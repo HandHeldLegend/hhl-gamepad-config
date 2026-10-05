@@ -1,5 +1,5 @@
 /**
- * course.js — The test course and its collision queries (pure data + math; no DOM, runs in Node).
+ * course.js: The test course and its collision queries (pure data + math; no DOM, runs in Node).
  *
  * Every solid is either
  *   a box   {kind: 'box',  min: [x, y, z], max: [x, y, z]}                  flat top at max[1]

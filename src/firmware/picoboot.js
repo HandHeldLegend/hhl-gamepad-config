@@ -1,12 +1,12 @@
 /**
- * picoboot.js — Flash RP2040/RP2350 controllers from the browser.
+ * picoboot.js: Flash RP2040/RP2350 controllers from the browser.
  *
  * Ported from hoja2/js/pico_update.js with the protocol logic unchanged; the only change is that
  * progress is reported through onFlashProgress() instead of writing to page elements.
  *
  * Strategy (pico_update_attempt_flash):
  *   1. download .bin (+ verify SHA-256 against the build manifest) and .uf2 in parallel;
- *   2. try PICOBOOT over WebUSB (vendor interface on the BOOTSEL device) — fastest, no file dialogs;
+ *   2. try PICOBOOT over WebUSB (vendor interface on the BOOTSEL device): fastest, no file dialogs;
  *   3. fall back to writing the UF2 onto the RPI-RP2 / RP2350 mass-storage drive via the
  *      File System Access folder picker (needs a user click → returned as needsUserAction);
  *   4. last resort: manual UF2 download.
@@ -14,7 +14,7 @@
  * Status messages are translated (t); errors that the wizard displays keep English text marked with
  * N_() so updater.js can still match on them and translates them when shown.
  *
- * PICOBOOT protocol reference: Raspberry Pi pico-bootrom (picoboot.h) — commands below.
+ * PICOBOOT protocol reference: Raspberry Pi pico-bootrom (picoboot.h); commands below.
  */
 import { t, N_ } from '../i18n/index.js';
 
@@ -273,7 +273,7 @@ export async function pico_try_claim_bootloader(options = {}) {
         error,
     });
 
-    // Already-permitted Pico (e.g. after a connect event) — no user gesture required
+    // Already-permitted Pico (e.g. after a connect event): no user gesture required
     let hadKnownDevice = false;
     try {
         const existing = await navigator.usb.getDevices();
@@ -287,7 +287,7 @@ export async function pico_try_claim_bootloader(options = {}) {
             } catch (error) {
                 console.warn('Could not claim known Pico bootloader:', error);
                 await closePicoDevice();
-                // Do not pop another USB picker — fall through to UF2
+                // Do not pop another USB picker; fall through to UF2
                 return failClaim(error, {
                     needsPermission: !allowRequestDevice,
                 });
@@ -304,7 +304,7 @@ export async function pico_try_claim_bootloader(options = {}) {
         );
     }
 
-    // Known device already failed claim — only skip requestDevice on auto-flow (no user gesture)
+    // Known device already failed claim: only skip requestDevice on auto-flow (no user gesture)
     if (hadKnownDevice && !allowRequestDevice) {
         return failClaim(new Error('Picoboot interface unavailable'));
     }
@@ -324,7 +324,7 @@ export async function pico_try_claim_bootloader(options = {}) {
 
 /**
  * Write a UF2 image to the RPI-RP2 drive via the File System Access API.
- * Call this only after the UI has shown instructions — the OS picker covers the page.
+ * Call this only after the UI has shown instructions, because the OS picker covers the page.
  */
 function isExpectedUf2EjectError(error) {
     const msg = String(error?.message || error).toLowerCase();
@@ -376,7 +376,7 @@ export async function pico_write_uf2_via_picker(uf2Data) {
     try {
         await writable.write(uf2Data);
     } catch (error) {
-        // Write can also abort if the volume ejects very quickly — treat as success.
+        // Write can also abort if the volume ejects very quickly; treat as success.
         if (!isExpectedUf2EjectError(error)) {
             try { await writable.abort(); } catch (_) { /* ignore */ }
             throw error;

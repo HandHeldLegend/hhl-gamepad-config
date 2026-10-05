@@ -1,12 +1,12 @@
 /**
- * RGB settings (rgbConfig_s) — lighting effect, speed, brightness, idle glow and per-group colors.
+ * RGB settings (rgbConfig_s): lighting effect, speed, brightness, idle glow and per-group colors.
  *
- * Pure data + pure functions only — this file is imported by Node for the MCP server.
+ * Pure data + pure functions only; this file is imported by Node for the MCP server.
  *
  * Firmware notes (HOJA-LIB-RP2040):
  *   - rgb_mode holds an rgb_anim_t (include/devices/animations/rgb_modes.h). That enum isn't in the
  *     generated layout, so the user-selectable values are listed in RGB_MODES below. BREATHE (5) is
- *     reserved/not wired and IDLE (6) is internal, so neither is offered — same as hoja2.
+ *     reserved/not wired and IDLE (6) is internal, so neither is offered (same as hoja2).
  *   - rgb_brightness is 0..RGB_BRIGHTNESS_MAX (4096); the firmware caps it to a third over wireless.
  *   - rgb_speed is the animation/fade time in ms, clamped by the firmware to 300..5000.
  *   - rgb_idle_glow: 1 = glow DISABLED; 0 (or 0xFF on blank flash) = enabled. hoja2's "On, Off"

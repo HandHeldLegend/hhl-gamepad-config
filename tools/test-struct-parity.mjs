@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * test-struct-parity.mjs — Cross-check the generic struct runtime against hoja2's generated parsers.
+ * test-struct-parity.mjs: Cross-check the generic struct runtime against hoja2's generated parsers.
  *
  * Fills random buffers, then compares every field both implementations know about. Fields that
  * exist only on one side are listed (usually new firmware fields hoja2 never got).

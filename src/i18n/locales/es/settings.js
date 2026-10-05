@@ -1,5 +1,5 @@
 /**
- * Spanish (neutral Latin American) translations — settings. English source text → translation.
+ * Spanish (neutral Latin American) translations (settings). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -11,14 +11,14 @@ export default {
   "Automatic ({language})": "Automático ({language})",
   "Language": "Idioma",
   "Appearance": "Apariencia",
-  "Automatic uses your device’s language. Translations are new — tell us if something reads oddly.": "Automático usa el idioma de tu dispositivo. Las traducciones son nuevas: avísanos si algo suena raro.",
+  "Automatic uses your device’s language. Translations are new, so tell us if something reads oddly.": "Automático usa el idioma de tu dispositivo. Las traducciones son nuevas: avísanos si algo suena raro.",
   "Dark is the default. System follows your device’s setting.": "Oscuro es el predeterminado. Sistema sigue el ajuste de tu dispositivo.",
   "Turns off decorative animation. Your device’s reduced-motion setting is always respected.": "Desactiva las animaciones decorativas. Siempre se respeta el ajuste de movimiento reducido de tu dispositivo.",
   "Stop demo": "Detener demo",
   "Start demo": "Iniciar demo",
   "Check for firmware updates": "Buscar actualizaciones de firmware",
   "When a controller connects, look online for newer firmware.": "Cuando se conecte un control, busca en línea un firmware más reciente.",
-  "Explore every page with a simulated controller — nothing is sent to hardware.": "Explora todas las páginas con un control simulado: no se envía nada al hardware.",
+  "Explore every page with a simulated controller. Nothing is sent to hardware.": "Explora todas las páginas con un control simulado: no se envía nada al hardware.",
   "Debug: force update prompt": "Depuración: forzar aviso de actualización",
   "Shows the firmware update flow on connect even when up to date.": "Muestra el proceso de actualización de firmware al conectar, aunque esté al día.",
   "You’re using the installed app. It works offline and updates itself.": "Estás usando la app instalada. Funciona sin conexión y se actualiza sola.",

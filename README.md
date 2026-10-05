@@ -1,6 +1,6 @@
 # HHL Gamepad Config
 
-*Internal name: **hoja3** — the successor to `hoja2/`.*
+*Internal name: **hoja3**, the successor to `hoja2/`.*
 
 An installable, offline-first web app (PWA) for configuring, calibrating and updating controllers running
 [HOJA firmware](https://github.com/HandHeldLegend/HOJA-LIB-RP2040) from Hand Held Legend. Talks to the controller
@@ -18,9 +18,9 @@ cd hoja3
 node tools/serve.mjs          # http://localhost:5173/   (no install needed)
 ```
 
-- `http://localhost:5173/?demo` — simulated controller (no hardware needed).
-- `http://localhost:5173/?sw` — enable the service worker locally to test offline/updates (off by default in dev so a refresh always shows your edits).
-- `?debug=force-update` — force the firmware update prompt on connect (same as hoja2).
+- `http://localhost:5173/?demo`: simulated controller (no hardware needed).
+- `http://localhost:5173/?sw`: enable the service worker locally to test offline/updates (off by default in dev so a refresh always shows your edits).
+- `?debug=force-update`: force the firmware update prompt on connect (same as hoja2).
 
 ## Everyday tasks
 
@@ -51,7 +51,7 @@ hoja3/
 │  ├─ app/                 shell (layout/nav), router (deep links), prefs (theme), pwa, update UI
 │  ├─ ui/                  dom helper, icons, controls (UI kit), overlays (dialogs, toasts, tooltips)
 │  ├─ device/              WebUSB driver, session, struct runtime, report decoder, demo controller
-│  │  └─ generated/        fw-layout.js — GENERATED from the firmware headers
+│  │  └─ generated/        fw-layout.js (GENERATED from the firmware headers
 │  ├─ firmware/            update/install state machine, PICOBOOT flasher, build catalog
 │  ├─ settings/            declarative settings schema, bound fields, #/apply deep links
 │  ├─ agent/               window.hhl bridge + WebMCP tools

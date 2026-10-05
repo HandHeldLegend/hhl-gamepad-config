@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * test-i18n.mjs — Check that every user-facing string has Spanish, Japanese and French translations.
+ * test-i18n.mjs: Check that every user-facing string has Spanish, Japanese and French translations.
  *
  *   node tools/test-i18n.mjs                    # summary; exit 1 if anything is missing
  *   node tools/test-i18n.mjs --emit es input    # print missing Spanish strings for the "input" area
@@ -167,7 +167,7 @@ export async function run({ quiet = false } = {}) {
       for (const [k, list] of clash.slice(0, 40)) console.log(`      "${k}" → ${list.map((x) => `${x.area}: ${x.value}`).join(' | ')}`);
     }
     const unused = Object.keys(dict).filter((k) => !strings.has(k));
-    if (unused.length && !quiet) console.log(`    (${lang}: ${unused.length} dictionary entries not used — fine if intentional)`);
+    if (unused.length && !quiet) console.log(`    (${lang}: ${unused.length} dictionary entries not used; fine if intentional)`);
   }
   return failures;
 }

@@ -1,5 +1,5 @@
 /**
- * Japanese translations — about. English source text → translation.
+ * Japanese translations (about). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -8,7 +8,7 @@ export default {
   "3D rendering on the Motion and 3D Platformer pages (vendor/three/)": "モーションページと3Dアクションページの3D描画（vendor/three/）",
   "Updating the ESP32 wireless module from the Wireless page (vendor/esptool-js/)": "ワイヤレスページからのESP32ワイヤレスモジュールのアップデート（vendor/esptool-js/）",
   "Compression while writing ESP32 firmware (vendor/esptool-js/)": "ESP32ファームウェア書き込み時の圧縮（vendor/esptool-js/）",
-  "The “Full reset — erase flash” recovery image (firmware/universal_flash_nuke.uf2)": "「完全リセット — フラッシュを消去」の復旧イメージ（firmware/universal_flash_nuke.uf2）",
+  "The “Full reset: erase flash” recovery image (firmware/universal_flash_nuke.uf2)": "「完全リセット：フラッシュを消去」の復旧イメージ（firmware/universal_flash_nuke.uf2）",
   "Reference for the USB bootloader commands used to flash firmware (src/firmware/picoboot.js)": "ファームウェアの書き込みに使うUSBブートローダーコマンドの参考資料（src/firmware/picoboot.js）",
   "Config/static memory layouts are generated from its headers (src/device/generated/fw-layout.js)": "設定／静的メモリのレイアウトはこのヘッダーから生成しています（src/device/generated/fw-layout.js）",
   "The controller won’t connect": "コントローラーが接続できない",

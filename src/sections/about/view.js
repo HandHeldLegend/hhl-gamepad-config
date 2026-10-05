@@ -1,5 +1,5 @@
 /**
- * Help & about — quick troubleshooting, links, version info and third-party attributions.
+ * Help & about: quick troubleshooting, links, version info and third-party attributions.
  */
 import { h, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
@@ -50,7 +50,7 @@ export function mount(root) {
 
     card({ title: t('Attributions'), icon: 'sparkle', tone: 'red', subtitle: t('Made possible by these people and projects.') },
       h('ul.attributions', ATTRIBUTIONS.map((a) => h('li',
-        h('div', h('strong', a.name), ' — ', a.author, ' · ', h('span.badge', a.license)),
+        h('div', h('strong', a.name), ' · ', a.author, ' · ', h('span.badge', a.license)),
         h('div.muted.small', t(a.usedFor), ' · ', h('a', { href: a.url, target: '_blank', rel: 'noopener' }, t('source')))))),
       h('p.faint.xs', t('Super Famicom-inspired colors are a tribute; this app is not affiliated with or endorsed by Nintendo.'))),
   );

@@ -1,15 +1,15 @@
 /**
- * hero.js — The player character: a small action state machine stepped at a fixed 30 Hz.
+ * hero.js (The player character): a small action state machine stepped at a fixed 30 Hz.
  * Pure logic (no DOM, no three.js) so the gameplay tests run it in Node.
  *
  * Each frame: read the stick relative to the camera (stickToIntent), tick timers, then run the current
  * action's handler. A handler may switch action *before* moving (the new action then runs in the same
  * frame, so a jump leaves the ground on the frame it is pressed) or *after* moving (landing, wall contact,
- * running off an edge — the new action starts next frame). Handlers move the hero with groundStep() or
+ * running off an edge; the new action starts next frame). Handlers move the hero with groundStep() or
  * airStep(), which advance in four quarter steps against the course's floors, walls and ceilings.
  *
  * Movement model (numbers in constants.js; behaviour modelled on the classic 30 Hz 3D platformer physics
- * documented by the n64decomp/sm64 project — reference only, nothing copied):
+ * documented by the n64decomp/sm64 project; reference only, nothing copied):
  *   Ground   speed eases toward (stick²) × 32 with a tapering acceleration; the facing turns 11.25° a frame
  *            toward the stick; pulling the stick back at speed skids (jump = side flip); slopes add or
  *            remove speed; floors steeper than 38° make you slide.
@@ -20,7 +20,7 @@
  *   Moves    crouch + jump = backflip; running + crouch → crouch slide, + jump = long jump; attack while
  *            running fast = dive (land into a belly slide; jump/attack to roll out); in the air, crouch =
  *            ground pound, attack = kick or dive; hitting a wall head-on in the air sticks you to it for
- *            two frames — jump then (or during the next five frames of falling away) to wall kick; falling
+ *            two frames: jump then (or during the next five frames of falling away) to wall kick; falling
  *            past a ledge 100–160 units above your feet grabs it.
  */
 import { BODY, STICK, GROUND, AIR, JUMPS, CHAIN, MOVES, POUND, WALL, LEDGE, SLOPE } from './constants.js';

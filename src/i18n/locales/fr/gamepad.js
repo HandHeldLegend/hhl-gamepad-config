@@ -1,5 +1,5 @@
 /**
- * French (France/international) translations — gamepad. English source text → translation.
+ * French (France/international) translations (gamepad). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -12,7 +12,7 @@ export default {
   "A or B (East or South)": "A ou B (Est ou Sud)",
   "Hold A or B (East or South) while plugging in to reconnect to this app after switching modes.": "Après un changement de mode, maintenez A ou B (Est ou Sud) en branchant la manette pour vous reconnecter à cette app.",
   "Config app": "Compatible app",
-  "The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app — after changing it, hold A or B (East or South) while plugging in to come back here.": "Le mode de sortie dans lequel la manette démarre quand elle est branchée ou allumée. Seuls les modes Switch et Steam fonctionnent avec cette app de configuration — après l’avoir changé, maintenez A ou B (Est ou Sud) en branchant la manette pour revenir ici.",
+  "The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app. After changing it, hold A or B (East or South) while plugging in to come back here.": "Le mode de sortie dans lequel la manette démarre quand elle est branchée ou allumée. Seuls les modes Switch et Steam fonctionnent avec cette app de configuration. Après l’avoir changé, maintenez A ou B (Est ou Sud) en branchant la manette pour revenir ici.",
   // Mode names stay as-is (brands / firmware names).
   "Switch": "Switch",
   "XInput": "XInput",
@@ -32,7 +32,7 @@ export default {
   // Switch colors
   "Switch device colors": "Couleurs de la manette sur Switch",
   "How the Switch draws your controller in its menus and some games.": "L’apparence de votre manette dans les menus de la Switch et certains jeux.",
-  "Colors which determine how the Switch displays the controller in menus and some games. They don’t change the LEDs — see the RGB page for those.": "Couleurs qui déterminent l’affichage de la manette dans les menus de la Switch et certains jeux. Elles ne modifient pas les LED — voir la page RGB pour cela.",
+  "Colors which determine how the Switch displays the controller in menus and some games. They don’t change the LEDs (see the RGB page for those).": "Couleurs qui déterminent l’affichage de la manette dans les menus de la Switch et certains jeux. Elles ne modifient pas les LED (voir la page RGB pour cela).",
   "Controller color preview": "Aperçu des couleurs de la manette",
   "Body": "Coque",
   "Buttons": "Boutons",
@@ -69,10 +69,10 @@ export default {
   "MAC address base": "Adresse MAC de base",
   "The hardware address used for USB and Bluetooth modes.": "L’adresse matérielle utilisée pour les modes USB et Bluetooth.",
   "Base address": "Adresse de base",
-  "Each connection mode uses its own address, counting up from this one, so your devices see each mode as a separate controller. Only change this if two controllers clash — you may need to pair again afterwards.": "Chaque mode de connexion utilise sa propre adresse, en comptant à partir de celle-ci, pour que vos appareils voient chaque mode comme une manette distincte. Ne la changez que si deux manettes entrent en conflit — vous devrez peut-être refaire l’appairage ensuite.",
+  "Each connection mode uses its own address, counting up from this one, so your devices see each mode as a separate controller. Only change this if two controllers clash. You may need to pair again afterwards.": "Chaque mode de connexion utilise sa propre adresse, en comptant à partir de celle-ci, pour que vos appareils voient chaque mode comme une manette distincte. Ne la changez que si deux manettes entrent en conflit. Vous devrez peut-être refaire l’appairage ensuite.",
   "A MAC address is the hardware ID other devices use to recognize the controller over Bluetooth and USB. The first byte must be even.": "Une adresse MAC est l’identifiant matériel qui permet aux autres appareils de reconnaître la manette en Bluetooth et en USB. Le premier octet doit être pair.",
   "The first byte must be even, so it was changed to {byte}.": "Le premier octet doit être pair, il a donc été changé en {byte}.",
-  "Saved as {mac} — press Save to keep it.": "Définie sur {mac} — appuyez sur Enregistrer pour la conserver.",
+  "Saved as {mac}. Press Save to keep it.": "Définie sur {mac}. Appuyez sur Enregistrer pour la conserver.",
   "MAC address": "Adresse MAC",
   "MAC byte {n} of 6": "Octet {n} sur 6 de l’adresse MAC",
 
@@ -91,7 +91,7 @@ export default {
   "Pressing the button below will reboot your controller into a firmware update mode. This is only necessary if you are updating the firmware.": "Le bouton ci-dessous redémarre votre manette en mode de mise à jour du firmware. Ce n’est nécessaire que si vous mettez à jour le firmware.",
   "Reboot to bootloader": "Redémarrer en bootloader",
   "Reboot into update mode?": "Redémarrer en mode de mise à jour ?",
-  "The controller will disconnect and restart in its bootloader so new firmware can be installed — this app offers to install it when the controller reappears. Unsaved changes will be lost. Only do this if you are updating the firmware.": "La manette va se déconnecter et redémarrer dans son bootloader pour qu’un nouveau firmware puisse être installé — cette app vous proposera de l’installer quand la manette réapparaîtra. Les modifications non enregistrées seront perdues. Ne le faites que si vous mettez à jour le firmware.",
+  "The controller will disconnect and restart in its bootloader so new firmware can be installed. This app offers to install it when the controller reappears. Unsaved changes will be lost. Only do this if you are updating the firmware.": "La manette va se déconnecter et redémarrer dans son bootloader pour qu’un nouveau firmware puisse être installé. Cette app vous proposera de l’installer quand la manette réapparaîtra. Les modifications non enregistrées seront perdues. Ne le faites que si vous mettez à jour le firmware.",
   "Reboot": "Redémarrer",
   "Rebooting…": "Redémarrage…",
   "Rebooting into the bootloader…": "Redémarrage dans le bootloader…",

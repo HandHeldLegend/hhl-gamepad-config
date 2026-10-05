@@ -45,7 +45,7 @@ HOJA applies a written block immediately (RAM). `Save` sends `GAMEPAD_CMD_SAVE_A
 and writes byte-identically to hoja2's generated parsers (it also exposed that hoja2 returned uint32 fields as
 signed numbers).
 
-When firmware adds a field: run `node tools/sync-firmware.mjs` — the new field is immediately available as
+When firmware adds a field: run `node tools/sync-firmware.mjs` and the new field is immediately available as
 `session.config.<block>.<field>`. If the device sends a bigger block than the app knows, the buffer grows rather
 than failing, so newer firmware keeps working with an older app.
 
@@ -75,10 +75,10 @@ update manifests stay fresh). New versions wait until the user taps *Restart*.
 
 ### Assistants
 
-- `llms.txt` + `docs/DEEPLINKS.md` — generated from the registry and schema.
-- `mcp/server.mjs` — zero-dependency MCP server: lists pages/settings, validates values, builds links,
+- `llms.txt` + `docs/DEEPLINKS.md`: generated from the registry and schema.
+- `mcp/server.mjs`: zero-dependency MCP server: lists pages/settings, validates values, builds links,
   serves the troubleshooting knowledge base (`docs/KNOWLEDGE.md`). It never touches hardware.
-- `src/agent/bridge.js` — `window.hhl` and WebMCP tool registration for in-browser agents; every change goes
+- `src/agent/bridge.js`: `window.hhl` and WebMCP tool registration for in-browser agents; every change goes
   through the same user confirmation as `#/apply`.
 
 ### Demo controller

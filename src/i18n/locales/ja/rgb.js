@@ -1,5 +1,5 @@
 /**
- * Japanese translations — rgb. English source text → translation.
+ * Japanese translations (rgb). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 
@@ -16,7 +16,7 @@ export default {
 
   // Lighting
   'Lighting': 'ライティング',
-  'Pick an effect — the preview shows roughly how it looks.': '効果を選んでください。プレビューでおおよその見た目を確認できます。',
+  'Pick an effect. The preview shows roughly how it looks.': '効果を選んでください。プレビューでおおよその見た目を確認できます。',
   'Preview of the selected lighting effect': '選択中のライティング効果のプレビュー',
   'Effect': '効果',
   'Lighting effect: Authentic (classic face-button colors for the output mode; called Chroma in older apps), Static (your colors), Rainbow, React (flash on press) or Fairy (blend between your first six colors).': 'ライティング効果：オーセンティック（出力モードに応じたフェイスボタンのクラシックカラー。旧アプリではChromaと呼ばれていました）、固定色（設定した色）、レインボー、リアクト（押すと点灯）、フェアリー（最初の6色の間で変化）。',
@@ -34,7 +34,7 @@ export default {
 
   // Brightness & timing
   'Brightness & timing': '明るさとタイミング',
-  'Changes apply instantly — press Save to keep them.': '変更はすぐに反映されます。保持するには「保存」を押してください。',
+  'Changes apply instantly. Press Save to keep them.': '変更はすぐに反映されます。保持するには「保存」を押してください。',
   'Brightness': '明るさ',
   'How bright the LEDs are, from off to full.': 'LEDの明るさです（オフから最大まで）。',
   'To save battery, the controller limits brightness to about a third while connected wirelessly.': 'バッテリー節約のため、ワイヤレス接続中は明るさが約3分の1に制限されます。',

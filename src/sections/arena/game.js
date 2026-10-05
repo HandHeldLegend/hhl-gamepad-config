@@ -1,5 +1,5 @@
 /**
- * game.js — The simulation: fighter + targets + training dummy (free play) + projectiles + timer,
+ * game.js (The simulation): fighter + targets + training dummy (free play) + projectiles + timer,
  * advanced one 60 Hz frame at a time.
  *
  * The Game knows nothing about the DOM or the canvas. view/play.js feeds it input snapshots from a
@@ -188,7 +188,7 @@ export class Game {
       const ms = this.elapsedMs();
       const record = this.bestTime == null || ms < this.bestTime;
       if (record) { this.bestTime = ms; this.onRecord(ms); }
-      this.feedback(record ? t('All targets cleared in {time} — new best!', { time: formatTime(ms) }) : t('All targets cleared in {time}', { time: formatTime(ms) }), 'green');
+      this.feedback(record ? t('All targets cleared in {time}. New best!', { time: formatTime(ms) }) : t('All targets cleared in {time}', { time: formatTime(ms) }), 'green');
     }
   }
 }
@@ -202,7 +202,7 @@ function segDist(s, cx, cy) {
 }
 
 export function formatTime(ms) {
-  if (ms == null || !Number.isFinite(ms)) return '—';
+  if (ms == null || !Number.isFinite(ms)) return '–';
   const s = ms / 1000;
   const m = Math.floor(s / 60);
   const rest = (s - m * 60).toFixed(2).padStart(5, '0');

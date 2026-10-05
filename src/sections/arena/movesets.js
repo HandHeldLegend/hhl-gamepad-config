@@ -1,5 +1,5 @@
 /**
- * movesets.js — Per-fighter attacks as data, plus the knockback helpers the training dummy uses.
+ * movesets.js: Per-fighter attacks as data, plus the knockback helpers the training dummy uses.
  *
  * Every move: `from`/`to` default active frames, `total` frames, `hitboxes` [{x, y, r, dmg, angle, bkb,
  * kbg}] in arena units relative to the fighter's feet, facing right (+y up; the body is a circle of
@@ -7,7 +7,7 @@
  * per move: sweetspot + sourspot share a group, multi-hit moves use one group per hit). Hitboxes are
  * listed in priority order (sweetspot first). Angle 361 = the "Sakurai angle".
  * Smash attacks (`smash`) can be charged on frame `charge` for up to 60 frames (damage × up to 1.3671).
- * Aerials: `landLag`, `lcLag` (L-cancelled: half, rounded down) and `autocancel` [a, b] — landing before
+ * Aerials: `landLag`, `lcLag` (L-cancelled: half, rounded down) and `autocancel` [a, b]: landing before
  * frame a or from frame b on gives normal landing lag. `iasa`: first frame the move can be interrupted
  * by any action (table IASA below; total + 1 when there is none).
  * `specials` are parameters for the archetypes in specials.js (no per-character code).
@@ -21,7 +21,7 @@
  *   Community frame data: https://meleeframedata.com and https://ikneedata.com/calculator.html
  * Frame/damage values were compiled from those references by hand and NEED REVIEW: active windows,
  * totals and damage aim to match the published numbers; BKB/KBG of many moves and every hitbox
- * position/size are our approximations (drawn by eye to match each move's shape and reach — Sable's
+ * position/size are our approximations (drawn by eye to match each move's shape and reach; Sable's
  * sword and tipper, Rally's knee, Mochi's short reach …). Ice Climbers' partner is not modelled.
  */
 import { N_ } from '../../i18n/index.js';
@@ -53,7 +53,7 @@ const grab = (reach, r = 4) => mv(7, 8, 30, [hb(reach, 8, r, 0, 0, 0, 0, { grab:
 
 // ---- Movesets -------------------------------------------------------------------------------------
 const SETS = {
-  // Mario — compact all-rounder: short reach, fireball, coin-punch recovery.
+  // Mario: compact all-rounder: short reach, fireball, coin-punch recovery.
   dot: {
     jab: mv(2, 3, 17, [hb(10, 8, 4.5, 3, 361, 0, 50)]),
     ftilt: mv(5, 8, 31, [hb(15, 8, 4.5, 9, 361, 8, 100), hb(9, 8, 4, 7, 361, 8, 100)]),
@@ -80,7 +80,7 @@ const SETS = {
     },
   },
 
-  // Fox — fast pokes, shine on frame 1, no-flinch laser.
+  // Fox: fast pokes, shine on frame 1, no-flinch laser.
   vix: {
     jab: mv(2, 3, 17, [hb(9, 9, 4, 4, 361, 0, 100)]),
     ftilt: mv(5, 8, 26, [hb(15, 6, 4.5, 9, 361, 8, 100, { tag: SWEET }), hb(9, 6, 4, 7, 361, 8, 100)]),
@@ -108,7 +108,7 @@ const SETS = {
     },
   },
 
-  // Falco — like Fox but stronger single hits, spiking down air, flinching laser, pop-up shine.
+  // Falco: like Fox but stronger single hits, spiking down air, flinching laser, pop-up shine.
   quill: {
     jab: mv(2, 3, 17, [hb(9, 9, 4, 4, 361, 0, 100)]),
     ftilt: mv(5, 8, 26, [hb(14, 7, 4.5, 9, 361, 8, 100), hb(8, 7, 4, 7, 361, 8, 100)]),
@@ -136,7 +136,7 @@ const SETS = {
     },
   },
 
-  // Marth — long sword reach; the tip of the blade ("tipper") hits much harder than the base.
+  // Marth: long sword reach; the tip of the blade ("tipper") hits much harder than the base.
   sable: {
     jab: mv(4, 7, 20, [hb(21, 9, 3, 6, 361, 0, 50, { tag: TIP }), hb(13, 9, 4.5, 4, 361, 0, 50, { tag: SOUR })]),
     ftilt: mv(7, 10, 35, [hb(24, 10, 3.5, 13, 361, 5, 90, { tag: TIP }), hb(15, 10, 5, 9, 361, 5, 90, { tag: SOUR })]),
@@ -165,7 +165,7 @@ const SETS = {
     },
   },
 
-  // Peach — golf-club side smash, spinning down smash, Toad counter, turnip toss.
+  // Peach: golf-club side smash, spinning down smash, Toad counter, turnip toss.
   rosette: {
     jab: mv(2, 4, 20, [hb(9, 8, 4, 3, 361, 0, 50)]),
     ftilt: mv(7, 10, 34, [hb(15, 4, 4.5, 12, 361, 10, 100), hb(9, 5, 4, 10, 361, 10, 100)]),
@@ -192,7 +192,7 @@ const SETS = {
     },
   },
 
-  // Ice Climbers (lead climber only) — hammer reach, ice shot along the ground, Blizzard.
+  // Ice Climbers (lead climber only): hammer reach, ice shot along the ground, Blizzard.
   rime: {
     jab: mv(3, 4, 16, [hb(11, 8, 4.5, 3, 361, 0, 50)]),
     ftilt: mv(9, 11, 30, [hb(16, 9, 5.5, 9, 361, 10, 90)]),
@@ -219,7 +219,7 @@ const SETS = {
     },
   },
 
-  // Captain Falcon — slow but heavy; the knee's 1-frame-wide sweetspot, Falcon Punch, grab-style dive.
+  // Captain Falcon: slow but heavy; the knee's 1-frame-wide sweetspot, Falcon Punch, grab-style dive.
   rally: {
     jab: mv(3, 4, 17, [hb(10, 9, 4, 3, 361, 0, 50)]),
     ftilt: mv(8, 11, 29, [hb(16, 7, 4.5, 10, 361, 10, 100), hb(9, 7, 4, 9, 361, 10, 100)]),
@@ -247,7 +247,7 @@ const SETS = {
     },
   },
 
-  // Jigglypuff — tiny reach, strong air game, Rest: frame-1 tiny sweetspot with massive knockback.
+  // Jigglypuff: tiny reach, strong air game, Rest: frame-1 tiny sweetspot with massive knockback.
   mochi: {
     jab: mv(4, 6, 20, [hb(9, 8, 3.5, 3, 361, 0, 50)]),
     ftilt: mv(7, 10, 28, [hb(13, 5, 4, 10, 361, 10, 100)]),
@@ -274,7 +274,7 @@ const SETS = {
     },
   },
 
-  // Mr. Game & Watch — flat LCD moves, random Judge, Oil Panic bucket (absorb), Chef.
+  // Mr. Game & Watch: flat LCD moves, random Judge, Oil Panic bucket (absorb), Chef.
   'sir-retro': {
     jab: mv(3, 4, 17, [hb(10, 8, 4, 4, 361, 0, 50)]),
     ftilt: mv(9, 11, 35, [hb(14, 7, 6, 13, 361, 20, 100)]),
@@ -304,14 +304,14 @@ const SETS = {
 };
 
 /*
- * IASA ("interruptible as soon as"): from this frame on the move can be cancelled into ANY action — jump,
- * attack, special, shield, dash, walk, crouch, airdodge, another aerial — exactly like the rest of its
+ * IASA ("interruptible as soon as"): from this frame on the move can be cancelled into ANY action (jump,
+ * attack, special, shield, dash, walk, crouch, airdodge, another aerial), exactly like the rest of its
  * animation had already ended. Every move gets `iasa` (normalize below); moves not listed here use
  * total + 1 (actionable on the frame after the last one). Values above a move's total are clamped.
  * Source: meleeframedata.com character pages ("IASA Frame"), fetched 2026-10; Fox's up air from SmashWiki
  * Fox_(SSBM) ("FAF 36"). Behaviour reference for how IASA works (an interrupt check that runs every frame
  * once the animation's interrupt flag is set, offering the same options as standing):
- * doldecomp/melee ftCo_AttackS4_IASA / ftCo_Landing_IASA — no code or data copied.
+ * doldecomp/melee ftCo_AttackS4_IASA / ftCo_Landing_IASA (no code or data copied).
  * Specials: the source lists no IASA frames for them, so they end at total + 1.
  */
 const IASA = {

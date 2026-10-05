@@ -1,5 +1,5 @@
 /**
- * help.js — The "Controls & help" tab: controls (with the build's printed button names), the move
+ * help.js (The "Controls & help" tab): controls (with the build's printed button names), the move
  * list, options and an "About" note.
  */
 import { h } from '../../ui/dom.js';
@@ -11,7 +11,7 @@ import { CHAIN, MOVES, WALL, SLOPE, STEP_MS } from './constants.js';
 function controlsCard(app) {
   const names = (b, fallback) => app.input.label(b).join(' / ') || fallback;
   const rows = [
-    [t('Move — push further to run faster'), t('Left stick')],
+    [t('Move (push further to run faster)'), t('Left stick')],
     [t('Orbit the camera'), t('Right stick')],
     [t('Camera behind the hero'), names('camera', t('L or right-stick press'))],
     [t('Jump'), names('jump', 'A')],
@@ -58,7 +58,7 @@ function aboutCard() {
   return card({ title: t('About the 3D Platformer'), icon: 'info', tone: 'lavender' },
     h('p.small', t('A small test course for your HOJA controller in three dimensions: analog walking speed, quick turns, camera control and precisely timed jumps show how your sticks and buttons feel in a 3D game. It reads only the controller connected to this app.')),
     h('p.small', t('Its movement is modelled on the publicly documented physics of classic 30 frames-per-second 3D platformers (speeds, jump heights, frame windows). The hero, the course and the code are original and were written for this app; it contains no game code, data or assets.')),
-    h('p.small.muted', t('There are no enemies or collectibles — just blocks, ramps, walls and pillars to move around on.')));
+    h('p.small.muted', t('There are no enemies or collectibles, just blocks, ramps, walls and pillars to move around on.')));
 }
 
 export function renderHelp(panel, app) {

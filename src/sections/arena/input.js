@@ -1,5 +1,5 @@
 /**
- * input.js — The Arena only ever reads the HOJA controller that is connected to the app.
+ * input.js: The Arena only ever reads the HOJA controller that is connected to the app.
  *
  * Source selection (re-evaluated every animation frame):
  *   1. Gamepad API pad matched to the connected controller. The WebUSB device's vendor/product IDs
@@ -70,7 +70,7 @@ const STANDARD_NAMES = [N_('South'), N_('East'), N_('West'), N_('North'), N_('Le
  *
  * Face buttons go by the label printed on the controller, not by position. HOJA builds differ: a
  * ProGCC has A on the right (EAST) and B at the bottom (SOUTH), a GC Ultimate / Phob has A at the
- * bottom (SOUTH) and B on the left (WEST) — the build's own labels come from the static input info.
+ * bottom (SOUTH) and B on the left (WEST); the build's own labels come from the static input info.
  * How they reach the Gamepad API (firmware cores + the browser's positional "standard" layout):
  *   Switch mode  the firmware maps the printed A/B/X/Y to Switch A/B/X/Y and the browser lays the Switch
  *                Pro pad out by position: index 0 = B, 1 = A, 2 = Y, 3 = X.
@@ -197,7 +197,7 @@ const BTN_KEYS = ['attack', 'special', 'jump', 'z', 'shield', ...META];
 /**
  * Press latch. Input is sampled far more often than the 60 Hz simulation reads it (every Gamepad API
  * poll, i.e. every display frame, and every HOJA USB report). A press that starts and ends between two
- * simulation frames used to vanish — the sim only saw the latest sample. The latch counts every press
+ * simulation frames used to vanish, because the sim only saw the latest sample. The latch counts every press
  * edge in every sample until the next simulation frame takes them, so no press is lost at any display
  * or report rate.
  */
@@ -276,7 +276,7 @@ export class InputManager extends EventTarget {
     this.#sig = '';
     this.#switching = false;
 
-    // Keyboard: pause / frame advance / reset only — it never moves the character.
+    // Keyboard: pause / frame advance / reset only; it never moves the character.
     this.onKeyDown = (e) => {
       if (isEditable(e.target) || e.ctrlKey || e.metaKey || e.altKey || !ALL_META.has(e.code)) return;
       if (this.captureKeys && e.code === 'Period') e.preventDefault();
@@ -597,7 +597,7 @@ export class InputManager extends EventTarget {
     let gp = this.#choose(pads, now);
     // The Arena reads the controller's config-app USB stream only. While the config app is connected,
     // HOJA firmware sends that stream *instead of* its normal gameplay HID reports (usb_hal.c,
-    // transport_usb_task), so the browser's Gamepad API view can't add anything — and the stream names
+    // transport_usb_task), so the browser's Gamepad API view can't add anything, and the stream names
     // every input exactly in every output mode. The Gamepad API path stays behind an opt-in flag.
     if (!store.get('useBrowserPad')) gp = null;
     const stale = this.#isStale(gp, now);

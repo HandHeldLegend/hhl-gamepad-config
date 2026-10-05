@@ -1,4 +1,4 @@
-/* battery.css — Battery page: animated gauge, status light, hardware rows. Theme tokens only. */
+/* battery.css (Battery page): animated gauge, status light, hardware rows. Theme tokens only. */
 
 /* ---- Hero: gauge + readout ------------------------------------------------------------- */
 .bat-hero {
@@ -57,7 +57,7 @@
   transition: width 700ms var(--ease-out), background-color var(--dur-slow);
   overflow: hidden;
 }
-/* Cell separators — read as segments without hiding the level. */
+/* Cell separators: read as segments without hiding the level. */
 .bat-ticks { position: absolute; inset: var(--bat-pad); display: grid; grid-template-columns: repeat(4, 1fr); pointer-events: none; }
 .bat-ticks i { border-right: 2px solid color-mix(in srgb, var(--surface-sunken) 75%, transparent); }
 

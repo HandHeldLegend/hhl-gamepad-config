@@ -1,10 +1,10 @@
 /**
- * Wireless view — port of hoja2/modules/wireless-md.js.
+ * Wireless view: port of hoja2/modules/wireless-md.js.
  *
  * Cards (each hidden exactly when hoja2 hid the matching panel):
  *   Wireless chip       part number + status badge (wireless_part_status), BR/EDR, LE, WLAN support
  *   Module firmware     external_update_supported only: installed vs latest baseband version and the
- *                       in-app ESP32 update (module-updater.js — replaces hoja2's "Enter Update Mode"
+ *                       in-app ESP32 update (module-updater.js, replaces hoja2's "Enter Update Mode"
  *                       button + the separate hoja_baseband/ esptool page)
  *   WLAN dongle         wlan_supported only: the 4-digit pairing PIN (authoritative editor;
  *                       setting `wireless.dongleKey` in settings.js)
@@ -51,7 +51,7 @@ export function mount(root, ctx) {
     [t('Part'), chip.model],
     [t('Status'), h('span.wl-inline', chip.label, infoTip(
       t('Active: the wireless hardware answered when the controller started. Not responding: it’s fitted but didn’t answer (try a restart; if it persists the module may need its firmware reinstalled). Inactive / Not present: nothing was detected.')))],
-    [t('Bluetooth Classic'), h('span.wl-inline', yesNo(bt.bluetooth_bdr_supported), infoTip(t('Bluetooth BR/EDR — used for Switch and most console/PC pairing.')))],
+    [t('Bluetooth Classic'), h('span.wl-inline', yesNo(bt.bluetooth_bdr_supported), infoTip(t('Bluetooth BR/EDR, used for Switch and most console/PC pairing.')))],
     [t('Bluetooth LE'), h('span.wl-inline', yesNo(bt.bluetooth_ble_supported), infoTip(t('Bluetooth Low Energy.')))],
     [t('WLAN dongle'), yesNo(bt.wlan_supported)],
   ]));
@@ -142,7 +142,7 @@ export function mount(root, ctx) {
   // ---- Regulatory ----------------------------------------------------------------------------
   const fccId = identityText(bt.fcc_id);
   // The FCC statement stays in its official English wording (lang="en"). Other languages get a
-  // reference translation below it, labelled as such (draft — the English text is what counts).
+  // reference translation below it, labelled as such (draft; the English text is what counts).
   const fccTranslated = t(FCC_STATEMENT);
   const fccCard = fccId && card({ title: t('Regulatory'), icon: 'info', tone: TONE, class: 'wl-fcc span-2' },
     h('div.wl-fcc-id', 'FCC ID: ', h('span.mono', fccId)),

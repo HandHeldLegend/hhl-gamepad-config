@@ -1,5 +1,5 @@
 /**
- * session.js — App-level view of the connected controller.
+ * session.js: App-level view of the connected controller.
  *
  * Views should talk to `session` rather than the raw driver for anything stateful:
  *   session.state         'disconnected' | 'connecting' | 'connected' | 'legacy'
@@ -13,7 +13,7 @@
  *
  * Events: 'state', 'dirty', 'saved', 'attention', 'legacy', 'bootloader'
  *
- * HOJA firmware applies a written block immediately (RAM) — "Save" persists it to flash.
+ * HOJA firmware applies a written block immediately (RAM); "Save" persists it to flash.
  * That's why every change is pushed live and the Save button lights up until committed.
  */
 import { device } from './hoja-device.js';

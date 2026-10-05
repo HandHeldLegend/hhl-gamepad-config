@@ -1,11 +1,11 @@
 /**
- * Battery view — port of hoja2/modules/battery-md.js.
+ * Battery view: port of hoja2/modules/battery-md.js.
  *
  * Cards:
- *   1. Battery   — animated gauge (fill + charging bolt), percentage, charge state with a status
+ *   1. Battery:   animated gauge (fill + charging bolt), percentage, charge state with a status
  *                  light that mirrors the controller's LED, plain-language explanation, model and
  *                  capacity. Live from bytes 1–2 of every input report (either stream mode).
- *   2. Hardware  — charger chip (PMIC), fuel gauge and battery pack detection, each with its part
+ *   2. Hardware:  charger chip (PMIC), fuel gauge and battery pack detection, each with its part
  *                  number, a status badge and what that status means.
  *
  * Read-only: nothing here writes to the controller. Static info is read once at connect
@@ -98,7 +98,7 @@ export function mount(root, { session, device, navigate }) {
     hwRow(t('Battery pack'), '', null, {
       ...pack,
       explain: pmic.pack === 'na' ? pack.explain
-        : joinSentences([pack.explain, t('Checked once at power-on — reconnect the controller to check again.')]),
+        : joinSentences([pack.explain, t('Checked once at power-on. Reconnect the controller to check again.')]),
     }));
 
   root.append(h('div.card-grid', statusCard, hardware));
@@ -136,7 +136,7 @@ export function mount(root, { session, device, navigate }) {
     }
     if (s.layout === 'waiting') {
       fill.style.setProperty('--fill', '0');
-      setText(percentEl, '—');
+      setText(percentEl, '–');
       percentEl.classList.remove('is-text');
       setText(explainEl, t('Waiting for the controller to report its battery…'));
       setText(ledNote, '');
@@ -159,8 +159,8 @@ export function mount(root, { session, device, navigate }) {
 
     const parts = [];
     if (s.state === 'charging') parts.push(t('Plugged in and charging. Keep it connected until the light turns green.'));
-    else if (s.state === 'full') parts.push(t('Fully charged — you can unplug whenever you like.'));
-    else parts.push(s.level === 'low' ? t('Battery is low — plug in a charging cable soon.') : t('The battery isn\'t being charged right now.'));
+    else if (s.state === 'full') parts.push(t('Fully charged. You can unplug whenever you like.'));
+    else parts.push(s.level === 'low' ? t('Battery is low. Plug in a charging cable soon.') : t('The battery isn\'t being charged right now.'));
     if (s.percent == null) {
       parts.push(fuel.present
         ? t('The fuel gauge didn\'t give a valid reading, so the level isn\'t shown.')

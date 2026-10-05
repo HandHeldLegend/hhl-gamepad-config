@@ -1,5 +1,5 @@
 /**
- * ch34x-webusb.js — A minimal Web Serial-shaped port for WCH CH34x USB-serial chips over WebUSB.
+ * ch34x-webusb.js: A minimal Web Serial-shaped port for WCH CH34x USB-serial chips over WebUSB.
  *
  * Port of hoja_esptool/src/plugin/niceSerial.js (the "WebUSB" switch on the standalone HOJA
  * baseband updater). In update mode the controller's USB mux connects the port to a CH340 bridge
@@ -158,7 +158,7 @@ export class Ch34xPort {
     const next = on ? (this.#ctrl | bit) : (this.#ctrl & ~bit & 0xff);
     if (next === this.#ctrl) return;
     this.#ctrl = next;
-    // Not awaited, matching niceSerial.js — esptool-js sequences resets with its own sleeps.
+    // Not awaited, matching niceSerial.js; esptool-js sequences resets with its own sleeps.
     this.#setControl(this.#ctrl);
   }
 

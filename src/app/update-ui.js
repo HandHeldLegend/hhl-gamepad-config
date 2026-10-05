@@ -1,8 +1,8 @@
 /**
- * update-ui.js — Progress and "restart to update" UI for app (service worker) updates.
+ * update-ui.js: Progress and "restart to update" UI for app (service worker) updates.
  *
  * First visit: a small card shows "Saving for offline use… 42%" and then "Ready to work offline".
- * New version: "Downloading update…" with a progress bar, then "Update ready — Restart".
+ * New version: "Downloading update…" with a progress bar, then "Update ready: Restart".
  * Updates apply automatically when no controller is connected; otherwise they wait for Restart so a
  * configuration session is never interrupted.
  */

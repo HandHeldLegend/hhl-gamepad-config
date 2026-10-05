@@ -5,7 +5,7 @@
  *                                or undefined for the default success. May dispatch events on device.
  *
  * The real controller sends an analog dump (0xFA) by itself whenever an axis is flicked to the edge and
- * released — there is no command for it. The demo imitates that: every few seconds it "flicks" the next
+ * released; there is no command for it. The demo imitates that: every few seconds it "flicks" the next
  * axis (LX, LY, RX, RY…) and dispatches a 'snapback' event with a 64-byte DataView in the firmware format
  * ([0] 0xFA, [1] axis, [2..63] (value + 2048) >> 4). The simulated rebound respects that stick's current
  * filter mode and cutoff so changing the settings visibly changes the plot.

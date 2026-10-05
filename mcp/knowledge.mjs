@@ -1,5 +1,5 @@
 /**
- * knowledge.mjs — Parse and search docs/KNOWLEDGE.md (the customer troubleshooting knowledge base).
+ * knowledge.mjs: Parse and search docs/KNOWLEDGE.md (the customer troubleshooting knowledge base).
  *
  * Topic format in the Markdown file:
  *   ## Human title

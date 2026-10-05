@@ -1,5 +1,5 @@
 /**
- * waveform.js — Snapback analyzer plot (modernized port of hoja2/components/waveform-display.js).
+ * waveform.js: Snapback analyzer plot (modernized port of hoja2/components/waveform-display.js).
  *
  * Input: the firmware's analog dump report (id 0xFA, WEBUSB_ANALOG_DUMP), 64 bytes:
  *   [0]      0xFA

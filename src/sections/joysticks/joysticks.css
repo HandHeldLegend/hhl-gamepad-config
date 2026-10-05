@@ -1,5 +1,5 @@
 /*
- * joysticks.css — Joysticks page (and the calibration dialog). Theme tokens only.
+ * joysticks.css: Joysticks page (and the calibration dialog). Theme tokens only.
  * Container queries keep the layout right whether the sidebar is open or not.
  * Text sizes are in rem so they follow the user's font-size setting.
  */
@@ -163,7 +163,7 @@
 .am-btns { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
 .am-count { font-size: var(--text-sm); color: var(--text-muted); font-variant-numeric: tabular-nums; }
 
-/* Slot rows, like hoja2: one plain line per slot —
+/* Slot rows, like hoja2: one plain line per slot:
      #  use  in∠ → out∠  in dist → out dist  snap  [capture][delete]
    Narrow editors (< 500px) wrap into two lines: angles + snap zone, then distances. The header uses
    the same grid so it lines up. */

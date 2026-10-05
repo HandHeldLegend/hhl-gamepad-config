@@ -1,5 +1,5 @@
 /**
- * French (France/international) translations — settings. English source text → translation.
+ * French (France/international) translations (settings). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -11,14 +11,14 @@ export default {
   "Automatic ({language})": "Automatique ({language})",
   "Language": "Langue",
   "Appearance": "Apparence",
-  "Automatic uses your device’s language. Translations are new — tell us if something reads oddly.": "Automatique utilise la langue de votre appareil. Les traductions sont récentes — signalez-nous ce qui sonne bizarre.",
+  "Automatic uses your device’s language. Translations are new, so tell us if something reads oddly.": "Automatique utilise la langue de votre appareil. Les traductions sont récentes : signalez-nous ce qui sonne bizarre.",
   "Dark is the default. System follows your device’s setting.": "Sombre est le thème par défaut. Système suit le réglage de votre appareil.",
   "Turns off decorative animation. Your device’s reduced-motion setting is always respected.": "Désactive les animations décoratives. Le réglage « réduire les animations » de votre appareil est toujours respecté.",
   "Stop demo": "Arrêter la démo",
   "Start demo": "Lancer la démo",
   "Check for firmware updates": "Rechercher les mises à jour du firmware",
   "When a controller connects, look online for newer firmware.": "À la connexion d’une manette, rechercher en ligne un firmware plus récent.",
-  "Explore every page with a simulated controller — nothing is sent to hardware.": "Parcourez toutes les pages avec une manette simulée — rien n’est envoyé au matériel.",
+  "Explore every page with a simulated controller. Nothing is sent to hardware.": "Parcourez toutes les pages avec une manette simulée : rien n’est envoyé au matériel.",
   "Debug: force update prompt": "Débogage : forcer l’invite de mise à jour",
   "Shows the firmware update flow on connect even when up to date.": "Affiche la procédure de mise à jour du firmware à la connexion, même si tout est à jour.",
   "You’re using the installed app. It works offline and updates itself.": "Vous utilisez l’app installée. Elle fonctionne hors ligne et se met à jour toute seule.",

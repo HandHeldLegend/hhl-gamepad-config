@@ -1,5 +1,5 @@
 /**
- * connect-guide.js — "How to connect" dialog: Switch (wired and Bluetooth) and Bluetooth pairing in
+ * connect-guide.js ("How to connect" dialog): Switch (wired and Bluetooth) and Bluetooth pairing in
  * Steam mode. Opened from the Wireless page (pairing tip) and the Gamepad page (Default mode card).
  *
  * The guide shows only what applies to the connected controller:
@@ -85,27 +85,27 @@ export function openConnectGuide(o = {}) {
   const p = connectProfile(o.session);
   const bt = p.radio !== 'none';
 
-  const wired = section(t('Nintendo Switch — wired'),
+  const wired = section(t('Nintendo Switch (wired)'),
     h('span', t('On the Switch, open System Settings → Controllers and Sensors and turn on'), ' ', h('strong', t('Pro Controller Wired Communication')), '. ',
       t('Without it, the Switch only charges the controller over USB and ignores its buttons.')),
     h('span', fillNodes(t('Plug the controller into the dock or the console. Hold {button} while plugging in if Switch isn’t its default mode.'), { button: combo(p.east) })));
 
-  const btSwitch = bt && section(t('Nintendo Switch — Bluetooth'),
+  const btSwitch = bt && section(t('Nintendo Switch (Bluetooth)'),
     t('On the Switch Home menu, open Controllers → Change Grip/Order and leave that screen open.'),
     h('span', fillNodes(t('Unplug the controller, then hold {buttons} while you turn it on. It enters pairing mode and connects.'), { buttons: combo(p.east, p.start) })),
     (p.radio === 'rm2' || p.radio === 'unknown') && h('span',
       p.radio === 'unknown' && h('strong', t('Controllers with the RM2 wireless module:'), ' '),
-      t('you can also pair with the cable — plug it into the Switch with USB in Switch mode once. It pairs on its own; unplug it and it connects over Bluetooth from then on.')),
+      t('you can also pair with the cable: plug it into the Switch with USB in Switch mode once. It pairs on its own; unplug it and it connects over Bluetooth from then on.')),
     t('Next time, turn the controller on and it reconnects to the same Switch.'));
 
-  const btSteam = bt && section(t('PC, Steam Deck, phone — Bluetooth (Steam mode)'),
+  const btSteam = bt && section(t('PC, Steam Deck, phone (Bluetooth, Steam mode)'),
     h('span', fillNodes(t('Unplug the controller, then hold {buttons} while you turn it on.'), { buttons: combo(p.south, p.start) })),
     t('Pair it from the device’s Bluetooth settings.'));
 
   const notes = h('ul.guide-notes',
     bt && h('li', t('Bluetooth works in Switch and Steam modes.')),
     p.wlan && h('li', t('XInput, GameCube, N64 and Slippi modes go wireless through the WLAN dongle instead.')),
-    bt && h('li', t('The controller remembers one Switch and one Steam host. Pairing again replaces it — the Wireless page shows both.')),
+    bt && h('li', t('The controller remembers one Switch and one Steam host. Pairing again replaces it. The Wireless page shows both.')),
     bt && h('li', t('Erasing the controller (“Start fresh” firmware install) forgets its pairings, so pair again afterwards.')),
     !bt && h('li', t('This controller is wired only.')));
 

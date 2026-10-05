@@ -1,4 +1,4 @@
-/* platformer.css — 3D Platformer. Theme tokens only (see css/tokens.css). */
+/* platformer.css: 3D Platformer. Theme tokens only (see css/tokens.css). */
 
 .plat-play { display: flex; flex-direction: column; gap: var(--space-3); }
 .plat-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); }

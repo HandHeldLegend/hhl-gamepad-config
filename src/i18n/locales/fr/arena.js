@@ -1,5 +1,5 @@
 /**
- * French translations — arena. English source text → translation.
+ * French translations (arena). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  *
  * Competitive tech terms stay in English as the French-speaking scene uses them: wavedash, waveland,
@@ -11,7 +11,7 @@
 export default {
   // ---- Page / tabs / connect prompt ----
   "Connect your controller to use the Arena": "Connectez votre manette pour utiliser l’Arène",
-  "The Arena tests the HOJA controller connected to this app — it doesn’t read any other gamepad. Plug it in with a USB data cable, then press Connect.":
+  "The Arena tests the HOJA controller connected to this app and doesn’t read any other gamepad. Plug it in with a USB data cable, then press Connect.":
     "L’Arène teste la manette HOJA connectée à cette application ; elle ne lit aucune autre manette. Branchez-la avec un câble USB de données, puis appuyez sur Connecter.",
   "Connect controller": "Connecter la manette",
   "Try the demo": "Essayer la démo",
@@ -37,10 +37,10 @@ export default {
   "Targets {left}/{total}": "Cibles {left}/{total}",
   "Paused · {status}": "En pause · {status}",
   "Paused · Start / P resumes · D-pad → / . steps one frame": "En pause · Start / P pour reprendre · Croix → / . pour avancer d’une frame",
-  "Target test — the clock starts when you move": "Test des cibles : le chrono démarre quand vous bougez",
+  "Target test: the clock starts when you move": "Test des cibles : le chrono démarre quand vous bougez",
   "Waiting for input from {name}…": "En attente d’une action sur {name}…",
   "Press any button on {name}": "Appuyez sur n’importe quel bouton de {name}",
-  "The Arena reads only the controller connected to this app — through the browser’s gamepad support when it can see it, otherwise straight over USB.":
+  "The Arena reads only the controller connected to this app. It uses the browser’s gamepad support when it can see the controller, otherwise it reads straight over USB.":
     "L’Arène ne lit que la manette connectée à cette application : via la prise en charge des manettes du navigateur quand il la voit, sinon directement par USB.",
   "Cleared in {time}": "Terminé en {time}",
   "New personal best!": "Nouveau record personnel !",
@@ -103,7 +103,7 @@ export default {
   "Short hop ✓ · tap jump": "Short hop ✓ · tap jump",
   "Short hop ✓ · jump held {n}f": "Short hop ✓ · saut maintenu {n}f",
   "Full hop · held {n}f+ (short hop: release within {window}f)": "Full hop · maintenu {n}f+ (short hop : relâchez en moins de {window}f)",
-  "Airdodge {n}f too early — press it after lift-off": "Esquive aérienne {n}f trop tôt : appuyez après avoir décollé",
+  "Airdodge {n}f too early: press it after lift-off": "Esquive aérienne {n}f trop tôt : appuyez après avoir décollé",
   "neutral, no slide": "neutre, sans glissade",
   "Ledgedash · {angle} · landed {n}f after letting go": "Ledgedash · {angle} · atterri {n}f après avoir lâché le rebord",
   "frame-perfect": "à la frame près",
@@ -124,7 +124,7 @@ export default {
   "Ledge grab": "Saisie du rebord",
   "Out of bounds! Respawning…": "Hors limites ! Réapparition…",
   "All targets cleared in {time}": "Toutes les cibles détruites en {time}",
-  "All targets cleared in {time} — new best!": "Toutes les cibles détruites en {time} : nouveau record !",
+  "All targets cleared in {time}. New best!": "Toutes les cibles détruites en {time} : nouveau record !",
   "right → left": "droite → gauche",
   "left → right": "gauche → droite",
   "up → down": "haut → bas",
@@ -145,7 +145,7 @@ export default {
 
   // ---- Input source / bindings (input.js, help.js) ----
   "Input source": "Source des entrées",
-  "Only {name} is read — other controllers are ignored.": "Seule {name} est lue ; les autres manettes sont ignorées.",
+  "Only {name} is read. Other controllers are ignored.": "Seule {name} est lue ; les autres manettes sont ignorées.",
   "Reading:": "Lecture :",
   "The browser sees this controller as “{name}” (USB {ids}).": "Le navigateur voit cette manette comme « {name} » (USB {ids}).",
   "The browser sees this controller as “{name}”.": "Le navigateur voit cette manette comme « {name} ».",
@@ -166,7 +166,7 @@ export default {
   "{n} other controller is connected to this computer and ignored.": "{n} autre manette est connectée à cet ordinateur et ignorée.",
   "{n} other controllers are connected to this computer and ignored.": "{n} autres manettes sont connectées à cet ordinateur et ignorées.",
   "Button mapping": "Attribution des boutons",
-  "Saved per output mode in this browser — Switch and Steam modes report buttons differently.": "Enregistrée par mode de sortie dans ce navigateur : les modes Switch et Steam transmettent les boutons différemment.",
+  "Saved per output mode in this browser, since Switch and Steam modes report buttons differently.": "Enregistrée par mode de sortie dans ce navigateur : les modes Switch et Steam transmettent les boutons différemment.",
   "Add": "Ajouter",
   "Add another input for this action": "Ajouter une autre entrée pour cette action",
   "Axis {i}": "Axe {i}",
@@ -233,7 +233,7 @@ export default {
   "Your best time is kept in this browser.": "Votre meilleur temps est conservé dans ce navigateur.",
 
   // ---- Controls & help: controls ----
-  "Defaults — change them under Button mapping. The keyboard only pauses, frame-advances and resets; your controller does all the playing.":
+  "Default bindings, which you can change under Button mapping. The keyboard only pauses, frame-advances and resets; your controller does all the playing.":
     "Valeurs par défaut ; modifiez-les dans Attribution des boutons. Le clavier sert seulement à mettre en pause, avancer image par image et réinitialiser ; tout le jeu se fait à la manette.",
   "Move · walk · dash": "Se déplacer · marcher · dash",
   "Attack · special": "Attaque · spéciale",
@@ -253,22 +253,22 @@ export default {
   "Push the stick slowly to walk (speed follows how far you push). Flick it past {threshold} within {n} frames of leaving the center to dash.":
     "Poussez le joystick lentement pour marcher (la vitesse dépend de l’inclinaison). Pour un dash, amenez-le au-delà de {threshold} en moins de {n} frames après avoir quitté le centre.",
   "Dash back / dash dance": "Dash back / dash dance",
-  "During the first {n} frames of a dash, flick the other way. The feedback counts how many frames the stick was seen in the \"tilt zone\" on the way — 2 or more and it reads as a slow turn instead. Stick bounce (snapback) shows up here too.":
+  "During the first {n} frames of a dash, flick the other way. The feedback counts how many frames the stick was seen in the \"tilt zone\" on the way. At 2 or more, it reads as a slow turn instead. Stick bounce (snapback) shows up here too.":
     "Pendant les {n} premières frames d’un dash, donnez un coup de joystick dans l’autre sens. Le message compte combien de frames le joystick a passé dans la « zone de tilt » en chemin : à partir de 2, c’est interprété comme un demi-tour lent. Le rebond du joystick (snapback) apparaît aussi ici.",
   "Short hop vs full hop": "Short hop ou full hop",
   "Release jump within {n} frames (≈{ms} ms) of pressing it for a short hop; hold it for a full hop.":
     "Relâchez saut dans les {n} frames (≈{ms} ms) après l’appui pour un short hop ; maintenez-le pour un full hop.",
   "Double jump & fast fall": "Double saut et fast fall",
-  "Jump again in the air. At or after the top of a jump, flick down to fall faster — the feedback shows how many frames after the peak you were.":
+  "Jump again in the air. At or after the top of a jump, flick down to fall faster. The feedback shows how many frames after the peak you were.":
     "Sautez à nouveau en l’air. Au sommet d’un saut ou après, donnez un coup de joystick vers le bas pour tomber plus vite ; le message indique combien de frames après le sommet vous l’avez fait.",
   "Airdodge, wavedash & waveland": "Esquive aérienne, wavedash et waveland",
-  "Press shield in the air; the stick picks the direction. Jump and airdodge diagonally into the ground on the first airborne frame to wavedash — the angle is shown (shallower = longer slide). Airdodging onto a platform from a fall is a waveland; letting go of the ledge, double jumping and airdodging onto the stage is a ledgedash.":
+  "Press shield in the air; the stick picks the direction. Jump and airdodge diagonally into the ground on the first airborne frame to wavedash. The angle is shown (shallower = longer slide). Airdodging onto a platform from a fall is a waveland; letting go of the ledge, double jumping and airdodging onto the stage is a ledgedash.":
     "Appuyez sur bouclier en l’air ; le joystick choisit la direction. Sautez et faites une esquive aérienne en diagonale vers le sol dès la première frame en l’air pour un wavedash ; l’angle est affiché (plus rasant = glissade plus longue). Une esquive aérienne sur une plateforme pendant une chute est un waveland ; lâcher le rebord, faire un double saut et une esquive aérienne vers le terrain est un ledgedash.",
   "L-cancel": "L-cancel",
   "Press shield or Z within {n} frames before an aerial lands to halve the landing lag.":
     "Appuyez sur bouclier ou Z dans les {n} frames avant l’atterrissage d’une attaque aérienne pour diviser par deux le lag d’atterrissage.",
   "Shield & light shield": "Bouclier et bouclier léger",
-  "Press a trigger past {threshold} to shield. A lighter press gives a bigger shield. The shield shrinks as it wears down — hold too long and it breaks.":
+  "Press a trigger past {threshold} to shield. A lighter press gives a bigger shield. The shield shrinks as it wears down, and if you hold it too long it breaks.":
     "Enfoncez une gâchette au-delà de {threshold} pour vous protéger avec le bouclier. Un appui plus léger donne un bouclier plus grand. Le bouclier rétrécit en s’usant : maintenez-le trop longtemps et il se brise.",
   "Shield drop": "Shield drop",
   "Shield on a platform, then push the stick down at {min}–{max}° from straight down (a down-diagonal notch is ideal). Straight down flicks spot dodge instead.":
@@ -279,9 +279,9 @@ export default {
 
   // ---- Controls & help: about ----
   "About this arena": "À propos de cette arène",
-  "The Arena is a place to put your HOJA controller through its paces. It reads only the controller connected to this app — never other gamepads — so what you see is exactly what your controller sends.":
+  "The Arena is a place to put your HOJA controller through its paces. It reads only the controller connected to this app (never other gamepads), so what you see is exactly what your controller sends.":
     "L’Arène permet de mettre votre manette HOJA à l’épreuve. Elle ne lit que la manette connectée à cette application (jamais d’autres manettes) : ce que vous voyez est exactement ce que votre manette envoie.",
-  "Frame windows and thresholds are tuned to feel familiar and to demand a lot of a controller, so it’s a good place to try a new stick module, gate or setting — but results won’t exactly match any particular game.":
+  "Frame windows and thresholds are tuned to feel familiar and to demand a lot of a controller, so it’s a good place to try a new stick module, gate or setting, but results won’t exactly match any particular game.":
     "Les fenêtres en frames et les seuils sont réglés pour paraître familiers et exiger beaucoup d’une manette : c’est donc un bon endroit pour essayer un nouveau module de joystick, une nouvelle gate ou un nouveau réglage, mais les résultats ne correspondront exactement à aucun jeu en particulier.",
 
   // ---- Input lab ----
@@ -299,11 +299,11 @@ export default {
   "Histogram of update intervals": "Histogramme des intervalles de mise à jour",
   "Measuring…": "Mesure…",
   "Measure poll rate": "Mesurer la fréquence d’interrogation",
-  "The probe measures the browser’s gamepad data, and {name} isn’t visible there yet — press a button on it. (Over USB, the report rate is shown below.)":
+  "The probe measures the browser’s gamepad data, and {name} isn’t visible there yet. Press a button on it. (Over USB, the report rate is shown below.)":
     "La sonde mesure les données de manette du navigateur, et {name} n’y est pas encore visible : appuyez sur un de ses boutons. (Via USB, la fréquence des rapports est indiquée ci-dessous.)",
   "Keep moving the stick in circles…": "Continuez à faire tourner le joystick…",
   "Not enough updates.": "Pas assez de mises à jour.",
-  "Most browsers only report new data when something changes — keep moving the stick in circles while measuring.":
+  "Most browsers only report new data when something changes, so keep moving the stick in circles while measuring.":
     "La plupart des navigateurs ne transmettent de nouvelles données que lorsque quelque chose change : continuez à faire tourner le joystick pendant la mesure.",
   "Estimated rate": "Fréquence estimée",
   "Median interval": "Intervalle médian",
@@ -319,7 +319,7 @@ export default {
     "Poussez d’un coup le joystick principal jusqu’au bord et relâchez-le. S’il rebondit au-delà du centre de l’autre côté, c’est listé ici. (Échantillonné une fois par image affichée, comme le ferait un jeu.)",
   "Snapback watch": "Surveillance du snapback",
   "Catches stick rebound after release.": "Détecte le rebond du joystick après le relâchement.",
-  "The sticks-only USB stream carries no buttons — switch the USB stream back to Buttons + sticks.":
+  "The sticks-only USB stream carries no buttons. Switch the USB stream back to Buttons + sticks.":
     "Le flux USB « joysticks seuls » ne transmet aucun bouton : repassez le flux USB sur Boutons + joysticks.",
   "No axes reported.": "Aucun axe signalé.",
   "Over USB the sticks arrive as the LX/LY/RX/RY direction inputs above (7 bits per direction), or as 12-bit values in the sticks-only stream.":
@@ -328,7 +328,6 @@ export default {
   "Buttons (Gamepad API)": "Boutons (Gamepad API)",
   "Axes (Gamepad API)": "Axes (Gamepad API)",
   "{ms} ms (median, while moving)": "{ms} ms (médiane, en mouvement)",
-  "— (Gamepad API only)": "— (Gamepad API uniquement)",
   "Not receiving": "Aucune réception",
   "{n} reports/s (joystick stream)": "{n} rapports/s (flux joysticks)",
   "{n} reports/s (raw stream)": "{n} rapports/s (flux brut)",
@@ -388,7 +387,7 @@ export default {
   "Y raw": "Y brut",
   "L raw": "L brut",
   "R raw": "R brut",
-  "Past the 80-unit circle — the game pulls it back to 100%.": "Au-delà du cercle de 80 unités : le jeu le ramène à 100 %.",
+  "Past the 80-unit circle: the game pulls it back to 100%.": "Au-delà du cercle de 80 unités : le jeu le ramène à 100 %.",
   "Melee processing": "Traitement Melee",
   "Raw": "Brut",
   "Stick and trigger values": "Valeurs des joysticks et des gâchettes",

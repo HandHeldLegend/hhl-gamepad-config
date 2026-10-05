@@ -1,8 +1,8 @@
 /**
- * analysis.js — Snapback warnings in Play.
+ * analysis.js: Snapback warnings in Play.
  *
  *   SnapbackWatch  spots a stick that, after being released from a full press, bounces past neutral
- *                  to the OTHER side and back — the classic cause of unwanted turnarounds.
+ *                  to the OTHER side and back, the classic cause of unwanted turnarounds.
  */
 import { STICK } from './constants.js';
 import { t } from '../../i18n/index.js';

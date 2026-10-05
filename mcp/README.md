@@ -1,12 +1,12 @@
-# HHL Gamepad Config — MCP server
+# HHL Gamepad Config MCP server
 
 A zero-dependency [Model Context Protocol](https://modelcontextprotocol.io) server that lets AI assistants
 (Claude Desktop, Claude Code, and any other MCP client) help customers configure HOJA controllers with
 HHL Gamepad Config: find the right page, explain settings, build deep links that pre-fill settings, and
 troubleshoot common problems.
 
-It reads the app's own source — `src/sections/registry.js` (pages, deep-link params) and
-`src/settings/schema.js` (every setting, with the same validation the app uses) — so it can't drift from
+It reads the app's own source (`src/sections/registry.js` (pages, deep-link params) and
+`src/settings/schema.js` (every setting, with the same validation the app uses), so it can't drift from
 what the app ships.
 
 Requires **Node.js 20.6 or newer**. Nothing to install.

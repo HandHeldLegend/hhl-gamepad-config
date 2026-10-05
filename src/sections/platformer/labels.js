@@ -1,5 +1,5 @@
 /**
- * labels.js — Readable names of the hero's actions (hero.js), for the on-screen action readout.
+ * labels.js: Readable names of the hero's actions (hero.js), for the on-screen action readout.
  * Marked with N_() and translated where shown.
  */
 import { N_ } from '../../i18n/index.js';

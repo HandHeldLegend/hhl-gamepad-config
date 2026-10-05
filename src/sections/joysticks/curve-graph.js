@@ -1,5 +1,5 @@
 /**
- * curve-graph.js — Stick response preview: input distance (x) → output distance (y), both 0–100 %.
+ * curve-graph.js (Stick response preview): input distance (x) → output distance (y), both 0–100 %.
  *
  * Mirrors the firmware maths in HOJA-LIB-RP2040 src/input/stick_deadzone.c:
  *   d ≤ inner                         → 0

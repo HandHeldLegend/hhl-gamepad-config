@@ -1,5 +1,5 @@
 /**
- * Japanese translations — snapback. English source text → translation.
+ * Japanese translations (snapback). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -13,10 +13,10 @@ export default {
   'View': '表示',
 
   // ---- View ----
-  'Auto watches for the moment you let go and holds back only the rebound — there is no cutoff to tune.': '「自動」は手を離した瞬間を検出し、跳ね返りだけを抑えます。調整するカットオフはありません。',
+  'Auto watches for the moment you let go and holds back only the rebound. There is no cutoff to tune.': '「自動」は手を離した瞬間を検出し、跳ね返りだけを抑えます。調整するカットオフはありません。',
   'Filter off: the stick reports its raw output. Use this to see your stick’s natural snapback.': 'フィルターオフ：スティックは生の出力を送ります。スティック本来のスナップバックを確認するときに使います。',
   'Snapback filter': 'スナップバックフィルター',
-  'Changes apply instantly — press Save to keep them.': '変更はすぐに反映されます。保持するには「保存」を押してください。',
+  'Changes apply instantly. Press Save to keep them.': '変更はすぐに反映されます。保持するには「保存」を押してください。',
   '{stick}: snapback waveform': '{stick}：スナップバック波形',
   'Flick the right stick…': '右スティックを弾いてください…',
   'Flick the left stick…': '左スティックを弾いてください…',
@@ -39,7 +39,7 @@ export default {
   'What the right stick does in the 31 ms after you let go.': '右スティックを離した後 31 ms の動き。',
   'What the left stick does in the 31 ms after you let go.': '左スティックを離した後 31 ms の動き。',
   'Captured': '記録しました',
-  'Flick again to compare — the last few captures stay below the plot.': 'もう一度弾いて比較できます。直近の記録はグラフの下に残ります。',
+  'Flick again to compare. The last few captures stay below the plot.': 'もう一度弾いて比較できます。直近の記録はグラフの下に残ります。',
   'New right stick capture': '右スティックの新しい記録',
   'New left stick capture': '左スティックの新しい記録',
   'How to test:': 'テスト方法：',
@@ -57,7 +57,7 @@ export default {
   'Filter mode': 'フィルターモード',
   'How the left stick suppresses the rebound past center after you let go.': '左スティックを離した後、中心を越える跳ね返りをどう抑えるか。',
   'How the right stick suppresses the rebound past center after you let go.': '右スティックを離した後、中心を越える跳ね返りをどう抑えるか。',
-  'Low-pass: smooths fast movement near the center (adjust with the cutoff). Auto: detects a release and holds back the rebound only when it happens. Off: raw stick output — use this to see your stick’s natural snapback.': 'ローパス：中心付近の速い動きを滑らかにします（カットオフで調整）。自動：離した瞬間を検出し、そのときだけ跳ね返りを抑えます。オフ：スティックの生の出力。スティック本来のスナップバックを確認するときに使います。',
+  'Low-pass: smooths fast movement near the center (adjust with the cutoff). Auto: detects a release and holds back the rebound only when it happens. Off: raw stick output. Use this to see your stick’s natural snapback.': 'ローパス：中心付近の速い動きを滑らかにします（カットオフで調整）。自動：離した瞬間を検出し、そのときだけ跳ね返りを抑えます。オフ：スティックの生の出力。スティック本来のスナップバックを確認するときに使います。',
   'Low-pass': 'ローパス',
   'Auto': '自動',
   'Filter cutoff': 'カットオフ周波数',

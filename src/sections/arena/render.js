@@ -1,5 +1,5 @@
 /**
- * render.js — Draws the arena on a 2D canvas. Original vector art in the Super Famicom palette.
+ * render.js: Draws the arena on a 2D canvas. Original vector art in the Super Famicom palette.
  *
  * World units, y up. The camera gently follows the fighter while always keeping the stage in view
  * (no shake, no sudden cuts). Positions are interpolated between simulation frames for smoothness
@@ -266,7 +266,7 @@ export class Renderer {
 
   /**
    * Simple geometric accessory per fighter, drawn in body space (y up, radius R). `behind` = the part
-   * drawn before the body. Shapes only — no character likenesses.
+   * drawn before the body. Shapes only, no character likenesses.
    */
   #accessory(ctx, look, facing, col, behind) {
     const c = col(look.band);

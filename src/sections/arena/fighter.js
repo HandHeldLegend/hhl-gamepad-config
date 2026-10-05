@@ -1,5 +1,5 @@
 /**
- * fighter.js — "Dot", the arena's small round fighter, as a frame-by-frame state machine.
+ * fighter.js: "Dot", the arena's small round fighter, as a frame-by-frame state machine.
  *
  * One call to step(pad) = one 60 Hz frame. Each state handler reads the PadState (see controller.js)
  * and may switch state; integrate() then moves the fighter and resolves collisions with the stage.
@@ -28,10 +28,10 @@
  *   - Jump out of shield works while the shield is up and during shield release (GuardOff), as does
  *     spot dodge; up special works out of shield too.
  *
- * Input buffer (deliberate, NOT Melee — see FRAMES.INPUT_BUFFER): a jump / attack / special / shield /
+ * Input buffer (deliberate, NOT Melee; see FRAMES.INPUT_BUFFER): a jump / attack / special / shield /
  * C-stick / dash press that the current state couldn't use is carried forward for game.inputBuffer frames
  * and comes out on the first frame the fighter can act. The same lenience widens the smash-attack window
- * (A up to that many frames after a smash flick, or before it — see smashFromNormal()). L-cancel timing
+ * (A up to that many frames after a smash flick, or before it; see smashFromNormal()). L-cancel timing
  * is never buffered.
  */
 import { PHYS, FRAMES, STICK, SHIELD, LEDGE, fighterById, fighterPhysics } from './constants.js';
@@ -368,7 +368,7 @@ export class Fighter {
   }
 
   walkPhysics(p) {
-    // Walk speed is proportional to how far the stick is pushed — a good way to feel stick resolution.
+    // Walk speed is proportional to how far the stick is pushed: a good way to feel stick resolution.
     this.vx = toward(this.vx, p.x * this.P.WALK_MAX, this.P.WALK_ACCEL);
   }
 
@@ -430,7 +430,7 @@ export class Fighter {
     if (p.y <= STICK.CROUCH_Y) { this.setState('crouch'); return; }
     if (p.xSide === -this.facing) {
       // Run turnaround: the fighter turns at once and slides on its old momentum (so sliding off an
-      // edge this way leaves it facing the stage — the "run off, turn back, grab the ledge" move).
+      // edge this way leaves it facing the stage (the "run off, turn back, grab the ledge" move).
       this.skidTurn = true; this.facing = -this.facing; this.setState('skid'); return;
     }
     if (p.xSide !== this.facing) { this.skidTurn = false; this.setState('skid'); return; }
@@ -524,7 +524,7 @@ export class Fighter {
     // Melee: the first airborne frame already takes an airdodge (frame-perfect wavedash) or an aerial.
     this.airOptions(p);
     if (this.earlyAirdodge > 0 && this.state !== 'airdodge') {
-      this.feedback(t('Airdodge {n}f too early — press it after lift-off', { n: this.earlyAirdodge }), 'yellow');
+      this.feedback(t('Airdodge {n}f too early: press it after lift-off', { n: this.earlyAirdodge }), 'yellow');
     }
   }
 
@@ -626,7 +626,7 @@ export class Fighter {
   /**
    * Lenience for web latency (not Melee: there ftCo_AttackS4 only fires when A is pressed while the
    * stick is past the threshold within the dash-smash window): A pressed up to inputBuffer frames BEFORE
-   * the smash flick started a jab/tilt — the flick arriving now turns it into the smash attack.
+   * the smash flick started a jab/tilt, and the flick arriving now turns it into the smash attack.
    */
   smashFromNormal(p) {
     const N = this.game.inputBuffer;

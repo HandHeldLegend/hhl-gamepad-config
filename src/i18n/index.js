@@ -1,5 +1,5 @@
 /**
- * i18n — translations and locale-aware formatting.
+ * i18n: translations and locale-aware formatting.
  *
  * Languages: English (source), Spanish (Latin American, neutral), Japanese, French.
  *
@@ -12,7 +12,7 @@
  * English text IS the key (gettext style): code stays readable, a missing translation simply shows
  * English, and `node tools/test-i18n.mjs` lists every string that still needs translating.
  * Data-only modules (registry.js, settings.js) keep plain English; it is translated where rendered,
- * e.g. t(def.label). Dictionaries live in src/i18n/locales/<lang>/<area>.js — one file per app area
+ * e.g. t(def.label). Dictionaries live in src/i18n/locales/<lang>/<area>.js, one file per app area
  * so several people can translate at once. Terminology: src/i18n/GLOSSARY.md.
  *
  * Detection (preference 'auto'): the browser/OS language list first (navigator.languages); if none

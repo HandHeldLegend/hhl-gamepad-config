@@ -1,16 +1,16 @@
 /**
- * schema.js — The declarative catalog of user-facing controller settings.
+ * schema.js: The declarative catalog of user-facing controller settings.
  *
  * Each section contributes simple ("scalar") settings in src/sections/<id>/settings.js. The same
  * definitions drive three things, so they can never drift apart:
- *   1. the UI — settingField(def) renders a bound control (src/settings/field.js);
- *   2. deep links — #/apply?haptics.intensity=80 validates and applies values (src/settings/apply.js);
- *   3. AI assistants — the MCP server and window.hhl bridge list/validate them.
+ *   1. the UI: settingField(def) renders a bound control (src/settings/field.js);
+ *   2. deep links: #/apply?haptics.intensity=80 validates and applies values (src/settings/apply.js);
+ *   3. AI assistants: the MCP server and window.hhl bridge list/validate them.
  *
  * Complex editors (button remapping, stick calibration, angle maps...) stay hand-written in the
  * section views; deep links can still *navigate* to them via route params.
  *
- * NO DOM CODE in this file or in any settings.js — it is imported by Node (mcp/server.mjs).
+ * NO DOM CODE in this file or in any settings.js; it is imported by Node (mcp/server.mjs).
  *
  * @typedef {Object} SettingDef
  * @property {string} key           Unique id, "<section>.<name>" (camelCase name). Used in deep links.

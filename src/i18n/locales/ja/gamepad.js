@@ -1,5 +1,5 @@
 /**
- * Japanese translations — gamepad. English source text → translation.
+ * Japanese translations (gamepad). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -12,7 +12,7 @@ export default {
   "A or B (East or South)": "AまたはB（右または下）",
   "Hold A or B (East or South) while plugging in to reconnect to this app after switching modes.": "モード変更後にこのアプリへ再接続するには、AまたはB（右または下ボタン）を押しながらコントローラーを接続してください。",
   'Config app': 'アプリ対応',
-  "The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app — after changing it, hold A or B (East or South) while plugging in to come back here.": "接続時または電源オン時にコントローラーが起動する出力モードです。この設定アプリで使えるのはSwitchモードとSteamモードのみです。変更後にここへ戻るには、AまたはB（右または下ボタン）を押しながら接続してください。",
+  "The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app. After changing it, hold A or B (East or South) while plugging in to come back here.": "接続時または電源オン時にコントローラーが起動する出力モードです。この設定アプリで使えるのはSwitchモードとSteamモードのみです。変更後にここへ戻るには、AまたはB（右または下ボタン）を押しながら接続してください。",
   // Mode names stay as-is (brands / firmware names).
   'Switch': 'Switch',
   'XInput': 'XInput',
@@ -32,7 +32,7 @@ export default {
   // Switch colors
   'Switch device colors': 'Switchでの表示カラー',
   'How the Switch draws your controller in its menus and some games.': 'Switchのメニューや一部のゲームで表示されるコントローラーの色です。',
-  'Colors which determine how the Switch displays the controller in menus and some games. They don’t change the LEDs — see the RGB page for those.': 'Switchがメニューや一部のゲームでコントローラーを表示する際の色です。LEDの色は変わりません。LEDはRGBページで設定してください。',
+  'Colors which determine how the Switch displays the controller in menus and some games. They don’t change the LEDs (see the RGB page for those).': 'Switchがメニューや一部のゲームでコントローラーを表示する際の色です。LEDの色は変わりません。LEDはRGBページで設定してください。',
   'Controller color preview': 'コントローラーのカラープレビュー',
   'Body': '本体',
   'Buttons': 'ボタン',
@@ -69,10 +69,10 @@ export default {
   'MAC address base': 'MACアドレス（ベース）',
   'The hardware address used for USB and Bluetooth modes.': 'USBモードとBluetoothモードで使われるハードウェアアドレスです。',
   'Base address': 'ベースアドレス',
-  'Each connection mode uses its own address, counting up from this one, so your devices see each mode as a separate controller. Only change this if two controllers clash — you may need to pair again afterwards.': '接続モードごとに、このアドレスから順に数えた別々のアドレスを使うため、相手の機器には各モードが別のコントローラーとして認識されます。2台のコントローラーが競合する場合のみ変更してください。変更後は再ペアリングが必要になる場合があります。',
+  'Each connection mode uses its own address, counting up from this one, so your devices see each mode as a separate controller. Only change this if two controllers clash. You may need to pair again afterwards.': '接続モードごとに、このアドレスから順に数えた別々のアドレスを使うため、相手の機器には各モードが別のコントローラーとして認識されます。2台のコントローラーが競合する場合のみ変更してください。変更後は再ペアリングが必要になる場合があります。',
   'A MAC address is the hardware ID other devices use to recognize the controller over Bluetooth and USB. The first byte must be even.': 'MACアドレスは、他の機器がBluetoothやUSBでコントローラーを識別するためのハードウェアIDです。最初のバイトは偶数である必要があります。',
   'The first byte must be even, so it was changed to {byte}.': '最初のバイトは偶数である必要があるため、{byte}に変更しました。',
-  'Saved as {mac} — press Save to keep it.': '{mac}に設定しました。保持するには「保存」を押してください。',
+  'Saved as {mac}. Press Save to keep it.': '{mac}に設定しました。保持するには「保存」を押してください。',
   'MAC address': 'MACアドレス',
   'MAC byte {n} of 6': 'MACアドレスの{n}/6バイト目',
 
@@ -90,7 +90,7 @@ export default {
   'Pressing the button below will reboot your controller into a firmware update mode. This is only necessary if you are updating the firmware.': '下のボタンを押すと、コントローラーがファームウェアのアップデートモードで再起動します。ファームウェアをアップデートする場合のみ必要です。',
   'Reboot to bootloader': 'ブートローダーで再起動',
   'Reboot into update mode?': 'アップデートモードで再起動しますか？',
-  'The controller will disconnect and restart in its bootloader so new firmware can be installed — this app offers to install it when the controller reappears. Unsaved changes will be lost. Only do this if you are updating the firmware.': 'コントローラーが切断され、新しいファームウェアをインストールできるようブートローダーで再起動します。コントローラーが再び認識されると、このアプリからインストールできます。未保存の変更は失われます。ファームウェアをアップデートする場合のみ実行してください。',
+  'The controller will disconnect and restart in its bootloader so new firmware can be installed. This app offers to install it when the controller reappears. Unsaved changes will be lost. Only do this if you are updating the firmware.': 'コントローラーが切断され、新しいファームウェアをインストールできるようブートローダーで再起動します。コントローラーが再び認識されると、このアプリからインストールできます。未保存の変更は失われます。ファームウェアをアップデートする場合のみ実行してください。',
   'Reboot': '再起動',
   'Rebooting…': '再起動中…',
   'Rebooting into the bootloader…': 'ブートローダーで再起動しています…',

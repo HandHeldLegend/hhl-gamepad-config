@@ -1,9 +1,9 @@
 /**
- * catalog.mjs — The app's pages and settings, loaded straight from the app source (Node side).
+ * catalog.mjs: The app's pages and settings, loaded straight from the app source (Node side).
  *
  * Shared by mcp/server.mjs, tools/gen-docs.mjs and tools/test-mcp.mjs. Everything here is derived
  * from src/sections/registry.js and src/settings/schema.js at runtime, so assistants always see
- * exactly what the app ships — nothing is copied by hand.
+ * exactly what the app ships; nothing is copied by hand.
  *
  *   const cat = await loadCatalog();
  *   cat.pages            public page descriptions (no functions)
@@ -169,7 +169,7 @@ async function importSchemaSafely() {
 }
 
 /**
- * Load everything assistants need. Never throws for settings problems — they are reported in
+ * Load everything assistants need. Never throws for settings problems; they are reported in
  * `warnings` and the affected settings are left out.
  * @param {{ appUrl?: string }} [opts]
  */
@@ -276,7 +276,7 @@ export async function loadCatalog({ appUrl = process.env.HHL_APP_URL } = {}) {
     const summary = changes.length
       ? `This link will ask to change ${changes.length} setting${changes.length === 1 ? '' : 's'}:\n${lines.join('\n')}\n` +
         `Afterwards it opens the "${pageById.get(thenPage)?.title || thenPage}" page.`
-      : 'No valid changes — no link was created.';
+      : 'No valid changes, so no link was created.';
     return { ok: changes.length > 0 && errors.length === 0, url, changes: changes.map(({ link, ...c }) => c), errors, then: thenPage, summary };
   }
 
@@ -306,7 +306,7 @@ export async function firmwareBuilds({ live = false, base = normalizeBase(proces
   const builds = await import(BUILDS_URL);
   const link = (id) => base + buildRoute('firmware', { build: id });
   const nuke = { id: builds.NUKE_BUILD.id, label: builds.NUKE_BUILD.label, danger: true,
-    note: 'Erases the whole flash (all settings). Recovery only — reinstall the right build afterwards.' };
+    note: 'Erases the whole flash (all settings). Recovery only. Reinstall the right build afterwards.' };
   if (!live) {
     const list = Object.entries(builds.DISPLAY_NAMES).map(([id, label]) => ({ id, label, installLink: link(id) }))
       .sort((a, b) => a.label.localeCompare(b.label));

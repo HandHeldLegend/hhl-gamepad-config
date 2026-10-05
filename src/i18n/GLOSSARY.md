@@ -9,7 +9,7 @@ and a normal space before : ; ? ! **All translations are drafts pending native r
 Keep untranslated: product names (HHL Gamepad Config, HOJA, Hand Held Legend, GC Ultimate, ProGCC…),
 button names printed on hardware (A, B, X, Y, L, R, ZL, ZR, Start, Select, Home, BOOTSEL), file/drive names
 (RPI-RP2, RP2350, UF2, INFO_UF2.TXT), mode names that are brands (Switch, XInput, Steam, Slippi,
-GameCube, N64, SNES — the UI says "Steam" for the firmware's SInput mode), units, and `{placeholders}`.
+GameCube, N64, SNES; the UI says "Steam" for the firmware's SInput mode), units, and `{placeholders}`.
 
 | English | Español | 日本語 | Français |
 |---|---|---|---|

@@ -1,5 +1,5 @@
 /**
- * Spanish (neutral Latin American) translations — 3D Platformer. English source text → translation.
+ * Spanish (neutral Latin American) translations (3D Platformer). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  * Move names use common Spanish gaming terms (salto largo, golpe en picada, salto de pared).
  */
@@ -59,7 +59,7 @@ export default {
   "Climbing up": "Subiendo",
 
   // ---- Controls & help ----
-  "Move — push further to run faster": "Moverse: inclina más para correr más rápido",
+  "Move (push further to run faster)": "Moverse: inclina más para correr más rápido",
   "Orbit the camera": "Girar la cámara",
   "Camera behind the hero": "Cámara detrás del personaje",
   "L or right-stick press": "L o presionar el joystick derecho",
@@ -117,6 +117,6 @@ export default {
     "Un pequeño circuito de prueba en tres dimensiones para tu control HOJA: la velocidad analógica al caminar, los giros rápidos, el control de cámara y los saltos con buen timing muestran cómo se sienten tus joysticks y botones en un juego 3D. Solo lee el control conectado a esta app.",
   "Its movement is modelled on the publicly documented physics of classic 30 frames-per-second 3D platformers (speeds, jump heights, frame windows). The hero, the course and the code are original and were written for this app; it contains no game code, data or assets.":
     "Su movimiento se basa en la física documentada públicamente de los clásicos juegos de plataformas 3D a 30 frames por segundo (velocidades, alturas de salto, ventanas de frames). El personaje, el circuito y el código son originales y se crearon para esta app; no contiene código, datos ni recursos de ningún juego.",
-  "There are no enemies or collectibles — just blocks, ramps, walls and pillars to move around on.":
+  "There are no enemies or collectibles, just blocks, ramps, walls and pillars to move around on.":
     "No hay enemigos ni objetos para recolectar: solo bloques, rampas, paredes y pilares para moverte.",
 };

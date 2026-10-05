@@ -1,10 +1,10 @@
 /**
- * bridge.js — In-page assistant bridge.
+ * bridge.js: In-page assistant bridge.
  *
  * Exposes the app to AI assistants that run *inside the browser* (agentic browsers, extensions,
  * DevTools automation) in two ways:
  *
- *   1. `window.hhl` — a small promise-based API:
+ *   1. `window.hhl`: a small promise-based API:
  *        hhl.version                      app version ('dev' until loaded)
  *        hhl.status()                     connection state, controller info, capabilities, unsaved blocks, route
  *        hhl.listPages()                  pages with availability for the connected controller
@@ -16,7 +16,7 @@
  *                                         Resolves with the report once the user decides. Never applies
  *                                         anything without the user pressing Apply.
  *
- *   2. WebMCP — when the browser exposes `navigator.modelContext`, the same functions are registered
+ *   2. WebMCP: when the browser exposes `navigator.modelContext`, the same functions are registered
  *      as tools (`registerTool`, or `provideContext({ tools })` on older previews). Absent API = no-op.
  *
  * The Node-side counterpart for desktop assistants is mcp/server.mjs.
@@ -250,7 +250,7 @@ export function installBridge() {
     /** Re-run WebMCP registration (e.g. after a polyfill loads). Returns true if an API was found. */
     registerWebMcp,
     help: 'HHL Gamepad Config assistant bridge. Read-only: status(), listPages(), listSettings(section?), getSetting(key). ' +
-      'Actions: navigate(page, params) and proposeSettings({key: value}) — the user must confirm every change. ' +
+      'Actions: navigate(page, params) and proposeSettings({key: value}); the user must confirm every change. ' +
       'Docs: llms.txt and docs/DEEPLINKS.md next to this page.',
   };
   try {

@@ -1,5 +1,5 @@
 /**
- * play.js — The "Play" tab: the arena canvas, toolbar (mode, pause, frame-step, speed, reset),
+ * play.js (The "Play" tab): the arena canvas, toolbar (mode, pause, frame-step, speed, reset),
  * per-action feedback chips, live input display and session stats.
  *
  * Phones (≤ 560px, PHONE_MQ): the toolbar and fighter picker collapse into compact rows, and the
@@ -145,7 +145,7 @@ export function renderPlay(panel, app) {
 
   // ---- Stats -------------------------------------------------------------------------------------
   let statsDirty = true;
-  const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—');
+  const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '–');
   const rows = {};
   function paintStats(force) {
     if (!statsDirty && !force) return;
@@ -205,7 +205,7 @@ export function renderPlay(panel, app) {
     if (overlay.dataset.kind !== ov || ov === 'done') setOverlay(ov);
     // Banner: paused / ready hints.
     const bn = app.paused ? t('Paused · Start / P resumes · D-pad → / . steps one frame')
-      : game.timer.state === 'ready' ? t('Target test — the clock starts when you move') : '';
+      : game.timer.state === 'ready' ? t('Target test: the clock starts when you move') : '';
     if (banner.textContent !== bn) { banner.textContent = bn; banner.hidden = !bn; }
     if (pauseBtn.dataset.paused !== String(app.paused)) {
       pauseBtn.dataset.paused = String(app.paused);
@@ -225,7 +225,7 @@ export function renderPlay(panel, app) {
       const name = input.deviceName();
       overlay.replaceChildren(h('div.arena-overlay-card',
         h('div.arena-overlay-title', kind === 'prompt-wait' ? t('Waiting for input from {name}…', { name }) : t('Press any button on {name}', { name })),
-        h('p.muted.small', t('The Arena reads only the controller connected to this app — through the browser’s gamepad support when it can see it, otherwise straight over USB.'))));
+        h('p.muted.small', t('The Arena reads only the controller connected to this app. It uses the browser’s gamepad support when it can see the controller, otherwise it reads straight over USB.'))));
       return;
     }
     const best = game.bestTime;

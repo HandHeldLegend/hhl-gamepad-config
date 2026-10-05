@@ -1,5 +1,5 @@
 /**
- * French (France/international) translations — input. English source text → translation.
+ * French (France/international) translations (input). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 export default {
@@ -21,8 +21,8 @@ export default {
     "Les six configurations reviennent aux valeurs par défaut de cette manette. Vos modifications dans tous les modes seront perdues.",
   "Every input in {mode} mode goes back to this controller's default layout and settings. Other modes are not affected.":
     "Toutes les entrées du mode {mode} reviennent à la configuration et aux réglages par défaut de cette manette. Les autres modes ne sont pas affectés.",
-  "All modes reset to defaults — press Save to keep it.": "Tous les modes ont été réinitialisés — appuyez sur Enregistrer pour conserver ce changement.",
-  "{mode} mode reset to defaults — press Save to keep it.": "Le mode {mode} a été réinitialisé — appuyez sur Enregistrer pour conserver ce changement.",
+  "All modes reset to defaults. Press Save to keep it.": "Tous les modes ont été réinitialisés. Appuyez sur Enregistrer pour conserver ce changement.",
+  "{mode} mode reset to defaults. Press Save to keep it.": "Le mode {mode} a été réinitialisé. Appuyez sur Enregistrer pour conserver ce changement.",
   "The controller did not confirm the reset. Try again.": "La manette n’a pas confirmé la réinitialisation. Réessayez.",
   "Reset": "Réinitialiser",
   "Done": "Terminé",
@@ -50,8 +50,8 @@ export default {
   "Stick directions": "Directions du joystick",
   "Inputs that measure how far they are pressed, such as analog triggers (the sensor type depends on your controller). They can act as a button with an adjustable activation point, as rapid trigger, or as a full analog output.":
     "Entrées qui mesurent jusqu’où elles sont enfoncées, comme les gâchettes analogiques (le type de capteur dépend de votre manette). Elles peuvent servir de bouton avec un point d’activation réglable, de rapid trigger ou de sortie entièrement analogique.",
-  "Each stick direction can be sent somewhere else too — for example to the d-pad or a button.":
-    "Chaque direction du joystick peut aussi être envoyée ailleurs — par exemple vers la croix directionnelle ou un bouton.",
+  "Each stick direction can be sent somewhere else too, for example to the d-pad or a button.":
+    "Chaque direction du joystick peut aussi être envoyée ailleurs, par exemple vers la croix directionnelle ou un bouton.",
   "This controller did not report any remappable inputs.": "Cette manette n’a signalé aucune entrée réassignable.",
   "{input} sends {output} in {mode} mode.": "{input} envoie {output} en mode {mode}.",
   "{input} is off in {mode} mode.": "{input} est désactivé en mode {mode}.",
@@ -87,8 +87,8 @@ export default {
   "Released": "Relâché",
   "Mode": "Mode",
   "Analog mode": "Mode analogique",
-  "Presses as soon as it moves down, and releases as soon as it starts coming back up — great for fast repeated presses.":
-    "S’active dès qu’elle descend et se relâche dès qu’elle commence à remonter — idéal pour des appuis rapides et répétés.",
+  "Presses as soon as it moves down, and releases as soon as it starts coming back up. Great for fast repeated presses.":
+    "S’active dès qu’elle descend et se relâche dès qu’elle commence à remonter. Idéal pour des appuis rapides et répétés.",
   "Counts as pressed once it passes the activation point, like a normal button with an adjustable trigger point.":
     "Compte comme appuyé une fois le point d’activation franchi, comme un bouton normal avec un point de déclenchement réglable.",
   "Sends the full analog travel, so games see exactly how far it is pressed.":
@@ -109,9 +109,9 @@ export default {
   "Paste settings": "Coller les réglages",
   "Copy this input's mode and values, then paste them onto another analog input.":
     "Copiez le mode et les valeurs de cette entrée, puis collez-les sur une autre entrée analogique.",
-  "Settings copied — open another analog input and press Paste.": "Réglages copiés — ouvrez une autre entrée analogique et appuyez sur Coller les réglages.",
+  "Settings copied. Open another analog input and press Paste.": "Réglages copiés. Ouvrez une autre entrée analogique et appuyez sur Coller les réglages.",
   "Settings copied inside the app (clipboard access was blocked).": "Réglages copiés dans l’app (l’accès au presse-papiers a été bloqué).",
-  "Nothing to paste — copy an analog input's settings first.": "Rien à coller — copiez d’abord les réglages d’une entrée analogique.",
+  "Nothing to paste. Copy an analog input's settings first.": "Rien à coller : copiez d’abord les réglages d’une entrée analogique.",
   "Settings pasted.": "Réglages collés.",
   "Calibration": "Calibrage",
   "Calibrate": "Calibrer",
@@ -191,6 +191,6 @@ export default {
   "Not calibrated": "Non calibré",
   "This controller has no analog inputs to calibrate.": "Cette manette n’a aucune entrée analogique à calibrer.",
   "The controller did not start calibrating. Try again.": "La manette n’a pas démarré le calibrage. Réessayez.",
-  "Calibration finished — press Save to keep it.": "Calibrage terminé — appuyez sur Enregistrer pour le conserver.",
+  "Calibration finished. Press Save to keep it.": "Calibrage terminé. Appuyez sur Enregistrer pour le conserver.",
   "The controller did not confirm the calibration.": "La manette n’a pas confirmé le calibrage.",
 };

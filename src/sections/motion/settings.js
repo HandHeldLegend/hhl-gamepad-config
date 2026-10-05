@@ -1,6 +1,6 @@
 /**
  * Motion settings (imuConfig_s). Port of the scalar controls in hoja2/modules/motion-md.js.
- * Pure data + pure functions only — imported by Node for the MCP server.
+ * Pure data + pure functions only; imported by Node for the MCP server.
  *
  *   imu_disabled                 0 = motion on, 1 = motion off (hoja2: "Enabled, Disabled" selector)
  *   imu_gyro_sensitivity[3]      per-axis X/Y/Z multiplier in percent, IMU_SENSITIVITY_MIN..MAX (50..200)
@@ -76,7 +76,7 @@ export default [
     key: 'motion.enabled',
     label: 'Motion controls',
     description: 'Turn the gyro and accelerometer on or off for every game.',
-    tip: 'When off, the controller reports no motion at all — handy for games that use gyro aiming you don\'t want.',
+    tip: 'When off, the controller reports no motion at all. That\'s handy for games that use gyro aiming you don\'t want.',
     block: 'imu',
     type: 'boolean',
     requires: 'imu',

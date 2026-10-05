@@ -1,5 +1,5 @@
 /**
- * shell.js — The app frame: app bar, navigation, and page mounting.
+ * shell.js (The app frame): app bar, navigation, and page mounting.
  *
  * Layout
  *   ≥ 960px : app bar + persistent sidebar + page
@@ -120,7 +120,7 @@ export function createShell(root) {
 
   function build() {
     // ---- App bar -----------------------------------------------------------------------
-    const brand = h('a.brand', { href: '#/', 'aria-label': t('HHL Gamepad Config — home') },
+    const brand = h('a.brand', { href: '#/', 'aria-label': t('HHL Gamepad Config, home') },
       h('img.brand-mark', { src: 'assets/icons/app/icon-96.png', alt: '', width: 32, height: 32 }),
       h('span.brand-text', h('strong', 'HHL'), ' Gamepad Config'));
 
@@ -184,7 +184,7 @@ export function createShell(root) {
     saveBtn.classList.toggle('dirty', dirty);
     saveBtn.querySelector('.pip')?.remove();
     if (dirty) saveBtn.append(h('span.pip.motion-ok'));
-    saveBtn.title = dirty ? t('You have unsaved changes — save them to the controller') : t('Save settings to the controller');
+    saveBtn.title = dirty ? t('You have unsaved changes: save them to the controller') : t('Save settings to the controller');
 
     for (const s of SECTIONS) {
       const a = navLinks.get(s.id);
@@ -230,7 +230,7 @@ export function createShell(root) {
       }, 1600);
     } else {
       delete saveBtn.dataset.state;
-      toast(t('Save failed — check the connection and try again'), { tone: 'red', timeout: 5000 });
+      toast(t('Save failed: check the connection and try again'), { tone: 'red', timeout: 5000 });
     }
   }
 

@@ -1,5 +1,5 @@
 /**
- * Spanish (neutral Latin American) translations — rgb. English source text → translation.
+ * Spanish (neutral Latin American) translations (rgb). English source text → translation.
  * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
  */
 
@@ -16,7 +16,7 @@ export default {
 
   // Lighting
   'Lighting': 'Iluminación',
-  'Pick an effect — the preview shows roughly how it looks.': 'Elige un efecto; la vista previa muestra aproximadamente cómo se ve.',
+  'Pick an effect. The preview shows roughly how it looks.': 'Elige un efecto; la vista previa muestra aproximadamente cómo se ve.',
   'Preview of the selected lighting effect': 'Vista previa del efecto de iluminación seleccionado',
   'Effect': 'Efecto',
   'Lighting effect: Authentic (classic face-button colors for the output mode; called Chroma in older apps), Static (your colors), Rainbow, React (flash on press) or Fairy (blend between your first six colors).': 'Efecto de iluminación: Auténtico (colores clásicos de los botones frontales según el modo de salida; se llamaba Chroma en apps anteriores), Estático (tus colores), Arcoíris, Reactivo (destello al presionar) o Hadas (mezcla entre tus primeros seis colores).',
@@ -34,7 +34,7 @@ export default {
 
   // Brightness & timing
   'Brightness & timing': 'Brillo y tiempo',
-  'Changes apply instantly — press Save to keep them.': 'Los cambios se aplican al instante; presiona Guardar para conservarlos.',
+  'Changes apply instantly. Press Save to keep them.': 'Los cambios se aplican al instante; presiona Guardar para conservarlos.',
   'Brightness': 'Brillo',
   'How bright the LEDs are, from off to full.': 'Qué tan brillantes son los LED, desde apagados hasta el máximo.',
   'To save battery, the controller limits brightness to about a third while connected wirelessly.': 'Para ahorrar batería, el control limita el brillo a aproximadamente un tercio mientras está conectado de forma inalámbrica.',

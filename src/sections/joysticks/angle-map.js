@@ -1,5 +1,5 @@
 /**
- * angle-map.js — Angle map editor for one stick (port of hoja2/components/angle-modifier.js plus the
+ * angle-map.js: Angle map editor for one stick (port of hoja2/components/angle-modifier.js plus the
  * angle handlers in hoja2/modules/analog-md.js), and the page's one-time explainer.
  *
  * Each enabled joyConfigSlot_s is one row: input angle → output angle (where the notch physically is →
@@ -7,7 +7,7 @@
  * Every edit follows hoja2's sequence: mutate slots → write the analog block → re-read it (the firmware
  * validates and sorts slots on write) → re-render. writeSlots also sets analog_calibration_set (hoja2).
  *
- * Layout (like hoja2): plain single-line rows with one short column header and no per-row help —
+ * Layout (like hoja2): plain single-line rows with one short column header and no per-row help:
  *   #  use  in∠ → out∠  in dist → out dist  snap  [capture][delete]
  * Narrow editors (< 500px) wrap a row into two lines (angles + snap zone, then distances). What each
  * column means is explained once, above both sticks, by angleMapExplainer() (collapsible; open on the
@@ -183,7 +183,7 @@ export function angleMapEditor(o) {
   const unusedList = h('div.am-list', { role: 'rowgroup' });
   const unusedSummary = h('summary');
   const unused = h('details.am-unused', unusedSummary,
-    h('p.am-help', t('Unused slots are ignored by the controller. Turn one on to add a notch — it starts in the widest gap.')),
+    h('p.am-help', t('Unused slots are ignored by the controller. Turn one on to add a notch. It starts in the widest gap.')),
     unusedList);
   const count = h('span.am-count');
 
@@ -379,7 +379,7 @@ export function angleMapEditor(o) {
     count.textContent = t('{used} of {total} slots used', { used: enabled.length, total: SLOT_COUNT });
     diagram.set(enabled.map((x) => x.slot));
     list.replaceChildren(...enabled.map(({ slot, index }, n) => slotRow(slot, index, n + 1, enabled.length)));
-    if (!enabled.length) list.append(h('p.muted.small', icon('info'), ' ', t('No angles enabled — press Reset to 8-way.')));
+    if (!enabled.length) list.append(h('p.muted.small', icon('info'), ' ', t('No angles enabled. Press Reset to 8-way.')));
     unused.hidden = !off.length;
     unusedSummary.textContent = plural(off.length, '{n} unused slot', '{n} unused slots');
     unusedList.replaceChildren(...off.map(({ slot, index }) => slotRow(slot, index, 0, enabled.length)));

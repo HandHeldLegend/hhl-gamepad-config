@@ -1,5 +1,5 @@
 /**
- * stage.js — The arena's geometry: one solid main platform, three pass-through platforms, two
+ * stage.js (The arena's geometry): one solid main platform, three pass-through platforms, two
  * ledges, blast zones and the target layout. An original layout (units: main platform = 136 wide).
  */
 

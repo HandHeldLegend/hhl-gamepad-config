@@ -1,5 +1,5 @@
 /**
- * dom.js — A tiny hyperscript helper. No framework, no virtual DOM.
+ * dom.js: A tiny hyperscript helper. No framework, no virtual DOM.
  *
  *   h('div.card.compact', { onclick: fn, dataset: { id: 1 } }, 'text', otherNode, [more, nodes])
  *

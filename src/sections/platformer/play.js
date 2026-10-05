@@ -1,5 +1,5 @@
 /**
- * play.js — The "Play" tab: toolbar, the 3D stage and its small overlays (input status, action readout,
+ * play.js (The "Play" tab): toolbar, the 3D stage and its small overlays (input status, action readout,
  * pause screen).
  *
  * Timing: one requestAnimationFrame loop. A fixed-timestep accumulator advances the simulation in exact

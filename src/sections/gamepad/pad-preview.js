@@ -1,11 +1,11 @@
 /**
- * pad-preview.js — Pro-style controller artwork tinted with the four Switch colors
+ * pad-preview.js: Pro-style controller artwork tinted with the four Switch colors
  * (body, buttons, left grip, right grip), so users can see what the console will draw.
  *
  *   const pv = padPreview({ body: '#8e7cc3', buttons: '#e9e8ee', leftGrip: '#2f6bd8', rightGrip: '#e23b3b' });
  *   pv.set({ body: '#ff0000' });          // update any subset
  *
- * Artwork: supplied by Hand Held Legend — assets/art/procon.svg. The markup below is that file
+ * Artwork: supplied by Hand Held Legend (assets/art/procon.svg). The markup below is that file
  * verbatim (same paths, viewBox and transform); the only change is that each path's inline fill
  * was replaced by a region class, colored in gamepad.css:
  *   pv-body           main shell                         → body color
