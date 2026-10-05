@@ -18,7 +18,7 @@
 import { h, loadStyles } from '../../ui/dom.js';
 import { card, colorField, asyncButton, badge, infoTip } from '../../ui/controls.js';
 import { toast } from '../../ui/overlay.js';
-import { t, N_ } from '../../i18n/index.js';
+import { t, N_, i18n } from '../../i18n/index.js';
 import { decodeText } from '../../device/struct.js';
 import { settingField, refreshSettings } from '../../settings/field.js';
 import { getSetting, u32ToHex, hexToU32 } from '../../settings/schema.js';
@@ -77,10 +77,10 @@ export function mount(root, { session }) {
     const label = h('span.rgb-group-name', name);
     const subText = h('span');
     const isPlayer = i === playerGroup;
-    const sub = h('span.rgb-group-sub', subText,
-      isPlayer && badge(t('Player'), 'blue'),
-      isPlayer && infoTip(t('These LEDs also show your player number when connected and chase while pairing, using this color.')));
-    const note = isPlayer && h('span.rgb-group-note', t('Always shows this color, in every mode.'));
+    const sub = h('span.rgb-group-sub', subText);
+    // Player group: badge + one tip on the title line (Japanese joins sentences without a space).
+    const playerTip = isPlayer && [t('Always shows this color, in every mode.'),
+      t('These LEDs also show your player number when connected and chase while pairing, using this color.')].join(i18n.lang === 'ja' ? '' : ' ');
     const picker = colorField({
       value: u32ToHex(rgb().rgb_colors[i]),
       ariaLabel: t('{name} color', { name }),
@@ -91,7 +91,7 @@ export function mount(root, { session }) {
       },
     });
     const el = h('div.rgb-group', { dataset: { index: i } },
-      h('div.rgb-group-text', h('span.rgb-group-title', label), sub, note),
+      h('div.rgb-group-text', h('span.rgb-group-title', label, isPlayer && badge(t('Player'), 'blue'), isPlayer && infoTip(playerTip)), sub),
       picker);
     return { el, label, subText, picker, name, isPlayer };
   }

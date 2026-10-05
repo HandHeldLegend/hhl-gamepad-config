@@ -94,8 +94,8 @@
 .rgb-group-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rgb-group-sub { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--text-muted); }
 .rgb-group-sub:empty { display: none; }
-.rgb-group-sub .tip { width: 18px; height: 18px; }
-.rgb-group-note { font-size: var(--text-xs); color: var(--text-muted); }
+.rgb-group-title .badge, .rgb-group-title .tip { flex: none; }
+.rgb-group-title .tip { width: 18px; height: 18px; }
 .rgb-group .color-field { flex: none; }
 
 /* Idle glow color key: the three status-light colors as small glowing LEDs with labels. */
