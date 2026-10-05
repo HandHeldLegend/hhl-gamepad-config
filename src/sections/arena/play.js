@@ -11,6 +11,7 @@
  * speed setting); rendering interpolates between the last two sim frames.
  */
 import { h } from '../../ui/dom.js';
+import { frameGate } from '../../ui/frame-gate.js';
 import { button, segmented, select, card } from '../../ui/controls.js';
 import { STEP_MS, MAX_STEPS_PER_RAF, SPEEDS, FIGHTERS } from './constants.js';
 import { Renderer } from './render.js';
@@ -257,6 +258,7 @@ export function renderPlay(panel, app) {
   }
 
   let wasPaused = app.paused;
+  const drawDue = frameGate();
   function tick(now, snap) {
     lastSnap = snap;
     if (snap.edges.start) app.setPaused(!app.paused);
@@ -274,8 +276,11 @@ export function renderPlay(panel, app) {
       while (acc >= STEP_MS && steps < MAX_STEPS_PER_RAF) { simStep(snap); acc -= STEP_MS; steps++; }
       if (steps === MAX_STEPS_PER_RAF) acc = 0;
     }
-    renderer.draw(game, app.paused ? 1 : acc / STEP_MS, { showHitboxes: store.get('showHitboxes'), stick: { x: snap.lx, y: snap.ly } });
-    display.draw(snap, app.theme, now);
+    // Input and simulation run every animation frame; only the drawing is capped (frame-gate.js).
+    if (drawDue(now)) {
+      renderer.draw(game, app.paused ? 1 : acc / STEP_MS, { showHitboxes: store.get('showHitboxes'), stick: { x: snap.lx, y: snap.ly } });
+      display.draw(snap, app.theme, now);
+    }
     if ((n++ & 7) === 0) { paintHud(); paintStats(); }
   }
 

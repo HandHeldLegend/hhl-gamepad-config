@@ -16,6 +16,7 @@
  * - Redraws are throttled with requestAnimationFrame: call invalidate() as often as you like.
  */
 import { h } from './dom.js';
+import { frameGate } from './frame-gate.js';
 
 /** CSS custom properties exposed to draw functions as camelCase keys (e.g. --text-muted → textMuted). */
 const TOKENS = [
@@ -101,9 +102,11 @@ export function canvasSurface(o) {
     invalidate();
   }
 
-  function paint() {
+  const due = frameGate(); // ≤ 60 paints/s even when invalidated at the 125 Hz report rate
+  function paint(now) {
     frame = 0;
     if (destroyed || !width) return;
+    if (!due(now)) { frame = requestAnimationFrame(paint); return; }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
     try { o.draw(ctx, width, height, colors); } catch (err) { console.error('[canvas] draw failed', err); }

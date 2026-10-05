@@ -28,6 +28,7 @@
  * everything is disposed in destroy().
  */
 import { h } from '../../ui/dom.js';
+import { frameGate } from '../../ui/frame-gate.js';
 import { t } from '../../i18n/index.js';
 
 const THREE_URL = new URL('../../../vendor/three/three.min.js', import.meta.url).href;
@@ -38,6 +39,9 @@ const MODEL_URL = new URL('../../../assets/3d/supergamepad.stl', import.meta.url
 const GYRO_MDPS_PER_LSB = 70;      // LSM6DSR ±2000 dps
 const VIEW_SENSITIVITY = 0.25;     // degrees of tilt per dps
 const ROTATION_EASE = 0.05;        // per-frame lerp toward the target rotation
+/** Below these (deg/s summed over axes; radians of remaining travel) the view is idle and stops rendering. */
+const IDLE_RATE = 1;         // gyro noise at rest stays below this; 1 dps tilts the view only 0.25°
+const IDLE_ANGLE = 0.0002;
 const RETURN_SPEED = 0.01;         // per-frame decay of the last gyro rate toward 0
 const MODEL_SCALE = 2.5;
 const ROTATION_OFFSET = { x: 0, y: 0, z: 0 };
@@ -144,6 +148,7 @@ export function createModelView(o = {}) {
     rate.x = -g.x * k;
     rate.y = g.y * k;
     rate.z = g.z * k;
+    schedule(); // wake the loop if it went idle (see frame())
   }
 
   function applyTheme() {
@@ -180,9 +185,11 @@ export function createModelView(o = {}) {
   const lerp = (a, b, t) => a + (b - a) * t;
   const deg = (d) => (d * Math.PI) / 180;
 
+  const due = frameGate(); // ≤ 60 renders/s; the easing below already scales with elapsed time
   function frame(now) {
     raf = 0;
     if (destroyed || !model) return;
+    if (!due(now)) { schedule(); return; }
     // hoja2 ran its lerps once per animation frame; scale them so any refresh rate matches 60 fps.
     const frames = lastFrame ? Math.min(4, (now - lastFrame) / (1000 / 60)) : 1;
     lastFrame = now;
@@ -197,6 +204,12 @@ export function createModelView(o = {}) {
     rate.z = lerp(rate.z, 0, decay);
 
     renderOnce();
+    // Idle: once the model has settled and the controller is still, stop rendering (the mesh is large)
+    // until setGyro() reports motion again. ~0.01° of remaining travel is invisible.
+    const still = Math.abs(rate.x) + Math.abs(rate.y) + Math.abs(rate.z) < IDLE_RATE
+      && Math.abs(model.rotation.x - deg(ROTATION_OFFSET.x)) + Math.abs(model.rotation.y - deg(ROTATION_OFFSET.y))
+        + Math.abs(model.rotation.z - deg(ROTATION_OFFSET.z)) < IDLE_ANGLE;
+    if (still) { lastFrame = 0; return; }
     schedule();
   }
 

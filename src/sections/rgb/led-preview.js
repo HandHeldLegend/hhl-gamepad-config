@@ -13,6 +13,7 @@
  * instead and redrawn on refresh().
  */
 import { h } from '../../ui/dom.js';
+import { frameGate } from '../../ui/frame-gate.js';
 import { t } from '../../i18n/index.js';
 import { FAIRY_COLORS } from './settings.js';
 
@@ -102,8 +103,9 @@ export function ledPreview(o) {
     });
   }
 
+  const due = frameGate(); // ≤ 60 redraws/s (frame-gate.js)
   function loop(now) {
-    draw(now - t0, false);
+    if (due(now)) draw(now - t0, false);
     raf = requestAnimationFrame(loop);
   }
   function start() {

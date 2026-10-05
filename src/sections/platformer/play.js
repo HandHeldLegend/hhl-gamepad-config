@@ -8,6 +8,7 @@
  * The game pauses when the tab is hidden, and while paused nothing advances.
  */
 import { h } from '../../ui/dom.js';
+import { frameGate } from '../../ui/frame-gate.js';
 import { button } from '../../ui/controls.js';
 import { t } from '../../i18n/index.js';
 import { STEP_MS, MAX_STEPS_PER_RAF } from './constants.js';
@@ -64,8 +65,12 @@ export function renderPlay(panel, app) {
   let shownStatus = '';
   let errors = 0;
 
+  // Capped at 60 draws/s (frame-gate.js). The 30 Hz simulation steps from elapsed time and presses
+  // are latched, so skipped animation frames lose nothing.
+  const due = frameGate();
   function frame(now) {
     raf = requestAnimationFrame(frame);
+    if (!due(now)) return;
     try { tick(now); } catch (err) { if (errors++ < 5) console.error('[platformer]', err); }
   }
 

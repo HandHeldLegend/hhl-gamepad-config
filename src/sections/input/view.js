@@ -25,6 +25,7 @@
  * INPUT_CODE_, lower-cased; the build's own input name (e.g. "zl") also works.
  */
 import { h, loadStyles } from '../../ui/dom.js';
+import { frameGate } from '../../ui/frame-gate.js';
 import { card, button, segmented, select, tabView, callout, badge, infoTip } from '../../ui/controls.js';
 import { toast, confirmDialog } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
@@ -93,8 +94,10 @@ export function mount(root, ctx) {
   let latest = null;
   let drawn = null;
   const stopReports = onInputReport(device, (r) => { if (r.kind === 'raw') latest = r; });
-  let raf = requestAnimationFrame(function loop() {
+  const due = frameGate(); // ≤ 60 updates/s (frame-gate.js)
+  let raf = requestAnimationFrame(function loop(now) {
     raf = requestAnimationFrame(loop);
+    if (!due(now)) return;
     remap?.pop.track(); // keep the editor popover next to its tile (scroll, resize, layout changes)
     if (!latest || latest === drawn) return;
     drawn = latest;
