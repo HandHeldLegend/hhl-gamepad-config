@@ -261,6 +261,9 @@
 }
 .callout > .icon { color: var(--tone, var(--text-muted)); margin-top: 1px; }
 .callout strong { font-weight: 700; }
+/* An inline button in the text (e.g. "How to connect") must not make its line taller, or the icon
+   (top-aligned for multi-line callouts) sits above the text. */
+.callout > div > .btn { vertical-align: middle; margin-block: -6px; }
 
 /* ---- Info tip (the "?" bubble) ----------------------------------------------------- */
 .tip {
