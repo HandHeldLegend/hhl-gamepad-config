@@ -43,7 +43,6 @@ export default {
   'ms': 'ms',
   'Idle glow': 'Brillo en reposo',
   'After 5 minutes without input the lights go dark and a single LED glows to show battery status. Any input turns it off again. Turn this off to keep it dark too.': 'Tras 5 minutos sin entradas, las luces se apagan y un solo LED brilla para mostrar el estado de la batería. Cualquier entrada lo vuelve a apagar. Desactívalo para que ese LED también quede apagado.',
-  'Cyan = on battery, orange = charging, green = fully charged.': 'Cian = con batería, naranja = cargando, verde = carga completa.',
 
   // Colors
   'Colors': 'Colores',
@@ -76,4 +75,6 @@ export default {
   'The clipboard doesn’t contain a hex color like #FF8800.': 'El portapapeles no contiene un color hexadecimal como #FF8800.',
   'All group colors': 'Colores de todos los grupos',
   'Set every LED group to the same color at once (like hoja2’s “Paste All”).': 'Pone todos los grupos de LED en el mismo color a la vez (como “Paste All” en hoja2).',
+  'On battery': 'Con batería',
+  'Idle glow colors': 'Colores del brillo en reposo',
 };

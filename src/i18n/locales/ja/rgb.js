@@ -43,7 +43,6 @@ export default {
   'ms': 'ms',
   'Idle glow': 'アイドル時の点灯',
   'After 5 minutes without input the lights go dark and a single LED glows to show battery status. Any input turns it off again. Turn this off to keep it dark too.': '5分間入力がないとライトが消え、1つのLEDだけがバッテリー状態を示して点灯します。何か入力すると再び消えます。オフにすると、そのLEDも消灯します。',
-  'Cyan = on battery, orange = charging, green = fully charged.': 'シアン＝バッテリー駆動、オレンジ＝充電中、緑＝充電完了。',
 
   // Colors
   'Colors': 'カラー',
@@ -76,4 +75,6 @@ export default {
   'The clipboard doesn’t contain a hex color like #FF8800.': 'クリップボードに #FF8800 のような16進カラーが含まれていません。',
   'All group colors': '全グループの色',
   'Set every LED group to the same color at once (like hoja2’s “Paste All”).': 'すべてのLEDグループを一度に同じ色に設定します（hoja2の「Paste All」と同様）。',
+  'On battery': 'バッテリー駆動',
+  'Idle glow colors': 'アイドル時の点灯色',
 };

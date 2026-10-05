@@ -180,7 +180,17 @@ export function mount(root, { session }) {
   speedRow.control.querySelector('input[type="range"]')?.addEventListener('input', (e) => { live.speed = Number(e.target.value); });
 
   const tuningCard = card({ title: t('Brightness & timing'), subtitle: t('Changes apply instantly — press Save to keep them.'), icon: 'sliders', tone: TONE },
-    brightRow, speedRow, settingField('rgb.idleGlow', { tone: TONE }));
+    brightRow, speedRow, idleGlowField());
+
+  /** Idle glow toggle with a small color key (the three status-light colors) under its description. */
+  function idleGlowField() {
+    const row = settingField('rgb.idleGlow', { tone: TONE, tip: false });
+    const key = h('ul.rgb-glow-key', { 'aria-label': t('Idle glow colors') },
+      [['cyan', N_('On battery')], ['orange', N_('Charging')], ['green', N_('Fully charged')]].map(([c, label]) =>
+        h('li', h('span.rgb-glow-led', { class: `glow-${c}`, 'aria-hidden': 'true' }), t(label))));
+    row.querySelector('.field-text')?.append(key);
+    return row;
+  }
 
   // Order (owner request): preview + effect, then brightness & timing, then the per-group colors.
   // Wide pages: preview/effect and brightness side by side; the color grid gets the full width.

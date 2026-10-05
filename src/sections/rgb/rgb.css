@@ -97,3 +97,14 @@
 .rgb-group-sub .tip { width: 18px; height: 18px; }
 .rgb-group-note { font-size: var(--text-xs); color: var(--text-muted); }
 .rgb-group .color-field { flex: none; }
+
+/* Idle glow color key: the three status-light colors as small glowing LEDs with labels. */
+.rgb-glow-key { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.rgb-glow-key li { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); font-weight: 600; color: var(--text-muted); }
+.rgb-glow-led {
+  --led: #22d3ee; width: 12px; height: 12px; flex: none; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, color-mix(in srgb, var(--led) 35%, white), var(--led) 60%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--led) 55%, black), 0 0 8px 1px color-mix(in srgb, var(--led) 70%, transparent);
+}
+.rgb-glow-led.glow-orange { --led: #ff8a1f; }
+.rgb-glow-led.glow-green { --led: #34d058; }
