@@ -29,7 +29,7 @@ export const pctText = (v, digits = 0) => `${(v * 100).toFixed(digits)}%`;
 
 /** Trigger level as words (so it isn't shown by color/opacity alone). */
 export function triggerLevel(v) {
-  return v >= TRIGGER.HARD ? t('Full press') : v >= TRIGGER.SHIELD_MIN ? t('Shield') : t('Off');
+  return v >= TRIGGER.HARD ? t('Full press') : v >= TRIGGER.SHIELD_MIN ? t('Shield') : t('Released');
 }
 
 /**
@@ -284,7 +284,7 @@ export class InputDisplay {
     this.trig.set('lraw', pctText(raw.l, 1)); this.trig.set('rraw', pctText(raw.r, 1));
     this.trig.set('lv', triggerLevel(s.l)); this.trig.set('rv', triggerLevel(s.r));
     const held = Object.keys(this.btnNames).filter((k) => s.btn[k]).map((k) => this.btnNames[k]);
-    this.btns.set('held', held.length ? held.join(' · ') : t('None'));
+    this.btns.set('held', held.length ? held.join(' · ') : t('No buttons'));
     this.announce.offer(now, () => [
       describeStickSpoken(this.labels.main, s.lx, s.ly),
       describeStickSpoken(this.labels.c, s.cx, s.cy),

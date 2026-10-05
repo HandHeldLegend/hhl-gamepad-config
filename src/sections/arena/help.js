@@ -147,7 +147,7 @@ function bindingsCard(app) {
     const rows = [];
     const row = (label, current, onSet, onAdd, hint, kind) => {
       const value = h('span.arena-bind-val', current);
-      const setBtn = button({ label: t('Set'), size: 'sm', variant: 'tonal' });
+      const setBtn = button({ label: t('Assign'), size: 'sm', variant: 'tonal' });
       const addBtn = onAdd && button({ label: t('Add'), icon: 'plus', size: 'sm', variant: 'ghost', title: t('Add another input for this action') });
       const start = (fn) => {
         cancelCapture?.();

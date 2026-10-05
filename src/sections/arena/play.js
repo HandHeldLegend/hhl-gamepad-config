@@ -36,7 +36,7 @@ export function renderPlay(panel, app) {
     onChange: (v) => { store.set('speed', v); refocus(); },
   });
   speedSel.classList.add('arena-speed');
-  const resetBtn = button({ label: t('Reset'), icon: 'refresh', variant: 'ghost', size: 'sm', title: t('Reset position / restart run (R or Select)'), onClick: () => { game.resetRun(); refocus(); } });
+  const resetBtn = button({ label: t('Restart run'), icon: 'refresh', variant: 'ghost', size: 'sm', title: t('Reset position / restart run (R or Select)'), onClick: () => { game.resetRun(); refocus(); } });
   const toolbar = h('div.arena-toolbar', modeSeg, h('div.spacer'), h('div.arena-tools', pauseBtn, stepBtn, speedSel, resetBtn));
 
   // ---- Fighter picker (radio group; arrow keys move the selection) ---------------------------------

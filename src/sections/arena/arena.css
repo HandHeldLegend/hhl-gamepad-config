@@ -136,9 +136,9 @@
 .arena-lab-stick { display: block; width: 100%; max-width: 300px; aspect-ratio: 1; margin: 0 auto; }
 .arena-lab-stickpanel .arena-readout-grid { grid-template-columns: minmax(0, 1fr); }
 
-.arena-trig { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr) 4.5rem 7rem; align-items: center; gap: var(--space-1) var(--space-3); }
-@media (max-width: 520px) {
-  .arena-trig { grid-template-columns: 1.5rem minmax(0, 1fr) 4.5rem; }
+.arena-trig { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr) 9rem 7rem; align-items: center; gap: var(--space-1) var(--space-3); }
+@media (max-width: 620px) {
+  .arena-trig { grid-template-columns: 1.5rem minmax(0, 1fr) 9rem; }
   .arena-trig-state { grid-column: 2 / -1; }
 }
 .arena-trig + .arena-trig { margin-top: var(--space-2); }

@@ -1,0 +1,15 @@
+name: test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      # Firmware-layout and hoja2-parity checks skip automatically when those checkouts aren't present.
+      - run: node tools/test.mjs
+      - run: node tools/test-i18n.mjs
+      - run: node src/sections/arena/tests/gameplay.test.mjs
+      - name: Precache manifest is current
+        run: node tools/precache.mjs && git diff --exit-code -- precache-manifest.js

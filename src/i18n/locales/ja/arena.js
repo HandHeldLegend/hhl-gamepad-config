@@ -29,7 +29,6 @@ export default {
   "Advance one frame (while paused)": "1F 進める（一時停止中）",
   "Speed {n}×": "速度 {n}×",
   "Simulation speed": "シミュレーション速度",
-  "Reset": "リセット",
   "Reset position / restart run (R or Select)": "位置をリセット / やり直し（R または Select）",
   "Arena: a small round fighter on a stage with platforms and targets": "アリーナ：足場とターゲットのあるステージにいる小さな丸いファイター",
   "No input yet": "まだ入力がありません",
@@ -46,7 +45,6 @@ export default {
   "Cleared in {time}": "クリアタイム {time}",
   "New personal best!": "自己ベスト更新！",
   "Best: {time}": "ベスト：{time}",
-  "Try again": "もう一度",
 
   // ---- Play: session stats ----
   "Session stats": "セッションの統計",
@@ -85,11 +83,9 @@ export default {
   "R state": "R の状態",
   "Buttons": "ボタン",
   "Held": "押下中",
-  "None": "なし",
   "Jump": "ジャンプ",
   "Shield": "シールド",
   "Sh": "盾",
-  "Off": "オフ",
   "Full press": "押し込み",
   "neutral · {mag}": "ニュートラル · {mag}",
   "Announce position": "位置を読み上げ",
@@ -171,7 +167,6 @@ export default {
   "{n} other controllers are connected to this computer and ignored.": "このコンピューターにはほかに {n} 台のコントローラーが接続されていますが、無視されます。",
   "Button mapping": "ボタン割り当て",
   "Saved per output mode in this browser — Switch and Steam modes report buttons differently.": "出力モードごとにこのブラウザーに保存されます。Switch モードと Steam モードではボタンの報告方法が異なります。",
-  "Set": "設定",
   "Add": "追加",
   "Add another input for this action": "このアクションに別の入力を追加",
   "Axis {i}": "軸 {i}",
@@ -235,15 +230,10 @@ export default {
   "Flicking the stick up jumps (a fast flick past the threshold, like a smash).": "スティックを上にはじくとジャンプします（スマッシュ入力のように、しきい値を素早く越える入力）。",
   "Show hitboxes": "攻撃判定を表示",
   "Draw attack hitboxes, the collision point and ledge-grab boxes.": "攻撃判定、接地判定の点、崖つかまり判定を表示します。",
-  "Input deadzone": "入力デッドゾーン",
-  "A tiny radial deadzone applied before anything else. Keep it at or near zero to see what your controller’s own deadzone does — that is the point of the test.":
-    "ほかのすべての処理の前にかかる、ごく小さな円形のデッドゾーンです。コントローラー本体のデッドゾーンの働きを確認するのがこのテストの目的なので、0 かそれに近い値にしておきましょう。",
-  "Values inside this radius read as exactly centered. Values outside are left untouched (not rescaled).": "この半径内の値はぴったり中央として扱われます。外側の値はそのまま（再スケールなし）です。",
   "Target test record": "ターゲットテストの記録",
   "Your best time is kept in this browser.": "ベストタイムはこのブラウザーに保存されます。",
 
   // ---- Controls & help: controls ----
-  "Controls": "操作方法",
   "Defaults — change them under Button mapping. The keyboard only pauses, frame-advances and resets; your controller does all the playing.":
     "デフォルトの設定です。「ボタン割り当て」で変更できます。キーボードは一時停止・コマ送り・リセットのみで、プレイはすべてコントローラーで行います。",
   "Move · walk · dash": "移動 · 歩き · ダッシュ",
@@ -261,7 +251,6 @@ export default {
 
   // ---- Controls & help: technique guide ----
   "Technique guide": "テクニックガイド",
-  "What each feedback message is measuring.": "各フィードバックが何を計測しているかの説明です。",
   "Walk vs dash": "歩きとダッシュ",
   "Push the stick slowly to walk (speed follows how far you push). Flick it past {threshold} within {n} frames of leaving the center to dash.":
     "スティックをゆっくり倒すと歩きます（倒した量で速度が変わります）。中央を離れてから {n}F 以内に {threshold} を越えるようにはじくとダッシュします。",
@@ -294,23 +283,16 @@ export default {
   "About this arena": "このアリーナについて",
   "The Arena is a place to put your HOJA controller through its paces. It reads only the controller connected to this app — never other gamepads — so what you see is exactly what your controller sends.":
     "アリーナは HOJA コントローラーの実力を試すための場所です。このアプリに接続されたコントローラーだけを読み取り、ほかのゲームパッドは一切読まないので、表示される内容はコントローラーが送っているそのままの値です。",
-  "It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. It was written from scratch for this app: the character, stage, art, physics and timing values are all our own, and it uses no game code, data or assets of any kind.":
-    "対戦アクションの名作と、そのプレイヤーたちが愛する移動テクニックに着想を得たオリジナルのサンドボックスです。このアプリのためにゼロから作られており、キャラクター、ステージ、アート、物理、タイミングの値はすべて独自のもので、ゲームのコード・データ・素材は一切使っていません。",
   "Frame windows and thresholds are tuned to feel familiar and to demand a lot of a controller, so it’s a good place to try a new stick module, gate or setting — but results won’t exactly match any particular game.":
     "受付フレームやしきい値は、なじみのある操作感とコントローラーへの高い要求を両立するよう調整されています。新しいスティックモジュールやゲート、設定を試すのに最適ですが、結果が特定のゲームと完全に一致するわけではありません。",
 
   // ---- Input lab ----
   "From nearest 45°": "最寄りの 45° から",
-  "Above 100% — the game clamps it to 100%.": "100% を超えています。ゲームでは 100% に制限されます。",
   "Shield starts": "シールド開始",
   "Hard press": "押し込み",
   "Sticks": "スティック",
-  "Raw positions (only the tiny input deadzone applied). Dashed rings: neutral zone and dash/smash threshold.":
-    "生の位置です（小さな入力デッドゾーンのみ適用）。破線の円：ニュートラルゾーンとダッシュ/はじき入力のしきい値。",
   "Axes": "軸",
   "Triggers & raw inputs": "トリガーと生の入力",
-  "Shield starts at {shield}%; {hard}% or more counts as a full press. Below: every input your controller reports through the active source.":
-    "{shield}% でシールドが始まり、{hard}% 以上で押し込みとみなされます。下には、現在のソースでコントローラーが報告しているすべての入力を表示します。",
   "Traced stick outline compared to a perfect circle": "なぞったスティックの外周と真円の比較",
   "Stick roundness": "スティックの真円度",
   "Slowly roll the stick around the rim two or three times. The shape is compared with a perfect circle.":
@@ -359,4 +341,71 @@ export default {
   "Out of round": "真円からのずれ",
   "Diagonal vs cardinal": "斜め / 上下左右の比",
   "Corners found": "検出した角",
+
+  // ---- Fighters, jump explanations, Steam tip, Melee input view ----
+  "Restart run": "やり直し",
+  "Assign": "割り当て",
+  "No buttons": "なし",
+  "Released": "未入力",
+  "All-rounder · balanced in every way": "万能型 · すべてがバランス良好",
+  "Fast faller · 3-frame jumpsquat · quick dash": "落下が速い · ジャンプ踏切 3F · 速いダッシュ",
+  "Fast faller · huge jump · 5-frame jumpsquat": "落下が速い · 大きなジャンプ · ジャンプ踏切 5F",
+  "Swordfighter · floaty · long run": "剣士 · ふわふわ系 · 長い走り",
+  "Floaty · float: hold jump, then press down": "ふわふわ系 · 浮遊：ジャンプを押したまま下",
+  "Low traction · longest wavedash · 3-frame jumpsquat": "滑りやすい · 最長の絶 · ジャンプ踏切 3F",
+  "Fastest runner · falls fast": "走りが最速 · 落下が速い",
+  "Very floaty · 5 mid-air jumps · strong air control": "とてもふわふわ · 空中ジャンプ 5 回 · 高い空中制御",
+  "Fighter": "ファイター",
+  "Jump ignored · {action} ({n}f left)": "ジャンプ無効 · {action}（残り {n}F）",
+  "Jump ignored · {action}": "ジャンプ無効 · {action}",
+  "landing lag": "着地隙",
+  "already in jumpsquat": "ジャンプ踏切中",
+  "aerial attack": "空中攻撃中",
+  "No jumps left": "空中ジャンプが残っていません",
+  "airdodge": "空中回避中",
+  "helpless fall (until you land or grab a ledge)": "しりもち落下（着地か崖つかまりまで）",
+  "attack": "攻撃中",
+  "special": "必殺ワザ中",
+  "shield release": "シールド解除中",
+  "roll": "回避中",
+  "spot dodge": "その場回避中",
+  "shield break": "シールドブレイク",
+  "ledge grab": "崖つかまり",
+  "ledge getup": "崖上がり中",
+  "respawning": "復帰中",
+  "Buffered jump · pressed {n}f early": "先行入力ジャンプ · {n}F 早く入力",
+  "Jump buffer": "ジャンプ先行入力",
+  "Off: like the classic games, a jump pressed while the fighter can’t act is dropped (a chip explains why). On: it is retried for {n} frames.":
+    "オフ：往年の作品と同じく、行動できない間に押したジャンプは無視されます（理由が表示されます）。オン：{n}F の間、再試行されます。",
+  "Hide this tip": "このヒントを隠す",
+  "Faster input in Steam mode.": "Steam モードなら入力がより高速です。",
+  "Steam mode sends USB reports up to {x}× as often as Switch mode ({fast} Hz vs {slow} Hz). For the most responsive testing, set Default mode to Steam on the Gamepad page.":
+    "Steam モードは Switch モードの最大 {x} 倍の頻度で USB レポートを送ります（{fast} Hz 対 {slow} Hz）。最も応答性の高いテストには、ゲームパッドページでデフォルトモードを Steam にしてください。",
+  "Open the Gamepad page": "ゲームパッドページを開く",
+  "(Measured here: {hz} Hz.)": "（ここでの計測値：{hz} Hz）",
+  "(Measure it with the polling probe in the Input lab.)": "（入力ラボのポーリングプローブで計測できます）",
+  "What each feedback message is measuring. Frame windows shown for {fighter}.": "各フィードバックが何を計測しているかの説明です。フレーム数は {fighter} の値です。",
+  "It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. The fighters are original characters whose movement is modelled on publicly documented attributes of classic platform-fighter characters (speeds, gravity, jumpsquat, traction), and the input handling follows the documented behaviour of the classic GameCube games. It was written from scratch for this app: the characters, stage, art and code are all our own, and it uses no game code, data files or assets of any kind.":
+    "対戦アクションの名作と、そのプレイヤーたちが愛する移動テクニックに着想を得たオリジナルのサンドボックスです。ファイターはオリジナルキャラクターで、その動きは往年の対戦アクションのキャラクターについて公開されている性能値（速度、重力、ジャンプ踏切、摩擦）を参考にしています。入力処理も GameCube の名作について公開されている挙動に沿っています。このアプリのためにゼロから作られており、キャラクター、ステージ、アート、コードはすべて独自のもので、ゲームのコード・データファイル・素材は一切使っていません。",
+  "Not affiliated with or endorsed by Nintendo or HAL Laboratory.": "任天堂およびハル研究所とは関係なく、承認も受けていません。",
+  "X raw": "X（生）",
+  "Y raw": "Y（生）",
+  "L raw": "L（生）",
+  "R raw": "R（生）",
+  "Past the 80-unit circle — the game pulls it back to 100%.": "80 ユニットの円を超えています。ゲームでは 100% に戻されます。",
+  "Melee processing": "Melee の処理",
+  "Raw": "生の値",
+  "Stick and trigger values": "スティックとトリガーの値",
+  "What the game sees: GameCube values clamped to an 80-unit circle (steps of 0.0125), with the per-axis deadzone below 23 units (0.2875). Shaded cross: deadzone. Dashed lines: dash (x ±0.8) and tap jump / fast fall (y ±0.6625).":
+    "ゲームから見た値：GameCube の値を 80 ユニットの円に制限（0.0125 刻み）し、軸ごとに 23 ユニット（0.2875）未満をデッドゾーンとして 0 にします。網掛けの十字：デッドゾーン。破線：ダッシュ（x ±0.8）とスティックジャンプ / 急降下（y ±0.6625）。",
+  "Your controller’s raw output (1.0 = full scale). The solid dashed circle is where the game’s 80-unit clamp sits; the shaded cross and lines are the game’s thresholds in raw terms.":
+    "コントローラーの生の出力（1.0 = フルスケール）。破線の円はゲームの 80 ユニット制限の位置、網掛けの十字と線は生の値に換算したゲームのしきい値です。",
+  "Compare what the game reads with your controller’s raw output.": "ゲームが読み取る値とコントローラーの生の出力を比較できます。",
+  "Analog triggers read 0–140 in the game: the light shield starts at {min} ({pct}%) and 140 is a full press; a digital press always counts as full. Below: every input your controller reports through the active source.":
+    "ゲーム内のアナログトリガーは 0〜140 で読み取られます。ライトシールドは {min}（{pct}%）から、140 で押し込みです。デジタル押下は常に押し込み扱いです。下には、現在のソースでコントローラーが報告しているすべての入力を表示します。",
+  "Taps between browser polls": "ブラウザーの読み取り間の入力",
+  "Taps that started and ended between two Gamepad API polls are invisible to the browser. When the HOJA USB stream is running they are still seen there, counted here, and handed to the game (with the default button mapping).":
+    "Gamepad API の 2 回の読み取りの間に始まって終わった入力は、ブラウザーからは見えません。HOJA USB ストリームが動作していればそこで検出でき、ここで数えてゲームに渡します（デフォルトのボタン割り当ての場合）。",
+  "{n} seen over USB · {r} recovered": "USB で {n} 件検出 · {r} 件復元",
+  "Arena button mapping was reset: A and B now follow the labels printed on your controller.": "アリーナのボタン割り当てをリセットしました。A と B はコントローラーに印字された表記どおりになります。",
 };

@@ -27,7 +27,6 @@ export default {
   "Advance one frame (while paused)": "Avanzar un frame (en pausa)",
   "Speed {n}×": "Velocidad {n}×",
   "Simulation speed": "Velocidad de la simulación",
-  "Reset": "Reiniciar",
   "Reset position / restart run (R or Select)": "Reiniciar posición / volver a empezar (R o Select)",
   "Arena: a small round fighter on a stage with platforms and targets": "Arena: un pequeño luchador redondo en un escenario con plataformas y blancos",
   "No input yet": "Aún no hay entrada",
@@ -44,7 +43,6 @@ export default {
   "Cleared in {time}": "Completado en {time}",
   "New personal best!": "¡Nuevo récord personal!",
   "Best: {time}": "Récord: {time}",
-  "Try again": "Intentar de nuevo",
 
   // ---- Play: session stats ----
   "Session stats": "Estadísticas de la sesión",
@@ -83,11 +81,9 @@ export default {
   "R state": "Estado R",
   "Buttons": "Botones",
   "Held": "Presionados",
-  "None": "Ninguno",
   "Jump": "Salto",
   "Shield": "Escudo",
   "Sh": "Esc",
-  "Off": "Suelto",
   "Full press": "A fondo",
   "neutral · {mag}": "neutral · {mag}",
   "Announce position": "Anunciar posición",
@@ -169,7 +165,6 @@ export default {
   "{n} other controllers are connected to this computer and ignored.": "Hay {n} controles más conectados a esta computadora y se ignoran.",
   "Button mapping": "Asignación de botones",
   "Saved per output mode in this browser — Switch and Steam modes report buttons differently.": "Se guarda por modo de salida en este navegador: los modos Switch y Steam reportan los botones de forma distinta.",
-  "Set": "Asignar",
   "Add": "Agregar",
   "Add another input for this action": "Agregar otra entrada para esta acción",
   "Axis {i}": "Eje {i}",
@@ -233,15 +228,10 @@ export default {
   "Flicking the stick up jumps (a fast flick past the threshold, like a smash).": "Mover rápido la palanca hacia arriba hace saltar (un movimiento rápido más allá del umbral, como un smash).",
   "Show hitboxes": "Mostrar hitboxes",
   "Draw attack hitboxes, the collision point and ledge-grab boxes.": "Dibuja las hitboxes de los ataques, el punto de colisión y las zonas de agarre al borde.",
-  "Input deadzone": "Zona muerta de entrada",
-  "A tiny radial deadzone applied before anything else. Keep it at or near zero to see what your controller’s own deadzone does — that is the point of the test.":
-    "Una pequeña zona muerta radial que se aplica antes que todo lo demás. Déjala en cero o cerca de cero para ver qué hace la zona muerta propia de tu control; ese es el objetivo de la prueba.",
-  "Values inside this radius read as exactly centered. Values outside are left untouched (not rescaled).": "Los valores dentro de este radio se leen como centrados exactos. Los de afuera no se modifican (no se reescalan).",
   "Target test record": "Récord de la prueba de blancos",
   "Your best time is kept in this browser.": "Tu mejor tiempo se guarda en este navegador.",
 
   // ---- Controls & help: controls ----
-  "Controls": "Controles",
   "Defaults — change them under Button mapping. The keyboard only pauses, frame-advances and resets; your controller does all the playing.":
     "Valores predeterminados; cámbialos en Asignación de botones. El teclado solo pausa, avanza frames y reinicia; todo el juego se hace con tu control.",
   "Move · walk · dash": "Moverse · caminar · dash",
@@ -259,7 +249,6 @@ export default {
 
   // ---- Controls & help: technique guide ----
   "Technique guide": "Guía de técnicas",
-  "What each feedback message is measuring.": "Qué mide cada mensaje de retroalimentación.",
   "Walk vs dash": "Caminar vs. dash",
   "Push the stick slowly to walk (speed follows how far you push). Flick it past {threshold} within {n} frames of leaving the center to dash.":
     "Empuja la palanca despacio para caminar (la velocidad depende de cuánto la empujes). Para hacer dash, llévala más allá de {threshold} en menos de {n} frames desde que sale del centro.",
@@ -292,23 +281,16 @@ export default {
   "About this arena": "Acerca de esta arena",
   "The Arena is a place to put your HOJA controller through its paces. It reads only the controller connected to this app — never other gamepads — so what you see is exactly what your controller sends.":
     "La Arena es un lugar para poner a prueba tu control HOJA. Solo lee el control conectado a esta app (nunca otros gamepads), así que lo que ves es exactamente lo que envía tu control.",
-  "It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. It was written from scratch for this app: the character, stage, art, physics and timing values are all our own, and it uses no game code, data or assets of any kind.":
-    "Es un sandbox original de juego de pelea de plataformas, inspirado en los clásicos competitivos del género y en las técnicas de movimiento que sus jugadores adoran. Se escribió desde cero para esta app: el personaje, el escenario, el arte, la física y los tiempos son todos propios, y no usa código, datos ni recursos de ningún juego.",
   "Frame windows and thresholds are tuned to feel familiar and to demand a lot of a controller, so it’s a good place to try a new stick module, gate or setting — but results won’t exactly match any particular game.":
     "Las ventanas de frames y los umbrales están ajustados para sentirse familiares y exigirle mucho a un control, así que es un buen lugar para probar un nuevo módulo de palanca, gate o ajuste, aunque los resultados no coincidirán exactamente con ningún juego en particular.",
 
   // ---- Input lab ----
   "From nearest 45°": "Desde el 45° más cercano",
-  "Above 100% — the game clamps it to 100%.": "Por encima del 100%: el juego lo limita al 100%.",
   "Shield starts": "Empieza el escudo",
   "Hard press": "Presión a fondo",
   "Sticks": "Palancas",
-  "Raw positions (only the tiny input deadzone applied). Dashed rings: neutral zone and dash/smash threshold.":
-    "Posiciones sin procesar (solo se aplica la pequeña zona muerta de entrada). Anillos punteados: zona neutral y umbral de dash/smash.",
   "Axes": "Ejes",
   "Triggers & raw inputs": "Gatillos y entradas sin procesar",
-  "Shield starts at {shield}%; {hard}% or more counts as a full press. Below: every input your controller reports through the active source.":
-    "El escudo empieza en {shield}%; {hard}% o más cuenta como presión a fondo. Abajo: todas las entradas que reporta tu control por la fuente activa.",
   "Traced stick outline compared to a perfect circle": "Contorno trazado de la palanca comparado con un círculo perfecto",
   "Stick roundness": "Redondez de la palanca",
   "Slowly roll the stick around the rim two or three times. The shape is compared with a perfect circle.":
@@ -357,4 +339,73 @@ export default {
   "Out of round": "Desviación del círculo",
   "Diagonal vs cardinal": "Diagonal vs. cardinal",
   "Corners found": "Esquinas encontradas",
+
+  // ---- Fighters, jump explanations, Steam tip, Melee input view ----
+  "Restart run": "Reiniciar ronda",
+  "Assign": "Asignar",
+  "No buttons": "Ningún botón",
+  "Released": "Suelto",
+  "All-rounder · balanced in every way": "Todoterreno · equilibrado en todo",
+  "Fast faller · 3-frame jumpsquat · quick dash": "Fast faller · jumpsquat de 3 frames · dash rápido",
+  "Fast faller · huge jump · 5-frame jumpsquat": "Fast faller · salto enorme · jumpsquat de 5 frames",
+  "Swordfighter · floaty · long run": "Espadachín · flotante · carrera larga",
+  "Floaty · float: hold jump, then press down": "Flotante · float: mantén salto y luego presiona abajo",
+  "Low traction · longest wavedash · 3-frame jumpsquat": "Poca tracción · el wavedash más largo · jumpsquat de 3 frames",
+  "Fastest runner · falls fast": "El más rápido corriendo · cae rápido",
+  "Very floaty · 5 mid-air jumps · strong air control": "Muy flotante · 5 saltos en el aire · gran control aéreo",
+  "Fighter": "Luchador",
+  "Jump ignored · {action} ({n}f left)": "Salto ignorado · {action} (quedan {n}f)",
+  "Jump ignored · {action}": "Salto ignorado · {action}",
+  "landing lag": "lag de aterrizaje",
+  "already in jumpsquat": "ya está en jumpsquat",
+  "aerial attack": "ataque aéreo",
+  "No jumps left": "No quedan saltos",
+  "airdodge": "airdodge",
+  "helpless fall (until you land or grab a ledge)": "caída indefensa (hasta aterrizar o agarrar un borde)",
+  "attack": "ataque",
+  "special": "especial",
+  "shield release": "soltando el escudo",
+  "roll": "roll",
+  "spot dodge": "spotdodge",
+  "shield break": "escudo roto",
+  "ledge grab": "agarre al borde",
+  "ledge getup": "subiendo del borde",
+  "respawning": "reapareciendo",
+  "Buffered jump · pressed {n}f early": "Salto en buffer · presionado {n}f antes",
+  "Jump buffer": "Buffer de salto",
+  "Off: like the classic games, a jump pressed while the fighter can’t act is dropped (a chip explains why). On: it is retried for {n} frames.":
+    "Desactivado: como en los juegos clásicos, un salto presionado mientras el luchador no puede actuar se descarta (un aviso explica por qué). Activado: se reintenta durante {n} frames.",
+  "Hide this tip": "Ocultar este consejo",
+  "Faster input in Steam mode.": "Entrada más rápida en modo Steam.",
+  "Steam mode sends USB reports up to {x}× as often as Switch mode ({fast} Hz vs {slow} Hz). For the most responsive testing, set Default mode to Steam on the Gamepad page.":
+    "El modo Steam envía reportes USB hasta {x}× más seguido que el modo Switch ({fast} Hz vs. {slow} Hz). Para probar con la mejor respuesta, elige Steam como modo predeterminado en la página Gamepad.",
+  "Open the Gamepad page": "Abrir la página Gamepad",
+  "(Measured here: {hz} Hz.)": "(Medido aquí: {hz} Hz).",
+  "(Measure it with the polling probe in the Input lab.)": "(Mídelo con la prueba de sondeo del Laboratorio de entrada).",
+  "What each feedback message is measuring. Frame windows shown for {fighter}.":
+    "Qué mide cada mensaje de retroalimentación. Ventanas de frames para {fighter}.",
+  "It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. The fighters are original characters whose movement is modelled on publicly documented attributes of classic platform-fighter characters (speeds, gravity, jumpsquat, traction), and the input handling follows the documented behaviour of the classic GameCube games. It was written from scratch for this app: the characters, stage, art and code are all our own, and it uses no game code, data files or assets of any kind.":
+    "Es un sandbox original de juego de pelea de plataformas, inspirado en los clásicos competitivos del género y en las técnicas de movimiento que sus jugadores adoran. Los luchadores son personajes originales cuyo movimiento se basa en atributos documentados públicamente de personajes clásicos del género (velocidades, gravedad, jumpsquat, tracción), y el manejo de la entrada sigue el comportamiento documentado de los clásicos de GameCube. Se escribió desde cero para esta app: los personajes, el escenario, el arte y el código son todos propios, y no usa código, archivos de datos ni recursos de ningún juego.",
+  "Not affiliated with or endorsed by Nintendo or HAL Laboratory.": "Sin afiliación ni respaldo de Nintendo o HAL Laboratory.",
+  "X raw": "X sin procesar",
+  "Y raw": "Y sin procesar",
+  "L raw": "L sin procesar",
+  "R raw": "R sin procesar",
+  "Past the 80-unit circle — the game pulls it back to 100%.": "Más allá del círculo de 80 unidades: el juego lo devuelve al 100%.",
+  "Melee processing": "Procesamiento de Melee",
+  "Raw": "Sin procesar",
+  "Stick and trigger values": "Valores de palancas y gatillos",
+  "What the game sees: GameCube values clamped to an 80-unit circle (steps of 0.0125), with the per-axis deadzone below 23 units (0.2875). Shaded cross: deadzone. Dashed lines: dash (x ±0.8) and tap jump / fast fall (y ±0.6625).":
+    "Lo que ve el juego: valores de GameCube limitados a un círculo de 80 unidades (pasos de 0.0125), con la zona muerta por eje por debajo de 23 unidades (0.2875). Cruz sombreada: zona muerta. Líneas punteadas: dash (x ±0.8) y tap jump / fast fall (y ±0.6625).",
+  "Your controller’s raw output (1.0 = full scale). The solid dashed circle is where the game’s 80-unit clamp sits; the shaded cross and lines are the game’s thresholds in raw terms.":
+    "La salida sin procesar de tu control (1.0 = escala completa). El círculo punteado marca dónde está el límite de 80 unidades del juego; la cruz sombreada y las líneas son los umbrales del juego en valores sin procesar.",
+  "Compare what the game reads with your controller’s raw output.": "Compara lo que lee el juego con la salida sin procesar de tu control.",
+  "Analog triggers read 0–140 in the game: the light shield starts at {min} ({pct}%) and 140 is a full press; a digital press always counts as full. Below: every input your controller reports through the active source.":
+    "En el juego, los gatillos analógicos leen de 0 a 140: el escudo ligero empieza en {min} ({pct}%) y 140 es presión a fondo; una presión digital siempre cuenta como a fondo. Abajo: todas las entradas que reporta tu control por la fuente activa.",
+  "Taps between browser polls": "Toques entre lecturas del navegador",
+  "Taps that started and ended between two Gamepad API polls are invisible to the browser. When the HOJA USB stream is running they are still seen there, counted here, and handed to the game (with the default button mapping).":
+    "Los toques que empiezan y terminan entre dos lecturas de la Gamepad API son invisibles para el navegador. Cuando el flujo USB de HOJA está activo, se siguen viendo ahí, se cuentan aquí y se pasan al juego (con la asignación de botones predeterminada).",
+  "{n} seen over USB · {r} recovered": "{n} vistos por USB · {r} recuperados",
+  "Arena button mapping was reset: A and B now follow the labels printed on your controller.":
+    "Se restableció la asignación de botones de la Arena: A y B ahora siguen las letras impresas en tu control.",
 };
