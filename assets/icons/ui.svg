@@ -7,7 +7,7 @@
 
 <symbol id="i-input" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="12" r="2.5"/><circle cx="19.5" cy="12" r="2.5"/><path d="M9 8.5h6M13 6.5l2 2-2 2"/><path d="M15 15.5H9M11 13.5l-2 2 2 2"/></g></symbol>
 
-<symbol id="i-joystick" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.6 3.2h-7.2L3.2 8.4v7.2l5.2 5.2h7.2l5.2-5.2V8.4z"/><circle cx="12" cy="12" r="4"/></g><circle cx="12" cy="12" r="1.25" fill="currentColor"/></symbol>
+<symbol id="i-joystick" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 12L18.65 5.35L12 2.6L5.35 5.35L2.6 12L5.35 18.65L12 21.4L18.65 18.65z"/><circle cx="12" cy="12" r="4"/></g><circle cx="12" cy="12" r="1.25" fill="currentColor"/></symbol>
 
 <symbol id="i-snapback" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12Q4.5 1 7 12q2 8 4 0 1.75-6 3.5 0 1.5 4.5 3 0 1.25-2.75 2.5 0H22"/></g></symbol>
 
