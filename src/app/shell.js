@@ -26,6 +26,7 @@ import { onRoute, currentRoute, navigate, setParams } from './router.js';
 import { prefs } from './prefs.js';
 import { pwa } from './pwa.js';
 import { isIOS, explainIOS } from './platform.js';
+import { isLinux, explainLinux } from './linux.js';
 import { applyFromRoute } from '../settings/apply.js';
 import { t, i18n, LANGUAGES, detectLanguage, setLanguage } from '../i18n/index.js';
 
@@ -90,6 +91,12 @@ export async function connectController() {
     return await session.connect();
   } catch (err) {
     console.error(err);
+    // On Linux, "Access denied" almost always means the udev rule is missing (see linux.js).
+    if (isLinux() && /Access denied|SecurityError/i.test(`${err?.name} ${err?.message}`)) {
+      toast(t('Linux blocked access to the controller. A one-time udev rule fixes this.'),
+        { tone: 'red', timeout: 12000, action: { label: t('Linux setup'), onClick: () => explainLinux() } });
+      return false;
+    }
     toast(err?.message?.includes('Access denied')
       ? t('The controller is busy in another tab or app. Close it and try again.')
       : t('Couldn’t connect. Unplug the controller, hold A (South) while plugging it back in, then try again.'), { tone: 'red', timeout: 7000 });

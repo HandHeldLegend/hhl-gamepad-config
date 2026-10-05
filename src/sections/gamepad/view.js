@@ -22,6 +22,7 @@ import { getSetting } from '../../settings/schema.js';
 import { rebootToBootloaderOnly, formatFwVersion } from '../../firmware/updater.js';
 import { DEFAULT_MODES } from './settings.js';
 import { padPreview } from './pad-preview.js';
+import { openConnectGuide } from '../../app/connect-guide.js';
 import { macEditor, formatMac } from './mac-editor.js';
 
 loadStyles(new URL('./gamepad.css', import.meta.url));
@@ -63,7 +64,14 @@ export function mount(root, { session, navigate }) {
     },
   });
 
-  const modeCard = card({ title: t('Default mode'), subtitle: t('What the controller pretends to be when it starts up.'), icon: 'gamepad', tone: TONE },
+  const btStatic = session.static.bluetooth || {};
+  const modeCard = card({
+    title: t('Default mode'), subtitle: t('What the controller pretends to be when it starts up.'), icon: 'gamepad', tone: TONE,
+    actions: button({
+      label: t('How to connect'), icon: 'help', size: 'sm', variant: 'ghost',
+      onClick: () => openConnectGuide({ focus: 'switch', bluetooth: !!(btStatic.bluetooth_bdr_supported || btStatic.bluetooth_ble_supported) }),
+    }),
+  },
     callout({ tone: 'yellow', title: t('Warning.') },
       ...tNodes(t('Only {modes} work with the config app. Changing the default mode may require you to hold the {button} button upon plugging in the controller to connect to this configuration app.'),
         { modes: h('strong', t('Switch & Steam modes')), button: h('strong', t('A or South')) })),

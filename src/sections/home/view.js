@@ -10,6 +10,7 @@ import { startDemo, isDemo } from '../../device/mock.js';
 import { firmwareStatus, openUpdateWizard, formatFwVersion } from '../../firmware/updater.js';
 import { t } from '../../i18n/index.js';
 import { isIOS, explainIOS } from '../../app/platform.js';
+import { isLinux, explainLinux } from '../../app/linux.js';
 
 function tiles(session) {
   return h('div.tiles', SECTIONS.filter((s) => s.id !== 'home').map((s) => {
@@ -37,7 +38,10 @@ function hero() {
       !webusb && h('div', { style: { marginTop: '16px' } }, isIOS()
         ? callout({ tone: 'yellow', title: t('iPhone and iPad can’t connect to controllers.'), text: t('Use a computer or an Android device to change settings. The demo works here.') },
           ' ', button({ label: t('Why?'), size: 'sm', variant: 'ghost', icon: 'info', onClick: () => explainIOS() }))
-        : callout({ tone: 'red', title: t('USB isn’t available in this browser.'), text: t('Use Chrome, Edge or another Chromium browser on desktop or Android.') }))),
+        : callout({ tone: 'red', title: t('USB isn’t available in this browser.'), text: t('Use Chrome, Edge or another Chromium browser on desktop or Android.') })),
+      webusb && isLinux() && h('div', { style: { marginTop: '16px' } },
+        callout({ tone: 'blue', icon: 'info', title: t('On Linux?'), text: t('Add a udev rule once so your browser and games can use the controller.') },
+          ' ', button({ label: t('Linux setup'), size: 'sm', variant: 'ghost', icon: 'usb', onClick: () => explainLinux() })))),
     h('img.hero-art', { src: 'assets/icons/app/icon-512.png', alt: '' }));
 }
 
@@ -46,6 +50,7 @@ function connectTips() {
     h('ul.tips',
       h('li', fillNodes(t('Hold {a} (or the {south} button) while plugging in to start the controller in config mode.'), { a: h('strong', 'A'), south: h('strong', t('South')) })),
       h('li', t('Use a cable that carries data — many charge-only cables don’t.')),
+      isLinux() && h('li', fillNodes(t('On Linux, “Access denied” means a udev rule is missing — see {setup}.'), { setup: h('a', { href: '#/home', onclick: (e) => { e.preventDefault(); explainLinux(); } }, t('Linux setup')) })),
       h('li', t('Only Switch and Steam modes talk to this app. If you changed the default mode, hold A while plugging in.')),
       h('li', fillNodes(t('Blank board or bricked? Hold BOOTSEL while plugging in, then open {firmware} to install HOJA.'), { firmware: h('a', { href: '#/firmware' }, t('Firmware')) }))));
 }

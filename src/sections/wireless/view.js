@@ -18,7 +18,8 @@
  * update mode the shell destroys this view, and the dialog carries on (see module-updater.js).
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { card, badge, kv, field, infoTip, button } from '../../ui/controls.js';
+import { card, badge, kv, field, infoTip, button, callout } from '../../ui/controls.js';
+import { openConnectGuide } from '../../app/connect-guide.js';
 import { latestBasebandVersion } from '../../device/session.js';
 import { getSetting } from '../../settings/schema.js';
 import {
@@ -149,6 +150,13 @@ export function mount(root, ctx) {
     i18n.lang !== 'en' && fccTranslated !== FCC_STATEMENT && h('div.wl-fcc-translation',
       h('p.xs.faint.wl-fcc-note', t('Translation for reference only. The English statement above is the official text.')),
       h('p.small.muted', fccTranslated)));
+
+  // Pairing is the most common question: a one-line answer on top, the full guide one tap away.
+  const hasBt = !!(bt.bluetooth_bdr_supported || bt.bluetooth_ble_supported);
+  const pairTip = hasBt && callout({ tone: 'blue', icon: 'wireless', title: t('Pairing over Bluetooth:') },
+    t('unplug the controller, then hold Start (+) while you turn it on.'), ' ',
+    button({ label: t('How to connect'), size: 'sm', variant: 'ghost', icon: 'help', onClick: () => openConnectGuide({ focus: 'bluetooth' }) }));
+  if (pairTip) { pairTip.style.marginBottom = 'var(--space-4)'; root.append(pairTip); }
 
   // Side by side on wide pages; the long regulatory text spans the full row.
   root.append(h('div.card-grid', ...[chipCard, firmwareCard, wlanCard, hostsCard, fccCard].filter(Boolean)));
