@@ -202,3 +202,12 @@
 .change-list li { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: center; justify-content: space-between; padding: var(--space-3); border-radius: var(--radius-md); background: var(--surface-2); }
 .change-list li.unsupported { opacity: 0.6; }
 .change-list .change-label { font-weight: 600; }
+
+/* BETA pill next to a section title (registry.js beta: true). */
+.beta-badge {
+  display: inline-block; margin-left: 0.5em; padding: 1px 7px; border-radius: 999px;
+  font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; line-height: 1.5; vertical-align: middle;
+  background: var(--yellow-soft, color-mix(in srgb, var(--yellow) 22%, transparent)); color: var(--yellow-ink, var(--ink));
+  border: 1px solid color-mix(in srgb, var(--yellow) 45%, transparent);
+}
+h1 .beta-badge { font-size: 0.72rem; position: relative; top: -0.15em; }

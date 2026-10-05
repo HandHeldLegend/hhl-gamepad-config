@@ -247,4 +247,6 @@ export default {
   "Disconnect without saving?": "¿Desconectar sin guardar?",
   "Saved": "Guardado",
   "Controller restarting — press Connect when it’s back": "El control se está reiniciando: presiona Conectar cuando vuelva",
+  'BETA': 'BETA',
+  'This feature is in beta and may change.': 'Esta función está en beta y puede cambiar.',
 };

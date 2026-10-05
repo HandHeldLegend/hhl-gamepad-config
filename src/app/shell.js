@@ -30,6 +30,11 @@ import { t, i18n } from '../i18n/index.js';
 
 const WIDE = matchMedia('(min-width: 960px)');
 
+/** Small "BETA" pill for sections marked beta in registry.js. */
+export function betaBadge() {
+  return h('span.beta-badge', { title: t('This feature is in beta and may change.') }, t('BETA'));
+}
+
 /** Is a section usable right now? Returns null when available, otherwise a (translated) reason. */
 export function unavailableReason(section) {
   if (!section.device) return null;
@@ -112,7 +117,7 @@ export function createShell(root) {
       nav.append(h('div.nav-group', g.id !== 'start' && h('div.nav-group-title', t(g.title)),
         items.map((s) => {
           const a = h('a.nav-link', { href: `#/${s.id === 'home' ? '' : s.id}`, class: `tone-${s.tone}`, dataset: { section: s.id } },
-            h('span.nav-icon', icon(s.icon)), h('span.nav-label', t(s.title)), h('span.nav-badge'));
+            h('span.nav-icon', icon(s.icon)), h('span.nav-label', t(s.title), s.beta && betaBadge()), h('span.nav-badge'));
           navLinks.set(s.id, a);
           return a;
         })));
@@ -216,7 +221,7 @@ export function createShell(root) {
     return h('header.page-head', { class: `tone-${section.tone}` },
       showBack && button({ icon: 'back', variant: 'ghost', title: t('Back to home'), onClick: () => navigate('home') }),
       section.id !== 'home' && face(section.icon, section.tone, 44),
-      h('div.page-titles', h('h1', t(section.title)), h('p.muted', t(section.summary))),
+      h('div.page-titles', h('h1', t(section.title), section.beta && betaBadge()), h('p.muted', t(section.summary))),
       h('div.page-head-extra'));
   }
 

@@ -16,7 +16,7 @@ import { t } from '../i18n/index.js';
 /**
  * @param {string|import('./schema.js').SettingDef} keyOrDef
  * @param {{onChange?: (value:any)=>void, tone?: string, label?: string, description?: string,
- *          control?: 'segmented'|'select'|'slider', stacked?: boolean}} [o]
+ *          control?: 'segmented'|'select'|'slider', stacked?: boolean, tip?: false}} [o]  `tip: false` hides the definition's ? bubble.
  */
 export function settingField(keyOrDef, o = {}) {
   const def = typeof keyOrDef === 'string' ? getSetting(keyOrDef) : keyOrDef;
@@ -58,7 +58,7 @@ export function settingField(keyOrDef, o = {}) {
     // Setting text is English data (Node-importable); translate at render time.
     label: o.label || t(def.label),
     description: o.description ?? (def.description && t(def.description)),
-    tip: def.tip && t(def.tip),
+    tip: o.tip === false ? null : (def.tip && t(def.tip)),
     control,
     stacked: o.stacked,
     settingKey: def.key,

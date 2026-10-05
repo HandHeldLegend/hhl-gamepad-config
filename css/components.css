@@ -471,3 +471,4 @@ dialog.dialog::backdrop { background: var(--scrim); backdrop-filter: blur(3px); 
   .field .field-control > .seg { width: 100%; }
   .field .slider { width: 100%; }
 }
+.card-head .card-title .tip { vertical-align: middle; margin-left: 2px; position: relative; top: -1px; }

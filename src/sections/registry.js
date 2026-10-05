@@ -15,6 +15,7 @@
  *   requires    capability flag from session.caps that must be true (null = always available)
  *   keywords    extra search terms for assistants
  *   params      documented deep-link query params: { name: description }
+ *   beta        optional: true shows a BETA badge next to the title (nav, page header, Home tile)
  *   load        lazy import of the view module (exports mount(root, ctx))
  */
 
@@ -107,7 +108,7 @@ export const SECTIONS = [
     load: () => import('./firmware/view.js'),
   },
   {
-    id: 'arena', title: 'Arena', icon: 'arena', tone: 'red', group: 'play', device: true, requires: null,
+    id: 'arena', title: 'Arena', icon: 'arena', tone: 'red', group: 'play', device: true, requires: null, beta: true,
     summary: 'Gameplay testing arena: try your connected controller in a platform-fighter sandbox.',
     keywords: ['test', 'play', 'game', 'input display', 'latency', 'wavedash', 'dash', 'melee'],
     params: { tab: 'play | lab | help', mode: 'free | targets (lab / help also open those tabs)' },

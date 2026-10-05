@@ -218,3 +218,7 @@
   .inp-cal-row { flex-wrap: wrap; }
   .inp-cal-row > .btn { margin-left: auto; }
 }
+
+/* The open editor tracks its tile's position every frame, so the tile it belongs to must not lift on
+   hover or squash on press — otherwise the whole popover jiggles as the pointer crosses the tile. */
+.inp-tile[aria-current="true"], .inp-tile[aria-current="true"]:hover, .inp-tile[aria-current="true"]:active { transform: none; }

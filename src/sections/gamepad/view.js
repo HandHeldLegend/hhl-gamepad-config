@@ -73,7 +73,7 @@ export function mount(root, { session, navigate }) {
   const current = () => Object.fromEntries(COLOR_KEYS.map(([k, slot]) => [slot, defs[k].get(session)]));
   const preview = padPreview(current());
   const colorRows = COLOR_KEYS.map(([key, slot, label]) => {
-    const row = settingField(key, { label: t(label), onChange: (v) => preview.set({ [slot]: v }) });
+    const row = settingField(key, { label: t(label), tip: false, onChange: (v) => preview.set({ [slot]: v }) });
     // Live preview while dragging the native picker (settingField only reports committed changes).
     row.control.querySelector('input[type="color"]')?.addEventListener('input', (e) => preview.set({ [slot]: e.target.value }));
     return row;
@@ -99,9 +99,9 @@ export function mount(root, { session, navigate }) {
     t(p.name))));
 
   const colorCard = card({
-    title: t('Switch device colors'), icon: 'palette', tone: TONE,
+    title: [t('Switch device colors'), ' ', infoTip(t('Colors which determine how the Switch displays the controller in menus and some games. They don’t change the LEDs — see the RGB page for those.'))],
+    icon: 'palette', tone: TONE,
     subtitle: t('How the Switch draws your controller in its menus and some games.'),
-    actions: infoTip(t('Colors which determine how the Switch displays the controller in menus and some games. They don’t change the LEDs — see the RGB page for those.')),
   },
   h('div.gp-colors', preview, h('div.gp-color-fields', colorRows)),
   h('div.gp-presets-wrap', h('div.gp-presets-label', t('Presets')), presetRow));

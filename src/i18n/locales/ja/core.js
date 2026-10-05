@@ -247,4 +247,6 @@ export default {
   "Disconnect without saving?": "保存せずに切断しますか？",
   "Saved": "保存しました",
   "Controller restarting — press Connect when it’s back": "コントローラーを再起動しています。戻ったら「接続」を押してください",
+  'BETA': 'ベータ',
+  'This feature is in beta and may change.': 'この機能はベータ版のため、変更される可能性があります。',
 };

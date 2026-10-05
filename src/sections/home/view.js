@@ -5,7 +5,7 @@ import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
 import { button, card, callout, badge, face, kv } from '../../ui/controls.js';
 import { SECTIONS } from '../registry.js';
-import { connectController, unavailableReason, currentModeLabel } from '../../app/shell.js';
+import { connectController, unavailableReason, currentModeLabel, betaBadge } from '../../app/shell.js';
 import { startDemo, isDemo } from '../../device/mock.js';
 import { firmwareStatus, openUpdateWizard, formatFwVersion } from '../../firmware/updater.js';
 import { t } from '../../i18n/index.js';
@@ -19,7 +19,7 @@ function tiles(session) {
       title: reason || t(s.summary),
     },
     face(s.icon, s.tone, 42),
-    h('div', h('div.tile-title', t(s.title)), h('div.tile-sub', t(s.summary))),
+    h('div', h('div.tile-title', t(s.title), s.beta && betaBadge()), h('div.tile-sub', t(s.summary))),
     att && h('span.tile-badge', badge(att.level === 'warn' ? t('Needs attention') : t('Update'), att.level === 'warn' ? 'yellow' : 'blue')));
   }));
 }
