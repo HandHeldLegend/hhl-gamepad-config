@@ -352,7 +352,8 @@ export class Renderer {
     else if (st === 'crouch') { sx = 1.18; sy = 0.72; }
     else if (st === 'landing') { const k = 0.22 * f.squash; sx = 1 + k; sy = 1 - k; }
     else if (!f.ground && st !== 'ledge' && st !== 'ledgeGetup') { const k = clamp(Math.abs(f.vy) * 0.045, 0, 0.12); sx = 1 - k; sy = 1 + k; }
-    if (st === 'dash' || st === 'run') lean = -f.facing * 0.14;
+    // No dash lean while a late A could still turn the flick into a smash attack (fighter.dashPending).
+    if ((st === 'dash' && !f.dashPending) || st === 'run') lean = -f.facing * 0.14;
     if (st === 'skid') lean = f.facing * 0.12;
     const hb0 = f.move?.hitboxes[0];
     if (hb0) lean = clamp(-hb0.x * f.facing * 0.012, -0.18, 0.18);

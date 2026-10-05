@@ -88,7 +88,8 @@ console.log('Input latching');
 
 console.log('Ignored jump explanations');
 {
-  const { game, feed } = newGame();
+  // Strict (no input buffer): the chip comes on the press frame.
+  const { game, feed } = newGame({ inputBuffer: 0 });
   frames(game, 30);
   // Jump, aerial right away, land with the aerial's landing lag (no L-cancel), press jump during the lag.
   frames(game, 1, (s) => { s.btn.jump = true; });
@@ -98,19 +99,18 @@ console.log('Ignored jump explanations');
   for (let i = 0; i < 120 && landed < 0; i++) { frames(game, 1); if (game.fighter.state === 'landing') landed = i; }
   check(landed >= 0, 'fighter lands with landing lag');
   frames(game, 1, (s) => { s.btn.jump = true; });
-  check(feed.some((x) => /^Jump ignored · landing lag \(\d+f left\)$/.test(x)), 'jump during landing lag → "Jump ignored · landing lag (Nf left)" chip');
+  check(feed.some((x) => /^Jump ignored · landing lag \(\d+f left\)$/.test(x)), 'buffer 0: jump during landing lag → "Jump ignored · landing lag (Nf left)" chip');
 
-  // Buffer on: the same press jumps as soon as the lag ends.
-  const b = newGame({ jumpBuffer: true });
-  frames(b.game, 30);
-  frames(b.game, 5, (s) => { s.btn.jump = true; });
-  frames(b.game, 1, (s) => { s.btn.attack = true; });
-  for (let i = 0; i < 120 && b.game.fighter.state !== 'landing'; i++) frames(b.game, 1);
-  while (b.game.fighter.state === 'landing' && b.game.fighter.landLag - b.game.fighter.sf > 2) frames(b.game, 1);
-  frames(b.game, 1, (s) => { s.btn.jump = true; });
-  frames(b.game, 6);
-  check(b.feed.some((x) => /^Buffered jump · pressed \d+f early$/.test(x)), 'with the jump buffer on, a press in the last frames of landing lag is used');
-  check(!b.feed.some((x) => /^Jump ignored/.test(x)), '… and no "ignored" chip is shown for it');
+  // Default buffer (3): a press too early for the buffer still gets the chip once the buffer gives up on it.
+  const d = newGame();
+  check(d.game.inputBuffer === 3, 'input buffer is on by default (3 frames)');
+  frames(d.game, 30);
+  frames(d.game, 5, (s) => { s.btn.jump = true; });
+  frames(d.game, 1, (s) => { s.btn.attack = true; });
+  for (let i = 0; i < 120 && d.game.fighter.state !== 'landing'; i++) frames(d.game, 1);
+  frames(d.game, 1, (s) => { s.btn.jump = true; });
+  frames(d.game, 4);
+  check(d.feed.some((x) => /^Jump ignored · landing lag/.test(x)), 'buffer 3: a press 10+ frames early still explains itself after the buffer expires');
 
   // No jumps left.
   const n = newGame();
@@ -120,7 +120,258 @@ console.log('Ignored jump explanations');
   frames(n.game, 1, (s) => { s.btn.jump = true; }); // double jump
   frames(n.game, 10);
   frames(n.game, 1, (s) => { s.btn.jump = true; }); // nothing left
+  frames(n.game, 4);
   check(n.feed.includes('No jumps left'), '"No jumps left" when out of double jumps');
+}
+
+console.log('IASA & actionability');
+{
+  const { movesetFor } = await import('../movesets.js');
+  const dsm = movesetFor('vix').dsmash;
+  check(dsm.iasa === 46 && dsm.total === 50, `Vix down smash: IASA frame 46 of 50 (meleeframedata) — got ${dsm.iasa}/${dsm.total}`);
+  // Jump pressed on move frame `at` of a C-stick down smash (buffer 0 = strict).
+  const jumpAt = (at, buffer = 0) => {
+    const { game } = newGame({ fighter: 'vix', inputBuffer: buffer });
+    frames(game, 20);
+    frames(game, 1, (s) => { s.cy = -1; });
+    const F = game.fighter;
+    while (F.state === 'attack' && F.moveFrame + 1 < at) frames(game, 1);
+    frames(game, 1, (s) => { s.btn.jump = true; });
+    const now = F.state;
+    frames(game, 3);
+    return { now, later: F.state };
+  };
+  check(jumpAt(dsm.iasa).now === 'jumpsquat', `jump on the IASA frame (${dsm.iasa}) interrupts the down smash`);
+  check(jumpAt(dsm.iasa - 1).now === 'attack' && jumpAt(dsm.iasa - 1).later === 'attack', `jump one frame before IASA (${dsm.iasa - 1}) is ignored without the buffer`);
+  check(jumpAt(dsm.iasa - 1, 3).later !== 'attack', '… and with the buffer it comes out on the IASA frame');
+  // Aerial IASA: Vix's neutral air (IASA 42) can be cut by a double jump.
+  {
+    const { game } = newGame({ fighter: 'vix', inputBuffer: 0 });
+    const F = game.fighter;
+    frames(game, 20);
+    F.ground = null; F.y = 80; F.enterAir(false); F.beginMove(F.moves.nair, 'nair'); F.moveFrame = F.moves.nair.iasa - 2;
+    frames(game, 1, (s) => { s.btn.jump = true; });
+    const before = F.jumps;
+    frames(game, 1, (s) => { s.btn.jump = true; });
+    frames(game, 1);
+    check(before === 1 && F.jumps === 1, 'aerial: jump before IASA is ignored');
+    const g2 = newGame({ fighter: 'vix', inputBuffer: 0 });
+    const G = g2.game.fighter;
+    frames(g2.game, 20);
+    G.ground = null; G.y = 80; G.enterAir(false); G.beginMove(G.moves.nair, 'nair'); G.moveFrame = G.moves.nair.iasa - 1;
+    frames(g2.game, 1, (s) => { s.btn.jump = true; });
+    check(G.jumps === 0 && !G.move, 'aerial: jump on the IASA frame double-jumps and ends the aerial');
+  }
+
+  // Jump out of shield, during shield startup and during shield release.
+  {
+    const { game } = newGame({ inputBuffer: 0 });
+    frames(game, 20);
+    frames(game, 2, (s) => { s.r = 1; });
+    check(game.fighter.state === 'shield', 'shield is up');
+    frames(game, 1, (s) => { s.r = 1; s.btn.jump = true; });
+    check(game.fighter.state === 'jumpsquat', 'jump out of shield (3rd shield frame)');
+    const r = newGame({ inputBuffer: 0 });
+    frames(r.game, 20);
+    frames(r.game, 12, (s) => { s.r = 1; });
+    frames(r.game, 3);
+    check(r.game.fighter.state === 'shieldRelease', 'releasing the trigger → shield drop lag');
+    frames(r.game, 1, (s) => { s.btn.jump = true; });
+    check(r.game.fighter.state === 'jumpsquat', 'jump during shield drop lag still works (Melee GuardOff)');
+    const q = newGame({ inputBuffer: 0 });
+    frames(q.game, 20);
+    frames(q.game, 12, (s) => { s.r = 1; });
+    let n = 0;
+    while (q.game.fighter.state !== 'idle' && n < 40) { frames(q.game, 1); n++; }
+    check(n === 16, `shield drop lag: 15 frames, actionable on the 16th after letting go (${n})`);
+  }
+
+  // Buffered jump out of landing lag.
+  const landJump = (buffer) => {
+    const { game } = newGame({ inputBuffer: buffer });
+    const F = game.fighter;
+    frames(game, 20);
+    frames(game, 1, (s) => { s.btn.jump = true; });
+    for (let i = 0; i < 120 && F.state !== 'landing'; i++) frames(game, 1);
+    const lag = F.landLag;
+    while (F.state === 'landing' && F.sf < lag - 2) frames(game, 1);
+    frames(game, 1, (s) => { s.btn.jump = true; }); // 2 frames before the first actionable frame
+    const s1 = F.state;
+    frames(game, 1);
+    const s2 = F.state;
+    frames(game, 1);                                 // first actionable frame
+    return { s1, s2, s3: F.state };
+  };
+  const lb = landJump(3);
+  check(lb.s1 === 'landing' && lb.s2 === 'landing' && lb.s3 === 'jumpsquat', `buffer 3: jump pressed 2f before landing lag ends → jumpsquat on the first actionable frame (${lb.s1} → ${lb.s2} → ${lb.s3})`);
+  const l0 = landJump(0);
+  check(l0.s3 === 'idle', `buffer 0: the same press is dropped (${l0.s3})`);
+  {
+    const b = newGame();
+    frames(b.game, 30);
+    frames(b.game, 1, (s) => { s.btn.jump = true; });
+    for (let i = 0; i < 120 && b.game.fighter.state !== 'landing'; i++) frames(b.game, 1);
+    while (b.game.fighter.state === 'landing' && b.game.fighter.landLag - b.game.fighter.sf > 1) frames(b.game, 1);
+    frames(b.game, 1, (s) => { s.btn.jump = true; });
+    frames(b.game, 6);
+    check(b.feed.some((x) => /^Buffered jump · pressed \d+f early$/.test(x)) && !b.feed.some((x) => /^Jump ignored/.test(x)), 'buffered jump shows "Buffered jump · pressed Nf early" and no "ignored" chip');
+  }
+
+  // L-cancel is never buffered.
+  const lcancel = (pressBefore, buffer) => {
+    const { game, feed } = newGame({ inputBuffer: buffer });
+    const F = game.fighter;
+    frames(game, 20);
+    F.ground = null; F.y = 30; F.vy = 0; F.enterAir(false); F.fastfall = true;
+    frames(game, 1, (s) => { s.btn.attack = true; }); // neutral air
+    // Fast-falling at a constant speed: landing frame is predictable.
+    const landIn = Math.ceil(F.y / F.P.FAST_FALL);
+    for (let i = 1; i < landIn + 1; i++) frames(game, 1, (s) => { if (landIn - i + 1 === pressBefore) s.r = 1; });
+    frames(game, 6);
+    return { feed };
+  };
+  for (const buffer of [0, 3]) {
+    const ok = lcancel(3, buffer); const late = lcancel(10, buffer);
+    check(ok.feed.some((x) => /^L-cancel ✓/.test(x)) && late.feed.some((x) => /^L-cancel missed/.test(x)) && !ok.feed.some((x) => /^Wave/.test(x)) && !late.feed.some((x) => /^Wave/.test(x)),
+      `buffer ${buffer}: L-cancel window unchanged (pressed shortly before ✓, 10f before missed) and the press never turns into an airdodge`);
+  }
+}
+
+console.log('Smash attacks (lenient window)');
+{
+  // Stick flicked right on frame 0, A pressed `aAt` frames later (negative = before the flick).
+  const smash = (aAt, buffer = 3) => {
+    const { game } = newGame({ inputBuffer: buffer });
+    const F = game.fighter;
+    frames(game, 20);
+    game.dummy.x = 200;
+    const x0 = F.x;
+    let xAtSmash = null;
+    for (let i = Math.min(0, aAt); i <= Math.max(aAt, 0) + 1; i++) {
+      frames(game, 1, (s) => { s.lx = i >= 0 ? 1 : 0; s.btn.attack = i === aAt; });
+      if (F.moveName === 'fsmash' && F.state === 'attack' && xAtSmash == null) xAtSmash = F.x;
+    }
+    return { name: F.state === 'attack' ? F.moveName : F.state, dx: xAtSmash == null ? null : xAtSmash - x0 };
+  };
+  for (let k = 1; k <= 5; k++) {
+    const r = smash(k);
+    check(r.name === 'fsmash' && r.dx === 0, `A ${k}f after the flick → forward smash, zero displacement before it starts (buffer 3; dx ${r.dx})`);
+  }
+  check(smash(5, 0).name === 'dash', 'A 5f after the flick with buffer 0 → dash attack (the strict 3f window)');
+  check(smash(3, 0).name === 'fsmash', 'A 3f after the flick with buffer 0 → forward smash');
+  check(smash(-2).name === 'fsmash', 'A 2f BEFORE the flick → forward smash (buffer 3)');
+  check(smash(-2, 0).name === 'jab', 'A 2f before the flick with buffer 0 → jab');
+  check(smash(0).name === 'fsmash', 'flick + A on the same frame → forward smash');
+  {
+    const { game } = newGame();
+    frames(game, 20);
+    const x0 = game.fighter.x;
+    frames(game, 8, (s) => { s.lx = 1; });
+    check(game.fighter.state === 'dash' && game.fighter.x - x0 > 5, 'flick without A → a normal dash, moving from its first frame');
+    frames(game, 1, (s) => { s.lx = -1; });
+    check(game.fighter.state === 'dash' && game.fighter.dashDir === -1 && game.fighter.stats.dashback.ok === 1, 'dash back during the initial dash still works');
+  }
+  {
+    const { game } = newGame();
+    frames(game, 20);
+    game.dummy.x = 200;
+    frames(game, 1, (s) => { s.lx = 1; });
+    frames(game, 3, (s) => { s.lx = 1; });
+    frames(game, 40, (s) => { s.lx = 1; s.btn.attack = true; });
+    check(game.fighter.chargeFrames > 20, `late A held → the smash charges (${game.fighter.chargeFrames}f)`);
+  }
+}
+
+console.log('Stage edges & ledge');
+{
+  const at = (x, id = 'vix') => { const g = newGame({ fighter: id }); frames(g.game, 20); g.game.fighter.x = x; g.game.fighter.prevX = x; return g; };
+  {
+    const { game } = at(56);
+    let grabbed = false; let air = false;
+    for (let i = 0; i < 40; i++) { frames(game, 1, (s) => { s.lx = 1; }); if (game.fighter.state === 'ledge') grabbed = true; if (game.fighter.state === 'air' && game.fighter.x > 68) air = true; }
+    check(air && !grabbed, 'dash off the edge facing outward → airborne past the edge, no ledge grab');
+  }
+  {
+    const { game } = at(20);
+    const F = game.fighter;
+    let i = 0;
+    while (F.x < 54 && i++ < 100) frames(game, 1, (s) => { s.lx = 1; });
+    const ran = F.state;
+    frames(game, 1, (s) => { s.lx = -1; });  // turn around at the edge: slide off backwards
+    let grabbed = false;
+    for (let j = 0; j < 60 && !grabbed; j++) { frames(game, 1); grabbed = F.state === 'ledge'; }
+    check(ran === 'run' && grabbed && F.ledge?.x === 68, `run, turn back at the edge, slide off facing the stage → ledge grab (${ran})`);
+  }
+  {
+    const { game } = at(60, 'dot');
+    const F = game.fighter;
+    frames(game, 30, (s) => { s.lx = 0.45; });
+    check(!F.ground, 'walking with the stick held past the edge walks off');
+    const b = at(66.5, 'dot');
+    b.game.fighter.vx = 0.8; // let go of the stick while walking toward the edge: slides at walking speed
+    frames(b.game, 30);
+    check(!!b.game.fighter.ground && b.game.fighter.x === 68, `walk to the edge and let go → stops (teeters) right at the edge (x ${b.game.fighter.x.toFixed(1)})`);
+    const w = at(60, 'dot');
+    w.game.fighter.vx = 3; w.game.fighter.state = 'landing'; w.game.fighter.landLag = 10; // a wavedash slide
+    frames(w.game, 10);
+    check(!w.game.fighter.ground, 'sliding faster than a walk (wavedash) carries the fighter off the edge');
+  }
+  {
+    const { game, feed } = at(20, 'dot');
+    const F = game.fighter;
+    F.ground = null; F.x = 62; F.y = -4; F.facing = -1; F.enterAir(false); F.vy = -1;
+    for (let i = 0; i < 10 && F.state !== 'ledge'; i++) frames(game, 1);
+    check(F.state === 'ledge', 'falling into the ledge box facing it grabs the ledge');
+    frames(game, 10);
+    frames(game, 1, (s) => { s.lx = 1; });                    // let go (away from the stage)
+    frames(game, 2);
+    frames(game, 1, (s) => { s.btn.jump = true; });            // double jump
+    for (let i = 0; i < 40 && F.y < 4; i++) frames(game, 1, (s) => { s.lx = -1; });
+    frames(game, 1, (s) => { const m = meleeStick(-0.9, -0.4); s.lx = m.x; s.ly = m.y; s.r = 1; }); // airdodge down-in
+    frames(game, 20);
+    check(feed.some((x) => /^Ledgedash/.test(x)), 'ledge drop → double jump → airdodge onto the stage = ledgedash');
+    const h = at(20, 'dot');
+    const G = h.game.fighter;
+    G.ground = null; G.x = 62; G.y = -4; G.facing = -1; G.enterAir(false); G.vy = -1;
+    for (let i = 0; i < 6; i++) frames(h.game, 1, (s) => { s.ly = -1; });
+    check(G.state !== 'ledge', 'holding down falls past the ledge without grabbing it');
+  }
+}
+
+console.log('Wavedash');
+{
+  // Jump, then shield on frame `adAt` relative to lift-off (0 = the first airborne frame).
+  const wd = (id, adAt, stick = [0.95, -0.3], buffer = 3) => {
+    const { game, feed } = newGame({ fighter: id, inputBuffer: buffer });
+    const F = game.fighter;
+    frames(game, 30);
+    game.dummy.x = 200;
+    const x0 = F.x;
+    const jsq = F.P.JUMPSQUAT;
+    const m = meleeStick(stick[0], stick[1]);
+    for (let i = 0; i <= jsq; i++) {
+      frames(game, 1, (s) => {
+        s.btn.jump = i === 0;
+        if (i >= jsq + adAt) { s.lx = m.x; s.ly = m.y; }
+        if (i === jsq + adAt) s.r = 1;
+      });
+    }
+    const lag = F.state === 'landing' ? F.landLag : null;
+    frames(game, 90);
+    return { dist: F.x - x0, feed, lag };
+  };
+  const perfect = wd('dot', 0);
+  check(perfect.feed.some((x) => /^Wavedash · .* · frame-perfect/.test(x)) && perfect.lag === 10, `airdodge on the first airborne frame → frame-perfect wavedash, 10f landing lag (${perfect.lag})`);
+  const buffered = wd('dot', -2);
+  check(buffered.feed.some((x) => /^Wavedash · .* · frame-perfect/.test(x)) && !buffered.feed.some((x) => /too early/.test(x)), 'buffer 3: shield 2f before lift-off → wavedash on the first airborne frame');
+  const strict = wd('dot', -2, undefined, 0);
+  check(!strict.feed.some((x) => /^Wavedash/.test(x)) && strict.feed.some((x) => /^Airdodge 2f too early/.test(x)), 'buffer 0: the same press is "2f too early" and no wavedash');
+  const shallow = wd('dot', 0, [0.95, -0.3]); const steep = wd('dot', 0, [0.6, -0.8]);
+  check(shallow.dist > steep.dist * 1.2, `shallower angle slides further (${shallow.dist.toFixed(1)} vs ${steep.dist.toFixed(1)})`);
+  const half = wd('dot', 0, [0.4, -0.4]); const full = wd('dot', 0, [1, -1]);
+  check(Math.abs(half.dist - full.dist) < 1e-9, `airdodge speed depends on the stick angle, not its magnitude (${half.dist.toFixed(2)} = ${full.dist.toFixed(2)})`);
+  const ranks = ['rime', 'dot', 'rosette'].map((id) => [id, wd(id, 0).dist]);
+  check(ranks[0][1] > ranks[1][1] && ranks[1][1] > ranks[2][1], `wavedash length follows traction: ${ranks.map(([id, d]) => `${id} ${d.toFixed(1)}`).join(' > ')}`);
 }
 
 console.log('Melee input processing');
@@ -164,6 +415,7 @@ console.log('Fighter profiles');
     check(/^Short hop/.test(hop(id, jsq - 1)), `${id}: jump held ${jsq - 1}f (jumpsquat ${jsq}) → short hop`);
     const full = hop(id, jsq + 1);
     check(/^Full hop/.test(full) && full.includes(`release within ${jsq}f`), `${id}: held ${jsq + 1}f → full hop, chip shows the ${jsq}f window`);
+    check(/^Full hop/.test(hop(id, jsq)), `${id}: held through all ${jsq} jumpsquat frames → full hop`);
   }
   const ffSpeed = (id) => {
     const { game } = newGame({ fighter: id });

@@ -372,9 +372,6 @@ export default {
   "ledge getup": "崖上がり中",
   "respawning": "復帰中",
   "Buffered jump · pressed {n}f early": "先行入力ジャンプ · {n}F 早く入力",
-  "Jump buffer": "ジャンプ先行入力",
-  "Off: like the classic games, a jump pressed while the fighter can’t act is dropped (a chip explains why). On: it is retried for {n} frames.":
-    "オフ：往年の作品と同じく、行動できない間に押したジャンプは無視されます（理由が表示されます）。オン：{n}F の間、再試行されます。",
   "Hide this tip": "このヒントを隠す",
   "Faster input in Steam mode.": "Steam モードなら入力がより高速です。",
   "Steam mode sends USB reports up to {x}× as often as Switch mode ({fast} Hz vs {slow} Hz). For the most responsive testing, set Default mode to Steam on the Gamepad page.":
@@ -435,4 +432,7 @@ export default {
   "Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.": "スティックをはじいて {n} フレーム以内に A を押す（または C スティックをはじく）とスマッシュ攻撃。A を押し続けると最大 60 フレームまでホールドできます（ダメージ ×1.367）。フリープレイではダミーが従来のふっとばし計算式どおりにダメージとふっとばしを受け、ヒットごとに技 · ダメージ · ふっとばしを表示します。",
   'Technique feedback': 'テクニックのフィードバック',
   'Show short messages about what you just did (wavedash angle, L-cancel timing…). Off by default.': '直前の操作について短いメッセージを表示します（絶の角度、Lキャンセルのタイミングなど）。初期設定はオフです。',
+  "Input buffer": "先行入力",
+  "A jump, attack, special, shield or smash input pressed up to this many frames before your fighter can act comes out on the first frame it can, and A may come this many frames before or after a smash flick. A deliberate convenience for browser and USB latency: the classic games have no buffer (0 = strict). L-cancel timing is never buffered.": "キャラクターが行動できるようになる最大この F 数前までに押したジャンプ・攻撃・必殺ワザ・シールド・スマッシュ入力は、行動可能になった最初の F で出ます。また、スマッシュ攻撃の A はスティックをはじく前後この F 数までずれても受け付けます。ブラウザと USB の遅延を補うための意図的な補助で、往年の作品には先行入力はありません（0 = 厳密）。Lキャンセルのタイミングは先行入力の対象外です。",
+  "frames": "F",
 };

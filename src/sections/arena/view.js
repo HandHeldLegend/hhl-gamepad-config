@@ -89,7 +89,7 @@ function mountArena(root, ctx) {
     mode: initial.mode || store.get('mode') || 'free',
     fighter: initial.fighter || store.get('fighter'),
     tapJump: store.get('tapJump'),
-    jumpBuffer: store.get('jumpBuffer'),
+    inputBuffer: store.get('inputBuffer'),
     bestTime: store.get('bestTime'),
     onFeedback: (e) => { for (const fn of feedFns) fn(e); },
     onRecord: (ms) => store.set('bestTime', ms),

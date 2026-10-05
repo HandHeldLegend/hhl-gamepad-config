@@ -33,12 +33,13 @@ export function newStats() {
 export class Game {
   /**
    * @param {{mode?: 'free'|'targets', tapJump?: boolean, onFeedback?: Function, onRecord?: Function,
-   *          bestTime?: number|null, fighter?: string, jumpBuffer?: boolean}} o  fighter: roster id
+   *          bestTime?: number|null, fighter?: string, inputBuffer?: number}} o  fighter: roster id;
+   *          inputBuffer: frames a press is carried forward until the fighter can act (FRAMES.INPUT_BUFFER)
    */
   constructor(o = {}) {
     this.mode = o.mode || 'free';
     this.tapJump = o.tapJump ?? true;
-    this.jumpBuffer = !!o.jumpBuffer; // retry ignored jump presses for FRAMES.JUMP_BUFFER frames
+    this.setInputBuffer(o.inputBuffer ?? FRAMES.INPUT_BUFFER);
     this.onFeedback = o.onFeedback || (() => {});
     this.onRecord = o.onRecord || (() => {});
     this.bestTime = o.bestTime ?? null;
@@ -51,6 +52,12 @@ export class Game {
     this.sparks = [];
     this.effects = [];
     this.resetRun();
+  }
+
+  /** Input buffer length in frames (0 = strict, like Melee). See FRAMES.INPUT_BUFFER. */
+  setInputBuffer(n) {
+    const v = Math.round(Number(n));
+    this.inputBuffer = Number.isFinite(v) ? Math.min(FRAMES.INPUT_BUFFER_MAX, Math.max(0, v)) : FRAMES.INPUT_BUFFER;
   }
 
   feedback(text, tone = 'lavender') {

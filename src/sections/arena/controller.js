@@ -61,6 +61,8 @@ export class PadState {
     this.cDir = null;
     this.any = false;
     this.lastSmash = null;
+    /** Frames after a smash flick in which A still makes a smash attack (the game adds its input buffer). */
+    this.smashWindow = STICK.SMASH_ATTACK;
   }
 
   /**
@@ -116,6 +118,9 @@ export class PadState {
     this.any = anyPress || this.shieldPressed || this.cDir != null || (Math.hypot(this.x, this.y) > 0.5 && this.moved);
   }
 
+  /** Frame of the latest smash flick in `dir` ('left' | 'right' | 'up' | 'down'), or -1. */
+  smashFrame(dir) { return this.lastSmash?.dir === dir ? this.lastSmash.frame : -1; }
+
   /** Smash on X this frame: returns ±1 when |x| reached SMASH_X within the smash window, else 0. */
   get xSmash() {
     const lat = this.ax.reach(STICK.SMASH_X);
@@ -136,12 +141,12 @@ export class PadState {
   get holdingDown() { return this.y <= -STICK.SMASH_Y; }
 
   /**
-   * 'left' | 'right' | 'up' | 'down' if the stick was flicked that way within SMASH_ATTACK frames
-   * and is still held there (A pressed now → smash attack), else null.
+   * 'left' | 'right' | 'up' | 'down' if the stick was flicked that way within `smashWindow` frames
+   * (STICK.SMASH_ATTACK + the input buffer) and is still held there (A pressed now → smash attack), else null.
    */
   get smashDir() {
     const s = this.lastSmash;
-    if (!s || this.frame - s.frame > STICK.SMASH_ATTACK) return null;
+    if (!s || this.frame - s.frame > this.smashWindow) return null;
     const held = { right: this.x >= STICK.NEUTRAL, left: this.x <= -STICK.NEUTRAL, up: this.y >= STICK.NEUTRAL, down: this.y <= -STICK.NEUTRAL }[s.dir];
     return held ? s.dir : null;
   }

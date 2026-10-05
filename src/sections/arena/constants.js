@@ -60,7 +60,10 @@ export const STICK = {
   /** The smash threshold must be reached within this many frames of leaving neutral. With 2, the
    *  stick may spend at most ONE sampled frame in the "tilt zone" (between NEUTRAL and SMASH). */
   SMASH_WINDOW: 2,
-  /** A pressed within this many frames of a smash flick → smash attack instead of a tilt (approx.). */
+  /** A pressed within this many frames of a smash flick → smash attack instead of a tilt (Melee: "small
+   *  step forward smash" works during the first 3 frames of a dash — SmashWiki "Dash"). The input buffer
+   *  (FRAMES.INPUT_BUFFER) is added on top of this, and A may also come up to that many frames BEFORE
+   *  the flick (fighter.js) — both are deliberate web-latency lenience, Melee has neither. */
   SMASH_ATTACK: 3,
   /** Holding the stick at or below this y crouches (approx.). */
   CROUCH_Y: -0.6,
@@ -71,9 +74,11 @@ export const STICK = {
   /** Shield drop happens when the stick crosses SHIELD_DOWN_Y between SPOTDODGE_CONE and this angle.
    *  This is the window a dedicated "shield-drop notch" on a notched gate is aimed at (approx.). */
   SHIELD_DROP_MAX: 55,
-  /** Minimum stick magnitude for a directional airdodge; below it the airdodge is neutral (approx.).
-   *  Airdodge / wavedash angles come from the quantized stick, so they snap to Melee's 1/80 grid. */
-  AIRDODGE_MIN: 0.3,
+  /** Airdodge: neutral (no movement) only when BOTH axes are inside this per-axis deadzone; otherwise the
+   *  dodge moves at the full airdodge speed along the stick angle, whatever the stick magnitude (doldecomp
+   *  ftCo_EscapeAir: per-axis deadzone, then force × cos/sin(angle) — behaviour reference only).
+   *  Angles come from the quantized stick, so they snap to Melee's 1/80 grid. */
+  AIRDODGE_DEADZONE: 0.2875,
   /** C-stick / attack direction threshold. */
   DIRECTION: 0.6,
 };
@@ -239,9 +244,18 @@ export const fighterById = (id) => FIGHTERS.find((f) => f.id === id) || FIGHTERS
 // ---------------------------------------------------------------------------------------------
 // Frame windows (frames)
 // ---------------------------------------------------------------------------------------------
+/*
+ * Frame-count convention: a state entered while handling input on frame 1 (shield release, roll, a ground
+ * attack…) with N frames of lag can act again on frame N + 1, and acts ON that frame (the frame the lag
+ * ends is also the frame the next input is read — no extra idle frame in between). Landing is entered by
+ * the collision step after the input was handled, so its lag counts from the next frame.
+ * Sources: SmashWiki "Shield" (Melee shield drop lag 15 frames, shield stays up at least 8 frames),
+ * "Wavedash" / "Air dodge" (airdodge landing = 10 frames of special landing lag), "Dash" (initial dash
+ * options), meleeframedata.com (spot dodge / roll totals per character, see FIGHTERS).
+ */
 export const FRAMES = {
   JUMPSQUAT: 4,            // crouch before leaving the ground. Release jump before it ends → short hop
-  DASH: 12,                // initial dash; a smash the other way inside it is a dash back (dash dance)
+  DASH: 12,                // default initial dash (profiles override: FIGHTERS.dashF); a smash the other way inside it is a dash back
   TURN: 6,                 // slow "tilt turn" when a dash back was too slow
   RUN_BRAKE: 10,
   RUN_TURN: 18,
@@ -253,9 +267,10 @@ export const FRAMES = {
   AIRDODGE_INTANGIBLE: [4, 26],
   WAVEDASH_MAX_AIR: 3,     // airdodge on airborne frame ≤ this (straight from a jump) counts as a wavedash
   LEDGEDASH_MAX: 45,       // ledge release → wave-land within this many frames counts as a ledgedash
-  ROLL: 30, ROLL_MOVE: [4, 22], ROLL_INTANGIBLE: [4, 19],
-  SPOTDODGE: 24, SPOTDODGE_INTANGIBLE: [2, 16],
-  SHIELD_RELEASE: 14,
+  ROLL: 31, ROLL_MOVE: [4, 22], ROLL_INTANGIBLE: [4, 19],     // default; profiles override (FIGHTERS.roll)
+  SPOTDODGE: 22, SPOTDODGE_INTANGIBLE: [2, 16],               // default; profiles override (FIGHTERS.spot)
+  SHIELD_RELEASE: 15,      // shield drop lag (jump and spot dodge still work during it, like Melee)
+  SHIELD_MIN: 8,           // the shield stays up at least this long once raised (jump out of shield works throughout)
   SHIELD_BREAK: 150,
   LEDGE_WAIT: 8,           // frames hanging before ledge options are accepted
   LEDGE_REGRAB: 30,
@@ -264,7 +279,14 @@ export const FRAMES = {
   RESPAWN_DELAY: 50,
   RESPAWN_WAIT: 180,
   TARGET_RESPAWN: 180,     // free play: broken targets come back after this long
-  JUMP_BUFFER: 5,          // optional jump buffer (off by default): an ignored jump press is retried this long
+  /**
+   * Input buffer (a deliberate convenience, NOT Melee behaviour — Melee reads a press only on the frame it
+   * happens). Browser + USB polling adds latency and jitter, so a jump / attack / special / shield /
+   * C-stick / dash press made up to this many frames before the fighter can act is carried forward and
+   * comes out on the first frame it can. L-cancel timing is never buffered. Set in Controls & help (0–6).
+   */
+  INPUT_BUFFER: 3,
+  INPUT_BUFFER_MAX: 6,
 };
 
 export const SHIELD = {

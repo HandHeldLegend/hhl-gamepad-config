@@ -8,7 +8,8 @@
  * listed in priority order (sweetspot first). Angle 361 = the "Sakurai angle".
  * Smash attacks (`smash`) can be charged on frame `charge` for up to 60 frames (damage × up to 1.3671).
  * Aerials: `landLag`, `lcLag` (L-cancelled: half, rounded down) and `autocancel` [a, b] — landing before
- * frame a or from frame b on gives normal landing lag.
+ * frame a or from frame b on gives normal landing lag. `iasa`: first frame the move can be interrupted
+ * by any action (table IASA below; total + 1 when there is none).
  * `specials` are parameters for the archetypes in specials.js (no per-character code).
  *
  * Sources (behaviour / numbers reference only; no game code, data files or extracted hitbox tables):
@@ -302,15 +303,42 @@ const SETS = {
   },
 };
 
-/** Fill per-hitbox windows and groups so consumers never have to look at the move's defaults. */
-function normalize(m) {
+/*
+ * IASA ("interruptible as soon as"): from this frame on the move can be cancelled into ANY action — jump,
+ * attack, special, shield, dash, walk, crouch, airdodge, another aerial — exactly like the rest of its
+ * animation had already ended. Every move gets `iasa` (normalize below); moves not listed here use
+ * total + 1 (actionable on the frame after the last one). Values above a move's total are clamped.
+ * Source: meleeframedata.com character pages ("IASA Frame"), fetched 2026-10; Fox's up air from SmashWiki
+ * Fox_(SSBM) ("FAF 36"). Behaviour reference for how IASA works (an interrupt check that runs every frame
+ * once the animation's interrupt flag is set, offering the same options as standing):
+ * doldecomp/melee ftCo_AttackS4_IASA / ftCo_Landing_IASA — no code or data copied.
+ * Specials: the source lists no IASA frames for them, so they end at total + 1.
+ */
+const IASA = {
+  dot: { utilt: 30, dash: 38, uair: 30, dair: 38 },
+  vix: { jab: 16, utilt: 23, dash: 36, dsmash: 46, nair: 42, fair: 53, bair: 38, uair: 36 },
+  quill: { jab: 16, utilt: 23, dash: 36, nair: 42, fair: 53, bair: 38, uair: 36 },
+  sable: { utilt: 32, dash: 40, fsmash: 48, dsmash: 62, fair: 30, bair: 35 },
+  rosette: { jab: 16, utilt: 37, dtilt: 26, dash: 36, uair: 34 },
+  rime: { jab: 16, ftilt: 28, dash: 38, fsmash: 47, usmash: 44, dsmash: 36, uair: 30 },
+  rally: { jab: 16, utilt: 38, usmash: 40, dsmash: 45, fair: 36, bair: 29, uair: 30, dair: 38 },
+  mochi: { jab: 16, dtilt: 30, dash: 39, fair: 35, bair: 31 },
+  'sir-retro': { jab: 16, dtilt: 26, fsmash: 42, usmash: 40 },
+};
+
+/** Fill per-hitbox windows, groups and the IASA frame so consumers never have to look at the move's defaults. */
+function normalize(m, iasa) {
   m.hitboxes = (m.hitboxes || []).map((h) => ({ g: 0, ...h, from: h.from ?? m.from ?? 1, to: h.to ?? m.to ?? m.from ?? 1 }));
+  m.iasa = Math.min(iasa ?? m.iasa ?? m.total + 1, m.total + 1);
   return m;
 }
-for (const set of Object.values(SETS)) {
-  for (const [id, m] of Object.entries(set)) if (id !== 'specials') { normalize(m); m.name = MOVE_NAMES[id]; }
+for (const [fid, set] of Object.entries(SETS)) {
+  for (const [id, m] of Object.entries(set)) if (id !== 'specials') { normalize(m, IASA[fid]?.[id]); m.name = MOVE_NAMES[id]; }
   for (const d of Object.values(set.specials)) { normalize(d); if (d.dump) normalize(d.dump); }
 }
+
+/** First frame (move frame numbering, 1 = first) on which a move can be interrupted. */
+export const iasaOf = (m) => Math.min(m.iasa ?? m.total + 1, m.total + 1);
 
 /** The moveset of a roster id (falls back to Dot's). */
 export const movesetFor = (id) => SETS[id] || SETS.dot;

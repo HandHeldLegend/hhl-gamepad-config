@@ -5,7 +5,7 @@
  * The Arena only reads the controller connected to the app (see input.js for how it is found).
  */
 import { h } from '../../ui/dom.js';
-import { button, card, field, toggle, callout, kv, segmented } from '../../ui/controls.js';
+import { button, card, field, toggle, callout, kv, segmented, slider } from '../../ui/controls.js';
 import { STICK, FRAMES, KEYS, MELEE } from './constants.js';
 import { ACTIONS, STICK_AXES, sourceLabel, padName, padMode } from './input.js';
 import { store } from './store.js';
@@ -198,8 +198,11 @@ function optionsCard(app) {
   return card({ title: t('Options'), icon: 'settings', tone: 'yellow' },
     field({ label: t('Tap jump'), description: t('Flicking the stick up jumps (a fast flick past the threshold, like a smash).'),
       control: toggle({ checked: store.get('tapJump'), tone: 'yellow', label: t('Tap jump'), onChange: (v) => { store.set('tapJump', v); app.game.tapJump = v; } }) }),
-    field({ label: t('Jump buffer'), description: t('Off: like the classic games, a jump pressed while the fighter can’t act is dropped (a chip explains why). On: it is retried for {n} frames.', { n: FRAMES.JUMP_BUFFER }),
-      control: toggle({ checked: !!store.get('jumpBuffer'), tone: 'yellow', label: t('Jump buffer'), onChange: (v) => { store.set('jumpBuffer', v); app.game.jumpBuffer = v; } }) }),
+    // Deliberate non-Melee convenience for browser / USB latency (see FRAMES.INPUT_BUFFER).
+    field({ label: t('Input buffer'), stacked: true,
+      description: t('A jump, attack, special, shield or smash input pressed up to this many frames before your fighter can act comes out on the first frame it can, and A may come this many frames before or after a smash flick. A deliberate convenience for browser and USB latency: the classic games have no buffer (0 = strict). L-cancel timing is never buffered.'),
+      control: slider({ min: 0, max: FRAMES.INPUT_BUFFER_MAX, step: 1, value: app.game.inputBuffer, unit: t('frames'), tone: 'yellow', ariaLabel: t('Input buffer'),
+        onInput: (v) => { app.game.setInputBuffer(v); store.set('inputBuffer', app.game.inputBuffer); } }) }),
     field({ label: t('Technique feedback'), description: t('Show short messages about what you just did (wavedash angle, L-cancel timing…). Off by default.'),
       control: toggle({ checked: !!store.get('techFeedback'), tone: 'yellow', label: t('Technique feedback'), onChange: (v) => store.set('techFeedback', v) }) }),
     field({ label: t('Show hitboxes'), description: t('Draw attack hitboxes (colored by damage), the dummy’s hurtbox, the collision point and ledge-grab boxes.'),
@@ -228,7 +231,7 @@ function techCard(app) {
   const P = app.game.fighter.P;
   const tech = [
     [t('Walk vs dash'), t('Push the stick slowly to walk (speed follows how far you push). Flick it past {threshold} within {n} frames of leaving the center to dash.', { threshold: STICK.SMASH_X, n: STICK.SMASH_WINDOW })],
-    [t('Dash back / dash dance'), t('During the first {n} frames of a dash, flick the other way. The feedback counts how many frames the stick was seen in the "tilt zone" on the way — 2 or more and it reads as a slow turn instead. Stick bounce (snapback) shows up here too.', { n: FRAMES.DASH })],
+    [t('Dash back / dash dance'), t('During the first {n} frames of a dash, flick the other way. The feedback counts how many frames the stick was seen in the "tilt zone" on the way — 2 or more and it reads as a slow turn instead. Stick bounce (snapback) shows up here too.', { n: P.DASH })],
     [t('Short hop vs full hop'), t('Release jump within {n} frames (≈{ms} ms) of pressing it for a short hop; hold it for a full hop.', { n: P.JUMPSQUAT, ms: Math.round(P.JUMPSQUAT * 16.7) })],
     [t('Double jump & fast fall'), t('Jump again in the air. At or after the top of a jump, flick down to fall faster — the feedback shows how many frames after the peak you were.')],
     [t('Airdodge, wavedash & waveland'), t('Press shield in the air; the stick picks the direction. Jump and airdodge diagonally into the ground on the first airborne frame to wavedash — the angle is shown (shallower = longer slide). Airdodging onto a platform from a fall is a waveland; letting go of the ledge, double jumping and airdodging onto the stage is a ledgedash.')],
@@ -236,7 +239,7 @@ function techCard(app) {
     [t('Shield & light shield'), t('Press a trigger past {threshold} to shield. A lighter press gives a bigger shield. The shield shrinks as it wears down — hold too long and it breaks.', { threshold: `${MELEE.TRIGGER_MIN}/${MELEE.TRIGGER_MAX}` })],
     [t('Shield drop'), t('Shield on a platform, then push the stick down at {min}–{max}° from straight down (a down-diagonal notch is ideal). Straight down flicks spot dodge instead.', { min: STICK.SPOTDODGE_CONE, max: STICK.SHIELD_DROP_MAX })],
     [t('Ledge'), t('Fall next to a ledge to grab it. Then: toward the stage or up to climb, jump to leap off, away or down to let go.')],
-    [t('Smash attacks & the training dummy'), t('Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.', { n: STICK.SMASH_ATTACK })],
+    [t('Smash attacks & the training dummy'), t('Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.', { n: STICK.SMASH_ATTACK + app.game.inputBuffer })],
   ];
   return card({ title: t('Technique guide'), subtitle: t('What each feedback message is measuring. Frame windows shown for {fighter}.', { fighter: app.game.fighter.profile.name }), icon: 'help', tone: 'red' },
     h('dl.arena-tech', tech.flatMap(([k, v]) => [h('dt', k), h('dd', v)])));

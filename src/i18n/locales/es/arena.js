@@ -370,9 +370,6 @@ export default {
   "ledge getup": "subiendo del borde",
   "respawning": "reapareciendo",
   "Buffered jump · pressed {n}f early": "Salto en buffer · presionado {n}f antes",
-  "Jump buffer": "Buffer de salto",
-  "Off: like the classic games, a jump pressed while the fighter can’t act is dropped (a chip explains why). On: it is retried for {n} frames.":
-    "Desactivado: como en los juegos clásicos, un salto presionado mientras el luchador no puede actuar se descarta (un aviso explica por qué). Activado: se reintenta durante {n} frames.",
   "Hide this tip": "Ocultar este consejo",
   "Faster input in Steam mode.": "Entrada más rápida en modo Steam.",
   "Steam mode sends USB reports up to {x}× as often as Switch mode ({fast} Hz vs {slow} Hz). For the most responsive testing, set Default mode to Steam on the Gamepad page.":
@@ -435,4 +432,7 @@ export default {
   "Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.": "Mueve el stick de golpe y presiona A dentro de {n} frames (o mueve el C-stick) para un smash; mantén A para cargarlo hasta 60 frames (×1.367 de daño). En Juego libre el muñeco recibe daño y knockback con la fórmula clásica, y cada golpe muestra movimiento · daño · knockback.",
   'Technique feedback': 'Retroalimentación de técnica',
   'Show short messages about what you just did (wavedash angle, L-cancel timing…). Off by default.': 'Muestra mensajes breves sobre lo que acabas de hacer (ángulo del wavedash, timing del L-cancel…). Desactivado por defecto.',
+  "Input buffer": "Buffer de entrada",
+  "A jump, attack, special, shield or smash input pressed up to this many frames before your fighter can act comes out on the first frame it can, and A may come this many frames before or after a smash flick. A deliberate convenience for browser and USB latency: the classic games have no buffer (0 = strict). L-cancel timing is never buffered.": "Un salto, ataque, especial, escudo o smash presionado hasta esta cantidad de frames antes de que tu luchador pueda actuar sale en el primer frame posible, y A puede llegar esa misma cantidad de frames antes o después de mover el stick de golpe para un smash. Es una ayuda deliberada para la latencia del navegador y del USB: los juegos clásicos no tienen buffer (0 = estricto). El timing del L-cancel nunca usa el buffer.",
+  "frames": "frames",
 };

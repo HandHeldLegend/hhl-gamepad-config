@@ -10,16 +10,29 @@
  *                      lingers in the tilt zone for SMASH_WINDOW frames instead, you get a slow turn.
  *   Short / full hop   jump held through the whole JUMPSQUAT → full hop; released earlier → short hop.
  *   Fast fall          a fresh down flick (SMASH_Y within the window) once vertical speed ≤ 0.
- *   Airdodge           a shield press in the air; direction from the stick. Touching ground during the
- *                      dodge converts the horizontal speed into a slide: wavedash (straight out of a
- *                      jump), waveland (from a fall) or ledgedash (just after letting go of the ledge).
+ *   Airdodge           a shield press in the air (from the first airborne frame); direction from the stick.
+ *                      Touching ground during the dodge converts the horizontal speed into a slide:
+ *                      wavedash (straight out of a jump), waveland (from a fall) or ledgedash (just after
+ *                      letting go of the ledge).
  *   L-cancel           a shield/Z press within LCANCEL frames before an aerial lands halves its lag.
  *   Shield             analog trigger ≥ SHIELD_MIN. Lighter press = bigger but weaker-looking shield;
  *                      the shield shrinks as it loses health. Shield drop = crossing SHIELD_DOWN_Y at
  *                      an angle between SPOTDODGE_CONE and SHIELD_DROP_MAX away from straight down.
- *   Ledge              falling near a ledge snaps to it; then stick/jump/drop options.
- *   Smash attacks      A within SMASH_ATTACK frames of a smash flick (or a C-stick flick on the
- *                      ground); hold A to charge. Moves come from movesets.js, specials from specials.js.
+ *   Ledge              falling into the ledge box while facing the ledge grabs it; then stick/jump/drop.
+ *   Smash attacks      A within the smash window of a smash flick (or a C-stick flick on the ground);
+ *                      hold A to charge. Moves come from movesets.js, specials from specials.js.
+ *
+ * Actionability (Melee behaviour, doldecomp/melee used as a behaviour reference only):
+ *   - Every move has an IASA frame (movesets.js); from it on, any action interrupts the move.
+ *   - A lag state (landing, shield release, roll, spot dodge, attack end…) acts ON the frame its lag ends.
+ *   - Jump out of shield works while the shield is up and during shield release (GuardOff), as does
+ *     spot dodge; up special works out of shield too.
+ *
+ * Input buffer (deliberate, NOT Melee — see FRAMES.INPUT_BUFFER): a jump / attack / special / shield /
+ * C-stick / dash press that the current state couldn't use is carried forward for game.inputBuffer frames
+ * and comes out on the first frame the fighter can act. The same lenience widens the smash-attack window
+ * (A up to that many frames after a smash flick, or before it — see smashFromNormal()). L-cancel timing
+ * is never buffered.
  */
 import { PHYS, FRAMES, STICK, SHIELD, LEDGE, fighterById, fighterPhysics } from './constants.js';
 import { STAGE, SURFACES } from './stage.js';
@@ -34,8 +47,16 @@ const DEG = 180 / Math.PI;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const toward = (v, target, step) => v + clamp(target - v, -step, step);
 
-/** Grounded states that stop at platform edges instead of sliding off. */
+/** Grounded states that always stop at platform edges instead of going off. */
 const EDGE_STOP = new Set(['shield', 'shieldRelease', 'spotdodge', 'roll', 'dizzy', 'attack', 'special', 'jumpsquat']);
+/** Grounded states that stop at an edge ("teeter", like Melee's Ottotto) unless they are sliding faster
+ *  than a walk (a wavedash or a run's momentum carries you off). Walk / dash / run / skid go off. */
+const TEETER = new Set(['idle', 'crouch', 'landing', 'turn']);
+/** Ground normals that an A press made just before a smash flick turns into the smash attack. */
+const GROUND_NORMALS = new Set(['jab', 'ftilt', 'utilt', 'dtilt']);
+/** Inputs the input buffer carries forward. */
+const BUF_KINDS = ['jump', 'attack', 'special', 'shield', 'cstick', 'dash'];
+const sideDir = (d) => (d > 0 ? 'right' : 'left');
 
 export class Fighter {
   constructor(game, profileId) {
@@ -67,33 +88,39 @@ export class Fighter {
       adAngle: null, adAirFrame: 0, adFromJump: false, adFromLedge: false,
       landLag: 0, intangible: !!halo, dashDir: 1, rollDir: 1, skidTurn: false,
       holdDown: false, squash: 0, trail: [], getupFrom: null,
-      jumpTaken: false, jumpBuf: null, floatLeft: this.P.FLOAT, floating: false,
+      floatLeft: this.P.FLOAT, floating: false,
+      buf: {}, used: new Set(), flick: null,
     });
   }
 
   setState(s) { this.state = s; this.sf = 0; }
 
-  /** Why a jump press can't be used in the current state (null = it can). Frames left are approximate. */
+  /** Mark an input kind (BUF_KINDS) as used this frame, so it isn't buffered / is removed from the buffer. */
+  use(...kinds) { for (const k of kinds) this.used.add(k); }
+
+  /**
+   * Why a jump press can't be used in the current state (null = it can). "Nf left" counts the frames
+   * until the state can act (same numbers the buffer works with).
+   */
   jumpBlockedReason() {
     const busy = (action, n) => (n != null && n > 0
       ? t('Jump ignored · {action} ({n}f left)', { action, n: Math.ceil(n) })
       : t('Jump ignored · {action}', { action }));
     switch (this.state) {
-      case 'landing': return busy(t('landing lag'), this.landLag - this.sf + 1);
+      case 'landing': return busy(t('landing lag'), this.landLag + 1 - this.sf);
       case 'jumpsquat': return busy(t('already in jumpsquat'));
       case 'air':
-        if (this.move) return busy(t('aerial attack'), this.move.total - this.moveFrame);
+        if (this.move && this.moveFrame < this.move.iasa) return busy(t('aerial attack'), this.move.iasa - this.moveFrame);
         return this.jumps > 0 ? null : t('No jumps left');
-      case 'airdodge': return busy(t('airdodge'), FRAMES.AIRDODGE - this.sf + 1);
+      case 'airdodge': return busy(t('airdodge'), FRAMES.AIRDODGE - this.sf);
       case 'helpless': return busy(t('helpless fall (until you land or grab a ledge)'));
-      case 'attack': return busy(t('attack'), this.move ? this.move.total - this.moveFrame : null);
-      case 'special': return busy(t('special'), this.move ? this.move.total - this.moveFrame : null);
-      case 'shieldRelease': return busy(t('shield release'), FRAMES.SHIELD_RELEASE - this.sf + 1);
-      case 'roll': return busy(t('roll'), FRAMES.ROLL - this.sf + 1);
-      case 'spotdodge': return busy(t('spot dodge'), FRAMES.SPOTDODGE - this.sf + 1);
-      case 'dizzy': return busy(t('shield break'), FRAMES.SHIELD_BREAK - this.sf + 1);
+      case 'attack': return this.move ? busy(t('attack'), this.move.iasa - this.moveFrame) : null;
+      case 'special': return busy(t('special'), this.move ? this.move.total + 1 - this.moveFrame : null);
+      case 'roll': return busy(t('roll'), this.P.ROLL - this.sf);
+      case 'spotdodge': return busy(t('spot dodge'), this.P.SPOTDODGE - this.sf);
+      case 'dizzy': return busy(t('shield break'), FRAMES.SHIELD_BREAK - this.sf);
       case 'ledge': return this.sf < FRAMES.LEDGE_WAIT ? busy(t('ledge grab'), FRAMES.LEDGE_WAIT - this.sf) : null;
-      case 'ledgeGetup': return busy(t('ledge getup'));
+      case 'ledgeGetup': return busy(t('ledge getup'), FRAMES.LEDGE_GETUP - this.sf);
       case 'respawn': case 'dead': return busy(t('respawning'));
       default: return null;
     }
@@ -101,6 +128,11 @@ export class Fighter {
   get grounded() { return !!this.ground; }
   get feedback() { return this.game.feedback.bind(this.game); }
   get stats() { return this.game.stats; }
+
+  /** True during the first frames of a dash that A could still turn into a smash attack (render: no dash lean). */
+  get dashPending() {
+    return this.state === 'dash' && !!this.flick && this.game.frame - this.flick.frame <= this.game.pad.smashWindow;
+  }
 
   /** Shield radius right now (units): shrinks with health, grows with a lighter press. */
   shieldRadius() {
@@ -144,63 +176,115 @@ export class Fighter {
     this.sf++;
     if (this.ledgeCooldown > 0) this.ledgeCooldown--;
     if (this.dropThrough > 0) this.dropThrough--;
-    if (p.lcancelPress) this.lastLcancel = g.frame;
+    if (p.lcancelPress) this.lastLcancel = g.frame; // real presses only: L-cancel is never buffered
     if (this.state !== 'shield') this.shieldHP = Math.min(SHIELD.MAX, this.shieldHP + SHIELD.REGEN);
     this.holdDown = p.holdingDown;
     this.intangible = false;
     this.squash *= 0.8;
 
-    // A jump press the current state can't use is explained (so "the game ignored it" never looks like
-    // "the controller didn't send it"). With the optional jump buffer it is retried for a few frames.
-    const realPress = p.pressed.jump;
-    let injected = false;
-    if (realPress) this.jumpBuf = null;
-    else if (this.jumpBuf) { p.pressed.jump = true; injected = true; }
-    const blocked = p.pressed.jump ? this.jumpBlockedReason() : null;
-    this.jumpTaken = false;
+    // Input buffer: presses the fighter couldn't use yet are re-offered (see bufferedPad()).
+    p.smashWindow = STICK.SMASH_ATTACK + g.inputBuffer;
+    this.raw = p;
+    const real = this.readPresses(p);
+    const at = { state: this.state, aerial: this.state === 'air' && !!this.move };
+    const q = this.bufferedPad(p, real);
+    this.used = new Set();
 
     switch (this.state) {
-      case 'idle': this.stIdle(p); break;
-      case 'walk': this.stWalk(p); break;
-      case 'dash': this.stDash(p); break;
-      case 'run': this.stRun(p); break;
-      case 'skid': this.stSkid(p); break;
-      case 'turn': this.stTurn(p); break;
-      case 'crouch': this.stCrouch(p); break;
-      case 'jumpsquat': this.stJumpsquat(p); break;
-      case 'landing': this.stLanding(p); break;
-      case 'attack': this.stAttack(p); break;
-      case 'special': this.stSpecial(p); break;
-      case 'shield': this.stShield(p); break;
-      case 'shieldRelease': this.stTimed(p, FRAMES.SHIELD_RELEASE); break;
-      case 'roll': this.stRoll(p); break;
-      case 'spotdodge': this.stSpotdodge(p); break;
-      case 'dizzy': this.stDizzy(p); break;
-      case 'air': this.stAir(p); break;
-      case 'airdodge': this.stAirdodge(p); break;
-      case 'helpless': this.stHelpless(p); break;
-      case 'ledge': this.stLedge(p); break;
-      case 'ledgeGetup': this.stLedgeGetup(p); break;
-      case 'respawn': this.stRespawn(p); break;
-      case 'dead': this.stDead(p); break;
+      case 'idle': this.stIdle(q); break;
+      case 'walk': this.stWalk(q); break;
+      case 'dash': this.stDash(q); break;
+      case 'run': this.stRun(q); break;
+      case 'skid': this.stSkid(q); break;
+      case 'turn': this.stTurn(q); break;
+      case 'crouch': this.stCrouch(q); break;
+      case 'jumpsquat': this.stJumpsquat(q); break;
+      case 'landing': this.stLanding(q); break;
+      case 'attack': this.stAttack(q); break;
+      case 'special': this.stSpecial(q); break;
+      case 'shield': this.stShield(q); break;
+      case 'shieldRelease': this.stShieldRelease(q); break;
+      case 'roll': this.stRoll(q); break;
+      case 'spotdodge': this.stSpotdodge(q); break;
+      case 'dizzy': this.stDizzy(q); break;
+      case 'air': this.stAir(q); break;
+      case 'airdodge': this.stAirdodge(q); break;
+      case 'helpless': this.stHelpless(q); break;
+      case 'ledge': this.stLedge(q); break;
+      case 'ledgeGetup': this.stLedgeGetup(q); break;
+      case 'respawn': this.stRespawn(q); break;
+      case 'dead': this.stDead(q); break;
       default: this.setState('idle');
     }
 
-    if (injected) {
-      const buf = this.jumpBuf;
-      if (this.jumpTaken) { this.feedback(t('Buffered jump · pressed {n}f early', { n: buf.age + 1 }), 'lavender'); this.jumpBuf = null; }
-      else if (++buf.age >= FRAMES.JUMP_BUFFER) { this.feedback(buf.reason, 'yellow'); this.jumpBuf = null; }
-    } else if (realPress && !this.jumpTaken && blocked) {
-      if (g.jumpBuffer) this.jumpBuf = { age: 0, reason: blocked };
-      else this.feedback(blocked, 'yellow');
-    }
+    this.updateBuffer(real, at);
 
     // Afterimages while airdodging (render decides whether to draw them).
     if (this.state === 'airdodge') this.trail.push({ x: this.x, y: this.y });
     else if (this.trail.length) this.trail.shift();
     if (this.trail.length > 6) this.trail.shift();
 
-    this.integrate(p);
+    this.integrate(q);
+  }
+
+  /** The bufferable presses made this frame (real input only). */
+  readPresses(p) {
+    const g = this.game;
+    return {
+      jump: p.pressed.jump ? { tap: false } : (g.tapJump && p.yUpSmash ? { tap: true } : null),
+      attack: p.pressed.attack ? {} : null,
+      special: p.pressed.special ? {} : null,
+      shield: p.shieldPressed ? {} : null,
+      cstick: p.cDir ? { dir: p.cDir } : null,
+      dash: p.xSmash ? { dir: p.xSmash } : null,
+    };
+  }
+
+  /** The pad the state handlers see: the real one, plus any buffered presses re-offered this frame. */
+  bufferedPad(p, real) {
+    const inject = {};
+    let any = false;
+    for (const k of BUF_KINDS) if (this.buf[k] && !real[k]) { inject[k] = this.buf[k]; any = true; }
+    this.injected = inject;
+    if (!any) return p;
+    const q = Object.create(p);
+    const def = (k, v) => Object.defineProperty(q, k, { value: v, configurable: true, writable: true });
+    def('pressed', { ...p.pressed });
+    def('lcancelPress', p.lcancelPress);
+    if (inject.jump) { if (inject.jump.tap) def('yUpSmash', true); else q.pressed.jump = true; }
+    if (inject.attack) q.pressed.attack = true;
+    if (inject.special) q.pressed.special = true;
+    if (inject.shield) def('shieldPressed', true);
+    if (inject.cstick) def('cDir', inject.cstick.dir);
+    // A buffered dash only counts while the stick is still held that way.
+    if (inject.dash && p.xSide === inject.dash.dir) def('xSmash', inject.dash.dir);
+    return q;
+  }
+
+  /** May a press made in this situation be carried forward? */
+  canBuffer(kind, at) {
+    if (at.state === 'dead' || at.state === 'respawn') return false;
+    if (kind === 'jump' && at.state === 'jumpsquat') return false; // no accidental double jump off a re-tap
+    if (kind === 'shield' && at.aerial) return false;               // that press is the L-cancel
+    return true;
+  }
+
+  updateBuffer(real, at) {
+    const N = this.game.inputBuffer;
+    for (const k of BUF_KINDS) {
+      const b = this.buf[k];
+      if (this.used.has(k)) {
+        if (k === 'jump' && b && !real.jump) this.feedback(t('Buffered jump · pressed {n}f early', { n: b.age + 1 }), 'lavender');
+        this.buf[k] = null;
+      } else if (real[k]) {
+        const reason = k === 'jump' ? this.jumpBlockedReason() : null;
+        if (N > 0 && this.canBuffer(k, at)) this.buf[k] = { ...real[k], age: 0, reason };
+        else { this.buf[k] = null; if (reason) this.feedback(reason, 'yellow'); }
+      } else if (b && ++b.age >= N) {
+        this.buf[k] = null;
+        if (b.reason) this.feedback(b.reason, 'yellow');
+      }
+    }
   }
 
   friction() {
@@ -216,20 +300,23 @@ export class Fighter {
   groundOptions(p, { allowDrop = true } = {}) {
     const g = this.game;
     if (p.pressed.jump || (g.tapJump && p.yUpSmash && !p.pressed.attack)) { this.startJumpsquat(!p.pressed.jump); return true; }
-    if (p.shieldHeld) { this.setState('shield'); this.shieldPressure = p.shieldPressure; return true; }
+    if (p.shieldHeld) { this.use('shield'); this.setState('shield'); this.shieldPressure = p.shieldPressure; return true; }
     if (p.pressed.special && this.startSpecial(p)) return true;
     if (p.cDir) {
       // C-stick on the ground = smash attack (not chargeable).
+      this.use('cstick');
       const side = p.cDir === 'left' ? -1 : p.cDir === 'right' ? 1 : 0;
       if (side) this.facing = side;
       this.startAttack(smashMove(side ? 'forward' : p.cDir));
       return true;
     }
     if (p.pressed.attack) {
+      this.use('attack');
       const sd = p.smashDir;
       if (sd) {
         const side = sd === 'left' ? -1 : sd === 'right' ? 1 : 0;
         if (side) this.facing = side;
+        this.rewindFlick(sd);
         this.startAttack(smashMove(side ? 'forward' : sd), true);
         return true;
       }
@@ -248,11 +335,26 @@ export class Fighter {
     return false;
   }
 
+  /**
+   * Everything a standing fighter can do (Melee's Wait / IASA interrupt list): ground options, dash,
+   * crouch, walk. Used by idle and by every lag state on the frame it becomes actionable.
+   */
+  groundInterrupt(p) {
+    if (this.groundOptions(p)) return true;
+    if (p.xSmash) { this.startDash(p.xSmash); return true; }
+    if (p.y <= STICK.CROUCH_Y) { this.setState('crouch'); return true; }
+    if (Math.abs(p.x) >= STICK.NEUTRAL) { this.facing = Math.sign(p.x); this.setState('walk'); this.walkPhysics(p); return true; }
+    return false;
+  }
+
+  /** A lag state ended: stand, and act on this same frame. */
+  actNow(p) {
+    this.setState('idle');
+    this.groundInterrupt(p);
+  }
+
   stIdle(p) {
-    if (this.groundOptions(p)) return;
-    if (p.xSmash) return this.startDash(p.xSmash);
-    if (p.y <= STICK.CROUCH_Y) { this.setState('crouch'); return; }
-    if (Math.abs(p.x) >= STICK.NEUTRAL) { this.facing = Math.sign(p.x); this.setState('walk'); this.walkPhysics(p); return; }
+    if (this.groundInterrupt(p)) return;
     this.friction();
   }
 
@@ -271,10 +373,25 @@ export class Fighter {
   }
 
   startDash(dir) {
+    this.use('dash');
+    // Remember where the flick happened: A arriving inside the smash window turns this dash into a smash
+    // attack from this exact spot (rewindFlick), so a late A never shows a dash step first.
+    this.flick = { frame: this.game.frame, x: this.x, vx: this.vx, dir };
     this.facing = dir;
     this.dashDir = dir;
-    this.vx = dir * Math.max(this.P.DASH_INITIAL, Math.abs(this.vx) * 0.5);
+    // Melee (ftCo_Dash_Enter, behaviour reference): the ground speed becomes the initial dash speed.
+    this.vx = dir * this.P.DASH_INITIAL;
     this.setState('dash');
+  }
+
+  /** A arrived within the smash window of the flick that started this dash: undo the dash's movement. */
+  rewindFlick(sd) {
+    const f = this.flick;
+    if (this.state !== 'dash' || !f || sideDir(f.dir) !== sd) return;
+    if (this.game.frame - f.frame > this.game.pad.smashWindow) return;
+    this.x = f.x; this.prevX = f.x;
+    this.vx = f.vx;
+    this.flick = null;
   }
 
   stDash(p) {
@@ -296,8 +413,12 @@ export class Fighter {
       return;
     }
     if (this.groundOptions(p)) return;
-    if (this.sf < FRAMES.DASH) {
-      this.vx = toward(this.vx, this.dashDir * this.P.RUN_SPEED, this.P.RUN_ACCEL);
+    if (this.sf < this.P.DASH) {
+      // Accelerate toward run speed (dash acceleration scales with the stick); an initial dash faster
+      // than the run slows down with traction instead (SmashWiki "Dash").
+      const target = this.dashDir * this.P.RUN_SPEED;
+      if (this.vx * this.dashDir > this.P.RUN_SPEED) this.vx = toward(this.vx, target, this.P.FRICTION);
+      else this.vx = toward(this.vx, target, this.P.RUN_ACCEL * Math.max(0.25, Math.abs(p.x)));
       return;
     }
     if (p.xSide === this.dashDir) { this.setState('run'); return; }
@@ -307,18 +428,23 @@ export class Fighter {
   stRun(p) {
     if (this.groundOptions(p)) return;
     if (p.y <= STICK.CROUCH_Y) { this.setState('crouch'); return; }
-    if (p.xSide === -this.facing) { this.skidTurn = true; this.setState('skid'); return; }
+    if (p.xSide === -this.facing) {
+      // Run turnaround: the fighter turns at once and slides on its old momentum (so sliding off an
+      // edge this way leaves it facing the stage — the "run off, turn back, grab the ledge" move).
+      this.skidTurn = true; this.facing = -this.facing; this.setState('skid'); return;
+    }
     if (p.xSide !== this.facing) { this.skidTurn = false; this.setState('skid'); return; }
     this.vx = toward(this.vx, this.facing * this.P.RUN_SPEED, this.P.RUN_ACCEL);
   }
 
   stSkid(p) {
+    // Melee RunBrake / TurnRun: only a jump (or a crouch out of a plain brake) interrupts it.
     if (p.pressed.jump || (this.game.tapJump && p.yUpSmash)) { this.startJumpsquat(!p.pressed.jump); return; }
+    if (!this.skidTurn && p.y <= STICK.CROUCH_Y) { this.setState('crouch'); this.friction(); return; }
     this.friction();
     if (this.sf < (this.skidTurn ? FRAMES.RUN_TURN : FRAMES.RUN_BRAKE)) return;
-    if (this.skidTurn) this.facing = -this.facing;
     if (p.xSide === this.facing && Math.abs(p.x) >= STICK.SMASH_X) { this.setState('run'); return; }
-    this.setState('idle');
+    this.actNow(p);
   }
 
   stTurn(p) {
@@ -355,7 +481,7 @@ export class Fighter {
   // ---- Jumping --------------------------------------------------------------------------------
 
   startJumpsquat(viaTap) {
-    this.jumpTaken = true;
+    this.use('jump');
     this.setState('jumpsquat');
     this.jumpViaTap = viaTap;
     this.jumpHeld = true;
@@ -365,15 +491,20 @@ export class Fighter {
   }
 
   stJumpsquat(p) {
+    // Jumpsquat frames 1..JUMPSQUAT; the frame after is the first airborne frame (and is actionable).
+    if (this.sf >= this.P.JUMPSQUAT) { this.liftoff(p); return; }
     // Short hop = jump released before the jumpsquat ends. Tap-jump: stick dropped back below neutral.
     const holding = this.jumpViaTap ? p.y >= STICK.NEUTRAL : p.held.jump;
     if (holding && this.jumpHeld) this.jumpHeldFrames++;
     else this.jumpHeld = false;
-    if (p.shieldPressed) this.earlyAirdodge = this.P.JUMPSQUAT - this.sf + 1;
+    if (this.raw.shieldPressed) this.earlyAirdodge = this.P.JUMPSQUAT - this.sf; // frames before lift-off
     // Up smash out of jumpsquat (A with the stick up, or C-stick up).
-    if ((p.pressed.attack && p.y >= STICK.SMASH_Y) || p.cDir === 'up') { this.startAttack('usmash', !p.cDir); return; }
+    if ((p.pressed.attack && p.y >= STICK.SMASH_Y) || p.cDir === 'up') {
+      this.use(p.cDir === 'up' ? 'cstick' : 'attack');
+      this.startAttack('usmash', !p.cDir);
+      return;
+    }
     this.friction();
-    if (this.sf >= this.P.JUMPSQUAT) this.liftoff(p);
   }
 
   liftoff(p) {
@@ -382,6 +513,7 @@ export class Fighter {
     this.vx = clamp(this.vx * this.P.GROUND_TO_AIR + p.x * this.P.JUMP_H_INIT, -this.P.JUMP_H_MAX, this.P.JUMP_H_MAX);
     this.ground = null;
     this.enterAir(true);
+    this.airFrame = 1; // this frame is the first airborne frame
     const st = this.stats.hops; st.n++;
     if (short) {
       st.short++;
@@ -389,7 +521,11 @@ export class Fighter {
     } else {
       this.feedback(t('Full hop · held {n}f+ (short hop: release within {window}f)', { n: this.jumpHeldFrames, window: this.P.JUMPSQUAT }), 'lavender');
     }
-    if (this.earlyAirdodge > 0) this.feedback(t('Airdodge {n}f too early — press it after lift-off', { n: this.earlyAirdodge }), 'yellow');
+    // Melee: the first airborne frame already takes an airdodge (frame-perfect wavedash) or an aerial.
+    this.airOptions(p);
+    if (this.earlyAirdodge > 0 && this.state !== 'airdodge') {
+      this.feedback(t('Airdodge {n}f too early — press it after lift-off', { n: this.earlyAirdodge }), 'yellow');
+    }
   }
 
   // ---- Landing ---------------------------------------------------------------------------------
@@ -469,13 +605,14 @@ export class Fighter {
 
   stLanding(p) {
     const g = this.game;
-    // Pressed just after landing? Tell the player how late it was.
+    // Pressed just after landing? Tell the player how late it was (real presses only).
     if (!this.lcLateNoted && p.lcancelPress && g.frame - this.lcMissedAt <= 12) {
       this.lcLateNoted = true;
       this.feedback(t('L-cancel {n}f late', { n: g.frame - this.lcMissedAt }), 'yellow');
     }
+    // Landing is entered by the collision step, so its lag runs on the following landLag frames.
+    if (this.sf > this.landLag) { this.setState('idle'); if (!this.groundInterrupt(p)) this.friction(); return; }
     this.friction();
-    if (this.sf >= this.landLag) this.setState(p.y <= STICK.CROUCH_Y ? 'crouch' : 'idle');
   }
 
   // ---- Attacks / specials ----------------------------------------------------------------------
@@ -486,29 +623,47 @@ export class Fighter {
     this.setState('attack');
   }
 
+  /**
+   * Lenience for web latency (not Melee: there ftCo_AttackS4 only fires when A is pressed while the
+   * stick is past the threshold within the dash-smash window): A pressed up to inputBuffer frames BEFORE
+   * the smash flick started a jab/tilt — the flick arriving now turns it into the smash attack.
+   */
+  smashFromNormal(p) {
+    const N = this.game.inputBuffer;
+    if (!N || !GROUND_NORMALS.has(this.moveName) || this.moveFrame > N) return false;
+    const sd = p.xSmash ? sideDir(p.xSmash) : p.yUpSmash ? 'up' : p.yDownSmash ? 'down' : null;
+    if (!sd) return false;
+    const side = p.xSmash || 0;
+    if (side) this.facing = side;
+    this.use('attack', 'dash', 'jump');
+    this.startAttack(smashMove(side ? 'forward' : sd), true);
+    return true;
+  }
+
   stAttack(p) {
+    if (this.smashFromNormal(p)) return;
     const m = this.move;
     // Smash charge: hold A on the charge frame (up to 60 frames).
     this.charging = this.chargeable && this.moveFrame === m.charge && p.held.attack && this.chargeFrames < KB.CHARGE_MAX;
     if (this.charging) { this.chargeFrames++; this.friction(); return; }
     this.moveFrame++;
     this.friction();
-    if (this.moveFrame > m.total) { this.move = null; this.setState('idle'); }
-  }
-
-  stTimed(p, frames) {
-    this.friction();
-    if (this.sf >= frames) this.setState('idle');
+    if (this.moveFrame < m.iasa) return;
+    // IASA: any action interrupts the rest of the move; after the last frame the fighter just stands.
+    const done = this.moveFrame > m.total;
+    if (this.groundInterrupt(p)) return;
+    if (done) { this.move = null; this.setState('idle'); }
   }
 
   /** B with the stick: neutral / side / up / down special (archetypes in specials.js). */
   startSpecial(p) {
     const slot = p.y >= 0.5 ? 'up' : p.y <= -0.5 ? 'down' : Math.abs(p.x) >= 0.5 ? 'side' : 'neutral';
     if (slot === 'up' && this.upSpecialUsed) return false;
+    this.use('special');
     const def = this.moves.specials[slot];
     const A = ARCHETYPES[def.kind];
     if (slot === 'side') this.facing = Math.sign(p.x);
-    if (slot === 'up') this.upSpecialUsed = true;
+    if (slot === 'up') { this.upSpecialUsed = true; if (Math.abs(p.x) >= STICK.NEUTRAL) this.facing = Math.sign(p.x); }
     const move = A.start?.(this, def, p) || def;
     this.beginMove(move, slot);
     this.sp = { ...def, ...move, kind: def.kind };
@@ -525,7 +680,12 @@ export class Fighter {
     const d = this.sp;
     this.moveFrame++;
     if (ARCHETYPES[d.kind].step(this, d, p) === 'done') { if (this.state !== 'air') this.move = null; this.sp = null; return; }
-    if (this.moveFrame > this.move.total) this.endSpecial();
+    if (this.moveFrame > this.move.total) {
+      this.endSpecial();
+      // Act on the frame the special ends (the archetype already moved the fighter this frame).
+      if (this.state === 'idle') this.groundInterrupt(p);
+      else if (this.state === 'air') this.airOptions(p);
+    }
   }
 
   endSpecial() {
@@ -547,8 +707,11 @@ export class Fighter {
 
   stShield(p) {
     const g = this.game;
-    if (!p.shieldHeld) { this.setState('shieldRelease'); return; }
-    this.shieldPressure = p.shieldPressure;
+    // Jump out of shield first: it works on any shield frame (Melee Guard / GuardOn interrupts).
+    if (p.pressed.jump || (g.tapJump && p.yUpSmash)) { this.startJumpsquat(!p.pressed.jump); return; }
+    // Once raised, the shield stays up at least FRAMES.SHIELD_MIN frames (SmashWiki "Shield", Melee: 8).
+    if (!p.shieldHeld && this.sf >= FRAMES.SHIELD_MIN) { this.setState('shieldRelease'); return; }
+    if (p.shieldHeld) this.shieldPressure = p.shieldPressure;
     this.shieldHP -= SHIELD.DECAY;
     if (this.shieldHP <= 0) {
       this.shieldHP = 0;
@@ -556,7 +719,8 @@ export class Fighter {
       this.feedback(t('Shield broke! Let go of the trigger a little sooner'), 'red');
       return;
     }
-    if (p.pressed.jump || (g.tapJump && p.yUpSmash)) { this.startJumpsquat(!p.pressed.jump); return; }
+    // Up special out of shield.
+    if (p.pressed.special && p.y >= 0.5 && this.startSpecial(p)) return;
 
     // Down while shielding: shield drop (platforms, diagonal) or spot dodge (straight down flick).
     const lat = p.yShieldDown;
@@ -576,53 +740,69 @@ export class Fighter {
       }
       if (lat < STICK.SMASH_WINDOW && off <= STICK.SHIELD_DROP_MAX) { this.setState('spotdodge'); return; }
     }
-    if (p.xSmash) { this.rollDir = p.xSmash; this.setState('roll'); return; }
-    if (p.pressed.attack || p.pressed.z) { this.startAttack('grab'); return; }
+    if (p.xSmash) { this.use('dash'); this.rollDir = p.xSmash; this.setState('roll'); return; }
+    if (p.pressed.attack || p.pressed.z) { if (p.pressed.attack) this.use('attack'); this.startAttack('grab'); return; }
     this.friction();
   }
 
-  stRoll() {
+  /** Shield drop lag (Melee GuardOff): jump and spot dodge still work; anything else waits it out. */
+  stShieldRelease(p) {
+    const g = this.game;
+    if (p.pressed.jump || (g.tapJump && p.yUpSmash)) { this.startJumpsquat(!p.pressed.jump); return; }
+    const lat = p.yShieldDown;
+    if (lat >= 0 && lat < STICK.SMASH_WINDOW && Math.abs(Math.atan2(p.x, -p.y)) * DEG <= STICK.SPOTDODGE_CONE) { this.setState('spotdodge'); return; }
+    this.friction();
+    if (this.sf >= FRAMES.SHIELD_RELEASE) this.actNow(p);
+  }
+
+  stRoll(p) {
     const [a, b] = FRAMES.ROLL_MOVE;
     this.intangible = this.sf >= FRAMES.ROLL_INTANGIBLE[0] && this.sf <= FRAMES.ROLL_INTANGIBLE[1];
     this.vx = this.sf >= a && this.sf <= b ? this.rollDir * (this.P.ROLL_DISTANCE / (b - a + 1)) : 0;
-    if (this.sf >= FRAMES.ROLL) { this.facing = -this.rollDir; this.setState('idle'); }
+    if (this.sf >= this.P.ROLL) { this.facing = -this.rollDir; this.actNow(p); }
   }
 
-  stSpotdodge() {
+  stSpotdodge(p) {
     this.intangible = this.sf >= FRAMES.SPOTDODGE_INTANGIBLE[0] && this.sf <= FRAMES.SPOTDODGE_INTANGIBLE[1];
     this.friction();
-    if (this.sf >= FRAMES.SPOTDODGE) this.setState('idle');
+    if (this.sf >= this.P.SPOTDODGE) this.actNow(p);
   }
 
-  stDizzy() {
+  stDizzy(p) {
     this.friction();
-    if (this.sf >= FRAMES.SHIELD_BREAK) { this.shieldHP = SHIELD.MAX * 0.5; this.setState('idle'); }
+    if (this.sf >= FRAMES.SHIELD_BREAK) { this.shieldHP = SHIELD.MAX * 0.5; this.actNow(p); }
   }
 
   // ===========================================================================================
   // Airborne states
   // ===========================================================================================
 
-  stAir(p) {
+  /** Actions an actionable airborne fighter can take. Returns true if the fighter's state took over. */
+  airOptions(p) {
     const g = this.game;
-    this.airFrame++;
-    if (this.move) {
-      this.moveFrame++;
-      if (this.moveFrame > this.move.total) this.move = null;
-    } else if ((p.pressed.jump || (g.tapJump && p.yUpSmash)) && this.jumps > 0) {
-      this.doubleJump(p);
-    } else if (p.shieldPressed && !this.airdodgeUsed) {
-      this.startAirdodge(p);
-      return;
-    } else if (p.cDir || p.pressed.attack) {
+    if ((p.pressed.jump || (g.tapJump && p.yUpSmash)) && this.jumps > 0) { this.doubleJump(p); return false; }
+    if (p.shieldPressed && !this.airdodgeUsed) { this.startAirdodge(p); return true; }
+    if (p.cDir || p.pressed.attack) {
+      this.use(p.cDir ? 'cstick' : 'attack');
       const dir = p.cDir
         ? (p.cDir === 'up' || p.cDir === 'down' ? p.cDir : ((p.cDir === 'right' ? 1 : -1) === this.facing ? 'forward' : 'back'))
         : relDir(p.x, p.y, this.facing, STICK.DIRECTION);
       const name = airMove(dir);
       this.beginMove(this.moves[name], name);
-    } else if (p.pressed.special && this.startSpecial(p)) {
-      return;
+      return false;
     }
+    if (p.pressed.special && this.startSpecial(p)) return true;
+    return false;
+  }
+
+  stAir(p) {
+    this.airFrame++;
+    if (this.move) {
+      this.moveFrame++;
+      if (this.moveFrame > this.move.total) this.move = null;
+    }
+    // Free, or the aerial reached its IASA frame: anything goes.
+    if ((!this.move || this.moveFrame >= this.move.iasa) && this.airOptions(p)) return;
     // Float (profiles with FLOAT): keep jump held, then press down → hover until jump is released
     // or the float time runs out (once per airtime; landing or a ledge grab refreshes it).
     if (this.P.FLOAT) {
@@ -644,7 +824,8 @@ export class Fighter {
   }
 
   doubleJump(p) {
-    this.jumpTaken = true;
+    this.use('jump');
+    this.move = null; // a jump in an aerial's IASA window replaces it
     this.jumps--;
     this.vy = this.P.DOUBLE_JUMP;
     this.vx = p.x * this.P.DJ_H;
@@ -684,9 +865,13 @@ export class Fighter {
 
   startAirdodge(p) {
     const g = this.game;
+    this.use('shield');
     this.floating = false;
     this.airdodgeUsed = true;
-    if (Math.hypot(p.x, p.y) >= STICK.AIRDODGE_MIN) {
+    // Melee (ftCo_EscapeAir, behaviour reference): neutral only when both axes are inside the deadzone;
+    // otherwise full airdodge speed along the stick angle, whatever the stick magnitude.
+    const dz = STICK.AIRDODGE_DEADZONE;
+    if (Math.abs(p.x) >= dz || Math.abs(p.y) >= dz) {
       const a = Math.atan2(p.y, p.x);
       this.adAngle = a;
       this.vx = Math.cos(a) * this.P.AIRDODGE_SPEED;
@@ -752,7 +937,7 @@ export class Fighter {
     if (Math.hypot(p.x, p.y) < STICK.NEUTRAL) this.ledgeNeutral = true;
     const stickOk = this.ledgeNeutral;
     if (p.pressed.jump || (g.tapJump && p.yUpSmash)) {
-      this.jumpTaken = true;
+      this.use('jump');
       this.vy = this.P.LEDGE_JUMP;
       this.vx = L.dir * 0.6;
       this.leaveLedge();
@@ -760,6 +945,8 @@ export class Fighter {
       return;
     }
     if ((stickOk && (toStage >= 0.5 || p.y >= 0.5)) || p.pressed.attack || p.shieldPressed) {
+      if (p.pressed.attack) this.use('attack');
+      if (p.shieldPressed) this.use('shield');
       this.getupFrom = { x: this.x, y: this.y };
       this.setState('ledgeGetup');
       return;
@@ -777,20 +964,20 @@ export class Fighter {
     this.ledgeCooldown = FRAMES.LEDGE_REGRAB;
   }
 
-  stLedgeGetup() {
+  stLedgeGetup(p) {
     const L = this.ledge;
-    const t = Math.min(1, this.sf / FRAMES.LEDGE_GETUP);
-    const e = t * t * (3 - 2 * t);
+    const k = Math.min(1, this.sf / FRAMES.LEDGE_GETUP);
+    const e = k * k * (3 - 2 * k);
     const to = { x: L.x + L.dir * 9, y: L.y };
     this.intangible = true;
     this.x = this.getupFrom.x + (to.x - this.getupFrom.x) * e;
     // Arc up and over the corner.
-    this.y = this.getupFrom.y + (to.y - this.getupFrom.y) * Math.min(1, t * 1.6) + Math.sin(Math.PI * t) * 4;
-    if (t >= 1) {
+    this.y = this.getupFrom.y + (to.y - this.getupFrom.y) * Math.min(1, k * 1.6) + Math.sin(Math.PI * k) * 4;
+    if (k >= 1) {
       this.y = L.y;
       this.ground = STAGE.main;
       this.leaveLedge();
-      this.setState('idle');
+      this.actNow(p);
     }
   }
 
@@ -834,7 +1021,10 @@ export class Fighter {
       this.y = s.y;
       this.vy = 0;
       if (this.x < s.x1 || this.x > s.x2) {
-        if (EDGE_STOP.has(st)) {
+        // Melee: standing / crouching / landing fighters teeter at the edge (Ottotto) unless momentum
+        // carries them off; walking, dashing, running and skidding go off and fall.
+        const slow = Math.abs(this.vx) <= this.P.WALK_MAX + 1e-9;
+        if (EDGE_STOP.has(st) || (TEETER.has(st) && slow)) {
           this.x = clamp(this.x, s.x1, s.x2);
           this.vx = 0;
         } else {
@@ -881,10 +1071,12 @@ export class Fighter {
       this.vx = 0;
     }
 
-    // Ledge grab: falling, near a ledge, not mid-attack.
+    // Ledge grab (Melee-like): falling (not rising), not mid-attack, not holding down, facing the ledge,
+    // inside the grab box, and not right after letting go. Running off facing outward just falls.
     const canGrab = (st === 'air' && !this.move) || st === 'helpless' || (st === 'special' && this.sp?.kind === 'recovery');
-    if (canGrab && this.vy < 0 && this.ledgeCooldown === 0) {
+    if (canGrab && this.vy < 0 && this.ledgeCooldown === 0 && !this.holdDown) {
       for (const L of STAGE.ledges) {
+        if (this.facing !== L.dir) continue;
         const dx = (this.x - L.x) * L.dir; // negative = off-stage side
         if (dx <= 1 && dx >= -LEDGE.REACH_X && this.y <= L.y - 1 && this.y >= L.y - LEDGE.REACH_Y) {
           this.grabLedge(L);

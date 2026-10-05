@@ -13,8 +13,8 @@ const DEFAULTS = {
   tab: 'play',
   tapJump: true,         // stick up jumps
   showHitboxes: false,
-  jumpBuffer: false,
-  hideSteamHint: false,  // the "Steam mode is faster" tip was dismissed     // retry a jump press the current state ignored for a few frames
+  inputBuffer: 3,        // frames a press is carried forward until the fighter can act (FRAMES.INPUT_BUFFER; 0–6)
+  hideSteamHint: false,  // the "Steam mode is faster" tip was dismissed
   labView: 'melee',      // Input lab: 'melee' (what the game sees) | 'raw'
   speed: 1,
   hiResSticks: false,    // Gamepad API source: take stick values from the 12-bit HOJA USB stream
