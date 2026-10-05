@@ -65,8 +65,6 @@ export default {
   'Calibrate now': 'Calibrar ahora',
   'Needs calibration': 'Necesita calibración',
   'Close editor': 'Cerrar editor',
-  'Pick an input': 'Elige una entrada',
-  'Choose a button on the left to see what it does and change it.': 'Elige un botón a la izquierda para ver qué hace y cambiarlo.',
 
   // ---- Editor (editor.js) ----
   '{input} in {mode} mode': '{input} en el modo {mode}',

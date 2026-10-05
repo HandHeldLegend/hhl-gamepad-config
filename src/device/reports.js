@@ -9,7 +9,8 @@
  *   [9..14]  gyro  x, y, z   int16 LE
  *   0xFF (raw):
  *     [15..16] focused input: big-endian u16, bit15 = pressed, low 15 bits = 0..4095
- *     [17..52] all 36 mapper inputs: bit7 = pressed, bits0-6 = value >> 5 (0..127)
+ *     [17..52] all 36 mapper inputs: bit7 = pressed, bits0-6 = value >> 5. Hover/analog inputs (0..4095)
+ *              reach 0..127; joystick-direction inputs (0..2048) only reach 0..64 at full deflection.
  *   0xFE (joysticks), big-endian u16 values centered at 2048:
  *     [15..22] lx, ly, rx, ry after snapback filtering
  *     [23..30] lx, ly, rx, ry after deadzone processing
@@ -24,7 +25,8 @@ const be16 = (v, i) => (v.getUint8(i) << 8) | v.getUint8(i + 1);
  *   accel: {x:number,y:number,z:number}, gyro: {x:number,y:number,z:number},
  *   focused?: {value:number, pressed:boolean}, inputs?: Array<{value:number, pressed:boolean}>,
  *   sticks?: {snapback:{lx,ly,rx,ry}, deadzone:{lx,ly,rx,ry}}}|null}
- *   Stick values are centered (−2048..2047). Raw input values are 0..127 (7-bit).
+ *   Stick values are centered (−2048..2047). Raw input values are 0..127 (7-bit field); joystick-direction
+ *   inputs top out at 64 (see the layout above).
  */
 export function decodeInputReport(v) {
   const id = v.getUint8(0);

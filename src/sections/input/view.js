@@ -26,7 +26,7 @@
  */
 import { h, loadStyles } from '../../ui/dom.js';
 import { card, button, segmented, select, tabView, callout, badge, infoTip } from '../../ui/controls.js';
-import { toast, openDialog, confirmDialog } from '../../ui/overlay.js';
+import { toast, confirmDialog } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { decodeText } from '../../device/struct.js';
 import { t, fmt, N_ } from '../../i18n/index.js';
@@ -37,14 +37,10 @@ import {
 } from './mapping.js';
 import { glyph, meter, outputName } from './parts.js';
 import { createEditor } from './editor.js';
+import { createPopover } from './popover.js';
 import { createCalibration, renderCalibrationTab } from './calibration.js';
 
 loadStyles(new URL('./input.css', import.meta.url));
-
-/** Glyph-name form of a label ('D Up' → 'dup'), to tell whether an input sends its own button. */
-
-/** Width at which the editor sits beside the input grid instead of opening as a dialog. */
-const SPLIT = '(min-width: 1100px)';
 
 const GROUPS = [
   { type: INPUT_TYPE.DIGITAL, title: N_('Buttons'), tip: null },
@@ -87,10 +83,8 @@ export function mount(root, ctx) {
   const calib = createCalibration(session);
   /** Handlers fed with every decoded raw report (registered by whatever is on screen). */
   const live = new Set();
-  const splitMq = matchMedia(SPLIT);
   let editor = null;
-  let dialog = null;
-  let remap = null; // { aside, markSelected, setModeUI, refreshTiles } while the Remap tab is shown
+  let remap = null; // { pop, tiles, markSelected, setModeUI, refreshTiles } while the Remap tab is shown
 
   // ---- Device setup: raw stream + live loop ------------------------------------------------------
   device.setInputMode(false).catch((err) => console.warn('[input] setInputMode failed', err));
@@ -101,6 +95,7 @@ export function mount(root, ctx) {
   const stopReports = onInputReport(device, (r) => { if (r.kind === 'raw') latest = r; });
   let raf = requestAnimationFrame(function loop() {
     raf = requestAnimationFrame(loop);
+    remap?.pop.track(); // keep the editor popover next to its tile (scroll, resize, layout changes)
     if (!latest || latest === drawn) return;
     drawn = latest;
     for (const fn of live) fn(drawn);
@@ -118,56 +113,32 @@ export function mount(root, ctx) {
     }
   }
 
-  // ---- Editor placement: side panel when wide, dialog otherwise -----------------------------------
+  // ---- Editor: a light popover anchored to the tile (bottom sheet on phones) ----------------------
 
   function openEditor(code, { updateUrl = true } = {}) {
     const input = inputs.find((i) => i.code === code);
     if (!input) return;
-    closeEditor({ updateUrl: false, keepCalibration: state.selected === code }); // same input in another mode/place
+    // Another tile (or the same input in another mode): the popover just moves / refills.
+    closeEditor({ updateUrl: false, keepCalibration: state.selected === code, keepPopover: true });
     state.selected = code;
+    if (!remap) return; // shown when the Remap tab renders
     device.setFocusedInput(code).catch((err) => console.warn('[input] setFocusedInput failed', err));
     if (updateUrl) ctx.setParams({ input: input.key.toLowerCase() });
 
     editor = createEditor({ session, modeId: state.mode, input, inputs, calib, onChange: (c) => remap?.refreshTiles(c) });
-    if (splitMq.matches && remap) {
-      remap.aside.replaceChildren(card({ title: editor.title, icon: 'input', tone: 'lavender', class: 'inp-aside-card',
-        actions: button({ icon: 'close', variant: 'ghost', title: t('Close editor'), onClick: () => closeEditor() }) }, editor.el));
-    } else {
-      dialog = openDialog({
-        title: editor.title, icon: 'input', tone: 'lavender', body: editor.el,
-        actions: [{ label: t('Done'), variant: 'primary', value: true }],
-        onClose: () => { if (dialog) { dialog = null; closeEditor(); } },
-      });
-      dialog.el.classList.add('inp-dialog');
-    }
-    remap?.markSelected(code);
+    remap.markSelected(code);
+    remap.pop.show(remap.tiles.get(code), { title: editor.title, content: editor.el, focus: editor.el.querySelector('.inp-out-btn') });
   }
 
-  function closeEditor({ updateUrl = true, keepCalibration = false } = {}) {
+  function closeEditor({ updateUrl = true, keepCalibration = false, keepPopover = false, returnFocus = false } = {}) {
     if (editor) { editor.destroy({ keepCalibration }); editor = null; }
-    if (dialog) { const d = dialog; dialog = null; d.close(); }
     state.selected = null;
-    if (remap) { remap.aside.replaceChildren(asidePlaceholder()); remap.markSelected(null); }
+    if (remap) {
+      if (!keepPopover) remap.pop.hide({ returnFocus });
+      remap.markSelected(null);
+    }
     if (updateUrl) ctx.setParams({ input: null });
   }
-
-  const asidePlaceholder = () => h('div.inp-aside-empty',
-    h('span.face.soft.tone-lavender', { style: { '--size': '48px' } }, icon('input')),
-    h('strong', t('Pick an input')),
-    h('p.muted.small', t('Choose a button on the left to see what it does and change it.')));
-
-  // Re-place an open editor when the layout crosses the split breakpoint.
-  const onSplit = () => { if (state.selected != null) { const c = state.selected; openEditor(c, { updateUrl: false }); } };
-  splitMq.addEventListener('change', onSplit);
-
-  // Escape closes the side panel; preventDefault() tells the shell not to navigate home.
-  const onKey = (e) => {
-    if (e.key !== 'Escape' || state.selected == null || dialog || document.querySelector('dialog[open]')) return;
-    if (e.target.closest?.('input, textarea, select')) return;
-    e.preventDefault();
-    closeEditor();
-  };
-  window.addEventListener('keydown', onKey, true);
 
   // ---- Mode -------------------------------------------------------------------------------------
 
@@ -229,14 +200,13 @@ export function mount(root, ctx) {
       subtitle: t('Each mode has its own layout. Pick the one you play in, then tap a button below to change it.') },
     h('div.inp-mode-seg', modeSeg), h('div.inp-mode-select', modeSelect), where, unsupported, h('div.row', resetBtn, resetAll));
 
-    const grid = h('div.stack', { style: { '--gap': 'var(--space-4)' } });
+    const grid = h('div.inp-groups');
     const inputsCard = card({ title: t('Buttons & inputs'), icon: 'input', tone: 'lavender', subtitle: t('What each input sends.') }, grid);
     const subtitle = inputsCard.querySelector('.card-sub');
-    const aside = h('aside.inp-aside', asidePlaceholder());
-    const layout = h('div.inp-layout', inputsCard, aside);
-    const syncSplit = () => { layout.classList.toggle('split', splitMq.matches); aside.hidden = !splitMq.matches; };
-    syncSplit();
-    splitMq.addEventListener('change', syncSplit);
+    const pop = createPopover({
+      ignore: '.inp-tile', // tiles open/move/toggle the popover themselves
+      onDismiss: ({ returnFocus }) => closeEditor({ returnFocus }),
+    });
 
     // Calibration reminder (only when this build has analog inputs to calibrate).
     const attention = hoverInputs.length && !session.config.hover.hover_calibration_set
@@ -254,7 +224,10 @@ export function mount(root, ctx) {
       const outG = glyph('', { shape: 'square', size: 38 });
       const foot = h('span.inp-tile-foot');
       const m = meter();
-      const el = h('button.inp-tile', { type: 'button', onclick: () => openEditor(input.code) },
+      const el = h('button.inp-tile', {
+        type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false',
+        onclick: () => (state.selected === input.code ? closeEditor({ returnFocus: true }) : openEditor(input.code)),
+      },
         h('span.inp-tile-map', inG, icon('chevron-right'), outG),
         foot, m);
       el.update = () => {
@@ -284,7 +257,8 @@ export function mount(root, ctx) {
       };
       el.live = (v) => {
         if (!v) return;
-        m.set(v.value / 127, v.pressed);
+        // Joystick-direction inputs (0..2048) arrive as 0..64 in the raw stream; analog/hover inputs as 0..127.
+        m.set(Math.min(1, v.value / (input.type === INPUT_TYPE.JOYSTICK ? 64 : 127)), v.pressed);
         if (v.pressed !== el._p) { el._p = v.pressed; el.classList.toggle('is-pressed', v.pressed); }
       };
       el.update();
@@ -296,7 +270,7 @@ export function mount(root, ctx) {
       tiles.clear();
       grid.replaceChildren(...GROUPS.map((g) => {
         const list = inputs.filter((i) => i.type === g.type);
-        return list.length > 0 && h('section.inp-group',
+        return list.length > 0 && h('section.inp-group', { style: { '--n': String(list.length) } },
           h('h3.inp-group-title', t(g.title), h('span.faint', fmt.number(list.length)), g.tip && infoTip(t(g.tip))),
           h('div.inp-grid', list.map(tile)));
       }).filter(Boolean));
@@ -305,7 +279,10 @@ export function mount(root, ctx) {
     }
 
     function markSelected(code) {
-      for (const [c, t] of tiles) t.setAttribute('aria-current', String(c === code));
+      for (const [c, t] of tiles) {
+        t.setAttribute('aria-current', String(c === code));
+        t.setAttribute('aria-expanded', String(c === code));
+      }
     }
 
     function setModeUI() {
@@ -326,19 +303,19 @@ export function mount(root, ctx) {
 
     buildGrid();
     remap = {
-      aside, markSelected, setModeUI,
+      pop, tiles, markSelected, setModeUI,
       refreshTiles: (code) => { if (code == null) for (const t of tiles.values()) t.update(); else tiles.get(code)?.update(); },
     };
     setModeUI();
-    panel.append(h('div.stack', attention, modeCard, layout));
+    panel.append(h('div.stack', attention, modeCard, inputsCard, pop.el));
 
-    // Re-open the editor in the new container if one was open (e.g. after switching tabs).
+    // Re-open the editor if one was selected (deep link on load, or after switching tabs).
     if (state.selected != null) openEditor(state.selected, { updateUrl: false });
 
     return () => {
       live.delete(onReport);
-      splitMq.removeEventListener('change', syncSplit);
-      if (dialog || editor) closeEditor(); // leaving the tab (page teardown closes the editor first)
+      if (editor) closeEditor(); // leaving the tab (page teardown closes the editor first)
+      pop.destroy();
       remap = null;
     };
   }
@@ -396,8 +373,6 @@ export function mount(root, ctx) {
     destroy() {
       cancelAnimationFrame(raf);
       stopReports();
-      splitMq.removeEventListener('change', onSplit);
-      window.removeEventListener('keydown', onKey, true);
       offTabBadge();
       closeEditor({ updateUrl: false });
       tabs?.destroy?.();

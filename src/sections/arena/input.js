@@ -155,6 +155,9 @@ export function prettyCode(code) {
     .replace(/^(Lb|Rb|Lt|Rt|Ls|Rs|Lp1|Rp1|Lp2|Rp2|Tp1|Tp2|Lx|Ly|Rx|Ry)\b/, (m) => m.toUpperCase());
 }
 
+/** Full-scale raw-report value of a joystick-direction input (2048 >> 5); analog/hover inputs use 127. */
+export const RAW_JOYSTICK_FULL = 64;
+
 /** Action states from one HOJA USB raw report through the 'usb' bindings ({attack…step, l, r, trig}). */
 export function usbButtons(inputs, map) {
   const val = (src) => (src?.t === 'c' ? (src.an ? (inputs[src.i]?.value ?? 0) / 127 : (inputs[src.i]?.pressed ? 1 : 0)) : 0);
@@ -641,7 +644,9 @@ export class InputManager extends EventTarget {
     } else if (this.usb.raw && usbFresh(this.usb.rawT)) {
       const inputs = this.usb.raw;
       const map = this.bindingsFor('usb');
-      const v = (code) => (inputs[code]?.value ?? 0) / 127;
+      // Stick directions are joystick-type mapper inputs (0..2048), sent as value >> 5 → 0..64 at full
+      // deflection; hover/analog inputs (0..4095) reach 0..127 (firmware webusb.c). Scale by type.
+      const v = (code) => Math.min(1, (inputs[code]?.value ?? 0) / RAW_JOYSTICK_FULL);
       [s.lx, s.ly] = [v(CODE.LX_RIGHT) - v(CODE.LX_LEFT), v(CODE.LY_UP) - v(CODE.LY_DOWN)];
       [s.cx, s.cy] = [v(CODE.RX_RIGHT) - v(CODE.RX_LEFT), v(CODE.RY_UP) - v(CODE.RY_DOWN)];
       const b = usbButtons(inputs, map);

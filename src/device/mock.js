@@ -124,7 +124,7 @@ function frame(t) {
     const type = device.static.input.input_info[i]?.input_type ?? 0;
     let value = 0;
     if (type === 2) value = Math.round((Math.sin(t * 1.5 + i) * 0.5 + 0.5) * 127);
-    else if (type === 3) value = Math.round(Math.max(0, Math.sin(t * 1.3 + i)) * 127);
+    else if (type === 3) value = Math.round(Math.max(0, Math.sin(t * 1.3 + i)) * 64); // joystick dirs: 0..2048 >> 5
     else if (type === 1 && i === pressedIdx) value = 127;
     inputs.push({ value, pressed: value > 64 });
   }

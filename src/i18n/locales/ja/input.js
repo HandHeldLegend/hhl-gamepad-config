@@ -65,8 +65,6 @@ export default {
   'Calibrate now': '今すぐキャリブレーション',
   'Needs calibration': 'キャリブレーションが必要',
   'Close editor': 'エディターを閉じる',
-  'Pick an input': '入力を選択',
-  'Choose a button on the left to see what it does and change it.': '左側のボタンを選ぶと、その動作を確認・変更できます。',
 
   // ---- Editor (editor.js) ----
   '{input} in {mode} mode': '{mode}モードの{input}',
