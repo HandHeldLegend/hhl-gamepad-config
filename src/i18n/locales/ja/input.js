@@ -48,8 +48,8 @@ export default {
   'Buttons': 'ボタン',
   'Analog inputs': 'アナログ入力',
   'Stick directions': 'スティック方向',
-  'Hall-effect inputs that measure how far they are pressed, such as analog triggers. They can act as a button with an adjustable activation point, as rapid trigger, or as a full analog output.':
-    'アナログトリガーなど、押し込み量を測定するホール効果入力です。作動ポイントを調整できるボタン、ラピッドトリガー、またはフルアナログ出力として使えます。',
+  'Inputs that measure how far they are pressed, such as analog triggers (the sensor type depends on your controller). They can act as a button with an adjustable activation point, as rapid trigger, or as a full analog output.':
+    'アナログトリガーなど、押し込み量を測定する入力です（センサーの種類はコントローラーによって異なります）。作動ポイントを調整できるボタン、ラピッドトリガー、またはフルアナログ出力として使えます。',
   'Each stick direction can be sent somewhere else too — for example to the d-pad or a button.':
     'スティックの各方向も、十字キーやボタンなど別の出力に割り当てられます。',
   'This controller did not report any remappable inputs.': 'このコントローラーから割り当て変更できる入力が報告されませんでした。',
@@ -177,8 +177,8 @@ export default {
   'Stick right': '右スティック',
 
   // ---- Calibration tab (calibration.js) ----
-  'Teach the controller the full travel of its analog (hall-effect) inputs, such as triggers.':
-    'トリガーなどのアナログ（ホール効果）入力のストローク全体をコントローラーに記憶させます。',
+  'Teach the controller the full travel of its analog inputs, such as triggers.':
+    'トリガーなどのアナログ入力のストローク全体をコントローラーに記憶させます。',
   'Start calibration': 'キャリブレーション開始',
   'Finish calibration': 'キャリブレーション終了',
   'Press {button}.': '{button}を押します。',

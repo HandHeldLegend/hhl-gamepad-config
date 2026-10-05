@@ -1,5 +1,5 @@
 /**
- * calibration.js — Analog ("hover" / hall-effect) input calibration for the Input section.
+ * calibration.js — Analog ("hover") input calibration for the Input section (any analog sensor type).
  *
  * Protocol (config block `hover`, hoverConfig_s; command encoding in mapping.js HOVER_CMD):
  *   start  → firmware sets hover_calibration_set = 0, resets min/max of the channel(s) and then
@@ -132,7 +132,7 @@ export function renderCalibrationTab(panel, { session, calib, hoverInputs, live 
 
   panel.append(
     card({ title: t('Analog calibration'), icon: 'calibrate', tone: 'lavender', actions: status, class: 'inp-cal-card',
-      subtitle: t('Teach the controller the full travel of its analog (hall-effect) inputs, such as triggers.') },
+      subtitle: t('Teach the controller the full travel of its analog inputs, such as triggers.') },
       // Wide cards: steps + button on the left, the live bars on the right (no scrolling between them).
       h('div.inp-cal-layout',
       h('div.inp-cal-howto',

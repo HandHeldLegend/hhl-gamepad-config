@@ -48,8 +48,8 @@ export default {
   'Buttons': 'Botones',
   'Analog inputs': 'Entradas analógicas',
   'Stick directions': 'Direcciones del joystick',
-  'Hall-effect inputs that measure how far they are pressed, such as analog triggers. They can act as a button with an adjustable activation point, as rapid trigger, or as a full analog output.':
-    'Entradas de efecto Hall que miden qué tanto se presionan, como los gatillos analógicos. Pueden funcionar como un botón con punto de activación ajustable, como rapid trigger o como salida analógica completa.',
+  'Inputs that measure how far they are pressed, such as analog triggers (the sensor type depends on your controller). They can act as a button with an adjustable activation point, as rapid trigger, or as a full analog output.':
+    'Entradas que miden qué tanto se presionan, como los gatillos analógicos (el tipo de sensor depende de tu control). Pueden funcionar como un botón con punto de activación ajustable, como rapid trigger o como salida analógica completa.',
   'Each stick direction can be sent somewhere else too — for example to the d-pad or a button.':
     'Cada dirección del joystick también se puede enviar a otro lugar, por ejemplo a la cruceta o a un botón.',
   'This controller did not report any remappable inputs.': 'Este control no informó ninguna entrada que se pueda reasignar.',
@@ -177,8 +177,8 @@ export default {
   'Stick right': 'Joystick derecho',
 
   // ---- Calibration tab (calibration.js) ----
-  'Teach the controller the full travel of its analog (hall-effect) inputs, such as triggers.':
-    'Enséñale al control el recorrido completo de sus entradas analógicas (de efecto Hall), como los gatillos.',
+  'Teach the controller the full travel of its analog inputs, such as triggers.':
+    'Enséñale al control el recorrido completo de sus entradas analógicas, como los gatillos.',
   'Start calibration': 'Iniciar calibración',
   'Finish calibration': 'Finalizar calibración',
   'Press {button}.': 'Presiona {button}.',

@@ -49,7 +49,7 @@ const SPLIT = '(min-width: 1100px)';
 const GROUPS = [
   { type: INPUT_TYPE.DIGITAL, title: N_('Buttons'), tip: null },
   { type: INPUT_TYPE.HOVER, title: N_('Analog inputs'),
-    tip: N_('Hall-effect inputs that measure how far they are pressed, such as analog triggers. They can act as a button with an adjustable activation point, as rapid trigger, or as a full analog output.') },
+    tip: N_('Inputs that measure how far they are pressed, such as analog triggers (the sensor type depends on your controller). They can act as a button with an adjustable activation point, as rapid trigger, or as a full analog output.') },
   { type: INPUT_TYPE.JOYSTICK, title: N_('Stick directions'),
     tip: N_('Each stick direction can be sent somewhere else too — for example to the d-pad or a button.') },
 ];

@@ -77,7 +77,6 @@ Japanese
 - [ ] "Rapid trigger" kept in English in Spanish (tile pill "Rapid")
 - [ ] Live meter states: es "Presionado/Suelto", ja "押下中/未入力"
 - [ ] ja "{mode}モードでの送信先" used for both "sends in {mode} mode" and "Send in {mode} mode"
-- [ ] Hall effect: es "efecto Hall", ja "ホール効果"
 
 ## Arena
 

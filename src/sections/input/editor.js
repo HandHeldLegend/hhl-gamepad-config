@@ -7,7 +7,7 @@
  *     selects the input with device.setFocusedInput(code) when the editor opens);
  *   - for analog inputs: rapid trigger / threshold / full-analog mode, the activation point or rapid
  *     trigger sensitivity (threshold_delta), copy/paste of those settings (hoja2 JSON format), and
- *     per-input calibration for hall-effect inputs;
+ *     per-input calibration for analog (hover) inputs;
  *   - "output when pressed" (static_output) when a press drives an analog output.
  * Every change patches the profile slot and pushes the `input` block (see mapping.js writeSlot).
  */
@@ -251,7 +251,7 @@ export function createEditor(o) {
     el.replaceChildren(...parts.filter(Boolean));
   }
 
-  // Per-input calibration (hall-effect inputs only), shares state with the calibration tab.
+  // Per-input calibration (analog/hover inputs only), shares state with the calibration tab.
   let calibBtn = null;
   function calibrateRow() {
     calibBtn = button({ size: 'sm', variant: 'tonal', icon: 'calibrate', label: t('Calibrate'),

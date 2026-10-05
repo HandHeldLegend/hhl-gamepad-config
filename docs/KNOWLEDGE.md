@@ -120,7 +120,7 @@ Calibrate the sticks first, then tune snapback while watching the live analyzer,
 ## Analog trigger calibration
 <!-- topic: trigger-calibration; keywords: trigger, triggers, analog trigger, hall effect, hover, rapid trigger, threshold, calibrate triggers, analog inputs need calibration -->
 
-Controllers with analog (hall-effect) inputs calibrate them on the [Input](#/input) page. Home shows “Analog
+Controllers with analog inputs (hall-effect, TMR, potentiometer or other sensors, depending on the model) calibrate them on the [Input](#/input) page. Home shows “Analog
 inputs need calibration” when they haven’t been.
 
 1. Start calibration of all analog inputs (**Start**).
