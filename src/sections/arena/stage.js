@@ -21,6 +21,8 @@ export const STAGE = {
   blast: { left: -200, right: 200, top: 175, bottom: -110 },
   spawn: { x: 0, y: 0 },
   respawn: { x: 0, y: 76 },
+  /** Free play: the training dummy's spot. */
+  dummy: { x: 30, y: 0 },
   /** The camera always keeps this box in view (plus the fighter). */
   view: { left: -124, right: 124, top: 108, bottom: -42 },
 };

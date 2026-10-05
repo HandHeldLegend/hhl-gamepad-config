@@ -143,14 +143,15 @@ export function mount(root, ctx) {
   // The FCC statement stays in its official English wording (lang="en"). Other languages get a
   // reference translation below it, labelled as such (draft — the English text is what counts).
   const fccTranslated = t(FCC_STATEMENT);
-  const fccCard = fccId && card({ title: t('Regulatory'), icon: 'info', tone: TONE, class: 'wl-fcc' },
+  const fccCard = fccId && card({ title: t('Regulatory'), icon: 'info', tone: TONE, class: 'wl-fcc span-2' },
     h('div.wl-fcc-id', 'FCC ID: ', h('span.mono', fccId)),
     h('p.small.muted', { lang: 'en' }, FCC_STATEMENT),
     i18n.lang !== 'en' && fccTranslated !== FCC_STATEMENT && h('div.wl-fcc-translation',
       h('p.xs.faint.wl-fcc-note', t('Translation for reference only. The English statement above is the official text.')),
       h('p.small.muted', fccTranslated)));
 
-  root.append(...[chipCard, firmwareCard, wlanCard, hostsCard, fccCard].filter(Boolean));
+  // Side by side on wide pages; the long regulatory text spans the full row.
+  root.append(h('div.card-grid', ...[chipCard, firmwareCard, wlanCard, hostsCard, fccCard].filter(Boolean)));
 
   return {
     destroy() { alive = false; },

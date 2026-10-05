@@ -18,10 +18,14 @@
  *                      the shield shrinks as it loses health. Shield drop = crossing SHIELD_DOWN_Y at
  *                      an angle between SPOTDODGE_CONE and SHIELD_DROP_MAX away from straight down.
  *   Ledge              falling near a ledge snaps to it; then stick/jump/drop options.
+ *   Smash attacks      A within SMASH_ATTACK frames of a smash flick (or a C-stick flick on the
+ *                      ground); hold A to charge. Moves come from movesets.js, specials from specials.js.
  */
 import { PHYS, FRAMES, STICK, SHIELD, LEDGE, fighterById, fighterPhysics } from './constants.js';
 import { STAGE, SURFACES } from './stage.js';
-import { MOVES, groundMove, airMove, relDir } from './moves.js';
+import { groundMove, smashMove, airMove, relDir } from './moves.js';
+import { movesetFor, chargeMult, KB } from './movesets.js';
+import { ARCHETYPES } from './specials.js';
 import { t } from '../../i18n/index.js';
 
 const R = PHYS.BODY_R;
@@ -44,6 +48,7 @@ export class Fighter {
   setProfile(id) {
     this.profile = fighterById(id);
     this.P = fighterPhysics(this.profile);
+    this.moves = movesetFor(this.profile.id);
   }
 
   spawn(at, halo) {
@@ -52,10 +57,11 @@ export class Fighter {
       state: halo ? 'respawn' : 'idle', sf: 0, ground: halo ? null : STAGE.main,
       jumps: this.P.JUMPS, airdodgeUsed: false, upSpecialUsed: false, fastfall: false,
       shieldHP: SHIELD.MAX, shieldPressure: 1,
-      move: null, moveName: null, moveFrame: 0,
+      move: null, moveName: null, moveFrame: 0, sp: null, spCaught: false, windowOn: null, bucket: 0,
+      chargeFrames: 0, chargeable: false, charging: false, hitGroups: new Set(),
       airFrame: 0, fromJump: false, apexFrame: -1, ffNoted: false,
       ledge: null, ledgeCooldown: 0, ledgeDropFrame: -9999,
-      dropThrough: 0, specialCooldown: 0,
+      dropThrough: 0,
       lastLcancel: -9999, lcMissedAt: -9999, lcLateNoted: true,
       jumpHeld: true, jumpViaTap: false, jumpHeldFrames: 0, earlyAirdodge: -1,
       adAngle: null, adAirFrame: 0, adFromJump: false, adFromLedge: false,
@@ -81,7 +87,7 @@ export class Fighter {
       case 'airdodge': return busy(t('airdodge'), FRAMES.AIRDODGE - this.sf + 1);
       case 'helpless': return busy(t('helpless fall (until you land or grab a ledge)'));
       case 'attack': return busy(t('attack'), this.move ? this.move.total - this.moveFrame : null);
-      case 'special': return busy(t('special'), 18 - this.sf + 1);
+      case 'special': return busy(t('special'), this.move ? this.move.total - this.moveFrame : null);
       case 'shieldRelease': return busy(t('shield release'), FRAMES.SHIELD_RELEASE - this.sf + 1);
       case 'roll': return busy(t('roll'), FRAMES.ROLL - this.sf + 1);
       case 'spotdodge': return busy(t('spot dodge'), FRAMES.SPOTDODGE - this.sf + 1);
@@ -102,12 +108,30 @@ export class Fighter {
     return SHIELD.RADIUS * health * (1 + SHIELD.LIGHT_GROWTH * (1 - this.shieldPressure));
   }
 
-  /** World-space active hitboxes this frame. */
+  /** World-space active hitboxes this frame (priority order), with damage after smash charge. */
   activeHitboxes() {
-    if (!this.move) return [];
+    if (!this.move || this.charging) return [];
+    const k = chargeMult(this.chargeFrames);
+    const name = this.sp ? this.move.name : t(this.move.name);
     return this.move.hitboxes
       .filter((hb) => this.moveFrame >= hb.from && this.moveFrame <= hb.to)
-      .map((hb) => ({ x: this.x + hb.x * this.facing, y: this.y + hb.y, r: hb.r }));
+      .map((hb) => ({ ...hb, x: this.x + hb.x * this.facing, y: this.y + hb.y, dmg: hb.dmg * k, name, charged: this.chargeFrames }));
+  }
+
+  /** A hitbox of the current move connected (called by the game). */
+  onHit(box) {
+    this.hitGroups.add(box.g);
+    if (this.sp) ARCHETYPES[this.sp.kind].onHit?.(this, this.sp, box);
+  }
+
+  /** Start a move instance: frame 1 is this frame. */
+  beginMove(move, name) {
+    this.move = move;
+    this.moveName = name;
+    this.moveFrame = 1;
+    this.chargeFrames = 0;
+    this.charging = false;
+    this.hitGroups = new Set();
   }
 
   // ===========================================================================================
@@ -120,7 +144,6 @@ export class Fighter {
     this.sf++;
     if (this.ledgeCooldown > 0) this.ledgeCooldown--;
     if (this.dropThrough > 0) this.dropThrough--;
-    if (this.specialCooldown > 0) this.specialCooldown--;
     if (p.lcancelPress) this.lastLcancel = g.frame;
     if (this.state !== 'shield') this.shieldHP = Math.min(SHIELD.MAX, this.shieldHP + SHIELD.REGEN);
     this.holdDown = p.holdingDown;
@@ -147,7 +170,7 @@ export class Fighter {
       case 'jumpsquat': this.stJumpsquat(p); break;
       case 'landing': this.stLanding(p); break;
       case 'attack': this.stAttack(p); break;
-      case 'special': this.stTimed(p, 18); break;
+      case 'special': this.stSpecial(p); break;
       case 'shield': this.stShield(p); break;
       case 'shieldRelease': this.stTimed(p, FRAMES.SHIELD_RELEASE); break;
       case 'roll': this.stRoll(p); break;
@@ -192,16 +215,25 @@ export class Fighter {
   /** Options shared by most actionable grounded states. Returns true if the state changed. */
   groundOptions(p, { allowDrop = true } = {}) {
     const g = this.game;
-    if (p.pressed.jump || (g.tapJump && p.yUpSmash)) { this.startJumpsquat(!p.pressed.jump); return true; }
+    if (p.pressed.jump || (g.tapJump && p.yUpSmash && !p.pressed.attack)) { this.startJumpsquat(!p.pressed.jump); return true; }
     if (p.shieldHeld) { this.setState('shield'); this.shieldPressure = p.shieldPressure; return true; }
-    if (p.pressed.special) { this.groundSpecial(p); return true; }
+    if (p.pressed.special && this.startSpecial(p)) return true;
     if (p.cDir) {
+      // C-stick on the ground = smash attack (not chargeable).
       const side = p.cDir === 'left' ? -1 : p.cDir === 'right' ? 1 : 0;
       if (side) this.facing = side;
-      this.startAttack(groundMove(side ? 'forward' : p.cDir));
+      this.startAttack(smashMove(side ? 'forward' : p.cDir));
       return true;
     }
     if (p.pressed.attack) {
+      const sd = p.smashDir;
+      if (sd) {
+        const side = sd === 'left' ? -1 : sd === 'right' ? 1 : 0;
+        if (side) this.facing = side;
+        this.startAttack(smashMove(side ? 'forward' : sd), true);
+        return true;
+      }
+      if (this.state === 'dash' || this.state === 'run') { this.startAttack('dash'); return true; }
       const dir = relDir(p.x, p.y, this.facing, STICK.DIRECTION);
       if (dir === 'back') this.facing = -this.facing;
       this.startAttack(groundMove(dir));
@@ -338,6 +370,8 @@ export class Fighter {
     if (holding && this.jumpHeld) this.jumpHeldFrames++;
     else this.jumpHeld = false;
     if (p.shieldPressed) this.earlyAirdodge = this.P.JUMPSQUAT - this.sf + 1;
+    // Up smash out of jumpsquat (A with the stick up, or C-stick up).
+    if ((p.pressed.attack && p.y >= STICK.SMASH_Y) || p.cDir === 'up') { this.startAttack('usmash', !p.cDir); return; }
     this.friction();
     if (this.sf >= this.P.JUMPSQUAT) this.liftoff(p);
   }
@@ -373,13 +407,18 @@ export class Fighter {
     this.upSpecialUsed = false;
     this.fastfall = false;
     let lag = FRAMES.LAND;
+    const ac = this.move?.autocancel;
     if (st === 'airdodge') { lag = FRAMES.WAVELAND; this.reportWaveland(); }
-    else if (st === 'helpless') lag = FRAMES.SPECIAL_LAND;
-    else if (this.move?.landLag && this.profile.noLcancel?.includes(this.moveName)) {
+    else if (st === 'helpless' || st === 'special') lag = FRAMES.SPECIAL_LAND;
+    else if (ac && (this.moveFrame < ac[0] || this.moveFrame >= ac[1])) {
+      this.feedback(t('Autocancel · {move} landed on frame {n}', { move: t(this.move.name), n: this.moveFrame }), 'blue');
+    } else if (this.move?.landLag && this.profile.noLcancel?.includes(this.moveName)) {
       lag = this.move.landLag;
       this.feedback(t('{move} can’t be L-cancelled · full landing lag', { move: t(this.move.name) }), 'lavender');
     } else if (this.move?.landLag) lag = this.reportLcancel();
     this.move = null;
+    this.sp = null;
+    this.windowOn = null;
     this.landLag = lag;
     this.setState('landing');
     this.squash = 1;
@@ -420,7 +459,7 @@ export class Fighter {
       st.ok++;
       this.lcMissedAt = -9999;
       this.feedback(t('L-cancel ✓ · pressed {n}f before landing', { n: since }), 'green');
-      return Math.ceil(lag / 2);
+      return this.move.lcLag ?? Math.floor(lag / 2);
     }
     this.lcMissedAt = g.frame;
     if (since <= 40) this.feedback(t('L-cancel missed · {n}f early (window {window}f)', { n: since, window: FRAMES.LCANCEL }), 'yellow');
@@ -441,17 +480,20 @@ export class Fighter {
 
   // ---- Attacks / specials ----------------------------------------------------------------------
 
-  startAttack(name) {
-    this.move = MOVES[name];
-    this.moveName = name;
-    this.moveFrame = 0;
+  startAttack(name, chargeable = false) {
+    this.beginMove(this.moves[name], name);
+    this.chargeable = chargeable && !!this.move.smash;
     this.setState('attack');
   }
 
-  stAttack() {
+  stAttack(p) {
+    const m = this.move;
+    // Smash charge: hold A on the charge frame (up to 60 frames).
+    this.charging = this.chargeable && this.moveFrame === m.charge && p.held.attack && this.chargeFrames < KB.CHARGE_MAX;
+    if (this.charging) { this.chargeFrames++; this.friction(); return; }
     this.moveFrame++;
     this.friction();
-    if (this.moveFrame >= this.move.total) { this.move = null; this.setState('idle'); }
+    if (this.moveFrame > m.total) { this.move = null; this.setState('idle'); }
   }
 
   stTimed(p, frames) {
@@ -459,29 +501,46 @@ export class Fighter {
     if (this.sf >= frames) this.setState('idle');
   }
 
-  groundSpecial(p) {
-    if (p.y >= 0.5) { this.ground = null; this.springUp(p); return; }
-    this.fireSpark();
+  /** B with the stick: neutral / side / up / down special (archetypes in specials.js). */
+  startSpecial(p) {
+    const slot = p.y >= 0.5 ? 'up' : p.y <= -0.5 ? 'down' : Math.abs(p.x) >= 0.5 ? 'side' : 'neutral';
+    if (slot === 'up' && this.upSpecialUsed) return false;
+    const def = this.moves.specials[slot];
+    const A = ARCHETYPES[def.kind];
+    if (slot === 'side') this.facing = Math.sign(p.x);
+    if (slot === 'up') this.upSpecialUsed = true;
+    const move = A.start?.(this, def, p) || def;
+    this.beginMove(move, slot);
+    this.sp = { ...def, ...move, kind: def.kind };
+    this.spCaught = false;
+    this.fastfall = false;
+    this.floating = false;
     this.setState('special');
+    this.squash = 0.6;
+    A.step(this, this.sp, p);
+    return true;
   }
 
-  springUp(p) {
-    // Up-special: a single springy boost, then helpless until landing (or grabbing a ledge).
-    this.upSpecialUsed = true;
-    this.vy = 3.4;
-    this.vx = p.x * 1.2;
-    this.move = null;
+  stSpecial(p) {
+    const d = this.sp;
+    this.moveFrame++;
+    if (ARCHETYPES[d.kind].step(this, d, p) === 'done') { if (this.state !== 'air') this.move = null; this.sp = null; return; }
+    if (this.moveFrame > this.move.total) this.endSpecial();
+  }
+
+  endSpecial() {
+    const d = this.sp;
+    this.move = null; this.sp = null; this.windowOn = null;
+    if (this.ground) { this.setState('idle'); return; }
+    if ((d.helpless || d.kind === 'recovery') && !this.spCaught) this.enterHelpless();
+    else { const vy = this.vy; this.enterAir(false); this.vy = vy; }
+  }
+
+  enterHelpless() {
     this.fastfall = false;
     this.apexFrame = -1;
     this.ffNoted = true;
     this.setState('helpless');
-    this.squash = 1;
-  }
-
-  fireSpark() {
-    if (this.specialCooldown > 0) return;
-    this.specialCooldown = FRAMES.SPECIAL_COOLDOWN;
-    this.game.spawnSpark(this.x + this.facing * 8, this.y + R, this.facing * this.P.SPECIAL_SPEED);
   }
 
   // ---- Shield ----------------------------------------------------------------------------------
@@ -549,7 +608,7 @@ export class Fighter {
     this.airFrame++;
     if (this.move) {
       this.moveFrame++;
-      if (this.moveFrame >= this.move.total) this.move = null;
+      if (this.moveFrame > this.move.total) this.move = null;
     } else if ((p.pressed.jump || (g.tapJump && p.yUpSmash)) && this.jumps > 0) {
       this.doubleJump(p);
     } else if (p.shieldPressed && !this.airdodgeUsed) {
@@ -559,13 +618,10 @@ export class Fighter {
       const dir = p.cDir
         ? (p.cDir === 'up' || p.cDir === 'down' ? p.cDir : ((p.cDir === 'right' ? 1 : -1) === this.facing ? 'forward' : 'back'))
         : relDir(p.x, p.y, this.facing, STICK.DIRECTION);
-      this.moveName = airMove(dir);
-      this.move = MOVES[this.moveName];
-      this.moveFrame = 0;
-    } else if (p.pressed.special) {
-      if (p.y >= 0.5 && !this.upSpecialUsed) { this.springUp(p); return; }
-      this.fireSpark();
-      this.vy = Math.max(this.vy, -0.4); // tiny float when firing in the air
+      const name = airMove(dir);
+      this.beginMove(this.moves[name], name);
+    } else if (p.pressed.special && this.startSpecial(p)) {
+      return;
     }
     // Float (profiles with FLOAT): keep jump held, then press down → hover until jump is released
     // or the float time runs out (once per airtime; landing or a ledge grab refreshes it).
@@ -675,6 +731,8 @@ export class Fighter {
     this.upSpecialUsed = false;
     this.fastfall = false;
     this.move = null;
+    this.sp = null;
+    this.windowOn = null;
     this.ground = null;
     this.setState('ledge');
     this.ledgeNeutral = false; // stick options need the stick to pass through neutral first
@@ -756,6 +814,8 @@ export class Fighter {
     this.stats.ko++;
     this.feedback(t('Out of bounds! Respawning…'), 'red');
     this.move = null;
+    this.sp = null;
+    this.windowOn = null;
     this.ground = null;
     this.trail = [];
     this.setState('dead');
@@ -822,7 +882,7 @@ export class Fighter {
     }
 
     // Ledge grab: falling, near a ledge, not mid-attack.
-    const canGrab = (st === 'air' && !this.move) || st === 'helpless';
+    const canGrab = (st === 'air' && !this.move) || st === 'helpless' || (st === 'special' && this.sp?.kind === 'recovery');
     if (canGrab && this.vy < 0 && this.ledgeCooldown === 0) {
       for (const L of STAGE.ledges) {
         const dx = (this.x - L.x) * L.dir; // negative = off-stage side

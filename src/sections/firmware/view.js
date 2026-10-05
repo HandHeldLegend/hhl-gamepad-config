@@ -9,7 +9,7 @@ import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
 import { card, button, asyncButton, callout, kv, badge } from '../../ui/controls.js';
 import { connectController } from '../../app/shell.js';
-import { listBuilds, NUKE_BUILD } from '../../firmware/builds.js';
+import { listBuilds } from '../../firmware/builds.js';
 import {
   firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion,
 } from '../../firmware/updater.js';
@@ -40,7 +40,7 @@ function controllerCard(session) {
     h('div.row',
       s.state === 'available'
         ? button({ label: t('Update now'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() })
-        : button({ label: t('Reinstall firmware'), icon: 'download', variant: 'tonal', onClick: () => openUpdateWizard() }),
+        : button({ label: t('Reinstall firmware'), icon: 'download', variant: 'tonal', onClick: () => openUpdateWizard({ reinstall: true }) }),
       asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', busyLabel: t('Checking…'), okLabel: t('Checked'),
         run: async () => { await checkForFirmwareUpdate(); return true; } })));
 }
@@ -60,7 +60,7 @@ function installCard(params) {
 
 function recoveryCard() {
   return card({ title: t('Recovery'), icon: 'warning', tone: 'red', subtitle: t('Only needed if something went wrong.') },
-    h('p.muted.small', t('Stuck in the bootloader after an interrupted update? Restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, choose “{nuke}” in the installer to wipe all settings, then install your build again.', { nuke: t(NUKE_BUILD.label) })),
+    h('p.muted.small', t('Stuck in the bootloader after an interrupted update? Restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.', { fresh: t('Start fresh — erase everything first') })),
     h('div.row', asyncButton({ label: t('Restart from bootloader'), icon: 'refresh', variant: 'tonal', busyLabel: t('Restarting…'), okLabel: t('Restarted'), run: exitBootloader })));
 }
 

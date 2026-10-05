@@ -84,9 +84,10 @@ export class Renderer {
     this.#stage(ctx);
     for (const tg of game.targets) if (tg.alive) this.#target(ctx, tg, game.frame);
     for (const e of game.effects) this.#effect(ctx, e, game.frame + a);
+    if (game.dummy) this.#dummy(ctx, game.dummy, a, game.frame);
     for (const sp of game.sparks) this.#spark(ctx, sp, a);
     if (f.state !== 'dead') this.#fighter(ctx, f, fx, fy, game, opts);
-    if (opts.showHitboxes) this.#debug(ctx, f);
+    if (opts.showHitboxes) this.#debug(ctx, f, game);
   }
 
   // ---- Background -------------------------------------------------------------------------------
@@ -222,14 +223,43 @@ export class Renderer {
   #spark(ctx, sp, a) {
     const t = this.t;
     const x = lerp(sp.prevX, sp.x, a);
+    const y = lerp(sp.prevY, sp.y, a);
     const fade = Math.min(1, sp.life / 12);
-    ctx.strokeStyle = alpha(t.yellow, 0.35 * fade);
-    ctx.lineWidth = 2.4;
-    ctx.beginPath(); ctx.moveTo(x - Math.sign(sp.vx) * 9, sp.y); ctx.lineTo(x, sp.y); ctx.stroke();
-    ctx.fillStyle = alpha(t.yellow, fade);
+    const c = { fire: t.red, laser: t.green, ice: t.blue, arc: t.accent }[sp.look] || t.yellow;
+    const r = sp.r;
+    const len = Math.hypot(sp.vx, sp.vy) || 1;
+    ctx.strokeStyle = alpha(c, 0.35 * fade);
+    ctx.lineWidth = sp.look === 'laser' ? 1.6 : 2.4;
+    ctx.beginPath(); ctx.moveTo(x - (sp.vx / len) * r * 3, y - (sp.vy / len) * r * 3); ctx.lineTo(x, y); ctx.stroke();
+    ctx.fillStyle = alpha(c, fade);
     ctx.beginPath();
-    ctx.moveTo(x + 3, sp.y); ctx.lineTo(x, sp.y + 3); ctx.lineTo(x - 3, sp.y); ctx.lineTo(x, sp.y - 3);
+    ctx.moveTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.lineTo(x, y - r);
     ctx.closePath(); ctx.fill();
+  }
+
+  /** Training dummy: a plain round body with its damage above it. */
+  #dummy(ctx, d, a, frame) {
+    if (d.state === 'dead') return;
+    const t = this.t;
+    const x = lerp(d.prevX, d.x, a); const y = lerp(d.prevY, d.y, a);
+    const stun = d.state === 'hitstun';
+    ctx.fillStyle = alpha(this.ink, 0.15);
+    ctx.beginPath(); ctx.ellipse(x, y + 0.6, 6, 1.4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = stun && !this.reduced && (frame & 2) ? t.surface3 : t.muted;
+    ctx.beginPath(); ctx.arc(x, y + R, R, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = t.surface3; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(x, y + R, R * 0.55, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = t.onAccent;
+    for (const side of [-1, 1]) { ctx.beginPath(); ctx.arc(x + d.facing * 2.2 + side * 2, y + R + 1.4, 1.1, 0, Math.PI * 2); ctx.fill(); }
+    // Damage percent (screen-oriented text).
+    ctx.save();
+    ctx.translate(x, y + 2 * R + 5);
+    ctx.scale(this.px, -this.px);
+    ctx.font = '700 13px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = d.percent >= 100 ? t.red : d.percent >= 50 ? t.yellow : t.text;
+    ctx.fillText(`${Math.floor(d.percent)}%`, 0, 0);
+    ctx.restore();
   }
 
   // ---- Fighter -------------------------------------------------------------------------------------
@@ -324,10 +354,8 @@ export class Renderer {
     else if (!f.ground && st !== 'ledge' && st !== 'ledgeGetup') { const k = clamp(Math.abs(f.vy) * 0.045, 0, 0.12); sx = 1 - k; sy = 1 + k; }
     if (st === 'dash' || st === 'run') lean = -f.facing * 0.14;
     if (st === 'skid') lean = f.facing * 0.12;
-    if (f.move) {
-      const hb = f.move.hitboxes[0];
-      lean = clamp(-hb.x * f.facing * 0.012, -0.18, 0.18);
-    }
+    const hb0 = f.move?.hitboxes[0];
+    if (hb0) lean = clamp(-hb0.x * f.facing * 0.012, -0.18, 0.18);
     if (lcd) { sx = 1; sy = 1; lean = 0; }
     this.lcdPose = lcd && !this.reduced && (f.ground ? Math.abs(f.vx) > 0.05 : true) ? (Math.floor(game.frame / 8) & 1) : 0;
 
@@ -399,6 +427,21 @@ export class Renderer {
       ctx.fill();
     }
 
+    // Smash charge glow; reflector / counter / absorb window.
+    if (f.charging) {
+      const k = f.chargeFrames / 60;
+      ctx.strokeStyle = alpha(t.yellow, 0.4 + 0.5 * k);
+      ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.arc(fx, fy + R, R + 1.5 + (this.reduced ? 0 : (game.frame & 4 ? 0.8 : 0)), 0, Math.PI * 2); ctx.stroke();
+    }
+    if (f.windowOn) {
+      const c = { reflect: t.blue, counter: t.accent, absorb: t.yellow }[f.windowOn];
+      ctx.strokeStyle = alpha(c, 0.85); ctx.fillStyle = alpha(c, 0.18); ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) { const an = (i / 6) * Math.PI * 2 + Math.PI / 6; ctx.lineTo(fx + Math.cos(an) * 10, fy + R + Math.sin(an) * 10); }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+
     // Shield bubble: shrinks with health, larger + paler with a light press.
     if (st === 'shield') {
       const r = f.shieldRadius();
@@ -421,14 +464,30 @@ export class Renderer {
     }
   }
 
-  #debug(ctx, f) {
+  #debug(ctx, f, game) {
     const t = this.t;
+    // Hitboxes coloured by damage (blue < 5% · green < 10% · yellow < 15% · red), active ones solid.
+    const dmgColor = (d) => (d < 5 ? t.blue : d < 10 ? t.green : d < 15 ? t.yellow : t.red);
     if (f.move) {
       for (const hb of f.move.hitboxes) {
         const on = f.moveFrame >= hb.from && f.moveFrame <= hb.to;
-        ctx.fillStyle = alpha(t.red, on ? 0.45 : 0.08);
+        const c = hb.grab ? t.accent : dmgColor(hb.dmg);
+        ctx.fillStyle = alpha(c, on ? 0.5 : 0.08);
         ctx.beginPath(); ctx.arc(f.x + hb.x * f.facing, f.y + hb.y, hb.r, 0, Math.PI * 2); ctx.fill();
+        if (on) { ctx.strokeStyle = c; ctx.lineWidth = this.px; ctx.stroke(); }
       }
+    }
+    for (const sp of game.sparks) {
+      ctx.strokeStyle = dmgColor(sp.hit.dmg); ctx.lineWidth = this.px;
+      ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2); ctx.stroke();
+    }
+    // Dummy hurtbox.
+    const d = game.dummy;
+    if (d && d.state !== 'dead') {
+      ctx.strokeStyle = alpha(t.yellow, 0.9); ctx.lineWidth = 1.2 * this.px;
+      ctx.setLineDash([3 * this.px, 2 * this.px]);
+      ctx.beginPath(); ctx.arc(d.x, d.y + R, R, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
     }
     // Feet point (collision) and ledge-grab boxes.
     ctx.fillStyle = t.green;

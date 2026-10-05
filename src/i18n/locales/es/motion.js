@@ -59,4 +59,5 @@ export default {
   "Scales the tilt and shake strength games see. 1.00× is the sensor's natural response.": "Ajusta la intensidad de inclinación y sacudida que perciben los juegos. 1,00× es la respuesta natural del sensor.",
   "Accelerometer Y-axis multiplier (default 1.00×).": "Multiplicador del eje Y del acelerómetro (predeterminado: 1,00×).",
   "Accelerometer Z-axis multiplier (default 1.00×).": "Multiplicador del eje Z del acelerómetro (predeterminado: 1,00×).",
+  'Sensitivity reset to defaults.': 'Sensibilidad restablecida a los valores predeterminados.',
 };

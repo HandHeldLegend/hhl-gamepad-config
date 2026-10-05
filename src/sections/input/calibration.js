@@ -56,8 +56,8 @@ export function createCalibration(session) {
       session.refreshAttention();
       emit();
       if (!quiet) {
-        toast(status ? t('Calibration finished — press Save to keep it.') : t('The controller did not confirm the calibration.'),
-          { tone: status ? 'green' : 'red' });
+        // Success shows in the page (status badge, ranges, glowing Save); only a failure needs a toast.
+        if (!status) toast(t('The controller did not confirm the calibration.'), { tone: 'red' });
       }
       return status;
     },
@@ -131,18 +131,21 @@ export function renderCalibrationTab(panel, { session, calib, hoverInputs, live 
   paint();
 
   panel.append(
-    card({ title: t('Analog calibration'), icon: 'calibrate', tone: 'lavender', actions: status,
+    card({ title: t('Analog calibration'), icon: 'calibrate', tone: 'lavender', actions: status, class: 'inp-cal-card',
       subtitle: t('Teach the controller the full travel of its analog (hall-effect) inputs, such as triggers.') },
+      // Wide cards: steps + button on the left, the live bars on the right (no scrolling between them).
+      h('div.inp-cal-layout',
+      h('div.inp-cal-howto',
       h('ol.inp-steps',
         h('li', rich(t('Press {button}.'), { button: h('strong', t('Start calibration')) })),
         h('li', t('Fully press and release every analog input below 3–4 times.')),
         h('li', rich(t('Press {button}.'), { button: h('strong', t('Finish calibration')) })),
         h('li', rich(t('Check each bar now reaches both ends, then press {button}.'), { button: h('strong', t('Save')) }))),
       h('div.row', mainBtn),
-      activeNote,
+      activeNote),
       rows.length
         ? h('div.inp-cal-list', rows.map((r) => r.row))
-        : h('p.muted.small', t('This controller has no analog inputs to calibrate.'))),
+        : h('p.muted.small', t('This controller has no analog inputs to calibrate.')))),
   );
 
   return () => { live.delete(onReport); offCalib(); };

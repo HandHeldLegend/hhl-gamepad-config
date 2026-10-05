@@ -80,8 +80,9 @@
   .appbar .install-btn .btn-label { display: none; }
 }
 @media (max-width: 380px) {
-  .appbar .device-chip .chip-sub { display: none; }
+  /* The chip keeps its second line: it shows the mode the controller is running in. */
   .appbar .appbar-settings { display: none; }
+  .appbar .device-chip { padding: 4px 10px; }
 }
 
 /* ---- Sidebar ------------------------------------------------------------------------- */
@@ -123,20 +124,22 @@
 .sfc-dots i:nth-child(4) { background: var(--sfc-blue); }
 
 /* ---- Main & pages -------------------------------------------------------------------- */
-.main { grid-area: main; min-width: 0; padding: var(--space-5) max(var(--space-4), env(safe-area-inset-right)) calc(var(--space-7) + env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left)); }
-.page { max-width: var(--content-max); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-5); }
+.main { grid-area: main; min-width: 0; padding: var(--space-4) max(var(--space-4), env(safe-area-inset-right)) calc(var(--space-6) + env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left)); }
+.page { max-width: var(--content-max); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-4); }
 .page:has(.lr-split:not(.single)) { max-width: 1240px; } /* left/right pages get room for two columns */
+.page:has(.card-grid) { max-width: 1160px; } /* pages with side-by-side cards */
 .page.page-enter { animation: rise-in var(--dur-slow) var(--ease-out) both; }
 .page-body { display: flex; flex-direction: column; gap: var(--space-4); }
 .page-head { display: flex; align-items: center; gap: var(--space-3); }
 .page-head .page-titles { min-width: 0; flex: 1; }
-.page-head h1 { font-size: var(--text-2xl); }
-.page-head p { font-size: var(--text-sm); margin-top: 2px; }
+.page-head h1 { font-size: 1.5rem; }
+.page-head p { font-size: var(--text-sm); margin-top: 1px; line-height: 1.4; }
 .page-head-extra { display: flex; gap: var(--space-2); align-items: center; }
 .app.wide .page-head > .btn:first-child { display: none; } /* back button only on narrow layouts */
 .app[data-page="home"] .page-head { display: none; }
 @media (max-width: 560px) {
-  .main { padding-top: var(--space-4); }
+  .main { padding-top: var(--space-3); }
+  .page { gap: var(--space-3); }
   .page-head h1 { font-size: var(--text-xl); }
   .page-head .face { --size: 36px !important; }
 }
@@ -145,7 +148,7 @@
 .hero {
   position: relative; overflow: hidden;
   display: grid; grid-template-columns: 1fr auto; gap: var(--space-5); align-items: center;
-  padding: var(--space-6); border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6); border-radius: var(--radius-lg);
   background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-2);
 }
 .hero::before {
@@ -155,21 +158,23 @@
 }
 .hero h1 { font-size: clamp(1.6rem, 3.2vw, 2.2rem); }
 .hero p { color: var(--text-muted); margin-top: var(--space-2); max-width: 52ch; }
-.hero .hero-actions { margin-top: var(--space-5); display: flex; gap: var(--space-3); flex-wrap: wrap; }
-.hero .hero-art { width: 148px; height: 148px; border-radius: 34px; box-shadow: var(--shadow-3); animation: float 6s ease-in-out infinite; }
+.hero .hero-actions { margin-top: var(--space-4); display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.hero .hero-art { width: 128px; height: 128px; border-radius: 34px; box-shadow: var(--shadow-3); animation: float 6s ease-in-out infinite; }
 @keyframes float { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-6px) rotate(-1deg); } }
 @media (max-width: 640px) {
-  .hero { grid-template-columns: 1fr; padding: var(--space-5); }
+  .hero { grid-template-columns: 1fr; padding: var(--space-5) var(--space-4) var(--space-4); }
   .hero .hero-art { display: none; }
   .hero .hero-actions .btn { flex: 1; }
 }
+
+.section-heading { font-size: var(--text-lg); margin-top: var(--space-1); }
 
 .tips { margin: 0; padding-left: 1.2em; display: grid; gap: var(--space-2); color: var(--text-muted); font-size: var(--text-sm); }
 
 .tiles { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr)); }
 .tile {
-  position: relative; display: flex; flex-direction: column; gap: var(--space-3);
-  padding: var(--space-4); border-radius: var(--radius-lg);
+  position: relative; display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg);
   background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-1);
   color: var(--text); text-decoration: none;
   transition: transform var(--dur-med) var(--ease-out), box-shadow var(--dur-med) var(--ease-out), border-color var(--dur-med);
@@ -184,10 +189,10 @@
 @media (max-width: 560px) {
   .tiles { grid-template-columns: repeat(2, 1fr); }
   .tile .tile-sub { display: none; }
-  .tile { align-items: center; text-align: center; padding: var(--space-4) var(--space-2); }
+  .tile { align-items: center; text-align: center; padding: var(--space-3) var(--space-2); }
 }
 
-.device-card .device-head { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
+.device-card .device-head { display: flex; gap: var(--space-3) var(--space-4); align-items: center; flex-wrap: wrap; }
 .device-card .device-head > div { flex: 1 1 200px; }
 @media (max-width: 560px) { .device-card .device-head > .btn { width: 100%; } }
 .device-card .device-name { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 800; }

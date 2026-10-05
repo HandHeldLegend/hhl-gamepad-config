@@ -16,6 +16,10 @@
  * times a second and draw the captured shape per stick. Progress = slots past the firmware's 400 threshold.
  *
  * Cancel (new in hoja3): STOP, then write back the analog block snapshot taken before START.
+ *
+ * Finish: on success the dialog closes right away and onFinished(true) lets the page show a non-blocking
+ * "move the sticks to check" note over its live views (so testing never happens behind a modal backdrop).
+ * Only a failed STOP keeps the dialog open with the error.
  */
 import { h } from '../../ui/dom.js';
 import { progressBar, callout, button } from '../../ui/controls.js';
@@ -100,7 +104,7 @@ export function openCalibration({ session, sticks, onFinished }) {
   let polling = false;
   let previews = [];
 
-  const steps = h('div.steps', h('span.step'), h('span.step'), h('span.step'));
+  const steps = h('div.steps', h('span.step'), h('span.step'));
   const setStep = (n) => [...steps.children].forEach((s, i) => { s.dataset.state = i < n ? 'done' : i === n ? 'active' : ''; });
 
   const dlg = openDialog({
@@ -128,7 +132,7 @@ export function openCalibration({ session, sticks, onFinished }) {
           ' ', t('Rest the controller on a table — the stick’s center is recorded the moment you press Start calibration.')),
         h('li', h('strong', t('Roll slowly around the edge.')),
           ' ', t('Push the stick to the rim and turn it in full circles, about 3 laps, keeping gentle pressure against the gate.')),
-        h('li', h('strong', t('Press Finish.')), ' ', t('Then check the result and save.'))),
+        h('li', h('strong', t('Press Finish.')), ' ', t('Then check the result in the live view and save.'))),
       sticks.length > 1 && callout({ tone: 'blue', text: t('Both sticks are calibrated together — you can roll them one after the other.') }),
       callout({ tone: 'yellow', text: t('Calibration also resets the response curve to linear (1.00).') }),
     );
@@ -204,35 +208,17 @@ export function openCalibration({ session, sticks, onFinished }) {
     phase = 'done';
     cleanup();
     session.refreshAttention?.();
-    onFinished?.(ok);
-    setStep(3);
-    if (!ok) {
-      dlg.setTitle(t('Calibration didn’t finish'));
-      dlg.setBody(steps, callout({ tone: 'red', text: t('The controller didn’t confirm. Unplug it, plug it back in and try again.') }));
-      dlg.setActions([{ label: t('Close'), variant: 'primary', value: false }]);
+    if (ok) {
+      // Close first, then let the page take over (live views + "move the sticks to check" note).
+      dlg.close(true);
+      onFinished?.(true);
       return;
     }
-    dlg.setTitle(t('Calibrated!'));
-    dlg.setBody(
-      steps,
-      h('div.cal-done', h('span.face.tone-green', { style: { '--size': '56px' } }, icon('check')),
-        h('div',
-          h('p', h('strong', t('Check it:')), ' ', sticks.length > 1
-            ? t('Move the sticks around — they should reach the edge of the circle in every direction and rest in the center.')
-            : t('Move the stick around — it should reach the edge of the circle in every direction and rest in the center.')),
-          h('p.muted.small', t('Calibration is active now. Press Save to keep it after unplugging.')))),
-    );
-    dlg.setActions([
-      { label: t('Close'), variant: 'ghost', value: true },
-      {
-        label: t('Save to controller'), icon: 'save', variant: 'primary',
-        onClick: async () => {
-          const saved = await session.save();
-          toast(saved ? t('Saved to controller') : t('Save failed'), { tone: saved ? 'green' : 'red' });
-          return true;
-        },
-      },
-    ]);
+    onFinished?.(false);
+    setStep(2);
+    dlg.setTitle(t('Calibration didn’t finish'));
+    dlg.setBody(steps, callout({ tone: 'red', text: t('The controller didn’t confirm. Unplug it, plug it back in and try again.') }));
+    dlg.setActions([{ label: t('Close'), variant: 'primary', value: false }]);
   }
 
   /** STOP, then restore the pre-calibration block. `closing` = dialog already closing. */

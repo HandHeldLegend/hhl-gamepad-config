@@ -1,56 +1,103 @@
 /**
  * angle-map.js — Angle map editor for one stick (port of hoja2/components/angle-modifier.js plus the
- * angle handlers in hoja2/modules/analog-md.js).
+ * angle handlers in hoja2/modules/analog-md.js), and the page's one-time explainer.
  *
  * Each enabled joyConfigSlot_s is one row: input angle → output angle (where the notch physically is →
- * what the console sees there), input distance → output distance, and the angular "sticky" deadzone.
+ * what the console sees there), input distance → output distance, and the angular "snap zone" deadzone.
  * Every edit follows hoja2's sequence: mutate slots → write the analog block → re-read it (the firmware
  * validates and sorts slots on write) → re-render. writeSlots also sets analog_calibration_set (hoja2).
  *
- * Layout: one shared column header (with tips) and one compact grid row per slot. Wide editors (container
- * ≥ 600px) show a slot on one line; narrower ones wrap each slot into two lines (angles, then distances)
- * that line up with a two-line header. Unused slots are listed collapsed below the table.
- * A small radial diagram shows the gate (input points) and the output spokes; hovering or focusing a row
- * highlights that slot's input → output angle.
+ * Layout (like hoja2): plain single-line rows with one short column header and no per-row help —
+ *   #  use  in∠ → out∠  in dist → out dist  snap  [capture][delete]
+ * Narrow editors (< 500px) wrap a row into two lines (angles + snap zone, then distances). What each
+ * column means is explained once, above both sticks, by angleMapExplainer() (collapsible; open on the
+ * first visit only). A small radial diagram shows the gate (input points) and output spokes; hovering or
+ * focusing a row highlights that slot's input → output angle. Unused slots are listed collapsed below.
  *
  * Actions (all hoja2 unless noted):
  *   Capture (row)   ANALOG_CMD_CAPTURE_JOYSTICK_* → that row's in_angle/in_distance
  *   Add angle       capture → first disabled slot (out_angle = captured angle, out_distance 2048, deadzone 2°)
- *   Snap nearest    capture → nearest enabled slot's in_angle/in_distance ("Angle Set" in hoja2)
+ *   Snap nearest    capture → nearest enabled slot's in_angle/in_distance ("Angle Set" in hoja2; also on
+ *                   each live-view card, see analog.js snapNearestSlot)
  *   Use (row)       new: enable/disable a slot keeping its values (disabling needs more than 8 enabled);
  *                   re-enabling a cleared slot places it in the widest gap between the enabled ones
  *   Delete (row)    reset slot to defaults and disable it (only while more than 8 are enabled)
  *   Reset angles    8 slots every 45°, the rest disabled
  */
 import { h } from '../../ui/dom.js';
-import { button, asyncButton, toggle, infoTip } from '../../ui/controls.js';
+import { button, asyncButton, toggle, badge } from '../../ui/controls.js';
 import { toast, confirmDialog } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { canvasSurface, withAlpha } from '../../ui/canvas-surface.js';
 import { t, N_, plural } from '../../i18n/index.js';
 import {
-  readSlots, writeSlots, captureStick, angleDistance, clearSlot, resetSlots, SLOT_COUNT, MIN_ENABLED,
+  readSlots, writeSlots, captureStick, angleDistance, clearSlot, resetSlots, snapNearestSlot, exclusive,
+  SLOT_COUNT, MIN_ENABLED,
 } from './analog.js';
 
-/** Editable numeric columns. `head` is the (translated) column header, `name` the per-input accessible name. */
+/**
+ * Editable numeric columns. `head` is the short column header, `name` the per-input accessible name,
+ * `def` the one-line definition shown once in the explainer.
+ */
 const COLUMNS = [
-  { key: 'in_angle', area: 'ia', head: N_('Input angle'), name: N_('Input angle, slot {n}'), unit: '°', step: 0.01, min: 0, max: 360,
-    tip: N_('Where the notch physically is, in degrees (0° = right, counter-clockwise). Capture fills this in.') },
-  { key: 'out_angle', area: 'oa', head: N_('Output angle'), name: N_('Output angle, slot {n}'), unit: '°', step: 0.01, min: 0, max: 360,
-    tip: N_('The exact angle the console receives at this notch, e.g. 45° for a perfect diagonal.') },
-  { key: 'in_distance', area: 'id', head: N_('Input distance'), name: N_('Input distance, slot {n}'), unit: '', step: 0.01, min: 0, max: 4096,
-    tip: N_('How far the stick physically travels at this angle (raw units). Calibration fills this in.') },
-  { key: 'out_distance', area: 'od', head: N_('Output distance'), name: N_('Output distance, slot {n}'), unit: '', step: 0.01, min: 0, max: 2048,
-    tip: N_('Output length at this angle (2048 = full).') },
-  { key: 'deadzone', area: 'dz', head: N_('Snap zone'), name: N_('Snap zone in degrees, slot {n}'), unit: '°', step: 0.1, min: 0, max: 45,
-    tip: N_('Angular deadzone: stick angles within this many degrees of the output angle snap exactly onto it.') },
+  { key: 'in_angle', area: 'ia', head: N_('In angle'), name: N_('Input angle, slot {n}'), unit: '°', step: 0.01, min: 0, max: 360 },
+  { key: 'out_angle', area: 'oa', head: N_('Out angle'), name: N_('Output angle, slot {n}'), unit: '°', step: 0.01, min: 0, max: 360 },
+  { key: 'in_distance', area: 'id', head: N_('In dist.'), name: N_('Input distance, slot {n}'), unit: '', step: 0.01, min: 0, max: 4096 },
+  { key: 'out_distance', area: 'od', head: N_('Out dist.'), name: N_('Output distance, slot {n}'), unit: '', step: 0.01, min: 0, max: 2048 },
+  { key: 'deadzone', area: 'dz', head: N_('Snap'), name: N_('Snap zone in degrees, slot {n}'), unit: '°', step: 0.1, min: 0, max: 45 },
 ];
 
-/**
- * Input value text: angles keep up to 2 decimals (trailing zeros dropped), distances are shown as whole
- * raw units. Display only — edits write just the changed field, so the stored precision is kept.
- */
+/** Input value text: angles keep up to 2 decimals (trailing zeros dropped), distances whole raw units. */
 const fixed = (v, c) => String(Number(Number(v).toFixed(c.unit === '°' ? 2 : 0)));
+
+const HELP_KEY = 'hhl-config:joysticks-angle-help';
+
+/** Static example: one notch at 60° whose output is pulled onto 45°, with its snap zone. */
+function exampleDiagram() {
+  const C = 60;
+  const P = (deg, r) => { const a = (deg * Math.PI) / 180; return [C + Math.cos(a) * r, C - Math.sin(a) * r]; };
+  const gate = Array.from({ length: 8 }, (_, i) => P(i * 45 + 15, i % 2 ? 42 : 46));
+  const [ix, iy] = P(60, 42);
+  const [ox, oy] = P(45, 54);
+  const [w0x, w0y] = P(45 - 10, 54);
+  const [w1x, w1y] = P(45 + 10, 54);
+  const [a0x, a0y] = P(60, 26);
+  const [a1x, a1y] = P(45, 26);
+  return h('svg.am-x-svg', { viewBox: '0 0 120 120', 'aria-hidden': 'true', focusable: 'false' },
+    h('circle.am-x-ring', { cx: C, cy: C, r: 54 }),
+    h('path.am-x-wedge', { d: `M${C},${C} L${w0x},${w0y} A54,54 0 0,0 ${w1x},${w1y} Z` }),
+    h('polygon.am-x-gate', { points: gate.map((p) => p.join(',')).join(' ') }),
+    h('line.am-x-out', { x1: C, y1: C, x2: ox, y2: oy }),
+    h('line.am-x-dist', { x1: C, y1: C, x2: ix, y2: iy }),
+    h('path.am-x-arc', { d: `M${a0x},${a0y} A26,26 0 0,1 ${a1x},${a1y}` }),
+    h('circle.am-x-in', { cx: ix, cy: iy, r: 4 }));
+}
+
+/**
+ * One explainer for the whole Angles tab: what the angle map is for and what each column means.
+ * Collapsible; open the first time it's shown, collapsed after that (remembered per browser).
+ */
+export function angleMapExplainer() {
+  let seen = false;
+  try { seen = localStorage.getItem(HELP_KEY) === '1'; } catch { /* storage blocked: show it open */ }
+  try { localStorage.setItem(HELP_KEY, '1'); } catch { /* fine */ }
+  const term = (mark, name, def) => [
+    h('dt', mark === 'cap' ? icon('download') : h('i', { class: `am-x-key ${mark}`, 'aria-hidden': 'true' }), name),
+    h('dd', def)];
+  return h('details.am-explain', { open: !seen },
+    h('summary', badge(t('Advanced'), 'lavender'), h('span', t('How the angle map works'))),
+    h('div.am-explain-body',
+      exampleDiagram(),
+      h('div.am-explain-text',
+        h('p', t('Each row turns a direction you physically push (input angle) into an exact output angle. Calibration fills in the inputs; most sticks don’t need changes here.')),
+        h('dl.am-defs',
+          term('in', t('In angle'), t('Where the notch physically is, in degrees (0° = right, counter-clockwise). Capture fills this in.')),
+          term('out', t('Out angle'), t('The exact angle the console receives at this notch, e.g. 45° for a perfect diagonal.')),
+          term('dist', t('In dist.'), t('How far the stick physically travels at this angle (raw units). Calibration fills this in.')),
+          term('odist', t('Out dist.'), t('Output length at this angle (2048 = full).')),
+          term('snap', t('Snap'), t('Angular deadzone: stick angles within this many degrees of the output angle snap exactly onto it.')),
+          term('cap', t('Capture buttons'), t('Hold the stick at a notch, then press a row’s capture button (or Snap nearest for the closest row) to set its input from the stick.'))))));
+}
 
 /** Mini radial diagram: gate shape from the input points, output spokes, and the highlighted slot. */
 function angleDiagram(stickName) {
@@ -143,34 +190,20 @@ export function angleMapEditor(o) {
   const head = h('div.am-row.am-head', { role: 'row' },
     h('span.am-c-num', { role: 'columnheader' }, '#'),
     h('span.am-c-on', { role: 'columnheader', 'data-tip': t('Turn a slot off to ignore it without losing its values.') }, t('Use')),
-    ...COLUMNS.map((c) => h(`span.am-c-${c.area}`, { role: 'columnheader' }, h('span', t(c.head)), infoTip(t(c.tip)))),
-    h('span.am-c-ar1', { 'aria-hidden': 'true' }, '→'),
-    h('span.am-c-ar2', { 'aria-hidden': 'true' }, '→'),
+    ...COLUMNS.map((c) => h(`span.am-c-${c.area}`, { role: 'columnheader' }, t(c.head))),
     h('span.am-c-act', { role: 'columnheader' }, h('span.sr-only', t('Actions'))));
 
   const el = h('div.am',
-    h('div.am-intro',
-      h('p', t('Each row turns a direction you physically push (input angle) into an exact output angle. Use it to line notches up with perfect 45° steps or to shape custom gates.')),
-      infoTip(t('Distances: input distance is how far the stick reaches at that angle (calibration measures it); output distance is how long the output is there (2048 = full). Snap zone: angles within that many degrees snap exactly onto the output angle, which makes notches feel precise.'))),
     h('div.am-tools',
-      h('div.am-figure',
-        diagram.el,
-        h('div.am-legend', { 'aria-hidden': 'true' },
-          h('span', h('i.js-swatch.in'), t('Input')),
-          h('span', h('i.am-spoke'), t('Output')))),
+      h('div.am-figure', diagram.el),
       h('div.am-actions',
-        h('div.am-action',
+        h('div.am-btns',
           asyncButton({ label: t('Add angle'), icon: 'plus', variant: 'tonal', size: 'sm', busyLabel: t('Capturing…'), okLabel: t('Added'), run: addAngle }),
-          h('span.am-help', t('Hold the stick at a notch, then press to add a slot there.'))),
-        h('div.am-action',
           asyncButton({ label: t('Snap nearest'), icon: 'calibrate', variant: 'ghost', size: 'sm', busyLabel: t('Capturing…'), okLabel: t('Snapped'), run: snapNearest }),
-          h('span.am-help', t('Moves the closest slot’s input to where the stick is now.'))),
+          button({ label: t('Reset to 8-way (45°)'), icon: 'refresh', variant: 'ghost', size: 'sm', onClick: resetAll })),
         count)),
     h('div.am-table', { role: 'table', 'aria-label': t('{stick} angle map', { stick: stickName }) }, head, list),
-    unused,
-    h('div.am-foot',
-      button({ label: t('Reset to 8-way (45°)'), icon: 'refresh', variant: 'ghost', size: 'sm', onClick: resetAll }),
-      h('span.am-help', t('Recalibrate afterwards.'))));
+    unused);
 
   /** Run an edit exclusively and refresh afterwards. Returns false on failure. */
   async function run(fn) {
@@ -178,7 +211,7 @@ export function angleMapEditor(o) {
     busy = true;
     el.setAttribute('aria-busy', 'true');
     try {
-      const r = await fn();
+      const r = await exclusive(fn);
       return r !== false;
     } catch (err) {
       console.error('[angles]', err);
@@ -217,20 +250,9 @@ export function angleMapEditor(o) {
 
   function snapNearest() {
     return run(async () => {
-      const c = await capture();
-      if (!c) return false;
-      const slots = readSlots(session, stick);
-      let best = -1;
-      let bestD = Infinity;
-      slots.forEach((s, i) => {
-        if (!s.enabled) return;
-        const d = angleDistance(c.angle, s.in_angle);
-        if (d < bestD) { bestD = d; best = i; }
-      });
-      if (best < 0) return false;
-      slots[best].in_angle = c.angle;
-      slots[best].in_distance = c.distance;
-      await writeSlots(session, stick, slots);
+      const ok = await snapNearestSlot(session, stick);
+      if (!ok) toast(t('The controller didn’t report a stick position.'), { tone: 'red' });
+      return ok;
     });
   }
 
@@ -329,10 +351,9 @@ export function angleMapEditor(o) {
         });
         input.addEventListener('change', () => editCell(index, c.key, input.value, c));
         input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); });
-        return h(`span.am-c-${c.area}`, { role: 'cell' }, h('span.am-field', input, c.unit && h('span.am-unit', { 'aria-hidden': 'true' }, c.unit)));
+        return h(`span.am-c-${c.area}`, { role: 'cell' }, h('span.am-field', input, c.unit && h('span.am-unit', { 'aria-hidden': 'true' }, c.unit)),
+          (c.area === 'ia' || c.area === 'id') && h('span.am-arrow', { 'aria-hidden': 'true' }, '→'));
       }),
-      h('span.am-c-ar1', { 'aria-hidden': 'true' }, '→'),
-      h('span.am-c-ar2', { 'aria-hidden': 'true' }, '→'),
       h('span.am-c-act', { role: 'cell' },
         on && asyncButton({ icon: 'download', variant: 'ghost', size: 'sm', title: t('Capture slot {n} from the stick (hold the stick at this notch first)', { n: label }), run: () => captureRow(index) }),
         on && button({

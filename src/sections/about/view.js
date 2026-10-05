@@ -28,7 +28,9 @@ export function mount(root) {
   loadVersion().then((v) => { version.textContent = v || 'dev'; });
 
   root.append(
-    card({ title: t('Quick help'), icon: 'help', tone: 'blue' },
+    // Wide pages: Quick help on the left, About + assistants stacked on the right; attributions below.
+    h('div.card-grid',
+    card({ title: t('Quick help'), icon: 'help', tone: 'blue', class: 'span-rows' },
       h('div.faq', FAQ.map(([q, a]) => h('details', h('summary', t(q)), h('p.muted', t(a)))))),
 
     card({ title: t('About'), icon: 'info', tone: 'lavender' },
@@ -44,7 +46,7 @@ export function mount(root) {
 
     card({ title: t('For AI assistants'), icon: 'link', tone: 'green', subtitle: t('Let an assistant help you set up your controller.') },
       h('p.muted.small', fillNodes(t('Every page and many settings can be opened with a link. Assistants can read the guide at {guide} or use the HHL Gamepad Config MCP server to build links for you. Links that change settings always ask you to confirm first.'),
-        { guide: h('a', { href: 'llms.txt', target: '_blank' }, 'llms.txt') }))),
+        { guide: h('a', { href: 'llms.txt', target: '_blank' }, 'llms.txt') })))),
 
     card({ title: t('Attributions'), icon: 'sparkle', tone: 'red', subtitle: t('Made possible by these people and projects.') },
       h('ul.attributions', ATTRIBUTIONS.map((a) => h('li',
@@ -54,13 +56,13 @@ export function mount(root) {
   );
 
   root.append(h('style', `
-    .faq details { border-bottom: 1px dashed var(--border); padding: 10px 0; }
+    .faq details { border-bottom: 1px dashed var(--border); padding: 9px 0; }
     .faq details:last-child { border-bottom: 0; }
     .faq summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
     .faq summary::after { content: "+"; color: var(--text-muted); font-weight: 700; transition: transform var(--dur-med) var(--ease-out); }
     .faq details[open] summary::after { transform: rotate(45deg); }
     .faq details p { margin-top: 6px; font-size: var(--text-sm); }
-    .attributions { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+    .attributions { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px 24px; grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr)); }
     .attributions li { min-width: 0; overflow-wrap: anywhere; }
     .attributions .badge { white-space: normal; }
   `));

@@ -16,14 +16,28 @@ import { t } from '../i18n/index.js';
 // ---------------------------------------------------------------------------------------------
 
 let toastHost = null;
+/** At most this many toasts are visible; older ones are dropped. */
+const MAX_TOASTS = 2;
+
+/** Keep the toast stack in the top layer, above any modal dialog opened since the last toast. */
+function raiseToasts() {
+  if (!toastHost.showPopover) return;
+  try {
+    if (toastHost.matches(':popover-open')) toastHost.hidePopover();
+    toastHost.showPopover();
+  } catch { /* not supported: falls back to z-index */ }
+}
 
 /**
+ * Brief status message. Use sparingly: only for results the page doesn't already show (errors,
+ * background events, an Undo). Success that's visible in the UI needs no toast.
+ * Default timeout: 2.8 s (4.5 s for errors and toasts with an action); 0 keeps it until clicked.
  * @param {string} message
  * @param {{tone?: string, icon?: string, timeout?: number, action?: {label:string, onClick:Function}}} [o]
  */
 export function toast(message, o = {}) {
   if (!toastHost) {
-    toastHost = h('div.toasts', { role: 'status', 'aria-live': 'polite' });
+    toastHost = h('div.toasts', { role: 'status', 'aria-live': 'polite', popover: 'manual' });
     document.body.append(toastHost);
   }
   const tone = o.tone || 'lavender';
@@ -34,12 +48,16 @@ export function toast(message, o = {}) {
     o.action && button({ label: o.action.label, size: 'sm', variant: 'tonal', onClick: () => { o.action.onClick(); dismiss(); } }));
   const dismiss = () => {
     el.classList.add('leaving');
-    setTimeout(() => el.remove(), 220);
+    setTimeout(() => {
+      el.remove();
+      if (!toastHost.children.length && toastHost.matches?.(':popover-open')) toastHost.hidePopover();
+    }, 220);
   };
   el.addEventListener('click', (e) => { if (!e.target.closest('button')) dismiss(); });
   toastHost.append(el);
-  while (toastHost.children.length > 3) toastHost.firstChild.remove();
-  if (o.timeout !== 0) setTimeout(dismiss, o.timeout ?? 3600);
+  while (toastHost.children.length > MAX_TOASTS) toastHost.firstChild.remove();
+  raiseToasts();
+  if (o.timeout !== 0) setTimeout(dismiss, o.timeout ?? (o.action || tone === 'red' ? 4500 : 2800));
   return { dismiss };
 }
 
@@ -142,6 +160,9 @@ export async function confirmDialog(o) {
 
 let bubble = null;
 let owner = null;
+let hoverTimer = 0;
+/** Hover must rest this long before a tip opens, so moving the pointer across the page doesn't flash tips. */
+const HOVER_DELAY_MS = 450;
 
 function showTip(target) {
   const text = target.getAttribute('data-tip');
@@ -149,8 +170,9 @@ function showTip(target) {
   hideTip();
   owner = target;
   owner.setAttribute('aria-expanded', 'true');
-  bubble = h('div.tip-bubble', { role: 'tooltip' }, text);
+  bubble = h('div.tip-bubble', { role: 'tooltip', popover: 'manual' }, text);
   document.body.append(bubble);
+  try { bubble.showPopover?.(); } catch { /* falls back to z-index */ } // top layer: above open dialogs too
   const r = target.getBoundingClientRect();
   const b = bubble.getBoundingClientRect();
   let left = r.left + r.width / 2 - b.width / 2;
@@ -162,6 +184,7 @@ function showTip(target) {
 }
 
 function hideTip() {
+  clearTimeout(hoverTimer);
   bubble?.remove();
   bubble = null;
   owner?.setAttribute('aria-expanded', 'false');
@@ -169,20 +192,30 @@ function hideTip() {
 }
 
 export function installTooltips(root = document) {
+  let pending = null; // element waiting for the hover delay
   root.addEventListener('pointerover', (e) => {
     if (e.pointerType === 'touch') return;
     const t = e.target.closest?.('[data-tip]');
-    if (t && t !== owner) showTip(t);
+    if (!t || t === owner || t === pending) return;
+    clearTimeout(hoverTimer);
+    pending = t;
+    hoverTimer = setTimeout(() => { pending = null; if (t.isConnected) showTip(t); }, HOVER_DELAY_MS);
   });
   root.addEventListener('pointerout', (e) => {
+    if (pending && !pending.contains(e.relatedTarget)) { clearTimeout(hoverTimer); pending = null; }
     if (owner && !owner.contains(e.relatedTarget)) hideTip();
   });
-  root.addEventListener('focusin', (e) => { const t = e.target.closest?.('[data-tip]'); if (t) showTip(t); });
+  // Keyboard focus opens a tip right away; mouse focus (a click) is handled by the click toggle below.
+  root.addEventListener('focusin', (e) => {
+    const t = e.target.closest?.('[data-tip]');
+    if (t && t.matches(':focus-visible')) showTip(t);
+  });
   root.addEventListener('focusout', hideTip);
   root.addEventListener('click', (e) => {
     const t = e.target.closest?.('[data-tip]');
+    pending = null;
     if (t && t.classList.contains('tip')) { e.preventDefault(); owner === t ? hideTip() : showTip(t); }
-    else if (!t) hideTip();
+    else if (!t || t !== owner) hideTip();
   });
   window.addEventListener('scroll', hideTip, true);
 }

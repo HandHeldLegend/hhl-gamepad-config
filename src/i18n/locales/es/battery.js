@@ -60,4 +60,5 @@ export default {
   "The fuel gauge isn't responding, so the percentage may be off.": "El medidor de carga no responde, así que el porcentaje podría no ser exacto.",
   "The charger chip isn't working, so the charging state may be wrong.": "El chip cargador no funciona, así que el estado de carga podría ser incorrecto.",
   "The controller couldn't confirm a battery is fitted.": "El control no pudo confirmar que haya una batería instalada.",
+  'After 5 minutes without input, the status light glows to show charging: orange while charging, green when full, cyan otherwise. Turn it on or off on the {rgb} page.': 'Tras 5 minutos sin entradas, la luz de estado brilla para mostrar la carga: naranja mientras carga, verde cuando está llena y cian en los demás casos. Actívala o desactívala en la página {rgb}.',
 };

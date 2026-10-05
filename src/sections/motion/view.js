@@ -94,23 +94,29 @@ export function mount(root, { session, device }) {
   const resetBtn = button({
     label: t('Reset to defaults'), icon: 'refresh', variant: 'ghost', size: 'sm',
     onClick: () => {
+      // No confirmation (it's undoable): the sliders show the new values, and the toast offers Undo.
+      const before = { gyro: imu().imu_gyro_sensitivity, accel: imu().imu_accel_sensitivity };
+      const apply = () => { session.commit('imu'); for (const r of sensRows) r.refresh(); };
       resetSensitivity(session);
-      session.commit('imu');
-      for (const r of sensRows) r.refresh();
-      toast(t('Sensitivity reset (gyro {gyro}, accelerometer {accel})', { gyro: mult(GYRO_SENSITIVITY_DEFAULT), accel: mult(ACCEL_SENSITIVITY_DEFAULT) }), { tone: 'green' });
+      apply();
+      toast(t('Sensitivity reset to defaults.'), {
+        tone: 'green',
+        action: { label: t('Undo'), onClick: () => { imu().imu_gyro_sensitivity = before.gyro; imu().imu_accel_sensitivity = before.accel; apply(); } },
+      });
     },
   });
   const sensitivity = card({
     title: t('Sensitivity'), icon: 'sliders', tone: TONE,
     subtitle: t('Multiply the motion games receive, per axis. 1.00× is the sensor\'s natural response.'),
-    actions: resetBtn,
+    actions: resetBtn, class: 'motion-sens-card',
   },
+  h('div.motion-sens-cols',
   h('div.motion-sens-group',
     h('h4.motion-sens-title', t('Gyro'), h('span.faint.xs', ' · ', t('default {value}', { value: mult(GYRO_SENSITIVITY_DEFAULT) }))),
     axisRows('gyro')),
   h('div.motion-sens-group',
     h('h4.motion-sens-title', t('Accelerometer'), h('span.faint.xs', ' · ', t('default {value}', { value: mult(ACCEL_SENSITIVITY_DEFAULT) }))),
-    axisRows('accel')));
+    axisRows('accel'))));
 
   root.append(controls, live, sensitivity);
 

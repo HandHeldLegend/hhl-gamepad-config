@@ -2,13 +2,13 @@
 
 /* ---- Hero: gauge + readout ------------------------------------------------------------- */
 .bat-hero {
-  display: flex; align-items: center; gap: var(--space-5);
+  display: flex; align-items: center; gap: var(--space-3) var(--space-5);
   flex-wrap: wrap;
 }
 .bat-readout { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
 /* Model + capacity: beside the readout on wide screens (like hoja2's right-hand panel), below on phones. */
-.bat-specs { flex: 1 1 100%; padding-top: var(--space-4); border-top: 1px solid var(--border); }
-@media (min-width: 900px) {
+.bat-specs { flex: 1 1 100%; padding-top: var(--space-3); border-top: 1px solid var(--border); }
+@container card (min-width: 620px) {
   .bat-hero { flex-wrap: nowrap; }
   .bat-specs { flex: 0 1 auto; margin-left: auto; padding: 0 0 0 var(--space-5); border-top: 0; border-left: 1px solid var(--border); }
 }
@@ -21,8 +21,10 @@
 .bat-state { display: flex; align-items: center; gap: var(--space-2); font-weight: 600; color: var(--text-muted); }
 .bat-explain { margin: 0; color: var(--text-muted); font-size: var(--text-sm); max-width: 62ch; }
 .bat-led-row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.bat-led-row:not(:has(> :not([hidden], :empty))) { display: none; }
 .bat-led-note { margin: 0; color: var(--text-faint); font-size: var(--text-xs); }
 .bat-led-note:empty { display: none; }
+.bat-glow-hint { margin: 0; color: var(--text-muted); font-size: var(--text-sm); }
 
 /* ---- The gauge --------------------------------------------------------------------------- */
 .bat-gauge {

@@ -183,7 +183,8 @@ export function mount(root, { session }) {
     brightRow, speedRow, settingField('rgb.idleGlow', { tone: TONE }));
 
   // Order (owner request): preview + effect, then brightness & timing, then the per-group colors.
-  root.append(lightingCard, tuningCard, colorsCard);
+  // Wide pages: preview/effect and brightness side by side; the color grid gets the full width.
+  root.append(h('div.card-grid', lightingCard, tuningCard), colorsCard);
 
   function onModeChange() {
     const m = RGB_MODES.find((x) => x.value === rgb().rgb_mode);

@@ -59,4 +59,5 @@ export default {
   "Scales the tilt and shake strength games see. 1.00× is the sensor's natural response.": "ゲームが受け取る傾きや振りの強さを調整します。1.00×がセンサー本来の反応です。",
   "Accelerometer Y-axis multiplier (default 1.00×).": "加速度センサーY軸の倍率（デフォルト 1.00×）。",
   "Accelerometer Z-axis multiplier (default 1.00×).": "加速度センサーZ軸の倍率（デフォルト 1.00×）。",
+  'Sensitivity reset to defaults.': '感度を初期設定に戻しました。',
 };

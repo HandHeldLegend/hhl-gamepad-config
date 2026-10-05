@@ -91,17 +91,18 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
-  padding: var(--space-5);
-  display: flex; flex-direction: column; gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  display: flex; flex-direction: column; gap: var(--space-3);
   min-width: 0;
 }
+@media (max-width: 560px) { .card { padding: var(--space-4); } }
 .card.flat { box-shadow: none; }
 .card.sunken { background: var(--surface-sunken); box-shadow: none; }
-.card.compact { padding: var(--space-4); gap: var(--space-3); }
+.card.compact { padding: var(--space-3) var(--space-4); gap: var(--space-2); }
 .card-head { display: flex; align-items: flex-start; gap: var(--space-3); flex-wrap: wrap; }
 .card-head > div:not(.card-actions):not(.face) { flex: 1 1 180px; min-width: 0; }
 .card-head .card-title { font-size: var(--text-lg); font-family: var(--font-display); font-weight: 700; }
-.card-head .card-sub { color: var(--text-muted); font-size: var(--text-sm); margin-top: 2px; }
+.card-head .card-sub { color: var(--text-muted); font-size: var(--text-sm); margin-top: 1px; line-height: 1.4; }
 .card-head .card-actions { margin-left: auto; display: flex; gap: var(--space-2); align-items: center; }
 .card-tone { border-top: 3px solid var(--tone, var(--accent)); }
 
@@ -113,9 +114,10 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-2) var(--space-4);
-  min-height: 44px;
+  min-height: 40px;
 }
 .field + .field { padding-top: var(--space-3); border-top: 1px dashed var(--border); }
+.field-desc { line-height: 1.4; }
 .field-label { font-weight: 600; display: flex; align-items: center; gap: var(--space-2); }
 .field-desc { color: var(--text-muted); font-size: var(--text-sm); margin-top: 2px; }
 .field-control { justify-self: end; display: flex; align-items: center; gap: var(--space-2); }
@@ -126,6 +128,9 @@
   .field .field-control { justify-self: stretch; }
   .field .field-control > .seg { width: 100%; }
 }
+/* A plain on/off switch always stays beside its label (no extra row on phones or in narrow cards). */
+.field:not(.stacked):has(> .field-control > .switch:only-child) { grid-template-columns: minmax(0, 1fr) auto; }
+.field:not(.stacked):has(> .field-control > .switch:only-child) > .field-control { justify-self: end; }
 
 /* ---- Segmented control (Start/Select pill vibe) ------------------------------------- */
 .seg {
@@ -266,6 +271,7 @@
 .tip:hover, .tip[aria-expanded="true"] { background: var(--accent-soft); color: var(--accent-ink); }
 .tip-bubble {
   position: fixed; z-index: 1000; max-width: min(320px, calc(100vw - 24px));
+  inset: auto; margin: 0; overflow: visible;
   padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
   background: var(--surface-3); color: var(--text); box-shadow: var(--shadow-2);
   border: 1px solid var(--border); font-size: var(--text-sm); line-height: 1.45; font-weight: 400;
@@ -292,7 +298,7 @@
 /* ---- Tabs ---------------------------------------------------------------------------- */
 .tabs { display: flex; gap: var(--space-1); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
 .tabs button {
-  position: relative; border: 0; background: transparent; padding: var(--space-3) var(--space-4);
+  position: relative; border: 0; background: transparent; padding: 10px var(--space-4); min-height: 42px;
   color: var(--text-muted); font-weight: 600; cursor: pointer; white-space: nowrap;
   display: inline-flex; align-items: center; gap: var(--space-2);
 }
@@ -313,7 +319,7 @@
 /* ---- Empty states -------------------------------------------------------------------- */
 .empty {
   display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-3);
-  padding: var(--space-7) var(--space-5); color: var(--text-muted);
+  padding: var(--space-6) var(--space-4); color: var(--text-muted);
 }
 .empty .empty-art {
   width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center;
@@ -332,35 +338,47 @@ dialog.dialog {
 dialog.dialog[open] { animation: dialog-in var(--dur-slow) var(--ease-out); display: flex; flex-direction: column; }
 dialog.dialog::backdrop { background: var(--scrim); backdrop-filter: blur(3px); animation: fade-in var(--dur-med) var(--ease-out); }
 @keyframes dialog-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
-.dialog-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-5) var(--space-5) var(--space-3); }
+.dialog-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-5) var(--space-3); }
 .dialog-head h2 { font-size: var(--text-xl); flex: 1; }
 .dialog-head .dialog-art { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--tone-soft, var(--accent-soft)); color: var(--tone, var(--accent)); }
 .dialog-body { padding: 0 var(--space-5) var(--space-4); overflow: auto; display: flex; flex-direction: column; gap: var(--space-4); }
-.dialog-foot { display: flex; gap: var(--space-2); justify-content: flex-end; flex-wrap: wrap; padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border); background: var(--surface-2); }
+.dialog-foot { display: flex; gap: var(--space-2); justify-content: flex-end; flex-wrap: wrap; padding: var(--space-3) var(--space-5) calc(var(--space-3) + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: var(--surface-2); }
 @media (max-width: 560px) {
   dialog.dialog { width: 100vw; max-width: 100vw; margin: auto 0 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; max-height: 92dvh; }
   @keyframes dialog-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
   .dialog-foot .btn { flex: 1; }
 }
 
-/* ---- Toasts -------------------------------------------------------------------------- */
+/* ---- Toasts --------------------------------------------------------------------------
+ * Small and out of the way: bottom-right on wide screens (clear of centered dialog buttons), just
+ * under the app bar on phones (clear of bottom sheets, primary buttons and the home indicator).
+ * The host is a manual popover so toasts also show above an open modal dialog. */
 .toasts {
-  position: fixed; z-index: 2000; left: 50%; bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
-  transform: translateX(-50%); display: flex; flex-direction: column; gap: var(--space-2); align-items: center;
-  width: min(440px, calc(100vw - 24px)); pointer-events: none;
+  position: fixed; z-index: 2000; inset: auto max(var(--space-4), env(safe-area-inset-right)) calc(var(--space-4) + env(safe-area-inset-bottom)) auto;
+  margin: 0; padding: 0; border: 0; background: transparent; overflow: visible; color: inherit;
+  display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-end;
+  width: min(360px, calc(100vw - 24px)); pointer-events: none;
+}
+.toasts:popover-open { display: flex; }
+@media (max-width: 760px) {
+  .toasts {
+    inset: calc(var(--appbar-h) + env(safe-area-inset-top) + var(--space-2)) auto auto 50%;
+    transform: translateX(-50%); flex-direction: column-reverse; align-items: center;
+  }
 }
 .toast {
-  pointer-events: auto; width: 100%;
-  display: flex; align-items: center; gap: var(--space-3);
-  padding: var(--space-3) var(--space-4); border-radius: var(--radius-md);
+  pointer-events: auto; max-width: 100%;
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
   background: var(--surface-3); color: var(--text); border: 1px solid var(--border);
-  box-shadow: var(--shadow-2); font-size: var(--text-sm);
+  box-shadow: var(--shadow-2); font-size: var(--text-sm); line-height: 1.35;
   animation: rise-in var(--dur-med) var(--ease-out);
-  border-left: 4px solid var(--tone, var(--accent));
+  border-left: 3px solid var(--tone, var(--accent));
 }
-.toast .icon { color: var(--tone, var(--accent)); }
+.toast .icon { color: var(--tone, var(--accent)); width: 1.1em; height: 1.1em; }
 .toast .toast-msg { flex: 1; }
-.toast.leaving { opacity: 0; transform: translateY(6px); transition: opacity var(--dur-med), transform var(--dur-med); }
+.toast .btn { min-height: 32px; }
+.toast.leaving { opacity: 0; transform: translateY(4px); transition: opacity var(--dur-med), transform var(--dur-med); }
 
 /* ---- Steps (used by the firmware wizard) -------------------------------------------- */
 .steps { display: flex; gap: var(--space-2); align-items: center; }
@@ -433,4 +451,23 @@ dialog.dialog::backdrop { background: var(--scrim); backdrop-filter: blur(3px); 
   .field { grid-template-columns: minmax(0, 1fr); }
   .slider { width: 100%; }
   .slider .input.num { width: calc(5ch + 2 * var(--space-2) + 2px); padding: 0 var(--space-2); }
+}
+
+/* ---- Card grid: related cards side by side when the page is wide enough ---------------
+ * <div class="card-grid">card card card…</div>. One column on phones and narrow pages; two columns
+ * once the page body is ≥ 700px wide (sidebar layouts from ~1000px). Add .span-2 to a card for the
+ * full row. Cards in the grid are containers, so their field rows stack when a column is narrow. */
+.page-body { container: page / inline-size; }
+.card-grid { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); align-items: stretch; }
+.card-grid > .card { container: card / inline-size; }
+@container page (min-width: 700px) {
+  .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card-grid > .span-2 { grid-column: 1 / -1; }
+  .card-grid > .span-rows { grid-row: span 2; }
+}
+@container card (max-width: 470px) {
+  .field { grid-template-columns: minmax(0, 1fr); }
+  .field .field-control { justify-self: stretch; }
+  .field .field-control > .seg { width: 100%; }
+  .field .slider { width: 100%; }
 }

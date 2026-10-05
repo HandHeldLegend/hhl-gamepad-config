@@ -17,9 +17,7 @@ export const DISPLAY_NAMES = {
   gcu_2: 'GC Ultimate 2',
   gcu_2s: 'GC Ultimate 2S',
   gcu_proto: 'GC Ultimate (Proto)',
-  gcu_r4k: 'GC Ultimate R4K',
-  gcu_r5: 'GC Ultimate R5',
-  gcu_s1: 'GC Ultimate S1',
+  gcu_r4k: 'GC Ultimate 1', // the original GCU (folder id kept for existing links)
   hoverboard: 'Hoverboard',
   padbox_gs_c: 'Padbox GS-C',
   phob_2: 'Phob 2',
@@ -31,6 +29,14 @@ export const DISPLAY_NAMES = {
   progcc_3s: 'ProGCC 3S',
   super_gamepad: 'Super Gamepad+',
 };
+
+/**
+ * Build folders that still exist on GitHub but shouldn't be offered: GCU R5 and S1 were renamed to
+ * GC Ultimate 2 / 2S (gcu_2, gcu_2s). Filtered from the live listing, the cache and the offline list.
+ */
+export const HIDDEN_BUILDS = new Set(['gcu_r5', 'gcu_s1']);
+
+const visible = (ids) => ids.filter((id) => !HIDDEN_BUILDS.has(id));
 
 /** Special entry: wipes the whole flash (recovery for badly corrupted boards). Label: t() it where shown. */
 export const NUKE_BUILD = {
@@ -63,13 +69,14 @@ export async function listBuilds() {
   try {
     const res = await fetch(BUILDS_API);
     if (!res.ok) throw new Error(`GitHub responded ${res.status}`);
-    const ids = (await res.json()).filter((e) => e.type === 'dir').map((e) => e.name);
+    const ids = visible((await res.json()).filter((e) => e.type === 'dir').map((e) => e.name));
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(ids)); } catch { /* ignore */ }
     memo = { builds: ids.map(toBuild).sort((a, b) => a.label.localeCompare(b.label)), offline: false };
   } catch (err) {
     let ids = [];
     try { ids = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]'); } catch { /* ignore */ }
-    if (!ids.length) ids = Object.keys(DISPLAY_NAMES);
+    ids = visible(Array.isArray(ids) ? ids : []);
+    if (!ids.length) ids = visible(Object.keys(DISPLAY_NAMES));
     console.warn('[builds] using cached list:', err.message);
     return { builds: ids.map(toBuild).sort((a, b) => a.label.localeCompare(b.label)), offline: true };
   }

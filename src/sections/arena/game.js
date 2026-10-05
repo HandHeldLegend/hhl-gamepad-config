@@ -1,5 +1,6 @@
 /**
- * game.js — The simulation: fighter + targets + projectiles + timer, advanced one 60 Hz frame at a time.
+ * game.js — The simulation: fighter + targets + training dummy (free play) + projectiles + timer,
+ * advanced one 60 Hz frame at a time.
  *
  * The Game knows nothing about the DOM or the canvas. view/play.js feeds it input snapshots from a
  * fixed-timestep accumulator and render.js draws whatever state it is in.
@@ -7,6 +8,7 @@
 import { FRAMES, STEP_MS } from './constants.js';
 import { STAGE, TARGETS, TARGET_R } from './stage.js';
 import { Fighter } from './fighter.js';
+import { Dummy } from './dummy.js';
 import { PadState } from './controller.js';
 import { SnapbackWatch, describeSnap } from './analysis.js';
 import { t } from '../../i18n/index.js';
@@ -23,6 +25,7 @@ export function newStats() {
     ko: 0,
     targets: 0,
     snapback: 0,
+    hits: 0,
   };
 }
 
@@ -58,6 +61,7 @@ export class Game {
     this.fighter.spawn(STAGE.spawn, false);
     this.targets = TARGETS.map((t, i) => ({ ...t, id: i, alive: true, brokenAt: -1 }));
     this.sparks = [];
+    this.dummy = this.mode === 'free' ? new Dummy(this.fighter.profile) : null;
     this.timer = { state: this.mode === 'targets' ? 'ready' : 'off', start: 0, end: 0 };
   }
 
@@ -84,8 +88,9 @@ export class Game {
 
   get targetsLeft() { return this.targets.filter((t) => t.alive).length; }
 
-  spawnSpark(x, y, vx) {
-    this.sparks.push({ x, y, vx, prevX: x, life: 70 });
+  /** Projectiles ("sparks"): {x, y, vx, vy, g, bounce, life, r, look, hit: {dmg, angle, bkb, kbg, flinch, name}}. */
+  spawnProjectile(o) {
+    this.sparks.push({ vy: 0, g: 0, bounce: 0, r: 3, ...o, prevX: o.x, prevY: o.y });
   }
 
   /** Advance one frame with an InputManager snapshot. */
@@ -101,19 +106,40 @@ export class Game {
 
     f.step(p);
 
-    // Sparks fly straight and fade.
-    for (const s of this.sparks) { s.prevX = s.x; s.x += s.vx; s.life--; }
-    this.sparks = this.sparks.filter((s) => s.life > 0 && s.x > STAGE.blast.left && s.x < STAGE.blast.right);
+    // Projectiles: fly (with gravity / bounces off the floor) and fade.
+    for (const s of this.sparks) {
+      s.prevX = s.x; s.prevY = s.y;
+      s.vy -= s.g; s.x += s.vx; s.y += s.vy; s.life--;
+      const M = STAGE.main;
+      if (s.y < M.y + s.r && s.prevY >= M.y + s.r && s.x > M.x1 && s.x < M.x2) {
+        if (s.bounce) { s.y = M.y + s.r; s.vy = s.bounce; } else if (s.g) s.life = 0;
+      }
+    }
+    this.sparks = this.sparks.filter((s) => s.life > 0 && s.x > STAGE.blast.left && s.x < STAGE.blast.right && s.y > STAGE.blast.bottom);
 
-    // Hits: fighter hitboxes and sparks vs targets.
+    // Hits: fighter hitboxes and projectiles vs targets.
     const boxes = f.activeHitboxes();
     for (const t of this.targets) {
       if (!t.alive) continue;
       let hit = boxes.some((b) => Math.hypot(b.x - t.x, b.y - t.y) <= b.r + TARGET_R);
       for (const s of this.sparks) {
-        if (s.life > 0 && Math.abs(s.y - t.y) <= TARGET_R + 2 && segHit(s.prevX, s.x, t.x, TARGET_R + 2)) { hit = true; s.life = 0; }
+        if (s.life > 0 && segDist(s, t.x, t.y) <= TARGET_R + s.r) { hit = true; s.life = 0; }
       }
       if (hit) this.breakTarget(t);
+    }
+
+    // Training dummy: the first active hitbox of each hit group that touches it connects.
+    const d = this.dummy;
+    if (d) {
+      for (const b of boxes) {
+        if (b.grab || f.hitGroups.has(b.g) || !d.touches(b.x, b.y, b.r)) continue;
+        this.hitDummy(b, Math.sign(d.x - f.x) || f.facing);
+        f.onHit(b);
+      }
+      for (const s of this.sparks) {
+        if (s.life > 0 && d.hittable && segDist(s, d.x, d.y + 7) <= s.r + 7) { this.hitDummy(s.hit, Math.sign(s.vx) || 1); s.life = 0; }
+      }
+      if (d.step() === 'ko') this.feedback(t('Dummy KO at {pct}%', { pct: Math.floor(d.percent) }), 'green');
     }
 
     // Free play: targets come back after a while.
@@ -127,6 +153,19 @@ export class Game {
 
     // Age effects.
     this.effects = this.effects.filter((e) => this.frame - e.frame < e.life);
+  }
+
+  /** Apply a hit to the dummy and show "Move · dmg% · KB n · tag". */
+  hitDummy(h, dir) {
+    const d = this.dummy;
+    const res = d.takeHit(h, dir);
+    this.stats.hits++;
+    const parts = [t('{move} · {dmg}% · KB {kb}', { move: h.name, dmg: +h.dmg.toFixed(1), kb: Math.round(res.kb) })];
+    if (h.flinch === false) parts.push(t('no flinch'));
+    if (h.tag) parts.push(t(h.tag));
+    if (h.charged) parts.push(t('charged {n}f', { n: h.charged }));
+    d.last = { text: parts.join(' · '), ...res, frame: this.frame };
+    this.feedback(d.last.text, 'blue');
   }
 
   breakTarget(target) {
@@ -145,10 +184,12 @@ export class Game {
   }
 }
 
-/** Did a point moving from a to b (1-D) pass within r of c? */
-function segHit(a, b, c, r) {
-  const lo = Math.min(a, b) - r; const hi = Math.max(a, b) + r;
-  return c >= lo && c <= hi;
+/** Closest distance from (cx, cy) to a projectile's path this frame (prev → current). */
+function segDist(s, cx, cy) {
+  const dx = s.x - s.prevX; const dy = s.y - s.prevY;
+  const len2 = dx * dx + dy * dy;
+  const k = len2 ? Math.max(0, Math.min(1, ((cx - s.prevX) * dx + (cy - s.prevY) * dy) / len2)) : 0;
+  return Math.hypot(s.prevX + dx * k - cx, s.prevY + dy * k - cy);
 }
 
 export function formatTime(ms) {

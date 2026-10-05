@@ -24,7 +24,7 @@ export default {
   "Installing firmware made for different hardware can stop the controller working until it’s re-flashed from BOOTSEL.": "別のハードウェア用のファームウェアをインストールすると、BOOTSELから書き込み直すまでコントローラーが動作しなくなることがあります。",
   "Recovery": "復旧",
   "Only needed if something went wrong.": "問題が起きたときだけ必要です。",
-  "Stuck in the bootloader after an interrupted update? Restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, choose “{nuke}” in the installer to wipe all settings, then install your build again.": "アップデートが中断されてブートローダーのままになった場合は、再起動するか、インストーラーから再インストールしてください。再インストール後も基板の動作がおかしい場合は、インストーラーで「{nuke}」を選んですべての設定を消去してから、もう一度ビルドをインストールしてください。",
+  "Stuck in the bootloader after an interrupted update? Restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.": "アップデートが中断されてブートローダーのままになった場合は、再起動するか、インストーラーから再インストールしてください。再インストール後も基板の動作がおかしい場合は、もう一度再インストールして「{fresh}」を選び、先にすべての設定、キャリブレーション、ペアリングを消去してください。",
   "Restart from bootloader": "ブートローダーから再起動",
   "Restarting…": "再起動中…",
   "Restarted": "再起動しました",

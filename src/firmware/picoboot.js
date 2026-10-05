@@ -239,11 +239,13 @@ async function closePicoDevice() {
 /**
  * Request the Pico bootloader and claim the Picoboot vendor interface.
  * Prefers an already-authorized device from getDevices() so no picker is needed.
- * @param {{ allowRequestDevice?: boolean }} [options]
+ * @param {{ allowRequestDevice?: boolean, uf2Only?: boolean }} [options] uf2Only: don't look for a .bin
+ *        (no PICOBOOT write; goes straight to the RPI-RP2 drive picker / manual download).
  * @returns {{ ok: true } | { ok: false, canceled: boolean, needsPermission: boolean, claimFailed?: boolean, error?: Error }}
  */
 export async function pico_try_claim_bootloader(options = {}) {
     const allowRequestDevice = options.allowRequestDevice !== false;
+    const uf2Only = options.uf2Only === true;
     // claimInterface can hang forever on Windows when WinUSB is not bound
     const claimTimeoutMs = options.claimTimeoutMs ?? 2000;
     interfaceNumber = null;
@@ -427,11 +429,13 @@ function stageUf2Picker(uf2Data, uf2Url) {
  *
  * @param {string} url Firmware URL (.uf2 or .bin)
  * @param {string|null} checksum Optional SHA-256 of the .bin image
- * @param {{ allowRequestDevice?: boolean }} [options]
+ * @param {{ allowRequestDevice?: boolean, uf2Only?: boolean }} [options] uf2Only: don't look for a .bin
+ *        (no PICOBOOT write; goes straight to the RPI-RP2 drive picker / manual download).
  * @returns {Promise<boolean|{ needsUserAction: true, reason: string }>}
  */
 export async function pico_update_attempt_flash(url, checksum = null, options = {}) {
     const allowRequestDevice = options.allowRequestDevice !== false;
+    const uf2Only = options.uf2Only === true;
     const uf2Url = ensureUf2Url(url);
     const binUrl = convertUf2ToBinUrl(uf2Url);
 
@@ -453,7 +457,8 @@ export async function pico_update_attempt_flash(url, checksum = null, options = 
 
     try {
         const [binResult, uf2Result] = await Promise.allSettled([
-            downloadFirmware(binUrl, t('Downloading firmware...')),
+            // uf2Only: images with no .bin twin (the flash nuke runs from RAM) skip PICOBOOT entirely.
+            uf2Only ? Promise.reject(new Error('UF2-only image')) : downloadFirmware(binUrl, t('Downloading firmware...')),
             downloadFirmware(uf2Url, t('Downloading firmware...')),
         ]);
 
@@ -471,7 +476,7 @@ export async function pico_update_attempt_flash(url, checksum = null, options = 
                 binVerified = true;
             }
         } else {
-            console.warn('BIN download failed:', binResult.reason);
+            if (!uf2Only) console.warn('BIN download failed:', binResult.reason);
         }
 
         if (uf2Result.status === 'fulfilled') {

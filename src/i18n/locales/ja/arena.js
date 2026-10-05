@@ -229,7 +229,6 @@ export default {
   "Tap jump": "スティックジャンプ",
   "Flicking the stick up jumps (a fast flick past the threshold, like a smash).": "スティックを上にはじくとジャンプします（スマッシュ入力のように、しきい値を素早く越える入力）。",
   "Show hitboxes": "攻撃判定を表示",
-  "Draw attack hitboxes, the collision point and ledge-grab boxes.": "攻撃判定、接地判定の点、崖つかまり判定を表示します。",
   "Target test record": "ターゲットテストの記録",
   "Your best time is kept in this browser.": "ベストタイムはこのブラウザーに保存されます。",
 
@@ -237,7 +236,6 @@ export default {
   "Defaults — change them under Button mapping. The keyboard only pauses, frame-advances and resets; your controller does all the playing.":
     "デフォルトの設定です。「ボタン割り当て」で変更できます。キーボードは一時停止・コマ送り・リセットのみで、プレイはすべてコントローラーで行います。",
   "Move · walk · dash": "移動 · 歩き · ダッシュ",
-  "Aerials · tilts (direction)": "空中攻撃 · 強攻撃（方向）",
   "Attack · special": "攻撃 · 必殺ワザ",
   "X or Y (or flick the stick up with Tap jump on)": "X または Y（スティックジャンプがオンならスティックを上にはじく）",
   "Shield · airdodge": "シールド · 空中回避",
@@ -414,4 +412,25 @@ export default {
   "{move} can’t be L-cancelled · full landing lag":
     "{move} は Lキャンセルできません · 着地隙そのまま",
   'HOJA USB stream · {name} (the browser’s gamepad view isn’t updating)': 'HOJA USBストリーム · {name}（ブラウザーのゲームパッド情報が更新されていません）',
+  // ---- Movesets, smash attacks, training dummy ----
+  "Dash attack": "ダッシュ攻撃",
+  "Forward smash": "横スマ",
+  "Up smash": "上スマ",
+  "Down smash": "下スマ",
+  "tipper": "先端",
+  "sourspot": "カス当たり",
+  "sweetspot": "クリーンヒット",
+  "clean hit": "出始め",
+  "late hit": "持続",
+  "meteor": "メテオ",
+  "knee": "膝",
+  "no flinch": "ひるみなし",
+  "charged {n}f": "ホールド {n}f",
+  "{move} · {dmg}% · KB {kb}": "{move} · {dmg}% · ふっとばし {kb}",
+  "Dummy KO at {pct}%": "{pct}% でダミーを撃墜",
+  "Autocancel · {move} landed on frame {n}": "着地キャンセル · {move} が {n}F 目に着地",
+  "Draw attack hitboxes (colored by damage), the dummy’s hurtbox, the collision point and ledge-grab boxes.": "攻撃判定（ダメージ別の色）、ダミーのやられ判定、接地判定の点、崖つかまり判定を表示します。",
+  "Aerials · smash attacks (direction)": "空中攻撃 · スマッシュ攻撃（方向）",
+  "Smash attacks & the training dummy": "スマッシュ攻撃とトレーニングダミー",
+  "Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.": "スティックをはじいて {n} フレーム以内に A を押す（または C スティックをはじく）とスマッシュ攻撃。A を押し続けると最大 60 フレームまでホールドできます（ダメージ ×1.367）。フリープレイではダミーが従来のふっとばし計算式どおりにダメージとふっとばしを受け、ヒットごとに技 · ダメージ · ふっとばしを表示します。",
 };

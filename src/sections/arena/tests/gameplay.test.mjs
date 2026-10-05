@@ -212,5 +212,101 @@ console.log('Sir Retro');
   check(P('sir-retro').AIR_SPEED > P('dot').AIR_SPEED, 'sir-retro drifts faster in the air than dot');
 }
 
+console.log('Movesets & training dummy');
+{
+  const { movesetFor, knockback, hitstun, chargeMult } = await import('../movesets.js');
+  const reach = (m) => Math.max(...m.hitboxes.map((h) => h.x + h.r));
+  const maxDmg = (m) => Math.max(...m.hitboxes.map((h) => h.dmg));
+  const sigs = FIGHTERS.map((f) => { const m = movesetFor(f.id).fsmash; return `${maxDmg(m)}/${reach(m)}/${m.from}`; });
+  check(new Set(sigs).size === FIGHTERS.length, `every fighter's forward smash differs in damage/reach/startup (${sigs.join(', ')})`);
+  check(reach(movesetFor('sable').fsmash) > reach(movesetFor('mochi').fsmash) + 8, 'Sable\'s sword reaches much further than Mochi\'s forward smash');
+  check(Math.abs(chargeMult(60) - 1.3671) < 1e-9 && chargeMult(999) === chargeMult(60), 'full smash charge (60f) = ×1.3671 damage, capped');
+  check(knockback(100, 15, 100, 30, 70) > knockback(20, 15, 100, 30, 70), 'knockback grows with percent');
+  check(knockback(80, 15, 60, 30, 70) > knockback(80, 15, 104, 30, 70), 'lighter fighters take more knockback');
+  check(hitstun(92.6) === 37, 'hitstun = floor(KB × 0.4)');
+
+  /** Free-play game with the dummy `dist` units in front of the fighter (facing right). */
+  const setup = (id, dist) => {
+    const { game, feed } = newGame({ fighter: id });
+    frames(game, 20);
+    game.dummy.x = game.fighter.x + dist; game.dummy.prevX = game.dummy.x;
+    return { game, feed, d: game.dummy };
+  };
+  const fsmash = (id, dist, hold) => {
+    const s = setup(id, dist);
+    frames(s.game, 1, (x) => { x.lx = 1; x.btn.attack = true; });          // flick + A on the same frame
+    frames(s.game, 120, (x, i) => { x.btn.attack = i < hold; });
+    return s;
+  };
+  const tap = fsmash('dot', 16, 0); const held = fsmash('dot', 16, 80);
+  check(tap.game.fighter.state !== 'attack' && tap.d.percent > 0, `flick + A → forward smash hits the dummy (${tap.d.percent.toFixed(1)}%)`);
+  check(held.d.percent > tap.d.percent * 1.3, `charged smash > uncharged (${held.d.percent.toFixed(1)}% vs ${tap.d.percent.toFixed(1)}%)`);
+  check(held.feed.some((x) => /^Forward smash · [\d.]+% · KB \d+ · sweetspot · charged 60f$/.test(x)), 'last-hit chip: "Forward smash · 24.3% · KB n · sweetspot · charged 60f"');
+
+  const kbAt = (pct) => { const s = setup('dot', 16); s.d.percent = pct; frames(s.game, 1, (x) => { x.lx = 1; x.btn.attack = true; }); frames(s.game, 30); return s.d; };
+  const low = kbAt(0); const high = kbAt(120);
+  check(high.stun > low.stun && Math.abs(high.kx) > Math.abs(low.kx), `knockback & hitstun grow with % (${low.stun}f → ${high.stun}f hitstun)`);
+
+  const tip = fsmash('sable', 27, 0); const sour = fsmash('sable', 12, 0);
+  check(tip.d.percent === 20 && sour.d.percent === 15, `Sable tipper 20% vs sourspot 15% (${tip.d.percent} / ${sour.d.percent})`);
+  check(tip.feed.some((x) => / · tipper$/.test(x)) && tip.d.stun > sour.d.stun, 'tipper launches harder and is labelled');
+
+  const shine = setup('vix', 8);
+  frames(shine.game, 1, (x) => { x.ly = -1; x.btn.special = true; });
+  check(shine.d.percent === 5, `Vix shine hits on frame 1 (${shine.d.percent}% after one frame)`);
+  frames(shine.game, 3, (x) => { x.btn.special = true; });
+  frames(shine.game, 1, (x) => { x.btn.special = true; x.btn.jump = true; });
+  check(shine.game.fighter.state === 'jumpsquat', 'shine is jump-cancelable from frame 4');
+
+  const rest = setup('mochi', 4);
+  frames(rest.game, 1, (x) => { x.ly = -1; x.btn.special = true; });
+  frames(rest.game, 2);
+  check(rest.d.percent === 20 && rest.d.stun > 40, `Rest: tiny sweetspot, huge knockback (hitstun ${rest.d.stun}f at 20%)`);
+
+  const ko = setup('rally', 15); ko.d.percent = 250;
+  frames(ko.game, 1, (x) => { x.lx = 1; x.btn.attack = true; });
+  frames(ko.game, 200);
+  check(ko.feed.some((x) => /^Dummy KO/.test(x)) && ko.d.percent === 0 && ko.d.state === 'stand', 'dummy is KO\'d past the blast zone and respawns at 0%');
+
+  // L-cancel halves landing lag per move; autocancel windows give normal lag.
+  let ok = true; let checked = 0;
+  for (const f of FIGHTERS) {
+    const set = movesetFor(f.id);
+    for (const name of ['nair', 'fair', 'bair', 'uair', 'dair']) {
+      const m = set[name];
+      const land = (lc, frame) => {
+        const { game } = newGame({ fighter: f.id });
+        const F = game.fighter;
+        F.ground = null; F.state = 'air'; F.beginMove(m, name); F.moveFrame = frame;
+        F.lastLcancel = lc ? game.frame : -9999;
+        F.land(game.fighter.game.fighter.ground || { y: 0, x1: -68, x2: 68, solid: true });
+        return F.landLag;
+      };
+      const mid = m.autocancel[0];
+      const full = land(false, mid); const lc = land(true, mid);
+      const noLc = f.noLcancel?.includes(name);
+      if (full !== m.landLag || lc !== (noLc ? m.landLag : Math.floor(m.landLag / 2))) { ok = false; console.log('   ', f.id, name, full, lc); }
+      if (land(false, m.autocancel[1]) !== 4) { ok = false; console.log('    autocancel', f.id, name); }
+      checked++;
+    }
+  }
+  check(ok, `L-cancel halves landing lag for each of ${checked} aerials (Sir Retro's nair/bair/uair excepted); autocancel → normal lag`);
+
+  // Targets / target test still work with the new moves and projectiles.
+  const tg = newGame({ mode: 'targets' });
+  check(!tg.game.dummy && tg.game.targets.length === 10, 'target test: no dummy, all targets');
+  frames(tg.game, 20);
+  tg.game.fighter.x = -9;
+  frames(tg.game, 1, (x) => { x.btn.attack = true; });          // jab the target at (0, 7)
+  frames(tg.game, 20);
+  check(tg.game.targetsLeft === 9, 'jab still breaks the target in front');
+  const fb = newGame({ mode: 'targets' });
+  frames(fb.game, 20);
+  fb.game.fighter.x = -30; fb.game.fighter.facing = 1;
+  frames(fb.game, 1, (x) => { x.btn.special = true; });
+  frames(fb.game, 80);
+  check(fb.game.targetsLeft === 9, 'fireball (bouncing projectile) breaks a target');
+}
+
 if (failures) { console.error(`\n${failures} arena test(s) failed`); process.exit(1); }
 console.log('\nArena gameplay tests passed');

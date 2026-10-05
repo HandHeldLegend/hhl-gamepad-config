@@ -2,6 +2,10 @@
  * play.js — The "Play" tab: the arena canvas, toolbar (mode, pause, frame-step, speed, reset),
  * per-action feedback chips, live input display and session stats.
  *
+ * Phones (≤ 560px, PHONE_MQ): the toolbar and fighter picker collapse into compact rows, and the
+ * feedback chips, banner and overlays move into a strip UNDER the canvas so nothing covers play.
+ * Everywhere: repeated chips merge ("×3"), at most two are shown and they fade quickly.
+ *
  * Timing: the shared loop in view.js polls input once per animation frame and calls tick(now, snap).
  * Here a fixed-timestep accumulator advances the simulation in exact 1/60 s steps (scaled by the
  * speed setting); rendering interpolates between the last two sim frames.
@@ -19,11 +23,14 @@ import { t } from '../../i18n/index.js';
 
 /** Theme keys (theme.js) whose CSS custom property has a different name. */
 const CSS_TOKEN = { muted: 'text-muted', faint: 'text-faint' };
+const PHONE_MQ = '(max-width: 560px)';
+const CHIP_MS = { phone: 1400, desktop: 1800 };
 
 export function renderPlay(panel, app) {
   const { input, game } = app;
   const timers = new Set();
-  const later = (fn, ms) => { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); };
+  const later = (fn, ms) => { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; };
+  const phone = globalThis.matchMedia?.(PHONE_MQ) || { matches: false, addEventListener() {}, removeEventListener() {} };
 
   // ---- Toolbar ---------------------------------------------------------------------------------
   const modeSeg = segmented({
@@ -34,12 +41,16 @@ export function renderPlay(panel, app) {
   const pauseBtn = button({ label: t('Pause'), icon: 'stop', variant: 'tonal', size: 'sm', onClick: () => { app.setPaused(!app.paused); refocus(); } });
   const stepBtn = button({ label: t('Frame'), icon: 'chevron-right', variant: 'ghost', size: 'sm', title: t('Advance one frame (while paused)'), onClick: () => { stepOnce(); refocus(); } });
   const speedSel = select({
-    options: SPEEDS.map((s) => ({ value: s, label: t('Speed {n}×', { n: s === 1 ? '1' : s === 0.5 ? '½' : '¼' }) })),
+    options: SPEEDS.map((s) => {
+      const n = s === 1 ? '1' : s === 0.5 ? '½' : '¼';
+      return { value: s, label: phone.matches ? `${n}×` : t('Speed {n}×', { n }) };
+    }),
     value: store.get('speed') ?? 1, ariaLabel: t('Simulation speed'),
     onChange: (v) => { store.set('speed', v); refocus(); },
   });
   speedSel.classList.add('arena-speed');
   const resetBtn = button({ label: t('Restart run'), icon: 'refresh', variant: 'ghost', size: 'sm', title: t('Reset position / restart run (R or Select)'), onClick: () => { game.resetRun(); refocus(); } });
+  stepBtn.classList.add('arena-step');
   const toolbar = h('div.arena-toolbar', modeSeg, h('div.spacer'), h('div.arena-tools', pauseBtn, stepBtn, speedSel, resetBtn));
 
   // ---- Fighter picker (radio group; arrow keys move the selection) ---------------------------------
@@ -87,7 +98,16 @@ export function renderPlay(panel, app) {
   const banner = h('div.arena-banner', { hidden: true });
   const stage = h('div.arena-stage', { tabindex: '0', onpointerdown: () => stage.focus({ preventScroll: true }) },
     canvas, h('div.arena-hud-top', sourceChip, stat), feed, overlay, banner);
+  const strip = h('div.arena-strip');
   const refocus = () => stage.focus({ preventScroll: true });
+  // Phones: feedback, banner and overlays live in the strip under the canvas instead of on top of it.
+  function placeFeedback() {
+    if (phone.matches) strip.append(overlay, banner, feed);
+    else stage.append(feed, overlay, banner);
+    strip.hidden = !phone.matches;
+  }
+  placeFeedback();
+  phone.addEventListener('change', placeFeedback);
 
   // ---- Below the stage -------------------------------------------------------------------------
   const display = new InputDisplay();
@@ -98,19 +118,29 @@ export function renderPlay(panel, app) {
     actions: display.announce.button }, display.canvas, display.readouts);
 
   const hint = steamHint(app);
-  panel.append(h('div.arena-play', toolbar, picker, stage, hint, h('div.grid-2', inputCard, statsCard)));
+  panel.append(h('div.arena-play', toolbar, picker, h('div.arena-stagewrap', stage, strip), hint, h('div.grid-2', inputCard, statsCard)));
 
   const renderer = new Renderer(canvas);
   const offTheme = app.onTheme((th) => renderer.setTheme(th));
 
   // ---- Feedback chips ----------------------------------------------------------------------------
+  // Newest first, at most two; a repeat of the newest chip bumps its count instead of stacking.
   const offFeed = app.onFeedback(({ text, tone }) => {
-    const chip = h('div.arena-feed-chip', { class: `tone-${tone}` }, text);
-    feed.prepend(chip);
-    while (feed.children.length > 4) feed.lastElementChild.remove();
-    later(() => chip.classList.add('leaving'), 2600);
-    later(() => chip.remove(), 2900);
     statsDirty = true;
+    let chip = feed.firstElementChild;
+    if (chip && chip.dataset.text === text && !chip.classList.contains('leaving')) {
+      chip.dataset.count = String(+chip.dataset.count + 1);
+      chip.lastElementChild.textContent = `×${chip.dataset.count}`;
+      chip.lastElementChild.hidden = false;
+    } else {
+      chip = h('div.arena-feed-chip', { class: `tone-${tone}`, 'data-text': text, 'data-count': '1' },
+        h('span.arena-feed-text', text), h('span.arena-feed-count', { hidden: true }));
+      feed.prepend(chip);
+      while (feed.children.length > 2) feed.lastElementChild.remove();
+    }
+    for (const id of chip.timers || []) { clearTimeout(id); timers.delete(id); }
+    const ms = phone.matches ? CHIP_MS.phone : CHIP_MS.desktop;
+    chip.timers = [later(() => chip.classList.add('leaving'), ms), later(() => chip.remove(), ms + 300)];
   });
 
   // ---- Stats -------------------------------------------------------------------------------------
@@ -260,6 +290,7 @@ export function renderPlay(panel, app) {
     offTick();
     offTheme();
     offFeed();
+    phone.removeEventListener('change', placeFeedback);
     for (const id of timers) clearTimeout(id);
     timers.clear();
     input.captureKeys = false;

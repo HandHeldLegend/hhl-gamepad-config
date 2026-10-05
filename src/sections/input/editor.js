@@ -152,8 +152,7 @@ export function createEditor(o) {
     if (data.delta !== undefined) patch.threshold_delta = clamp4096(data.delta);
     if (data.output !== undefined) patch.static_output = clamp4096(data.output);
     write(patch);
-    render();
-    toast(t('Settings pasted.'), { tone: 'green' });
+    render(); // the editor shows the pasted values; no toast
   }
 
   // ---- Render ---------------------------------------------------------------------------------

@@ -5,7 +5,7 @@ import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
 import { button, card, callout, badge, face, kv } from '../../ui/controls.js';
 import { SECTIONS } from '../registry.js';
-import { connectController, unavailableReason } from '../../app/shell.js';
+import { connectController, unavailableReason, currentModeLabel } from '../../app/shell.js';
 import { startDemo, isDemo } from '../../device/mock.js';
 import { firmwareStatus, openUpdateWizard, formatFwVersion } from '../../firmware/updater.js';
 import { t } from '../../i18n/index.js';
@@ -59,6 +59,8 @@ function deviceCard(session) {
         h('div.device-name.ellipsis', session.info.name),
         h('div.row', { style: { '--gap': '8px', marginTop: '4px' } },
           badge(isDemo() ? t('Demo controller') : t('Connected'), isDemo() ? 'lavender' : 'green'),
+          // The output mode it is running as right now (Switch / Steam), from its USB IDs.
+          !isDemo() && currentModeLabel() && h('span', { title: t('Running in {mode}', { mode: currentModeLabel() }) }, badge(currentModeLabel(), 'blue')),
           fw.state === 'available' && badge(t('Update available'), 'blue'),
           fw.state === 'current' && badge(t('Firmware up to date'), 'green'))),
       updateBtn),
@@ -75,7 +77,7 @@ export function mount(root, { session }) {
     replace(root,
       session.connected ? deviceCard(session) : hero(),
       !session.connected && connectTips(),
-      h('h2.section-heading', { style: { marginTop: '8px' } }, session.connected ? t('Configure') : t('Explore')),
+      h('h2.section-heading', session.connected ? t('Configure') : t('Explore')),
       tiles(session));
   };
   render();

@@ -197,7 +197,7 @@ function optionsCard(app) {
       control: toggle({ checked: store.get('tapJump'), tone: 'yellow', label: t('Tap jump'), onChange: (v) => { store.set('tapJump', v); app.game.tapJump = v; } }) }),
     field({ label: t('Jump buffer'), description: t('Off: like the classic games, a jump pressed while the fighter can’t act is dropped (a chip explains why). On: it is retried for {n} frames.', { n: FRAMES.JUMP_BUFFER }),
       control: toggle({ checked: !!store.get('jumpBuffer'), tone: 'yellow', label: t('Jump buffer'), onChange: (v) => { store.set('jumpBuffer', v); app.game.jumpBuffer = v; } }) }),
-    field({ label: t('Show hitboxes'), description: t('Draw attack hitboxes, the collision point and ledge-grab boxes.'),
+    field({ label: t('Show hitboxes'), description: t('Draw attack hitboxes (colored by damage), the dummy’s hurtbox, the collision point and ledge-grab boxes.'),
       control: toggle({ checked: store.get('showHitboxes'), tone: 'yellow', label: t('Show hitboxes'), onChange: (v) => store.set('showHitboxes', v) }) }),
     field({ label: t('Target test record'), description: t('Your best time is kept in this browser.'),
       control: [best, button({ label: t('Clear'), size: 'sm', variant: 'ghost', onClick: () => { store.set('bestTime', null); app.game.bestTime = null; best.textContent = formatTime(null); } })] }));
@@ -206,7 +206,7 @@ function optionsCard(app) {
 function controlsCard() {
   const rows = [
     [t('Move · walk · dash'), t('Main stick')],
-    [t('Aerials · tilts (direction)'), t('C-stick')],
+    [t('Aerials · smash attacks (direction)'), t('C-stick')],
     [t('Attack · special'), 'A · B'],
     [t('Jump'), t('X or Y (or flick the stick up with Tap jump on)')],
     [t('Shield · airdodge'), t('Analog L / R (a lighter press = light shield), or the left bumper')],
@@ -231,6 +231,7 @@ function techCard(app) {
     [t('Shield & light shield'), t('Press a trigger past {threshold} to shield. A lighter press gives a bigger shield. The shield shrinks as it wears down — hold too long and it breaks.', { threshold: `${MELEE.TRIGGER_MIN}/${MELEE.TRIGGER_MAX}` })],
     [t('Shield drop'), t('Shield on a platform, then push the stick down at {min}–{max}° from straight down (a down-diagonal notch is ideal). Straight down flicks spot dodge instead.', { min: STICK.SPOTDODGE_CONE, max: STICK.SHIELD_DROP_MAX })],
     [t('Ledge'), t('Fall next to a ledge to grab it. Then: toward the stage or up to climb, jump to leap off, away or down to let go.')],
+    [t('Smash attacks & the training dummy'), t('Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.', { n: STICK.SMASH_ATTACK })],
   ];
   return card({ title: t('Technique guide'), subtitle: t('What each feedback message is measuring. Frame windows shown for {fighter}.', { fighter: app.game.fighter.profile.name }), icon: 'help', tone: 'red' },
     h('dl.arena-tech', tech.flatMap(([k, v]) => [h('dt', k), h('dd', v)])));

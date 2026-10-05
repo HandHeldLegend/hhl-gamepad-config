@@ -10,7 +10,7 @@
  *   constants.js   every tunable number (thresholds, frame windows, physics)
  *   input.js       matched Gamepad API pad / HOJA USB stream → one snapshot per animation frame
  *   controller.js  per-60 Hz-frame input state: edges, smash detection, tilt-zone frame counts
- *   fighter.js     the fighter's state machine; game.js the simulation; stage.js / moves.js data
+ *   fighter.js     the fighter's state machine; game.js the simulation; stage.js / movesets.js data
  *   render.js      canvas drawing; hud.js input display; analysis.js lab measurements
  *   play.js / lab.js / help.js   the three tabs; theme.js CSS-token colors; store.js prefs
  *

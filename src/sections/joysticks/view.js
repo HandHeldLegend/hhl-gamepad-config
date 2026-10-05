@@ -3,13 +3,16 @@
  *
  * Layout (shared left/right pattern, see "Left/right layouts" in docs/SECTIONS.md):
  *   notice      "needs calibrating" callout
- *   live split  .lr-split — one live visualizer card per stick (+ the Left/Right switch on narrow pages)
+ *   check note  after a successful calibration the dialog closes and a non-blocking "move the sticks to
+ *               check" note (with Save) appears here while the live cards pulse briefly
+ *   live split  .lr-split — one compact live visualizer card per stick (+ the Left/Right switch on narrow
+ *               pages); each card has a Snap nearest action (analog.js snapNearestSlot, write → push → re-read)
  *   tabs        a single tab strip; each panel holds any shared content plus another .lr-split whose
  *               columns hold the same card for each stick, so left and right line up row by row:
- *     calibrate  status, guided calibration (calibration.js, always every stick) | resting centers per stick
+ *     calibrate  status, guided calibration (calibration.js, always every stick) and resting centers, one card
  *     sensitivity center/edge deadzones and response curve (settings.js) in compact rows + a small live
  *                curve preview (the old id `deadzone` still deep-links here)
- *     angles     angle map editor (angle-map.js)
+ *     angles     one collapsible explainer (advanced setting), then the angle map editor per stick (angle-map.js)
  *     axes       per-axis invert (only when the build reports analog invert_allowed, like hoja2)
  * Every split marks the selected stick's column with data-active. The container query in components.css
  * shows both columns side by side on wide pages (≥ 640px) and only the active one, picked with the switch,
@@ -28,15 +31,16 @@
  * calibration push the block immediately and re-read it, matching hoja2's write → re-read sequence.
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { card, callout, segmented, tabView, badge, kv, button } from '../../ui/controls.js';
+import { card, callout, segmented, tabView, badge, button, asyncButton } from '../../ui/controls.js';
+import { toast } from '../../ui/overlay.js';
 import { prefersReducedMotion } from '../../ui/canvas-surface.js';
 import { settingField, refreshSettings } from '../../settings/field.js';
 import { onInputReport } from '../../device/reports.js';
 import { stickVisual } from './stick-visual.js';
 import { curveGraph } from './curve-graph.js';
-import { angleMapEditor } from './angle-map.js';
+import { angleMapEditor, angleMapExplainer } from './angle-map.js';
 import { openCalibration } from './calibration.js';
-import { enabledSlots, prefix } from './analog.js';
+import { enabledSlots, prefix, snapNearestSlot, exclusive } from './analog.js';
 import { expStoredToMultiplier } from './settings.js';
 import { getSetting } from '../../settings/schema.js';
 import { t, N_, fmt, i18n } from '../../i18n/index.js';
@@ -95,9 +99,28 @@ export function mount(root, ctx) {
   // ---- Live visualizers (one per stick) -----------------------------------------------------
   const live = Object.fromEntries(sticks.map((s) => {
     const visual = stickVisual({ tone: TONE, stick: s });
-    const el = card({ title: t(STICK_LABEL[s]), subtitle: t('Live view'), icon: 'joystick', tone: TONE, class: 'js-visual-card' }, visual.el);
+    const snap = asyncButton({
+      label: t('Snap nearest'), icon: 'calibrate', variant: 'ghost', size: 'sm',
+      busyLabel: t('Capturing…'), okLabel: t('Snapped'), run: () => snapNearest(s),
+    });
+    snap.dataset.tip = t('Hold the stick at a notch, then press to move the closest angle-map point there.');
+    const el = card({ title: t(STICK_LABEL[s]), subtitle: t('Live view'), tone: TONE, class: 'compact js-visual-card', actions: snap }, visual.el);
     return [s, { visual, el }];
   }));
+
+  /** Live-card Snap nearest: same write → push → re-read as the angle map's button, then re-sync. */
+  async function snapNearest(s) {
+    let ok = false;
+    try {
+      ok = await exclusive(() => snapNearestSlot(session, s));
+      if (!ok) toast(t('The controller didn’t report a stick position.'), { tone: 'red' });
+    } catch (err) {
+      console.error('[joysticks] snap', err);
+      toast(t('Couldn’t update the angle map. Check the connection and try again.'), { tone: 'red' });
+    }
+    if (root.isConnected) { angleEditors[s]?.refresh(); syncStick(s); }
+    return ok;
+  }
 
   /** Push a stick's deadzones / angle map / curve into its visualizers. */
   function syncStick(s) {
@@ -123,10 +146,45 @@ export function mount(root, ctx) {
   }
 
   function calibrate() {
+    clearCheckNote();
     openCalibration({
       session, sticks,
-      onFinished: () => { afterReload(); },
+      onFinished: (ok) => { afterReload(); if (ok) showCheckNote(); },
     });
+  }
+
+  // ---- After calibrating: non-blocking "move the sticks to check" note ----------------------
+  /** The dialog closes on Finish; this note (above the live views) and a brief highlight take over. */
+  const checkNote = h('div.js-check-note', { role: 'status' });
+  let checkTimer = 0;
+  function clearCheckNote() {
+    clearTimeout(checkTimer);
+    checkNote.replaceChildren();
+    for (const s of sticks) live[s].el.removeAttribute('data-checking');
+  }
+  function showCheckNote() {
+    if (!root.isConnected) return;
+    clearCheckNote();
+    const saveBtn = asyncButton({
+      label: t('Save to controller'), icon: 'save', variant: 'primary', size: 'sm', okLabel: t('Saved to controller'),
+      run: async () => {
+        const saved = await session.save();
+        if (saved) setTimeout(clearCheckNote, 1200);
+        return saved;
+      },
+    });
+    checkNote.append(callout({ tone: 'green', icon: 'check', title: single ? t('Calibrated — move the stick to check.') : t('Calibrated — move the sticks to check.') },
+      single
+        ? t('It should reach the edge of the circle in every direction and rest in the center.')
+        : t('They should reach the edge of the circle in every direction and rest in the center.'),
+      ' ', t('Calibration is active now. Press Save to keep it after unplugging.'),
+      h('div.row.js-check-actions',
+        saveBtn,
+        button({ label: t('Dismiss'), variant: 'ghost', size: 'sm', onClick: clearCheckNote }))));
+    void page.offsetWidth; // restart the highlight animation
+    for (const s of sticks) live[s].el.setAttribute('data-checking', '');
+    checkTimer = setTimeout(() => { for (const s of sticks) live[s].el.removeAttribute('data-checking'); }, 2600);
+    requestAnimationFrame(() => checkNote.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' }));
   }
 
   /** Re-sync everything after the analog block was re-read from the controller. */
@@ -157,16 +215,16 @@ export function mount(root, ctx) {
   // ---- Tabs ------------------------------------------------------------------------------
   /** Editor card for one stick inside a tab's split. */
   const stickCard = (s, subtitle, ...children) =>
-    card({ title: t(STICK_LABEL[s]), subtitle, tone: TONE, class: 'js-stick-card' }, ...children);
+    card({ title: t(STICK_LABEL[s]), subtitle, tone: TONE, class: 'compact js-stick-card' }, ...children);
 
   let renderCalibrateTab = null;
 
   function calibrateTab(panel) {
-    const status = h('div.stack');
-    const centers = {};
+    const status = h('div.stack.js-cal-card');
     renderCalibrateTab = () => {
       const c = cfg();
       const set = !!c.analog_calibration_set;
+      const center = (s, axis) => (axes[s][axis] ? fmt.number(c[`${prefix(s)}${axis}_center`], { useGrouping: false }) : '—');
       status.replaceChildren(
         h('div.row',
           set ? badge(t('Calibrated'), 'green') : badge(t('Not calibrated'), 'red'),
@@ -178,16 +236,16 @@ export function mount(root, ctx) {
           h('li', ...richText(N_('Press {finish}, check the live view, then {save}.'),
             { finish: h('strong', t('Finish')), save: h('strong', t('Save')) }))),
         h('div.row', button({ label: single ? t('Calibrate stick') : t('Calibrate sticks'), icon: 'calibrate', variant: 'danger', onClick: calibrate })),
-        h('p.muted.small', t('Drifting after calibrating? Raise the center deadzone on the Sensitivity tab.')));
-      for (const s of sticks) {
-        const center = (axis) => (axes[s][axis] ? fmt.number(c[`${prefix(s)}${axis}_center`], { useGrouping: false }) : '—');
-        centers[s].replaceChildren(kv([['X', h('span.mono', center('x'))], ['Y', h('span.mono', center('y'))]]));
-      }
+        h('p.muted.small', t('Drifting after calibrating? Raise the center deadzone on the Sensitivity tab.')),
+        h('div.js-centers',
+          h('div.js-centers-title', t('Resting center (raw, captured when calibration starts)')),
+          h('table.js-centers-table',
+            h('tbody', sticks.map((s) => h('tr',
+              h('th', { scope: 'row' }, t(STICK_LABEL[s])),
+              h('td', h('span.muted', 'X '), h('span.mono', center(s, 'x'))),
+              h('td', h('span.muted', 'Y '), h('span.mono', center(s, 'y')))))))));
     };
-    for (const s of sticks) centers[s] = h('div');
-    panel.append(h('div.stack',
-      card({ title: single ? t('Calibrate your stick') : t('Calibrate your sticks'), icon: 'calibrate', tone: TONE }, status),
-      split((s) => stickCard(s, t('Resting center (raw, captured when calibration starts)'), centers[s]))));
+    panel.append(card({ title: single ? t('Calibrate your stick') : t('Calibrate your sticks'), icon: 'calibrate', tone: TONE, class: 'compact' }, status));
     renderCalibrateTab();
     return () => { renderCalibrateTab = null; };
   }
@@ -217,7 +275,7 @@ export function mount(root, ctx) {
       curves[s] = curveGraph();
       const o = { tone: TONE, onChange: () => syncStick(s) };
       syncStick(s);
-      return card({ title: t('{stick} · Sensitivity', { stick: t(STICK_LABEL[s]) }), tone: TONE, class: 'js-stick-card js-sens-card' },
+      return card({ title: t('{stick} · Sensitivity', { stick: t(STICK_LABEL[s]) }), tone: TONE, class: 'compact js-stick-card js-sens-card' },
         h('div.js-sens',
           h('div.js-fields',
             sensField(s, 'Deadzone', o),
@@ -233,10 +291,12 @@ export function mount(root, ctx) {
   }
 
   function anglesTab(panel) {
-    panel.append(split((s) => {
-      angleEditors[s] = angleMapEditor({ session, stick: s, tone: TONE, onChanged: () => syncStick(s) });
-      return stickCard(s, t('Angle map'), angleEditors[s].el);
-    }));
+    panel.append(h('div.stack.js-tab-stack',
+      angleMapExplainer(),
+      split((s) => {
+        angleEditors[s] = angleMapEditor({ session, stick: s, tone: TONE, onChanged: () => syncStick(s) });
+        return stickCard(s, null, angleEditors[s].el);
+      })));
     return () => { for (const s of Object.keys(angleEditors)) { angleEditors[s].destroy?.(); delete angleEditors[s]; } };
   }
 
@@ -290,6 +350,7 @@ export function mount(root, ctx) {
   page.classList.toggle('two-sticks', !single);
   page.append(
     notice,
+    checkNote,
     split((s) => live[s].el, { switcher: stickSeg }),
     tabs);
   root.append(page);
@@ -327,6 +388,7 @@ export function mount(root, ctx) {
       stopInput();
       cancelAnimationFrame(focusFrame);
       clearTimeout(highlightTimer);
+      clearTimeout(checkTimer);
       tabs.destroy();
       for (const { visual } of Object.values(live)) visual.destroy();
       device.setInputMode(false)?.catch?.(() => {});

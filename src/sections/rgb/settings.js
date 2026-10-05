@@ -89,7 +89,7 @@ export default [
   {
     key: 'rgb.idleGlow',
     label: 'Idle glow',
-    description: 'After a while without input the lights go dark and a single LED glows to show battery status. Turn off to keep it dark too.',
+    description: 'After 5 minutes without input the lights go dark and a single LED glows to show battery status. Any input turns it off again. Turn this off to keep it dark too.',
     tip: 'Cyan = on battery, orange = charging, green = fully charged.',
     block: 'rgb',
     type: 'boolean',

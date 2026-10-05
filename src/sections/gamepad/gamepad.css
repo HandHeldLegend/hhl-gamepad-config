@@ -41,7 +41,7 @@
 .gp-colors {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  gap: var(--space-4) var(--space-5);
+  gap: var(--space-3) var(--space-5);
   align-items: center;
 }
 @media (max-width: 700px) { .gp-colors { grid-template-columns: 1fr; } }
@@ -50,7 +50,7 @@
 .gp-color-fields .field .field-control { justify-self: end; }
 
 .gp-preview {
-  width: 100%; max-width: 360px; justify-self: center;
+  width: 100%; max-width: 320px; justify-self: center;
   padding: var(--space-3);
   border-radius: var(--radius-lg);
   background: var(--surface-sunken);

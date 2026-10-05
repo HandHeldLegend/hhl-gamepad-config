@@ -18,7 +18,7 @@ import { confirmDialog, toast } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { t, N_ } from '../../i18n/index.js';
 import { settingField, refreshSettings } from '../../settings/field.js';
-import { getSetting, formatValue } from '../../settings/schema.js';
+import { getSetting } from '../../settings/schema.js';
 import { rebootToBootloaderOnly, formatFwVersion } from '../../firmware/updater.js';
 import { DEFAULT_MODES } from './settings.js';
 import { padPreview } from './pad-preview.js';
@@ -57,11 +57,9 @@ export function mount(root, { session, navigate }) {
   const modePicker = modeTiles({
     value: modeDef.get(session),
     onChange: (v) => {
+      // No toast: the warning above the tiles already explains how to get back to this app.
       modeDef.set(session, v);
       session.commit('gamepad');
-      if (!APP_MODES.has(formatValue(modeDef, v))) {
-        toast(t('Hold A (South) while plugging in to reconnect to this app after switching modes.'), { tone: 'yellow', timeout: 6000 });
-      }
     },
   });
 
@@ -132,8 +130,8 @@ export function mount(root, { session, navigate }) {
   });
   const macField = field({
       label: t('Base address'),
-      description: t('Each mode adds one to this address. Change it only if two controllers clash; you may need to pair again afterwards.'),
-      tip: t('This is the MAC that is used for USB and Bluetooth modes. Each mode increments the address. The first byte must be even.'),
+      description: t('Each connection mode uses its own address, counting up from this one, so your devices see each mode as a separate controller. Only change this if two controllers clash — you may need to pair again afterwards.'),
+      tip: t('A MAC address is the hardware ID other devices use to recognize the controller over Bluetooth and USB. The first byte must be even.'),
       control: mac,
       stacked: true,
     });
@@ -165,8 +163,7 @@ export function mount(root, { session, navigate }) {
       rebootBtn.disabled = true;
       rebootBtn.setLabel(t('Rebooting…'));
       try {
-        await rebootToBootloaderOnly();
-        toast(t('Rebooting into the bootloader…'), { tone: 'blue' });
+        await rebootToBootloaderOnly(); // the button already reads "Rebooting…"; no toast
         // Normally the controller drops off and this page unmounts; re-arm the button if it didn't.
         setTimeout(reset, 8000);
       } catch (err) {
@@ -181,7 +178,7 @@ export function mount(root, { session, navigate }) {
       t('Pressing the button below will reboot your controller into a firmware update mode. This is only necessary if you are updating the firmware.')),
     h('div.row', rebootBtn));
 
-  root.append(modeCard, colorCard, h('div.grid-2', connCard, macCard), h('div.grid-2', devCard, supportCard));
+  root.append(modeCard, colorCard, h('div.card-grid', connCard, macCard, devCard, supportCard));
 
   // Re-read everything if the block is refreshed elsewhere (e.g. a deep link re-applied values).
   return {

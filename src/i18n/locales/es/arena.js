@@ -227,7 +227,6 @@ export default {
   "Tap jump": "Tap jump (saltar con la palanca)",
   "Flicking the stick up jumps (a fast flick past the threshold, like a smash).": "Mover rápido la palanca hacia arriba hace saltar (un movimiento rápido más allá del umbral, como un smash).",
   "Show hitboxes": "Mostrar hitboxes",
-  "Draw attack hitboxes, the collision point and ledge-grab boxes.": "Dibuja las hitboxes de los ataques, el punto de colisión y las zonas de agarre al borde.",
   "Target test record": "Récord de la prueba de blancos",
   "Your best time is kept in this browser.": "Tu mejor tiempo se guarda en este navegador.",
 
@@ -235,7 +234,6 @@ export default {
   "Defaults — change them under Button mapping. The keyboard only pauses, frame-advances and resets; your controller does all the playing.":
     "Valores predeterminados; cámbialos en Asignación de botones. El teclado solo pausa, avanza frames y reinicia; todo el juego se hace con tu control.",
   "Move · walk · dash": "Moverse · caminar · dash",
-  "Aerials · tilts (direction)": "Aéreos · tilts (dirección)",
   "Attack · special": "Ataque · especial",
   "X or Y (or flick the stick up with Tap jump on)": "X o Y (o mueve rápido la palanca hacia arriba con tap jump activado)",
   "Shield · airdodge": "Escudo · airdodge",
@@ -414,4 +412,25 @@ export default {
   "{move} can’t be L-cancelled · full landing lag":
     "{move} no se puede L-cancelar · todo el lag de aterrizaje",
   'HOJA USB stream · {name} (the browser’s gamepad view isn’t updating)': 'Flujo USB de HOJA · {name} (la vista de control del navegador no se actualiza)',
+  // ---- Movesets, smash attacks, training dummy ----
+  "Dash attack": "Ataque en carrera",
+  "Forward smash": "Smash lateral",
+  "Up smash": "Smash hacia arriba",
+  "Down smash": "Smash hacia abajo",
+  "tipper": "tipper",
+  "sourspot": "sourspot",
+  "sweetspot": "sweetspot",
+  "clean hit": "golpe limpio",
+  "late hit": "golpe tardío",
+  "meteor": "meteoro",
+  "knee": "rodilla",
+  "no flinch": "sin retroceso",
+  "charged {n}f": "cargado {n}f",
+  "{move} · {dmg}% · KB {kb}": "{move} · {dmg}% · KB {kb}",
+  "Dummy KO at {pct}%": "Muñeco KO al {pct}%",
+  "Autocancel · {move} landed on frame {n}": "Autocancel · {move} aterrizó en el frame {n}",
+  "Draw attack hitboxes (colored by damage), the dummy’s hurtbox, the collision point and ledge-grab boxes.": "Dibuja las hitboxes de los ataques (con color según el daño), la hurtbox del muñeco, el punto de colisión y las zonas de agarre al borde.",
+  "Aerials · smash attacks (direction)": "Aéreos · smash (dirección)",
+  "Smash attacks & the training dummy": "Smash y el muñeco de práctica",
+  "Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.": "Mueve el stick de golpe y presiona A dentro de {n} frames (o mueve el C-stick) para un smash; mantén A para cargarlo hasta 60 frames (×1.367 de daño). En Juego libre el muñeco recibe daño y knockback con la fórmula clásica, y cada golpe muestra movimiento · daño · knockback.",
 };

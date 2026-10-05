@@ -72,6 +72,12 @@ DOM helper: `h('div.class', props, ...children)` from `src/ui/dom.js`. Canvas vi
 For simple scalar settings, prefer declaring them in `settings.js` and rendering with
 `settingField('section.key')` from `src/settings/field.js` — then deep links and assistants get them for free.
 
+## Dense layouts
+
+Pages with several short cards wrap them in `.card-grid` (css/components.css): two cards per row once the
+page body is ≥ 700px wide, one column on phones; pages using it widen automatically. Field rows inside a
+narrow card stack on their own. Prefer this over long single-column pages.
+
 ## Left/right layouts
 
 Anything configured per stick (or per trigger) uses the shared `.lr-split` layout from `css/components.css`:

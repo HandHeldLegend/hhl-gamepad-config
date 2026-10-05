@@ -24,7 +24,7 @@ export default {
   "Installing firmware made for different hardware can stop the controller working until it’s re-flashed from BOOTSEL.": "Instalar firmware hecho para otro hardware puede hacer que el control deje de funcionar hasta que vuelvas a escribirlo desde BOOTSEL.",
   "Recovery": "Recuperación",
   "Only needed if something went wrong.": "Solo si algo salió mal.",
-  "Stuck in the bootloader after an interrupted update? Restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, choose “{nuke}” in the installer to wipe all settings, then install your build again.": "¿Se quedó en el bootloader tras una actualización interrumpida? Reinícialo o reinstala desde el instalador. Si la placa sigue fallando después de reinstalar, elige “{nuke}” en el instalador para borrar todos los ajustes y luego vuelve a instalar tu compilación.",
+  "Stuck in the bootloader after an interrupted update? Restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.": "¿Se quedó en el bootloader tras una actualización interrumpida? Reinícialo o reinstala desde el instalador. Si la placa sigue fallando después de reinstalar, vuelve a reinstalar y elige “{fresh}” para borrar primero todos los ajustes, la calibración y los emparejamientos.",
   "Restart from bootloader": "Reiniciar desde el bootloader",
   "Restarting…": "Reiniciando…",
   "Restarted": "Reiniciado",

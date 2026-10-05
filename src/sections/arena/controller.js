@@ -60,6 +60,7 @@ export class PadState {
     this.prevC = 0;
     this.cDir = null;
     this.any = false;
+    this.lastSmash = null;
   }
 
   /**
@@ -81,6 +82,10 @@ export class PadState {
 
     this.ax.update(this.x, f);
     this.ay.update(this.y, f);
+    // Smash input (for smash attacks): remember the latest fast flick for a few frames.
+    if (this.xSmash) this.lastSmash = { dir: this.ax.side > 0 ? 'right' : 'left', frame: f };
+    else if (this.yUpSmash) this.lastSmash = { dir: 'up', frame: f };
+    else if (this.yDownSmash) this.lastSmash = { dir: 'down', frame: f };
 
     // Triggers: combined analog value (digital shield = full press).
     const btnShield = !!s.btn.shield;
@@ -129,6 +134,17 @@ export class PadState {
   /** Latency if y crossed SHIELD_DOWN_Y (downwards) this frame, else -1. */
   get yShieldDown() { return this.ay.side < 0 ? this.ay.reach(Math.abs(STICK.SHIELD_DOWN_Y)) : -1; }
   get holdingDown() { return this.y <= -STICK.SMASH_Y; }
+
+  /**
+   * 'left' | 'right' | 'up' | 'down' if the stick was flicked that way within SMASH_ATTACK frames
+   * and is still held there (A pressed now → smash attack), else null.
+   */
+  get smashDir() {
+    const s = this.lastSmash;
+    if (!s || this.frame - s.frame > STICK.SMASH_ATTACK) return null;
+    const held = { right: this.x >= STICK.NEUTRAL, left: this.x <= -STICK.NEUTRAL, up: this.y >= STICK.NEUTRAL, down: this.y <= -STICK.NEUTRAL }[s.dir];
+    return held ? s.dir : null;
+  }
 
   /** Pressed shield or Z this frame (counts for L-cancel). */
   get lcancelPress() { return this.shieldPressed || this.pressed.z; }

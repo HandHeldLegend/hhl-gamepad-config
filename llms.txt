@@ -101,7 +101,7 @@ Capability flags used in “Needs” columns (detected from the connected contro
 | `rgb.mode` | Effect | 0 = Authentic (also: authentic, chroma, auto, era, classic); 1 = Static (also: static, user, solid, none, custom); 2 = Rainbow (also: rainbow, cycle, spectrum); 3 = React (also: react, reactive, press); 4 = Fairy (also: fairy, twinkle, sparkle) | rgb | Lighting effect: Authentic (classic face-button colors for the output mode; called Chroma in older apps), Static (your colors), Rainbow, React (flash on press) or Fairy (blend between your first six colors). |
 | `rgb.brightness` | Brightness | number 0% – 100% | rgb | How bright the LEDs are, from off to full. |
 | `rgb.speed` | Animation time | number 300 ms – 5000 ms, step 25 | rgb | How long one animation step or fade takes, in milliseconds. Lower is faster. |
-| `rgb.idleGlow` | Idle glow | on \| off | rgb | After a while without input the lights go dark and a single LED glows to show battery status. Turn off to keep it dark too. |
+| `rgb.idleGlow` | Idle glow | on \| off | rgb | After 5 minutes without input the lights go dark and a single LED glows to show battery status. Any input turns it off again. Turn this off to keep it dark too. |
 | `rgb.allColors` | All group colors | hex color like #ff8800 | rgb | Set every LED group to the same color at once (like hoja2’s “Paste All”). |
 | `rgb.group1Color` | Group 1 color | hex color like #ff8800 | rgb | Color of LED group 1 as listed on the RGB page (group names and count depend on the controller, e.g. "D-Pad" or "A"). |
 | `rgb.group2Color` | Group 2 color | hex color like #ff8800 | rgb | Color of LED group 2 as listed on the RGB page (group names and count depend on the controller, e.g. "D-Pad" or "A"). |

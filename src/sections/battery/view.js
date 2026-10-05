@@ -14,7 +14,7 @@
  * Like hoja2, the live panel is built once per layout and values are patched in place, so CSS
  * animations (charging shimmer, LED blink) keep running instead of restarting on every report.
  */
-import { h, loadStyles } from '../../ui/dom.js';
+import { h, loadStyles, fillNodes } from '../../ui/dom.js';
 import { card, kv, button } from '../../ui/controls.js';
 import { icon } from '../../ui/icons.js';
 import { decodeText } from '../../device/struct.js';
@@ -65,6 +65,10 @@ export function mount(root, { session, device, navigate }) {
   const ledNote = h('p.bat-led-note');
   const rgbLink = button({ label: t('Open RGB settings'), size: 'sm', variant: 'ghost', icon: 'rgb', onClick: () => navigate('rgb') });
   rgbLink.hidden = true;
+  // The status light's idle glow is an RGB setting (rgb.idleGlow); point there, but only on controllers with RGB.
+  const glowHint = session.caps.rgb && h('p.bat-glow-hint',
+    fillNodes(t('After 5 minutes without input, the status light glows to show charging: orange while charging, green when full, cyan otherwise. Turn it on or off on the {rgb} page.'), { rgb: h('a', { href: '#/rgb' }, t('RGB')) }));
+  if (glowHint) glowHint.hidden = true;
 
   const details = kv([
     [t('Battery'), text(st.battery_part_number)],
@@ -77,7 +81,8 @@ export function mount(root, { session, device, navigate }) {
       h('div.bat-readout', percentEl, stateRow),
       h('div.bat-specs', details)),
     explainEl,
-    h('div.bat-led-row', ledNote, rgbLink));
+    h('div.bat-led-row', ledNote, rgbLink),
+    glowHint);
 
   // ---- 2. Hardware card (static) ----------------------------------------------------------
   const hwRow = (name, tip, part, info) => h('div.bat-hw-row',
@@ -96,7 +101,7 @@ export function mount(root, { session, device, navigate }) {
         : joinSentences([pack.explain, t('Checked once at power-on — reconnect the controller to check again.')]),
     }));
 
-  root.append(statusCard, hardware);
+  root.append(h('div.card-grid', statusCard, hardware));
 
   // ---- Live updates -----------------------------------------------------------------------
   let last = null;      // latest {charging, chargeDone, batteryPercent}
@@ -116,6 +121,7 @@ export function mount(root, { session, device, navigate }) {
     setAttr(gauge, 'data-layout', s.layout);
     stateRow.hidden = s.layout !== 'normal';
     rgbLink.hidden = true;
+    if (glowHint) glowHint.hidden = true;
 
     if (s.layout === 'absent') {
       // hoja2: empty battery icon + "No Battery"; charge bits are inert without a pack.
@@ -168,6 +174,9 @@ export function mount(root, { session, device, navigate }) {
 
     setText(ledNote, t(LED_TEXT[s.led]));
     rgbLink.hidden = s.led !== 'off';
+    // With RGB, the hint explains the idle glow (when and which colors) and links to it, so the one-line
+    // light note would repeat it; when the glow is off, the note + button say where to turn it on.
+    if (glowHint) { glowHint.hidden = s.led === 'off'; ledNote.hidden = !glowHint.hidden; }
   }
 
   const schedule = () => { if (!raf) raf = requestAnimationFrame(paint); };

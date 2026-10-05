@@ -60,6 +60,8 @@ export const STICK = {
   /** The smash threshold must be reached within this many frames of leaving neutral. With 2, the
    *  stick may spend at most ONE sampled frame in the "tilt zone" (between NEUTRAL and SMASH). */
   SMASH_WINDOW: 2,
+  /** A pressed within this many frames of a smash flick → smash attack instead of a tilt (approx.). */
+  SMASH_ATTACK: 3,
   /** Holding the stick at or below this y crouches (approx.). */
   CROUCH_Y: -0.6,
   /** Shield-drop / spot-dodge vertical threshold (−56 / 80; approx.). */
@@ -118,7 +120,6 @@ export const PHYS = {
   AIRDODGE_DECAY: 0.9,     // velocity multiplier per frame during the dodge
   ROLL_DISTANCE: 32,
   LEDGE_JUMP: 2.9,
-  SPECIAL_SPEED: 3.0,      // spark projectile
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -150,8 +151,10 @@ export const PHYS = {
  * use 2.0. Vix's short-hop height isn't in the table; ~10.6 is derived from the commonly quoted
  * short-hop velocity of 2.1 and gravity 0.23. Both NEED REVIEW.
  * Sir Retro: the wiki's movement numbers are almost the same as the all-rounder's (gravity 0.095, fall
- * 1.7 / 2.3, jumpsquat 4); what sets him apart is air speed 1.0, a light build (weight has no effect
- * here — the arena has no knockback) and aerials that can't be L-cancelled (noLcancel below).
+ * 1.7 / 2.3, jumpsquat 4); what sets him apart is air speed 1.0, a light build (weight 60: the training
+ * dummy flies further) and aerials that can't be L-cancelled (noLcancel below).
+ * weight (w)       https://www.ssbwiki.com/Weight (Melee: Mario 100, Fox 75, Falco 80, Marth 87, Peach 90,
+ *                  Popo 88, Captain Falcon 104, Jigglypuff 60, Mr. Game & Watch 60) — used by the dummy.
  *
  * Values are in the game's units; FIGHTER_SCALE converts them to arena units (our stage is smaller),
  * chosen so the all-rounder matches the arena's original tuning. Frames are the same 60 Hz frames.
@@ -161,37 +164,37 @@ export const FIGHTER_SCALE = 1.15;
 /**
  * g gravity · fall / ff max fall / fast-fall speed · jsq jumpsquat frames · dash initial dash ·
  * run run speed · walk max walk · air air speed · airAcc max air acceleration · traction ·
- * fh / sh full / short hop height · jumps mid-air jumps · float max float frames (0 = none) ·
+ * fh / sh full / short hop height · jumps mid-air jumps · float max float frames (0 = none) · w weight ·
  * noLcancel aerials whose landing lag an L-cancel can't reduce.
  * look: body / band / feet colour tokens and an accessory, drawn on the round body (no likenesses).
  */
 export const FIGHTERS = [
   { id: 'dot', name: 'Dot', feel: N_('All-rounder · balanced in every way'),
-    g: 0.095, fall: 1.7, ff: 2.3, jsq: 4, dash: 1.5, run: 1.5, walk: 1.1, air: 0.86, airAcc: 0.045, traction: 0.06, fh: 29, sh: 11.025, jumps: 1, float: 0,
+    g: 0.095, fall: 1.7, ff: 2.3, jsq: 4, dash: 1.5, run: 1.5, walk: 1.1, air: 0.86, airAcc: 0.045, traction: 0.06, fh: 29, sh: 11.025, jumps: 1, float: 0, w: 100,
     look: { body: 'red', band: 'blue', feet: 'yellow', acc: 'cap' } },
   { id: 'vix', name: 'Vix', feel: N_('Fast faller · 3-frame jumpsquat · quick dash'),
-    g: 0.23, fall: 2.8, ff: 3.4, jsq: 3, dash: 1.9, run: 2.2, walk: 1.6, air: 0.83, airAcc: 0.08, traction: 0.08, fh: 31.28, sh: 10.6, jumps: 1, float: 0,
+    g: 0.23, fall: 2.8, ff: 3.4, jsq: 3, dash: 1.9, run: 2.2, walk: 1.6, air: 0.83, airAcc: 0.08, traction: 0.08, fh: 31.28, sh: 10.6, jumps: 1, float: 0, w: 75,
     look: { body: 'yellow', band: 'green', feet: 'blue', acc: 'ears' } },
   { id: 'quill', name: 'Quill', feel: N_('Fast faller · huge jump · 5-frame jumpsquat'),
-    g: 0.17, fall: 3.1, ff: 3.5, jsq: 5, dash: 1.9, run: 1.5, walk: 1.4, air: 0.83, airAcc: 0.07, traction: 0.08, fh: 51.5, sh: 11.58, jumps: 1, float: 0,
+    g: 0.17, fall: 3.1, ff: 3.5, jsq: 5, dash: 1.9, run: 1.5, walk: 1.4, air: 0.83, airAcc: 0.07, traction: 0.08, fh: 51.5, sh: 11.58, jumps: 1, float: 0, w: 80,
     look: { body: 'blue', band: 'yellow', feet: 'red', acc: 'crest' } },
   { id: 'sable', name: 'Sable', feel: N_('Swordfighter · floaty · long run'),
-    g: 0.085, fall: 2.2, ff: 2.5, jsq: 4, dash: 1.5, run: 1.8, walk: 1.6, air: 0.9, airAcc: 0.05, traction: 0.06, fh: 35.09, sh: 13.995, jumps: 1, float: 0,
+    g: 0.085, fall: 2.2, ff: 2.5, jsq: 4, dash: 1.5, run: 1.8, walk: 1.6, air: 0.9, airAcc: 0.05, traction: 0.06, fh: 35.09, sh: 13.995, jumps: 1, float: 0, w: 87,
     look: { body: 'green', band: 'blue', feet: 'yellow', acc: 'headband' } },
   { id: 'rosette', name: 'Rosette', feel: N_('Floaty · float: hold jump, then press down'),
-    g: 0.08, fall: 1.5, ff: 2.0, jsq: 5, dash: 1.2, run: 1.3, walk: 0.85, air: 1.1, airAcc: 0.07, traction: 0.1, fh: 31.36, sh: 16.8, jumps: 1, float: 150,
+    g: 0.08, fall: 1.5, ff: 2.0, jsq: 5, dash: 1.2, run: 1.3, walk: 0.85, air: 1.1, airAcc: 0.07, traction: 0.1, fh: 31.36, sh: 16.8, jumps: 1, float: 150, w: 90,
     look: { body: 'accent', band: 'yellow', feet: 'yellow', acc: 'crown' } },
   { id: 'rime', name: 'Rime', feel: N_('Low traction · longest wavedash · 3-frame jumpsquat'),
-    g: 0.1, fall: 1.6, ff: 2.0, jsq: 3, dash: 1.4, run: 1.4, walk: 0.95, air: 0.7, airAcc: 0.047, traction: 0.035, fh: 35.1, sh: 10.5, jumps: 1, float: 0,
+    g: 0.1, fall: 1.6, ff: 2.0, jsq: 3, dash: 1.4, run: 1.4, walk: 0.95, air: 0.7, airAcc: 0.047, traction: 0.035, fh: 35.1, sh: 10.5, jumps: 1, float: 0, w: 88,
     look: { body: 'blue', band: 'green', feet: 'accent', acc: 'hood' } },
   { id: 'rally', name: 'Rally', feel: N_('Fastest runner · falls fast'),
-    g: 0.13, fall: 2.9, ff: 3.5, jsq: 4, dash: 2.0, run: 2.3, walk: 0.85, air: 1.12, airAcc: 0.06, traction: 0.08, fh: 38.52, sh: 14.85, jumps: 1, float: 0,
+    g: 0.13, fall: 2.9, ff: 3.5, jsq: 4, dash: 2.0, run: 2.3, walk: 0.85, air: 1.12, airAcc: 0.06, traction: 0.08, fh: 38.52, sh: 14.85, jumps: 1, float: 0, w: 104,
     look: { body: 'red', band: 'yellow', feet: 'blue', acc: 'visor' } },
   { id: 'mochi', name: 'Mochi', feel: N_('Very floaty · 5 mid-air jumps · strong air control'),
-    g: 0.064, fall: 1.3, ff: 1.6, jsq: 5, dash: 1.4, run: 1.1, walk: 0.7, air: 1.35, airAcc: 0.28, traction: 0.09, fh: 20.8, sh: 9.146, jumps: 5, float: 0,
+    g: 0.064, fall: 1.3, ff: 1.6, jsq: 5, dash: 1.4, run: 1.1, walk: 0.7, air: 1.35, airAcc: 0.28, traction: 0.09, fh: 20.8, sh: 9.146, jumps: 5, float: 0, w: 60,
     look: { body: 'accent', band: 'green', feet: 'red', acc: 'tuft' } },
   { id: 'sir-retro', name: 'Sir Retro', feel: N_('Featherweight · LCD style · neutral, back and up aerials can’t be L-cancelled'),
-    g: 0.095, fall: 1.7, ff: 2.3, jsq: 4, dash: 1.5, run: 1.5, walk: 1.1, air: 1.0, airAcc: 0.05, traction: 0.06, fh: 29, sh: 11.025, jumps: 1, float: 0,
+    g: 0.095, fall: 1.7, ff: 2.3, jsq: 4, dash: 1.5, run: 1.5, walk: 1.1, air: 1.0, airAcc: 0.05, traction: 0.06, fh: 29, sh: 11.025, jumps: 1, float: 0, w: 60,
     noLcancel: ['nair', 'bair', 'uair'],
     look: { body: 'text', band: 'muted', feet: 'text', acc: 'lcd' } },
 ];
@@ -241,7 +244,6 @@ export const FRAMES = {
   LEDGE_REGRAB: 30,
   LEDGE_GETUP: 26,
   DROP_THROUGH: 10,        // platforms are ignored for this long after a drop
-  SPECIAL_COOLDOWN: 24,
   RESPAWN_DELAY: 50,
   RESPAWN_WAIT: 180,
   TARGET_RESPAWN: 180,     // free play: broken targets come back after this long

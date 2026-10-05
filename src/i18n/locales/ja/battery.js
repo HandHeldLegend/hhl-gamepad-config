@@ -59,4 +59,5 @@ export default {
   "The fuel gauge isn't responding, so the percentage may be off.": "残量計が応答しないため、パーセンテージが正確でない可能性があります。",
   "The charger chip isn't working, so the charging state may be wrong.": "充電チップが動作していないため、充電状態が正しくない可能性があります。",
   "The controller couldn't confirm a battery is fitted.": "コントローラーはバッテリーの装着を確認できませんでした。",
+  'After 5 minutes without input, the status light glows to show charging: orange while charging, green when full, cyan otherwise. Turn it on or off on the {rgb} page.': '5分間入力がないと、ステータスランプが充電状態を示して点灯します（充電中はオレンジ、満充電は緑、それ以外はシアン）。オン/オフは{rgb}ページで切り替えられます。',
 };

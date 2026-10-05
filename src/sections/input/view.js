@@ -198,9 +198,7 @@ export function mount(root, ctx) {
       await session.refresh('input');
       session.commit('input'); // re-send what we just read: harmless, and lights up Save
       remap?.refreshTiles();
-      editor?.refresh();
-      toast(all ? t('All modes reset to defaults — press Save to keep it.')
-        : t('{mode} mode reset to defaults — press Save to keep it.', { mode: mode.label }), { tone: 'green' });
+      editor?.refresh(); // the tiles show the defaults and Save lights up; no success toast
     } catch (err) {
       console.warn('[input] reset failed', err);
       toast(t('The controller did not confirm the reset. Try again.'), { tone: 'red' });

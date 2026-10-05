@@ -95,3 +95,37 @@ export function resetSlots(slots) {
   });
   return slots;
 }
+
+/**
+ * Run angle-map edits one at a time (the per-stick editor and the live cards' Snap nearest share the
+ * analog block, and each edit is write → push → re-read). Returns fn's result.
+ */
+let queue = Promise.resolve();
+export function exclusive(fn) {
+  const run = queue.then(fn, fn);
+  queue = run.catch(() => {});
+  return run;
+}
+
+/**
+ * hoja2 "Angle Set": capture where the stick points now and move the nearest enabled slot's input
+ * angle/distance there, then write → push → re-read. Resolves false when nothing could be snapped
+ * (no capture reply or no enabled slot). Throws on connection errors.
+ */
+export async function snapNearestSlot(session, stick) {
+  const c = await captureStick(session, stick);
+  if (!c) return false;
+  const slots = readSlots(session, stick);
+  let best = -1;
+  let bestD = Infinity;
+  slots.forEach((s, i) => {
+    if (!s.enabled) return;
+    const d = angleDistance(c.angle, s.in_angle);
+    if (d < bestD) { bestD = d; best = i; }
+  });
+  if (best < 0) return false;
+  slots[best].in_angle = c.angle;
+  slots[best].in_distance = c.distance;
+  await writeSlots(session, stick, slots);
+  return true;
+}

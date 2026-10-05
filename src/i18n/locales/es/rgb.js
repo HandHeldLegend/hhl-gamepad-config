@@ -42,7 +42,7 @@ export default {
   'How long one animation step or fade takes, in milliseconds. Lower is faster.': 'Cuánto dura un paso de animación o un desvanecimiento, en milisegundos. Menos es más rápido.',
   'ms': 'ms',
   'Idle glow': 'Brillo en reposo',
-  'After a while without input the lights go dark and a single LED glows to show battery status. Turn off to keep it dark too.': 'Tras un rato sin entradas, las luces se apagan y un solo LED brilla para mostrar el estado de la batería. Desactívalo para que ese LED también quede apagado.',
+  'After 5 minutes without input the lights go dark and a single LED glows to show battery status. Any input turns it off again. Turn this off to keep it dark too.': 'Tras 5 minutos sin entradas, las luces se apagan y un solo LED brilla para mostrar el estado de la batería. Cualquier entrada lo vuelve a apagar. Desactívalo para que ese LED también quede apagado.',
   'Cyan = on battery, orange = charging, green = fully charged.': 'Cian = con batería, naranja = cargando, verde = carga completa.',
 
   // Colors

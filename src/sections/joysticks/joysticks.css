@@ -5,162 +5,226 @@
  */
 
 /* ---- Page layout ------------------------------------------------------------------- */
-.js-page { container: jspage / inline-size; }
+/* Tighter than the app default: compact cards and smaller gaps so more fits on one screen. */
+.js-page { container: jspage / inline-size; --gap: var(--space-3); }
+.js-page .lr-split, .js-page .lr-cols, .js-page .lr-col { gap: var(--space-3); }
+.js-page .tab-panel > .stack, .js-page .js-tabs { --gap: var(--space-3); }
+.js-page .card.compact { padding: var(--space-3) var(--space-4) var(--space-4); gap: var(--space-3); }
+.js-page .card.compact .card-head .card-title { font-size: var(--text-md, 1rem); }
+.js-page .card.compact .card-head .card-actions .btn { min-height: 32px; }
+@container jspage (max-width: 480px) {
+  .js-page .card.compact { padding: var(--space-3); }
+}
+.js-page .tabs button { padding: var(--space-2) var(--space-3); }
 /* Left/right columns use the shared .lr-split layout (css/components.css). The column tone drives its
    deep-link highlight; scroll-margin keeps a scrolled-to column clear of the sticky app bar. */
 .js-page .lr-col { --tone: var(--red); --tone-soft: var(--red-soft); scroll-margin-top: calc(var(--appbar-h) + var(--space-4)); }
 
+/* After calibrating: inline note above the live views + a brief pulse on each live card. */
+.js-check-note { scroll-margin-top: calc(var(--appbar-h) + var(--space-3)); }
+.js-check-note:empty { display: none; }
+.js-check-actions { margin-top: var(--space-2); --gap: var(--space-2); }
+.js-visual-card[data-checking] { animation: js-check 1.3s var(--ease-out) 2; }
+@keyframes js-check { 0% { box-shadow: 0 0 0 3px var(--green); } 100% { box-shadow: 0 0 0 3px transparent; } }
+
 /* ---- Live visualizer --------------------------------------------------------------- */
-/* Canvas + legend, then the readout panel and controls. A wide card (single stick) puts the readout
-   beside the canvas; columns and phones stack it underneath. */
+/* Compact: the canvas is capped at 240px. Cards ≥ 420px wide put the readout beside the canvas;
+   narrower ones stack it underneath. */
 .js-visual { container: jsvis / inline-size; width: 100%; }
-.js-vis-grid { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr); }
-.js-vis-main { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
-.js-vis-side { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
-.js-visual .cv-surface { max-width: 340px; margin: 0 auto; }
-@container jsvis (min-width: 600px) {
-  .js-vis-grid { grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem); align-items: start; }
+.js-vis-grid { display: grid; gap: var(--space-2) var(--space-4); grid-template-columns: minmax(0, 1fr); }
+.js-vis-main { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.js-vis-side { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.js-visual .cv-surface { width: 100%; max-width: 220px; margin: 0 auto; }
+@container jsvis (min-width: 420px) {
+  .js-vis-grid { grid-template-columns: minmax(150px, 240px) minmax(0, 1fr); align-items: start; }
+  .js-visual .cv-surface { max-width: 240px; }
 }
 
-.js-legend { display: flex; gap: var(--space-4); justify-content: center; flex-wrap: wrap; font-size: 0.875rem; color: var(--text-muted); }
-.js-key { display: inline-flex; align-items: center; gap: 6px; cursor: help; }
+.js-legend { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; font-size: 0.8125rem; color: var(--text-muted); }
+.js-key { display: inline-flex; align-items: center; gap: 5px; cursor: help; }
 /* Marker shapes match the canvas: input = hollow ring, output = filled dot, trace = filled square. */
-.js-swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
+.js-swatch { width: 11px; height: 11px; border-radius: 50%; display: inline-block; flex: none; }
 .js-swatch.in { background: transparent; box-shadow: inset 0 0 0 2.5px var(--red); }
 .js-swatch.out { background: var(--blue); }
 .js-swatch.trace { background: var(--green); border-radius: 3px; }
 
-/* Readout panel: large tabular numerals in fixed-width cells, so values don't jitter. */
-.js-readout { display: flex; flex-direction: column; gap: var(--space-1); }
+/* Readout panel: tabular numerals in fixed-width cells, so values don't jitter. */
+.js-readout { display: flex; flex-direction: column; gap: 2px; }
 .js-rtable {
   width: 100%; table-layout: fixed; border-collapse: collapse;
   background: var(--surface-2); border-radius: var(--radius-md); overflow: hidden;
 }
-.js-rtable th, .js-rtable td { padding: 6px var(--space-3); }
+.js-rtable th, .js-rtable td { padding: 3px var(--space-2); }
 .js-rtable thead th {
-  font-size: 0.875rem; font-weight: 600; color: var(--text-muted); text-align: right; white-space: nowrap; cursor: help;
+  font-size: 0.8125rem; font-weight: 600; color: var(--text-muted); text-align: right; white-space: nowrap; cursor: help;
 }
-.js-rtable thead th .js-swatch { margin-inline-end: 6px; vertical-align: -1px; }
-.js-rtable tbody th { font-size: 0.875rem; font-weight: 600; color: var(--text-muted); text-align: left; overflow-wrap: anywhere; }
+.js-rtable thead th .js-swatch { margin-inline-end: 5px; vertical-align: -1px; }
+.js-rtable tbody th { font-size: 0.8125rem; font-weight: 600; color: var(--text-muted); text-align: left; overflow-wrap: anywhere; }
 .js-rtable tbody td {
-  font-family: var(--font-mono); font-size: 1rem; font-weight: 600; color: var(--text);
+  font-family: var(--font-mono); font-size: 0.9375rem; font-weight: 600; color: var(--text);
   font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap;
 }
 .js-rtable tbody tr + tr > * { border-top: 1px solid var(--border); }
-.js-rtable tr > :first-child { width: 34%; }
-.js-units { margin: 0; font-size: 0.875rem; color: var(--text-muted); }
+.js-rtable tr > :first-child { width: 32%; }
+.js-units { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
 
-.js-controls { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; }
+.js-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 .js-controls .seg { flex: 1 1 100%; }
+.js-controls .seg button { min-height: 32px; }
 .js-trace { display: inline-flex; align-items: center; gap: var(--space-2); font-size: 0.875rem; font-weight: 600; }
-.js-announce { margin-inline-start: auto; min-height: 40px; }
+.js-announce { margin-inline-start: auto; }
 .js-announce[aria-pressed="true"] { --btn-bg: var(--tone-soft, var(--accent-soft)); --btn-fg: var(--text); --btn-border: var(--tone, var(--accent)); }
 
+/* ---- Calibrate tab ---------------------------------------------------------------- */
+.js-cal-card { --gap: var(--space-3); }
+.js-cal-card .cal-steps { gap: var(--space-1); }
+.js-cal-card > p { margin: 0; }
+.js-centers { border-top: 1px dashed var(--border); padding-top: var(--space-2); }
+.js-centers-title { font-size: 0.8125rem; color: var(--text-muted); margin-bottom: var(--space-1); }
+.js-centers-table { border-collapse: collapse; font-size: 0.875rem; }
+.js-centers-table th { text-align: start; font-weight: 600; padding: 2px var(--space-4) 2px 0; }
+.js-centers-table td { padding: 2px var(--space-4) 2px 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
 /* ---- Sensitivity tab: compact rows -------------------------------------------------- */
-/* Each control: label (+ "?" tip with the full explanation) and one short help line, then the slider
-   row (step buttons, track, number) at the column's full width. Wide cards put text and slider on one
-   line. The curve preview sits under the controls (beside them on wide cards) at a modest size. */
-.js-sens { container: jssens / inline-size; display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); }
+/* Each control: label (+ "?" tip with the full explanation) and one short help line, then the slider.
+   Cards ≥ 460px put the curve preview beside the controls; very wide cards also put each control's
+   text and slider on one line. */
+.js-sens-card { container: jssens / inline-size; }
+.js-sens { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr); }
 .js-fields { display: flex; flex-direction: column; min-width: 0; }
-.js-sens .field { grid-template-columns: minmax(0, 1fr); gap: var(--space-1) var(--space-4); min-height: 0; padding: var(--space-2) 0; }
+.js-sens .field { grid-template-columns: minmax(0, 1fr); gap: 2px var(--space-4); min-height: 0; padding: var(--space-1) 0 var(--space-2); }
 .js-sens .field + .field { padding-top: var(--space-2); border-top: 1px dashed var(--border); }
 .js-sens .field-label { font-size: 0.9375rem; }
-.js-sens .field-desc { font-size: 0.875rem; margin-top: 0; }
+.js-sens .field-desc { font-size: 0.8125rem; margin-top: 0; }
 .js-sens .field-control { justify-self: stretch; }
-.js-sens .slider { width: 100%; gap: var(--space-2); }
-.js-sens .slider input[type="range"] { flex: 1 1 auto; min-width: 0; min-height: 40px; }
-.js-sens .input.num { width: 5rem; }
-@container jssens (min-width: 560px) {
+.js-sens .slider { width: 100%; gap: var(--space-1); }
+.js-sens .slider input[type="range"] { flex: 1 1 auto; min-width: 0; min-height: 36px; }
+.js-sens .input.num { width: 4.5rem; min-height: 36px; }
+@container jssens (min-width: 460px) {
+  .js-sens { grid-template-columns: minmax(0, 1fr) minmax(150px, 200px); align-items: start; }
+}
+@container jssens (min-width: 820px) {
   .js-sens .field { grid-template-columns: minmax(10rem, 0.9fr) minmax(16rem, 1.1fr); align-items: center; }
 }
-@container jssens (min-width: 760px) {
-  .js-sens { grid-template-columns: minmax(0, 1fr) minmax(220px, 280px); align-items: start; }
+.js-curve-wrap { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; width: 100%; max-width: 240px; justify-self: center; }
+.js-curve-legend { font-size: 0.75rem; color: var(--text-muted); }
+
+/* ---- Angle map: one explainer for the tab ------------------------------------------ */
+.am-explain { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); }
+.am-explain > summary {
+  cursor: pointer; display: flex; align-items: center; gap: var(--space-2); min-height: 40px;
+  padding: var(--space-1) var(--space-3); font-weight: 600; font-size: 0.9375rem;
 }
-.js-curve-wrap { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; width: 100%; max-width: 320px; justify-self: center; }
-.js-curve-legend { font-size: 0.875rem; color: var(--text-muted); }
+.am-explain > summary::-webkit-details-marker { display: none; }
+.am-explain > summary::after {
+  content: ""; margin-inline-start: auto; width: 8px; height: 8px; flex: none;
+  border-right: 2px solid var(--text-muted); border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg); transition: transform var(--dur-med) var(--ease-out);
+}
+.am-explain[open] > summary::after { transform: rotate(-135deg); }
+.am-explain-body { display: flex; gap: var(--space-4); align-items: flex-start; padding: 0 var(--space-3) var(--space-3); }
+.am-explain-text { flex: 1; min-width: 0; font-size: 0.875rem; }
+.am-explain-text > p { margin: 0 0 var(--space-2); }
+.am-defs { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px var(--space-3); margin: 0; }
+.am-defs dt { font-weight: 600; display: flex; align-items: center; gap: 6px; white-space: nowrap; align-self: start; line-height: 1.45; }
+.am-defs dd { line-height: 1.45; }
+.am-defs dd { margin: 0; color: var(--text-muted); }
+.am-defs .icon { width: 14px; height: 14px; color: var(--text-muted); }
+@container jspage (max-width: 560px) {
+  .am-explain-body { flex-direction: column; align-items: center; }
+  .am-defs { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .am-defs dd { margin-bottom: var(--space-2); }
+}
+.am-x-svg { width: 120px; height: 120px; flex: none; }
+.am-x-ring { fill: var(--surface); stroke: var(--border); stroke-width: 1; }
+.am-x-wedge { fill: var(--blue); fill-opacity: 0.28; }
+.am-x-gate { fill: none; stroke: var(--red); stroke-opacity: 0.55; stroke-width: 1.5; }
+.am-x-out { stroke: var(--blue); stroke-width: 2.5; stroke-linecap: round; }
+.am-x-dist { stroke: var(--red); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.am-x-arc { fill: none; stroke: var(--text); stroke-width: 1.5; }
+.am-x-in { fill: none; stroke: var(--red); stroke-width: 2.5; }
+/* Legend keys in the definitions, matching the example diagram's marks. */
+.am-x-key { display: inline-block; flex: none; width: 12px; height: 12px; }
+.am-x-key.in { border-radius: 50%; box-shadow: inset 0 0 0 2.5px var(--red); }
+.am-x-key.out { height: 3px; border-radius: 2px; background: var(--blue); }
+.am-x-key.dist { height: 0; border-top: 2px dashed var(--red); }
+.am-x-key.odist { height: 3px; border-radius: 2px; background: var(--blue); opacity: 0.55; }
+.am-x-key.snap { border-radius: 2px 10px 2px 2px; background: var(--blue); opacity: 0.35; }
 
 /* ---- Angle map editor -------------------------------------------------------------- */
-.am { container: am / inline-size; display: flex; flex-direction: column; gap: var(--space-3); }
+.am { container: am / inline-size; display: flex; flex-direction: column; gap: var(--space-2); }
 .am[aria-busy="true"] .am-list { opacity: 0.6; pointer-events: none; transition: opacity var(--dur-med); }
-.am-help { font-size: 0.875rem; color: var(--text-muted); }
-.am-intro { display: flex; align-items: flex-start; gap: var(--space-2); }
-.am-intro p { margin: 0; font-size: 0.9375rem; flex: 1; }
-.am-tools { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
-.am-figure { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; width: 112px; }
-.am-figure .cv-surface { width: 112px; }
-.am-legend { display: flex; gap: var(--space-2); font-size: 0.75rem; color: var(--text-muted); }
-.am-legend > span { display: inline-flex; align-items: center; gap: 4px; }
-.am-legend .js-swatch { width: 10px; height: 10px; }
-.am-spoke { display: inline-block; width: 12px; height: 2.5px; background: var(--blue); border-radius: 2px; }
-.am-actions { flex: 1 1 10rem; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-.am-action { display: flex; align-items: center; gap: var(--space-1) var(--space-2); flex-wrap: wrap; }
-.am-action .btn { min-height: 40px; flex: none; }
-.am-action .am-help { flex: 1 1 9rem; min-width: 0; }
-.am-count { font-size: 0.875rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
-.am-foot { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-.am-foot .btn { min-height: 40px; }
+.am-help { font-size: 0.8125rem; color: var(--text-muted); margin: 0; }
+.am-tools { display: flex; gap: var(--space-3); align-items: center; }
+.am-figure { flex: none; width: 72px; }
+.am-figure .cv-surface { width: 72px; }
+.am-actions { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.am-btns { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
+.am-count { font-size: 0.8125rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 
-/* Slot grid. Narrow (default): two lines per slot —
-     #  use  input∠ → output∠  [capture][delete]
-             in dist → out dist  snap zone
-   Wide (≥ 600px): one line per slot. The header uses the same grid so it lines up. */
+/* Slot rows, like hoja2: one plain line per slot —
+     #  use  in∠ → out∠  in dist → out dist  snap  [capture][delete]
+   Narrow editors (< 500px) wrap into two lines: angles + snap zone, then distances. The header uses
+   the same grid so it lines up. */
 .am-table { display: flex; flex-direction: column; }
 .am-list { display: flex; flex-direction: column; }
 .am-row {
-  display: grid; align-items: center; gap: 4px 6px;
-  grid-template-columns: 46px minmax(0, 1fr) 12px minmax(0, 1fr) 36px 36px;
+  display: grid; align-items: center; gap: 2px 4px;
+  grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.75fr) 64px;
   grid-template-areas:
-    "num ia ar1 oa act act"
-    "on id ar2 od dz dz";
-  padding: 4px 0;
+    "num ia oa dz act"
+    "on id od . .";
+  padding: 3px 0;
 }
 .am-list .am-row { border-top: 1px solid var(--border); }
 .am-row.off { opacity: 0.7; }
-.am-c-num { grid-area: num; text-align: center; } .am-c-on { grid-area: on; }
+.am-c-num { grid-area: num; text-align: center; } .am-c-on { grid-area: on; display: flex; justify-content: center; }
 .am-c-ia { grid-area: ia; } .am-c-oa { grid-area: oa; }
 .am-c-id { grid-area: id; } .am-c-od { grid-area: od; }
-.am-c-dz { grid-area: dz; } .am-c-act { grid-area: act; display: flex; justify-content: flex-end; gap: 2px; }
-.am-c-ar1 { grid-area: ar1; } .am-c-ar2 { grid-area: ar2; }
-.am-c-ar1, .am-c-ar2 { color: var(--text-muted); text-align: center; font-weight: 700; }
-.am-head { padding: 0 0 var(--space-1); }
-/* Header text flows inline with its "?" tip, so a long word gets the full column width (no mid-word breaks). */
+.am-c-dz { grid-area: dz; } .am-c-act { grid-area: act; display: flex; justify-content: flex-end; gap: 0; }
+.am-head { padding: 0 0 2px; }
 .am-head > span {
-  display: block; min-width: 0; align-self: end;
-  font-size: 0.8125rem; font-weight: 600; color: var(--text-muted); line-height: 1.25;
-  hyphens: auto; overflow-wrap: break-word;
+  display: block; min-width: 0; align-self: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 0.75rem; font-weight: 600; color: var(--text-muted); line-height: 1.25;
 }
-.am-head .tip { display: inline-grid; vertical-align: middle; width: 18px; height: 18px; font-size: 11px; margin-inline-start: 2px; }
+.am-head .am-c-on { cursor: help; }
 .am-num {
-  width: 24px; height: 24px; border-radius: 50%; display: inline-grid; place-items: center;
-  background: var(--tone-soft, var(--surface-2)); color: var(--text); font-size: 0.8125rem; font-weight: 700;
+  width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center;
+  background: var(--tone-soft, var(--surface-2)); color: var(--text); font-size: 0.75rem; font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-.am-field { display: flex; align-items: center; gap: 2px; min-width: 0; }
+/* Cells: [input][unit] then an arrow toward the paired output cell. */
+.am-row > [class^="am-c-"] { min-width: 0; }
+.am-row .am-c-ia, .am-row .am-c-id { display: flex; align-items: center; gap: 2px; }
+.am-field { display: flex; align-items: center; gap: 1px; min-width: 0; flex: 1 1 auto; }
+.am-arrow { flex: none; width: 10px; text-align: center; color: var(--text-muted); font-weight: 700; font-size: 0.8125rem; }
 .am-row .input.num {
-  width: 100%; min-width: 0; min-height: 36px; padding: 0 3px;
-  font-size: 0.875rem; font-variant-numeric: tabular-nums; color: var(--text);
+  width: 100%; min-width: 0; min-height: 32px; padding: 0 3px;
+  font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--text); text-align: right;
   -moz-appearance: textfield; appearance: textfield;
 }
 .am-row .input.num::-webkit-inner-spin-button, .am-row .input.num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-.am-unit { font-size: 0.875rem; color: var(--text-muted); width: 0.6em; flex: none; }
-.am-c-act .btn { min-height: 36px; width: 36px; }
-.am-unused > summary { cursor: pointer; font-size: 0.875rem; font-weight: 600; color: var(--text-muted); padding: var(--space-1) 0; min-height: 32px; }
-.am-unused > .am-help { margin: 0 0 var(--space-2); }
-@container am (min-width: 600px) {
+.am-unit { font-size: 0.8125rem; color: var(--text-muted); width: 0.6em; flex: none; }
+.am-c-act .btn { min-height: 32px; width: 32px; padding: 0; }
+/* Smaller switch inside rows. */
+.am-row .switch .track { width: 36px; height: 22px; }
+.am-row .switch .track::after { width: 16px; height: 16px; top: 2px; left: 2px; }
+.am-row .switch input:checked + .track::after { transform: translateX(14px); }
+.am-unused > summary { cursor: pointer; font-size: 0.8125rem; font-weight: 600; color: var(--text-muted); padding: var(--space-1) 0; min-height: 32px; }
+.am-unused > .am-help { margin: 0 0 var(--space-1); }
+@container am (min-width: 500px) {
   .am-row {
-    grid-template-columns: 26px 46px minmax(0, 1fr) 12px minmax(0, 1fr) minmax(0, 1fr) 12px minmax(0, 1fr) minmax(0, 0.85fr) 76px;
-    grid-template-areas: "num on ia ar1 oa id ar2 od dz act";
-    min-height: 44px;
+    grid-template-columns: 24px 40px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.7fr) 64px;
+    grid-template-areas: "num on ia oa id od dz act";
+    gap: 4px;
   }
 }
 
-/* ---- Calibration dialog & tab ------------------------------------------------------ */
+/* ---- Calibration dialog ------------------------------------------------------------ */
 .cal-steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: var(--space-2); }
 .cal-steps li::marker { color: var(--red); font-weight: 700; }
 .cal-grid { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr)); }
 .cal-stick { display: flex; flex-direction: column; gap: var(--space-2); }
-.cal-stick .cv-surface { max-width: 240px; margin: 0 auto; }
+.cal-stick .cv-surface { max-width: 220px; margin: 0 auto; }
 .cal-status { display: flex; align-items: center; gap: var(--space-2); font-weight: 600; min-height: 1.5em; }
 .cal-status.ok { color: var(--green); }
-.cal-done { display: flex; gap: var(--space-4); align-items: flex-start; }
-.cal-done p + p { margin-top: var(--space-2); }

@@ -42,7 +42,7 @@ export default {
   'How long one animation step or fade takes, in milliseconds. Lower is faster.': 'アニメーションの1ステップまたはフェードにかかる時間（ミリ秒）です。小さいほど速くなります。',
   'ms': 'ms',
   'Idle glow': 'アイドル時の点灯',
-  'After a while without input the lights go dark and a single LED glows to show battery status. Turn off to keep it dark too.': 'しばらく入力がないとライトが消え、1つのLEDだけがバッテリー状態を示して点灯します。オフにすると、そのLEDも消灯します。',
+  'After 5 minutes without input the lights go dark and a single LED glows to show battery status. Any input turns it off again. Turn this off to keep it dark too.': '5分間入力がないとライトが消え、1つのLEDだけがバッテリー状態を示して点灯します。何か入力すると再び消えます。オフにすると、そのLEDも消灯します。',
   'Cyan = on battery, orange = charging, green = fully charged.': 'シアン＝バッテリー駆動、オレンジ＝充電中、緑＝充電完了。',
 
   // Colors

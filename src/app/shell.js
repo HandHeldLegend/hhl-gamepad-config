@@ -17,7 +17,7 @@
 import { h, replace } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
 import { button, emptyState, dot, face } from '../ui/controls.js';
-import { toast } from '../ui/overlay.js';
+import { toast, confirmDialog } from '../ui/overlay.js';
 import { SECTIONS, GROUPS, getSection } from '../sections/registry.js';
 import { session } from '../device/session.js';
 import { device } from '../device/hoja-device.js';
@@ -38,6 +38,23 @@ export function unavailableReason(section) {
   return null;
 }
 
+/**
+ * What the connected controller is running as right now, from its USB IDs (translated), or null.
+ * Only two output modes talk to this app over USB (HOJA-LIB-RP2040 descriptors):
+ *   057e:2009          Switch mode (Nintendo Switch Pro Controller descriptor, ns_lib_hid.c)
+ *   2e8a:<board PID>   Steam mode (SInput; 0x10C6 generic, or the board's own usb_pid, core_sinput.c)
+ * XInput (045e:028e), Slippi (057e:0337) and the console modes can't be reached from the app.
+ */
+export function currentModeLabel() {
+  if (!session.connected) return null;
+  if (isDemo()) return t('Demo mode');
+  const usb = device.usbDevice;
+  if (!usb) return null;
+  if (usb.vendorId === 0x057e && usb.productId === 0x2009) return t('Switch mode');
+  if (usb.vendorId === 0x2e8a) return t('Steam mode');
+  return null;
+}
+
 /** Shared connect flow used by the app bar, Home and empty states. */
 export async function connectController() {
   if (!navigator.usb && !isDemo()) {
@@ -45,9 +62,8 @@ export async function connectController() {
     return false;
   }
   try {
-    const result = await session.connect();
-    if (result === true && session.connected) toast(t('Connected to {name}', { name: session.info.name }), { tone: 'green' });
-    return result;
+    // No "connected" toast: the app bar chip and Home already show the controller and its mode.
+    return await session.connect();
   } catch (err) {
     console.error(err);
     toast(err?.message?.includes('Access denied')
@@ -115,7 +131,9 @@ export function createShell(root) {
     const connected = st === 'connected';
     chipDot.className = `dot tone-${connected ? 'green' : st === 'connecting' ? 'yellow' : st === 'legacy' ? 'red' : 'lavender'}${connected ? ' live' : ''}`;
     chipName.textContent = connected ? session.info.name : st === 'legacy' ? t('Legacy firmware') : t('No controller');
-    chipSub.textContent = connected ? (isDemo() ? t('Demo mode') : t('Connected')) : st === 'connecting' ? t('Connecting…') : t('Not connected');
+    const mode = currentModeLabel(); // e.g. "Switch mode": what the controller is running as right now
+    chipSub.textContent = connected ? (mode || t('Connected')) : st === 'connecting' ? t('Connecting…') : t('Not connected');
+    chip.title = mode ? t('Running in {mode}', { mode }) : '';
     chip.classList.toggle('demo', isDemo());
 
     connectBtn.setLabel(connected || st === 'legacy' ? t('Disconnect') : st === 'connecting' ? t('Connecting…') : t('Connect'));
@@ -145,9 +163,11 @@ export function createShell(root) {
 
   async function onConnectClick() {
     if (session.state === 'connected' || session.state === 'legacy') {
-      if (session.dirty.size && !confirm(t('You have unsaved changes. Disconnect anyway? They will be lost when the controller powers off.'))) return;
-      await session.disconnect();
-      toast(t('Controller disconnected'), { tone: 'lavender' });
+      if (session.dirty.size && !await confirmDialog({
+        title: t('Disconnect without saving?'), confirmLabel: t('Disconnect'), danger: true,
+        message: t('You have unsaved changes. Disconnect anyway? They will be lost when the controller powers off.'),
+      })) return;
+      await session.disconnect(); // the chip shows "No controller"; no toast needed
     } else {
       await connectController();
     }
@@ -157,10 +177,23 @@ export function createShell(root) {
     saveBtn.disabled = true;
     saveBtn.dataset.state = 'busy';
     const ok = await session.save().catch(() => false);
-    delete saveBtn.dataset.state;
     saveBtn.disabled = !session.connected;
-    toast(ok ? t('Saved to controller') : t('Save failed — check the connection and try again'), { tone: ok ? 'green' : 'red' });
     renderChrome();
+    // Success shows on the button itself (green check + "Saved"); only a failure needs a toast.
+    if (ok) {
+      saveBtn.dataset.state = 'ok';
+      saveBtn.setLabel(t('Saved'));
+      saveBtn.querySelector('use')?.setAttribute('href', saveBtn.querySelector('use').getAttribute('href').replace(/#i-.*/, '#i-check'));
+      clearTimeout(onSave.timer);
+      onSave.timer = setTimeout(() => {
+        delete saveBtn.dataset.state;
+        saveBtn.setLabel(t('Save'));
+        saveBtn.querySelector('use')?.setAttribute('href', saveBtn.querySelector('use').getAttribute('href').replace(/#i-.*/, '#i-save'));
+      }, 1600);
+    } else {
+      delete saveBtn.dataset.state;
+      toast(t('Save failed — check the connection and try again'), { tone: 'red', timeout: 5000 });
+    }
   }
 
   // ---- Pages -----------------------------------------------------------------------------

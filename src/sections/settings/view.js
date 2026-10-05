@@ -99,6 +99,6 @@ export function mount(root, { params }) {
   const apply = (p) => { if (['dark', 'light', 'system'].includes(p.theme)) prefs.set('theme', p.theme); };
   apply(params);
   const appearance = appearanceCard();
-  root.append(appearance, behaviorCard(), installCard(), aboutAppCard());
+  root.append(h('div.card-grid', appearance, behaviorCard(), installCard(), aboutAppCard()));
   return { destroy: () => appearance.cleanup?.(), update: apply };
 }
