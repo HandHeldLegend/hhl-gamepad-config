@@ -9,7 +9,7 @@ import { prefs } from '../../app/prefs.js';
 import { pwa } from '../../app/pwa.js';
 import { isDemo, startDemo, stopDemo } from '../../device/mock.js';
 import { DEBUG, debugForceUpdate } from '../../firmware/updater.js';
-import { t, N_, LANGUAGES, detectLanguage } from '../../i18n/index.js';
+import { t, N_, LANGUAGES, detectLanguage, setLanguage } from '../../i18n/index.js';
 
 const THEMES = [
   { value: 'dark', label: N_('Dark'), icon: 'moon' },
@@ -25,7 +25,7 @@ function appearanceCard() {
   const language = select({
     options: [{ value: 'auto', label: t('Automatic ({language})', { language: auto.native }) }, ...LANGUAGES.map((l) => ({ value: l.code, label: l.native }))],
     value: prefs.get('language') || 'auto', ariaLabel: t('Language'),
-    onChange: (v) => prefs.set('language', v),
+    onChange: (v) => setLanguage(v),
   });
   const el = card({ title: t('Appearance'), icon: 'palette', tone: 'lavender' },
     field({ label: t('Language'), description: t('Automatic uses your device’s language. Translations are new — tell us if something reads oddly.'), control: language }),

@@ -26,9 +26,26 @@ import { onRoute, currentRoute, navigate, setParams } from './router.js';
 import { prefs } from './prefs.js';
 import { pwa } from './pwa.js';
 import { applyFromRoute } from '../settings/apply.js';
-import { t, i18n } from '../i18n/index.js';
+import { t, i18n, LANGUAGES, detectLanguage, setLanguage } from '../i18n/index.js';
 
 const WIDE = matchMedia('(min-width: 960px)');
+
+/**
+ * App bar language picker: a globe with the current language's short name over a native <select>
+ * (keyboard, screen reader and phone pickers for free). Its label is in all three languages, so
+ * anyone can find it whatever language the app is showing.
+ */
+function languagePicker() {
+  const SHORT = { en: 'EN', es: 'ES', ja: '日本語' };
+  const label = 'Language · Idioma · 言語';
+  const auto = LANGUAGES.find((l) => l.code === detectLanguage());
+  const sel = h('select.lang-pick-select', { 'aria-label': label, title: label, onchange: (e) => setLanguage(e.target.value) },
+    h('option', { value: 'auto' }, t('Automatic ({language})', { language: auto.native })),
+    LANGUAGES.map((l) => h('option', { value: l.code, lang: l.code }, l.native)));
+  // A ?lang= link shows that language; otherwise the saved choice (or Automatic).
+  sel.value = new URLSearchParams(location.search).get('lang') ? i18n.lang : (prefs.get('language') || 'auto');
+  return h('div.lang-pick', icon('globe'), h('span.lang-pick-code', { 'aria-hidden': 'true' }, SHORT[i18n.lang] || i18n.lang.toUpperCase()), sel);
+}
 
 /** Small "BETA" pill for sections marked beta in registry.js. */
 export function betaBadge() {
@@ -106,7 +123,7 @@ export function createShell(root) {
     const settingsBtn = button({ icon: 'settings', variant: 'ghost', title: t('App settings'), onClick: () => navigate('settings') });
     settingsBtn.classList.add('appbar-settings');
 
-    const appbar = h('header.appbar', brand, h('div.spacer'), chip, installBtn, saveBtn, connectBtn, settingsBtn);
+    const appbar = h('header.appbar', brand, h('div.spacer'), chip, installBtn, saveBtn, connectBtn, languagePicker(), settingsBtn);
 
     // ---- Sidebar -------------------------------------------------------------------------
     const nav = h('nav.sidebar', { 'aria-label': t('Sections') });

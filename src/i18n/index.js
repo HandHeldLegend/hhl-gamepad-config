@@ -44,7 +44,7 @@ export function detectLanguage(languages = navigator.languages || [navigator.lan
   return 'en';
 }
 
-const urlLang = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('lang');
+let urlLang = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('lang');
 
 /** The language currently in effect. */
 export function currentLanguage() {
@@ -111,6 +111,21 @@ async function apply() {
   dict = nextDict;
   document.documentElement.lang = lang;
   if (changed) for (const fn of listeners) fn(lang);
+}
+
+/**
+ * Choose a language ('auto' or a code) from the UI. A `?lang=` override from the URL is dropped, so
+ * the pick takes effect now and is remembered for later visits.
+ */
+export function setLanguage(value) {
+  if (urlLang) {
+    urlLang = null;
+    const url = new URL(location.href);
+    url.searchParams.delete('lang');
+    history.replaceState(history.state, '', url);
+  }
+  if ((prefs.get('language') || 'auto') === value) apply();
+  else prefs.set('language', value);
 }
 
 /** Load the active language before the first render. Re-applies whenever the preference changes. */
