@@ -309,4 +309,5 @@ export default {
   "How to connect": "Cómo conectar",
   "Pairing over Bluetooth:": "Emparejar por Bluetooth:",
   "unplug the controller, then hold Start (+) while you turn it on.": "desconecta el control y mantén pulsado Start (+) mientras lo enciendes.",
+  "Connected, but this controller didn’t send some settings ({blocks}). Those stay unchanged on the controller. A firmware update usually fixes this.": "Conectado, pero este control no envió algunos ajustes ({blocks}). Esos ajustes no se modificarán en el control. Actualizar el firmware suele solucionarlo.",
 };

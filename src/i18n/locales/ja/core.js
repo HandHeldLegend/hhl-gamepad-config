@@ -309,4 +309,5 @@ export default {
   "How to connect": "接続方法",
   "Pairing over Bluetooth:": "Bluetoothでのペアリング：",
   "unplug the controller, then hold Start (+) while you turn it on.": "ケーブルを抜いてから、スタート（+）を押しながら電源を入れてください。",
+  "Connected, but this controller didn’t send some settings ({blocks}). Those stay unchanged on the controller. A firmware update usually fixes this.": "接続しましたが、このコントローラーから一部の設定（{blocks}）を受信できませんでした。これらの設定はコントローラー上で変更されません。通常はファームウェアを更新すると解決します。",
 };

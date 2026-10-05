@@ -88,7 +88,14 @@ export async function connectController() {
   }
   try {
     // No "connected" toast: the app bar chip and Home already show the controller and its mode.
-    return await session.connect();
+    const ok = await session.connect();
+    // Some firmware doesn't serve every settings block; the app connects anyway (see device.missing).
+    const missing = device.missing?.config || [];
+    if (ok === true && missing.length) {
+      toast(t('Connected, but this controller didn’t send some settings ({blocks}). Those stay unchanged on the controller. A firmware update usually fixes this.', { blocks: missing.join(', ') }),
+        { tone: 'yellow', timeout: 10000 });
+    }
+    return ok;
   } catch (err) {
     console.error(err);
     // On Linux, "Access denied" almost always means the udev rule is missing (see linux.js).

@@ -87,6 +87,7 @@ export class HojaDevice extends EventTarget {
   #inputJoysticks = false; // last stream chosen with setInputMode (re-sent by the watchdog)
   #watchdog = 0;
   #rearmAt = 0;
+  #streaming = false;      // setInputMode() was called: the watchdog only re-arms a stream we asked for
   #usbListenerInstalled = false;
 
   // Pending read/command state, filled in by the report parser.
@@ -98,6 +99,13 @@ export class HojaDevice extends EventTarget {
   config = {};
   /** Static (read-only) info blocks keyed by name ('device', 'battery', ...). */
   static = {};
+  /**
+   * Blocks the controller didn't answer while connecting, e.g. {config: ['rgb'], static: []}.
+   * Older or board-specific firmware may not serve every block; like hoja2 we connect anyway, but a
+   * config block that was never read is never written back (it would overwrite real settings with
+   * blanks). See sendBlock().
+   */
+  missing = { config: [], static: [] };
 
   constructor() {
     super();
@@ -112,6 +120,7 @@ export class HojaDevice extends EventTarget {
   #resetMemory() {
     for (const b of this.#configTable) this.config[b.key] = createStruct(b.struct);
     for (const b of this.#staticTable) this.static[b.key] = createStruct(b.struct);
+    this.missing = { config: [], static: [] };
   }
 
   get isConnected() { return this.#connected; }
@@ -183,6 +192,7 @@ export class HojaDevice extends EventTarget {
 
     this.#usb = usb;
     this.#connected = true;
+    this.#streaming = false;
     this.#resetMemory();
     this.#installDisconnectListener();
     this.#lastReportAt = performance.now();
@@ -201,6 +211,7 @@ export class HojaDevice extends EventTarget {
     clearInterval(this.#watchdog);
     this.#watchdog = setInterval(() => {
       if (!this.#connected || !this.#usb) { clearInterval(this.#watchdog); return; }
+      if (!this.#streaming) return; // nothing requested yet (e.g. still reading blocks while connecting)
       const now = performance.now();
       if (now - this.#lastReportAt < STREAM_STALL_MS || now - this.#rearmAt < STREAM_STALL_MS) return;
       this.#rearmAt = now;
@@ -364,15 +375,33 @@ export class HojaDevice extends EventTarget {
   }
 
   readAllConfig() {
-    return this.#exclusive(async () => {
-      for (const b of this.#configTable) await this.#readBlock('config', b.index);
-    });
+    return this.#exclusive(() => this.#readAll('config', this.#configTable));
   }
 
   readAllStatic() {
-    return this.#exclusive(async () => {
-      for (const b of this.#staticTable) await this.#readBlock('static', b.index);
-    });
+    return this.#exclusive(() => this.#readAll('static', this.#staticTable));
+  }
+
+  /**
+   * Read every block of one kind. A block that doesn't answer is recorded in `missing` instead of
+   * failing the whole connection (hoja2 behaved the same way). After the first miss the timeout
+   * drops, so a firmware without several blocks doesn't stall the connect for long.
+   */
+  async #readAll(kind, table) {
+    let timeout = 3000;
+    for (const b of table) {
+      try {
+        await this.#readBlock(kind, b.index, timeout);
+      } catch (err) {
+        if (!this.#connected) throw err;
+        console.warn(`[device] ${kind} block ${b.index} (${b.key}) didn't answer; continuing without it`);
+        this.missing[kind].push(b.key);
+        timeout = 1000;
+      }
+    }
+    if (this.missing[kind].length === table.length) {
+      throw new Error('The controller didn’t answer any settings requests.');
+    }
   }
 
   /**
@@ -382,6 +411,10 @@ export class HojaDevice extends EventTarget {
   sendBlock(block) {
     const index = typeof block === 'string' ? this.blockIndex(block) : block;
     const entry = this.#configTable.find((b) => b.index === index);
+    if (this.missing.config.includes(entry.key)) {
+      console.warn(`[device] not writing ${entry.key}: it was never read from this controller`);
+      return Promise.resolve();
+    }
     return this.#exclusive(async () => {
       const buf = this.config[entry.key].buffer;
       for (let idx = 0, pos = 0; pos < buf.length; idx++, pos += CHUNK_MAX) {
@@ -433,6 +466,7 @@ export class HojaDevice extends EventTarget {
   /** Choose which live input stream the device sends: joysticks (0xFE) or raw hover (0xFF). */
   setInputMode(joysticks = false) {
     this.#inputJoysticks = !!joysticks;
+    this.#streaming = true;
     return this.sendReport(REPORT.INPUT_MODE, [0x00, joysticks ? 254 : 255]);
   }
 
