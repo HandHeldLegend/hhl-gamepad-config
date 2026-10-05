@@ -29,8 +29,11 @@ const be16 = (v, i) => (v.getUint8(i) << 8) | v.getUint8(i + 1);
  *   inputs top out at 64 (see the layout above).
  */
 export function decodeInputReport(v) {
+  if (!v || v.byteLength < 1) return null;
   const id = v.getUint8(0);
   if (id !== 0xff && id !== 0xfe) return null;
+  // Truncated reports (shorter than the fields we read) are dropped rather than throwing.
+  if (v.byteLength < (id === 0xff ? 17 + INPUT_COUNT : 31)) return null;
   const out = {
     kind: id === 0xff ? 'raw' : 'joysticks',
     charging: !!(v.getUint8(1) & 1),

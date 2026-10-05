@@ -46,6 +46,12 @@ const EP = 2;
 const ITF = 1;
 const CHUNK_MAX = 32;
 const IN_FLIGHT = 2; // concurrent IN transfers (see #pollLoop)
+/**
+ * Stream watchdog. If the firmware can't deliver a stream report in time it drops out of WebUSB
+ * streaming (webusb.c _webusb_mark_unready) until the next command arrives. When no report has
+ * arrived for STREAM_STALL_MS we re-send the current input mode, which re-arms it.
+ */
+const STREAM_STALL_MS = 600;
 
 const REPORT = {
   READ_CONFIG: 1,
@@ -77,6 +83,10 @@ export class HojaDevice extends EventTarget {
   #usb = null;
   #connected = false;
   #queue = Promise.resolve();
+  #lastReportAt = 0;   // performance.now() of the last IN report of any kind
+  #inputJoysticks = false; // last stream chosen with setInputMode (re-sent by the watchdog)
+  #watchdog = 0;
+  #rearmAt = 0;
   #usbListenerInstalled = false;
 
   // Pending read/command state, filled in by the report parser.
@@ -175,7 +185,9 @@ export class HojaDevice extends EventTarget {
     this.#connected = true;
     this.#resetMemory();
     this.#installDisconnectListener();
+    this.#lastReportAt = performance.now();
     this.#pollLoop();
+    this.#startWatchdog();
 
     if (await this.#probeLegacy()) return true; // 'legacy' event already emitted
 
@@ -185,7 +197,19 @@ export class HojaDevice extends EventTarget {
     return true;
   }
 
+  #startWatchdog() {
+    clearInterval(this.#watchdog);
+    this.#watchdog = setInterval(() => {
+      if (!this.#connected || !this.#usb) { clearInterval(this.#watchdog); return; }
+      const now = performance.now();
+      if (now - this.#lastReportAt < STREAM_STALL_MS || now - this.#rearmAt < STREAM_STALL_MS) return;
+      this.#rearmAt = now;
+      this.sendReport(REPORT.INPUT_MODE, [0x00, this.#inputJoysticks ? 254 : 255]).catch(() => {});
+    }, 250);
+  }
+
   async disconnect() {
+    clearInterval(this.#watchdog);
     if (!this.#usb) return true;
     const usb = this.#usb;
     this.#connected = false;
@@ -229,18 +253,28 @@ export class HojaDevice extends EventTarget {
   }
 
   async #readLoop() {
+    let failures = 0;
     while (this.#connected && this.#usb) {
       try {
         const result = await this.#usb.transferIn(EP, 64);
-        if (result.data) this.#parse(result.data);
+        if (result.status === 'stall') { await this.#usb.clearHalt('in', EP); continue; }
+        // Zero-length packets happen on the bulk endpoint; ignore them rather than parse.
+        if (result.data && result.data.byteLength > 0) {
+          this.#lastReportAt = performance.now();
+          this.#parse(result.data);
+        }
+        failures = 0;
       } catch (err) {
-        if (this.#connected) console.warn('[device] poll stopped', err?.message || err);
-        return;
+        if (!this.#connected || !this.#usb) return;
+        // Transient transfer errors: keep the loop alive (a dead loop silently stops all input).
+        if (++failures > 20) { console.warn('[device] poll stopped', err?.message || err); return; }
+        await sleep(20);
       }
     }
   }
 
   #parse(view) {
+    if (view.byteLength < 1) return;
     try {
       switch (view.getUint8(0)) {
         case REPORT.READ_CONFIG: return this.#onChunk(view, 'config');
@@ -398,6 +432,7 @@ export class HojaDevice extends EventTarget {
 
   /** Choose which live input stream the device sends: joysticks (0xFE) or raw hover (0xFF). */
   setInputMode(joysticks = false) {
+    this.#inputJoysticks = !!joysticks;
     return this.sendReport(REPORT.INPUT_MODE, [0x00, joysticks ? 254 : 255]);
   }
 
