@@ -29,6 +29,8 @@
 
 <symbol id="i-arena" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l13 13M14.4 18.6l4.2-4.2M16.5 16.5L20 20"/><path d="M20.5 3.5l-13 13M9.6 18.6l-4.2-4.2M7.5 16.5L4 20"/></g></symbol>
 
+<symbol id="i-platformer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10.5l7.5 3.75v4.5L12 22.5l-7.5-3.75v-4.5z"/><path d="M4.5 14.25L12 18l7.5-3.75M12 18v4.5"/><circle cx="12" cy="4.5" r="2.5"/></g></symbol>
+
 <symbol id="i-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/></g></symbol>
 
 <symbol id="i-home" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9v11a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/></g></symbol>

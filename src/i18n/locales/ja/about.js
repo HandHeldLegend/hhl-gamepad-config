@@ -5,7 +5,7 @@
 export default {
   "Button glyphs on the Input page (assets/glyphs/)": "入力ページのボタンアイコン（assets/glyphs/）",
   "Controller model in the Motion page live view (assets/3d/supergamepad.stl)": "モーションページのライブビューのコントローラーモデル（assets/3d/supergamepad.stl）",
-  "3D rendering on the Motion page (vendor/three/)": "モーションページの3D描画（vendor/three/）",
+  "3D rendering on the Motion and 3D Platformer pages (vendor/three/)": "モーションページと3Dアクションページの3D描画（vendor/three/）",
   "Updating the ESP32 wireless module from the Wireless page (vendor/esptool-js/)": "ワイヤレスページからのESP32ワイヤレスモジュールのアップデート（vendor/esptool-js/）",
   "Compression while writing ESP32 firmware (vendor/esptool-js/)": "ESP32ファームウェア書き込み時の圧縮（vendor/esptool-js/）",
   "The “Full reset — erase flash” recovery image (firmware/universal_flash_nuke.uf2)": "「完全リセット — フラッシュを消去」の復旧イメージ（firmware/universal_flash_nuke.uf2）",

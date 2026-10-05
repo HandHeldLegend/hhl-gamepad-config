@@ -7,7 +7,7 @@ Third-party work used by HHL Gamepad Config. This list is mirrored in the app (*
 |---|---|---|---|
 | [Input Prompts](https://kenney.nl/assets/input-prompts) | Kenney | CC0 1.0 | Button glyphs on the Input page (`assets/glyphs/`) |
 | ["Nintendo Gamepad" 3D model](https://skfb.ly/PyDP) | Nidal Ghonaim | [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) | Controller model on the Motion page (`assets/3d/supergamepad.stl`) |
-| [three.js](https://threejs.org) r128 + STLLoader | three.js authors | MIT (`vendor/three/LICENSE`) | 3D rendering on the Motion page (`vendor/three/`) |
+| [three.js](https://threejs.org) r128 + STLLoader | three.js authors | MIT (`vendor/three/LICENSE`) | 3D rendering on the Motion and 3D Platformer pages (`vendor/three/`) |
 | [esptool-js](https://github.com/espressif/esptool-js) 0.4.3 | Espressif Systems | Apache-2.0 (`vendor/esptool-js/LICENSE`) | ESP32 wireless module updates (`vendor/esptool-js/`) |
 | [pako](https://github.com/nodeca/pako) 2.1.0 (bundled in esptool-js) | Andrei Tuputcyn, Vitaly Puzrin | MIT AND Zlib (`vendor/esptool-js/LICENSE-pako`, `NOTICE.txt`) | Compression while writing ESP32 firmware |
 | CH340 WebUSB serial driver | ported from `hoja_esptool/src/plugin/niceSerial.js` (Hand Held Legend) | — | Android ESP32 updates without Web Serial (`src/sections/wireless/ch34x-webusb.js`) |
@@ -17,6 +17,10 @@ Third-party work used by HHL Gamepad Config. This list is mirrored in the app (*
 
 The Super Famicom-inspired palette is a tribute; this project is not affiliated with or endorsed by Nintendo.
 The Gameplay Arena is original work inspired by classic platform fighters and contains no game code or assets.
+The 3D Platformer is original work: its hero, course, art and code were written for this app. Its movement
+(speeds, jump heights, frame windows) was tuned using the [n64decomp/sm64](https://github.com/n64decomp/sm64)
+decompilation and public movement write-ups as a **behaviour reference only** — no code, comments, data tables or
+assets were copied (see `src/sections/platformer/constants.js`).
 
 ## pico-universal-flash-nuke — BSD 3-Clause License
 

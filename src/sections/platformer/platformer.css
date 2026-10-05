@@ -1,0 +1,67 @@
+/* platformer.css — 3D Platformer. Theme tokens only (see css/tokens.css). */
+
+.plat-play { display: flex; flex-direction: column; gap: var(--space-3); }
+.plat-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+.plat-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+.plat-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 240px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface-sunken);
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+  outline: none;
+  touch-action: manipulation;
+}
+.plat-stage:focus-visible { border-color: var(--accent); }
+@media (max-width: 560px) { .plat-stage { aspect-ratio: 4 / 3.4; } }
+.plat-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.plat-hud {
+  position: absolute; top: var(--space-2); left: var(--space-2); right: var(--space-2);
+  display: flex; justify-content: flex-start; pointer-events: none;
+}
+.plat-chip, .plat-action {
+  display: inline-flex; align-items: center; gap: 6px; min-width: 0;
+  padding: 3px 10px; border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  border: 1px solid var(--border);
+  font-size: var(--text-xs); font-weight: 600; color: var(--text-muted);
+}
+.plat-chip-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60vw; }
+.plat-chip-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); flex: none; }
+.plat-chip[data-source="usb"] .plat-chip-dot { background: var(--blue); }
+
+.plat-action {
+  position: absolute; left: var(--space-2); bottom: var(--space-2);
+  color: var(--text); font-size: var(--text-sm);
+  border-left: 3px solid var(--blue);
+  pointer-events: none;
+}
+.plat-action[hidden] { display: none; }
+
+.plat-overlay {
+  position: absolute; inset: 0;
+  display: grid; place-items: center; padding: var(--space-4);
+  background: color-mix(in srgb, var(--bg) 45%, transparent);
+  animation: fade-in var(--dur-med) var(--ease-out) both;
+}
+.plat-overlay[hidden] { display: none; }
+.plat-overlay-card {
+  max-width: 420px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-2);
+}
+
+.plat-hint { margin: 0; }
+
+.plat-moves { margin: 0; font-size: var(--text-sm); }
+.plat-moves dt { font-weight: 700; margin-top: var(--space-3); }
+.plat-moves dt:first-child { margin-top: 0; }
+.plat-moves dd { margin: 2px 0 0; color: var(--text-muted); }

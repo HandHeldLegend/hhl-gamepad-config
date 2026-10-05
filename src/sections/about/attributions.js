@@ -25,7 +25,7 @@ export const ATTRIBUTIONS = [
     author: 'three.js authors',
     url: 'https://threejs.org',
     license: 'MIT',
-    usedFor: N_('3D rendering on the Motion page (vendor/three/)'),
+    usedFor: N_('3D rendering on the Motion and 3D Platformer pages (vendor/three/)'),
   },
   {
     name: 'esptool-js 0.4.3',

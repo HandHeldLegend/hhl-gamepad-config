@@ -70,7 +70,7 @@
     ids = [...holder.querySelectorAll('symbol')].map(s => s.id);
     prefix = '';
   } catch (e) {
-    ids = 'gamepad input joystick snapback rgb motion haptics user battery wireless firmware settings arena home back chevron-right chevron-down close menu check warning info help sun moon system download upload refresh external usb unplug save install trash plus minus play stop calibrate sparkle link copy palette sliders dpad trigger bolt'
+    ids = 'gamepad input joystick snapback rgb motion haptics user battery wireless firmware settings arena platformer home back chevron-right chevron-down close menu check warning info help sun moon system download upload refresh external usb unplug save install trash plus minus play stop calibrate sparkle link copy palette sliders dpad trigger bolt'
       .split(' ').map(n => 'i-' + n);
   }
   const icon = id => `<svg aria-hidden="true"><use href="${prefix}#${id}"/></svg>`;

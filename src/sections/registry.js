@@ -115,6 +115,13 @@ export const SECTIONS = [
     load: () => import('./arena/view.js'),
   },
   {
+    id: 'platformer', title: '3D Platformer', icon: 'platformer', tone: 'blue', group: 'play', device: true, requires: null, beta: true,
+    summary: 'Run, jump, long jump, ground pound and wall kick around a small 3D test course with your controller.',
+    keywords: ['3d', 'platformer', 'test', 'play', 'game', 'camera', 'analog', 'long jump', 'wall kick', 'triple jump', 'ground pound'],
+    params: { tab: 'play | help' },
+    load: () => import('./platformer/view.js'),
+  },
+  {
     id: 'settings', title: 'App settings', icon: 'settings', tone: 'lavender', group: 'app', device: false, requires: null,
     summary: 'Theme (dark, light or system), motion, install and updates.',
     keywords: ['theme', 'dark mode', 'light mode', 'install app', 'offline'],

@@ -15,6 +15,7 @@ import wireless from './wireless.js';
 import gamepad from './gamepad.js';
 import user from './user.js';
 import arena from './arena.js';
+import platformer from './platformer.js';
 
 // core is spread LAST so shared words (Cancel, Reset, Save…) keep one translation app-wide.
-export default { ...home, ...firmware, ...settings, ...about, ...input, ...joysticks, ...snapback, ...motion, ...rgb, ...haptics, ...battery, ...wireless, ...gamepad, ...user, ...arena, ...core };
+export default { ...home, ...firmware, ...settings, ...about, ...input, ...joysticks, ...snapback, ...motion, ...rgb, ...haptics, ...battery, ...wireless, ...gamepad, ...user, ...arena, ...platformer, ...core };
