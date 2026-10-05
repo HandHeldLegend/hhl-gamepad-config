@@ -92,11 +92,24 @@ export function defaultBindings(kind, ctx = {}) {
       start: [c('START')], select: [c('SELECT')], step: [c('RIGHT')],
     };
   }
+  // Axes: the W3C standard layout is [LX, LY, RX, RY], but pads the browser doesn't recognize (e.g. some
+  // HID modes) can put analog triggers between the sticks. ctx.rest (each axis's learned resting value) tells
+  // them apart: sticks rest near 0, triggers near ±1. Centered axes → main stick then C-stick; axes
+  // resting at −1 → analog triggers. Without rest data, assume the standard layout.
+  let lx = { i: 0, inv: false }; let ly = { i: 1, inv: true }; let cx = { i: 2, inv: false }; let cy = { i: 3, inv: true };
+  const trigAxes = [];
+  if (ctx.rest?.length) {
+    const centered = []; ctx.rest.forEach((v, i) => { if (Math.abs(v) < 0.5) centered.push(i); else if (v <= -0.5) trigAxes.push(i); });
+    if (centered.length >= 2) { lx = { i: centered[0], inv: false }; ly = { i: centered[1], inv: true }; }
+    if (centered.length >= 4) { cx = { i: centered[2], inv: false }; cy = { i: centered[3], inv: true }; }
+    else if (trigAxes.includes(2) || trigAxes.includes(3)) { cx = null; cy = null; } // no C-stick axes: leave unbound
+  }
+  const trig = (n) => (trigAxes[n] != null ? [{ t: 'a', i: trigAxes[n], full: true }] : []);
   return {
-    lx: { i: 0, inv: false }, ly: { i: 1, inv: true }, cx: { i: 2, inv: false }, cy: { i: 3, inv: true },
+    lx, ly, cx, cy,
     attack: [{ t: 'b', i: faceIndex('A', ctx.mode, labels) ?? 0 }], special: [{ t: 'b', i: faceIndex('B', ctx.mode, labels) ?? 1 }],
     jump: [{ t: 'b', i: faceIndex('X', ctx.mode, labels) ?? 2 }, { t: 'b', i: faceIndex('Y', ctx.mode, labels) ?? 3 }],
-    z: [{ t: 'b', i: 5 }], l: [{ t: 'b', i: 6 }], r: [{ t: 'b', i: 7 }], shield: [{ t: 'b', i: 4 }],
+    z: [{ t: 'b', i: 5 }], l: [...trig(0), { t: 'b', i: 6 }], r: [...trig(1), { t: 'b', i: 7 }], shield: [{ t: 'b', i: 4 }],
     start: [{ t: 'b', i: 9 }], select: [{ t: 'b', i: 8 }], step: [{ t: 'b', i: 15 }],
   };
 }
@@ -243,6 +256,8 @@ export class InputManager extends EventTarget {
     this.missedTaps = 0;                    // Gamepad API source: taps seen over USB that fell between polls
     this.recoveredTaps = 0;                 // … of which were handed to the game
     this.usbDown = new Map();               // mapper code → time it went down (Gamepad API source)
+    this.axisRest = new Map();              // Gamepad.id → learned per-axis resting value (sticks ≈ 0, triggers ≈ −1)
+    this.restSamples = new Map();           // Gamepad.id → samples collected while learning
     this.usbActivityAt = 0;                 // last USB report showing the player pressing/moving something
     this.padChange = new Map();             // pad index → {ts, at}: last time its Gamepad.timestamp changed
     this.padStale = false;                  // matched pad looks frozen while the USB stream shows input
@@ -499,7 +514,7 @@ export class InputManager extends EventTarget {
   bindingsFor(key) {
     const all = store.get('bindings') || {};
     const defaults = key === 'usb' ? defaultBindings('usb', { labels: this.labels })
-      : defaultBindings('gamepad', { mode: padMode(key), labels: this.labels });
+      : defaultBindings('gamepad', { mode: padMode(key), labels: this.labels, rest: this.axisRest.get(key) });
     return { ...defaults, ...(all[key] || {}) };
   }
 
@@ -593,6 +608,7 @@ export class InputManager extends EventTarget {
     const usbFresh = (t) => now - t < 300;
 
     if (gp) {
+      this.#trackRest(gp);
       const map = this.bindingsFor(gp.id);
       const axis = (b) => { const a = gp.axes[b?.i] ?? 0; return b?.inv ? -a : a; };
       const val = (src) => {
@@ -658,6 +674,24 @@ export class InputManager extends EventTarget {
     this.lastPollAt = performance.now();
     this.state = s;
     return s;
+  }
+
+  /**
+   * Learn each axis's resting value once per pad: collect ~1 s of samples after the pad starts sending
+   * real data (Chrome can report zeros before that), take the per-axis median, then lock it for the
+   * session. Sticks rest near 0 and analog triggers near −1, so later stick movement can't reclassify.
+   */
+  #trackRest(gp) {
+    if (this.axisRest.has(gp.id)) return;
+    let r = this.restSamples.get(gp.id);
+    if (!r) { r = []; this.restSamples.set(gp.id, r); }
+    if (!r.length && gp.axes.every((v) => v === 0)) return; // no real data yet
+    r.push([...gp.axes]);
+    if (r.length < 45) return;
+    const med = gp.axes.map((_, i) => { const col = r.map((x) => x[i]).sort((a, b) => a - b); return col[col.length >> 1]; });
+    this.axisRest.set(gp.id, med);
+    this.restSamples.delete(gp.id);
+    this.dispatchEvent(new Event('change'));
   }
 
   #applyUsbSticks(s) {
