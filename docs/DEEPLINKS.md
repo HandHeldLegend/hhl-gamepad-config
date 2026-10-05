@@ -36,7 +36,7 @@ Add `?demo` before the `#` to try any page with a simulated controller, e.g. <ht
 | `#/arena` | Arena | Gameplay testing arena: try your connected controller in a platform-fighter sandbox. | Controller | `tab`: play \| help<br>`mode`: free \| targets (help also opens that tab) |
 | `#/platformer` | 3D Platformer | Run, jump, long jump, ground pound and wall kick around a small 3D test course with your controller. | Controller | `tab`: play \| help |
 | `#/settings` | App settings | Theme (dark, light or system), motion, install and updates. | – | `theme`: dark \| light \| system |
-| `#/about` | Help & about | Troubleshooting, version info and attributions. | – | – |
+| `#/about` | Help & about | Troubleshooting, version info and attributions. | – | `guide`: linux \| connect \| ios (opens that guide) |
 
 If the page needs a controller, it asks the customer to connect first and then opens. If the controller doesn’t
 have the hardware (for example a page that needs `imu` on a controller without a gyro), the page explains that.

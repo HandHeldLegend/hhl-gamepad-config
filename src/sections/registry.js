@@ -131,7 +131,8 @@ export const SECTIONS = [
   {
     id: 'about', title: 'Help & about', icon: 'help', tone: 'lavender', group: 'app', device: false, requires: null,
     summary: 'Troubleshooting, version info and attributions.',
-    keywords: ['help', 'support', 'troubleshooting', 'attributions', 'license', 'version'],
+    keywords: ['help', 'support', 'troubleshooting', 'attributions', 'license', 'version', 'linux', 'udev', 'pairing', 'bluetooth', 'iphone'],
+    params: { guide: 'linux | connect | ios (opens that guide)' },
     load: () => import('./about/view.js'),
   },
 ];
