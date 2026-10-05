@@ -19,7 +19,7 @@
  */
 import { h, loadStyles } from '../../ui/dom.js';
 import { card, badge, kv, field, infoTip, button, callout } from '../../ui/controls.js';
-import { openConnectGuide } from '../../app/connect-guide.js';
+import { openConnectGuide, pairingTipNodes } from '../../app/connect-guide.js';
 import { latestBasebandVersion } from '../../device/session.js';
 import { getSetting } from '../../settings/schema.js';
 import {
@@ -152,10 +152,12 @@ export function mount(root, ctx) {
       h('p.small.muted', fccTranslated)));
 
   // Pairing is the most common question: a one-line answer on top, the full guide one tap away.
+  // Button names come from the controller (connect-guide.js), e.g. "A + Plus" or "East + Start".
   const hasBt = !!(bt.bluetooth_bdr_supported || bt.bluetooth_ble_supported);
-  const pairTip = hasBt && callout({ tone: 'blue', icon: 'wireless', title: t('Pairing over Bluetooth:') },
-    t('unplug the controller, then hold A + Start (+) for Switch or B + Start (+) for Steam while you turn it on.'), ' ',
-    button({ label: t('How to connect'), size: 'sm', variant: 'ghost', icon: 'help', onClick: () => openConnectGuide({ focus: 'bluetooth' }) }));
+  const tipNodes = hasBt && pairingTipNodes(session);
+  const pairTip = tipNodes && callout({ tone: 'blue', icon: 'wireless', title: t('Pairing over Bluetooth:') },
+    ...tipNodes, ' ',
+    button({ label: t('How to connect'), size: 'sm', variant: 'ghost', icon: 'help', onClick: () => openConnectGuide({ focus: 'bluetooth', session }) }));
   if (pairTip) { pairTip.style.marginBottom = 'var(--space-4)'; root.append(pairTip); }
 
   // Side by side on wide pages; the long regulatory text spans the full row.

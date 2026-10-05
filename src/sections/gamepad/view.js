@@ -64,12 +64,11 @@ export function mount(root, { session, navigate }) {
     },
   });
 
-  const btStatic = session.static.bluetooth || {};
   const modeCard = card({
     title: t('Default mode'), subtitle: t('What the controller pretends to be when it starts up.'), icon: 'gamepad', tone: TONE,
     actions: button({
       label: t('How to connect'), icon: 'help', size: 'sm', variant: 'ghost',
-      onClick: () => openConnectGuide({ focus: 'switch', bluetooth: !!(btStatic.bluetooth_bdr_supported || btStatic.bluetooth_ble_supported) }),
+      onClick: () => openConnectGuide({ focus: 'switch', session }),
     }),
   },
     callout({ tone: 'yellow', title: t('Warning.') },
