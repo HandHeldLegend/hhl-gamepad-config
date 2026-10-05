@@ -17,6 +17,9 @@ import { store } from './store.js';
 import { steamHint } from './help.js';
 import { t } from '../../i18n/index.js';
 
+/** Theme keys (theme.js) whose CSS custom property has a different name. */
+const CSS_TOKEN = { muted: 'text-muted', faint: 'text-faint' };
+
 export function renderPlay(panel, app) {
   const { input, game } = app;
   const timers = new Set();
@@ -42,7 +45,7 @@ export function renderPlay(panel, app) {
   // ---- Fighter picker (radio group; arrow keys move the selection) ---------------------------------
   const fighterBtns = FIGHTERS.map((f) => h('button.arena-fighter', {
     type: 'button', role: 'radio', 'data-id': f.id, tabindex: '-1',
-    style: { '--f-body': `var(--${f.look.body})`, '--f-band': `var(--${f.look.band})` },
+    style: { '--f-body': `var(--${CSS_TOKEN[f.look.body] || f.look.body})`, '--f-band': `var(--${CSS_TOKEN[f.look.band] || f.look.band})` },
     onclick: () => chooseFighter(f.id, true),
   }, h('span.arena-fighter-dot', { 'aria-hidden': 'true' }), h('span.arena-fighter-name', f.name), h('span.arena-fighter-feel', t(f.feel))));
   const picker = h('div.arena-fighters', {

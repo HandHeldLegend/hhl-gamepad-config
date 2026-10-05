@@ -408,4 +408,9 @@ export default {
     "Gamepad API の 2 回の読み取りの間に始まって終わった入力は、ブラウザーからは見えません。HOJA USB ストリームが動作していればそこで検出でき、ここで数えてゲームに渡します（デフォルトのボタン割り当ての場合）。",
   "{n} seen over USB · {r} recovered": "USB で {n} 件検出 · {r} 件復元",
   "Arena button mapping was reset: A and B now follow the labels printed on your controller.": "アリーナのボタン割り当てをリセットしました。A と B はコントローラーに印字された表記どおりになります。",
+  // ---- Sir Retro ----
+  "Featherweight · LCD style · neutral, back and up aerials can’t be L-cancelled":
+    "超軽量級 · 液晶ゲーム風 · 空N・空後・空上は Lキャンセル不可",
+  "{move} can’t be L-cancelled · full landing lag":
+    "{move} は Lキャンセルできません · 着地隙そのまま",
 };

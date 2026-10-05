@@ -375,7 +375,10 @@ export class Fighter {
     let lag = FRAMES.LAND;
     if (st === 'airdodge') { lag = FRAMES.WAVELAND; this.reportWaveland(); }
     else if (st === 'helpless') lag = FRAMES.SPECIAL_LAND;
-    else if (this.move?.landLag) lag = this.reportLcancel();
+    else if (this.move?.landLag && this.profile.noLcancel?.includes(this.moveName)) {
+      lag = this.move.landLag;
+      this.feedback(t('{move} can’t be L-cancelled · full landing lag', { move: t(this.move.name) }), 'lavender');
+    } else if (this.move?.landLag) lag = this.reportLcancel();
     this.move = null;
     this.landLag = lag;
     this.setState('landing');

@@ -278,6 +278,15 @@ export class Renderer {
         if (behind) return;
         ctx.beginPath(); ctx.arc(facing * 1.5, R + 0.6, 1.8, Math.PI * 1.1, Math.PI * 2.4); ctx.stroke();
         break;
+      case 'lcd': { // flat silhouette: a nose bump and one arm that flips between two poses
+        if (behind) return;
+        ctx.fillStyle = col(look.body);
+        ctx.beginPath(); ctx.arc(facing * (R - 0.4), 1.6, 1.6, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = col(look.body); ctx.lineWidth = 1.8;
+        const up = this.lcdPose ? 1 : -1;
+        ctx.beginPath(); ctx.moveTo(facing * 3, -1.5); ctx.lineTo(facing * (R + 2.5), -1.5 + up * 3.5); ctx.stroke();
+        break;
+      }
       case 'cap': // small cap brim
         if (behind) return;
         ctx.beginPath(); ctx.ellipse(facing * 2.4, R - 1.6, 4.4, 1.4, 0, 0, Math.PI * 2); ctx.fill();
@@ -298,8 +307,9 @@ export class Renderer {
       ctx.stroke();
     }
 
+    const lcd = f.profile?.look?.acc === 'lcd'; // flat, stepped "LCD game" look: no smear or squash
     // Airdodge afterimages.
-    if (!this.reduced && f.trail.length > 1) {
+    if (!this.reduced && !lcd && f.trail.length > 1) {
       f.trail.forEach((p, i) => {
         ctx.fillStyle = alpha(t.accent, 0.08 + (i / f.trail.length) * 0.12);
         ctx.beginPath(); ctx.arc(p.x, p.y + R, R, 0, Math.PI * 2); ctx.fill();
@@ -318,6 +328,8 @@ export class Renderer {
       const hb = f.move.hitboxes[0];
       lean = clamp(-hb.x * f.facing * 0.012, -0.18, 0.18);
     }
+    if (lcd) { sx = 1; sy = 1; lean = 0; }
+    this.lcdPose = lcd && !this.reduced && (f.ground ? Math.abs(f.vx) > 0.05 : true) ? (Math.floor(game.frame / 8) & 1) : 0;
 
     const cy = fy + R * sy;
     ctx.save();

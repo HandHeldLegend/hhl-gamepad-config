@@ -79,4 +79,12 @@ Japanese
 - [ ] ja "{mode}モードでの送信先" used for both "sends in {mode} mode" and "Send in {mode} mode"
 - [ ] Hall effect: es "efecto Hall", ja "ホール効果"
 
+## Arena
+
+- [ ] Japanese scene terms: ウェーブランド (waveland), レッジダッシュ (ledgedash — maybe 崖絶), ダッシュバック (dash back),
+      ステップ (dash dance), シールドドロップ (shield drop), 傾け入力ゾーン (tilt zone), 盾 ("Sh" light), スティックジャンプ (tap jump)
+- [ ] Japanese 絶 (wavedash), Lキャンセル, 小ジャンプ / 大ジャンプ, 急降下, 空中回避 — confirm with a JP Melee player
+- [ ] Spanish keeps English scene terms (wavedash, L-cancel, dash dance…); "L-cancelar" in Sir Retro's text
+- [ ] Sir Retro description: ja 超軽量級 / 液晶ゲーム風
+
 <!-- More sections are appended as each area's translator reports. -->

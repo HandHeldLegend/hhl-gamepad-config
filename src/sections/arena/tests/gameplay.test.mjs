@@ -190,5 +190,27 @@ console.log('Fighter profiles');
   check(rime.dist > rosette.dist, `low traction slides further: rime ${rime.dist.toFixed(1)} > rosette ${rosette.dist.toFixed(1)}`);
 }
 
+console.log('Sir Retro');
+{
+  const aerialLanding = (id) => {
+    const { game, feed } = newGame({ fighter: id });
+    frames(game, 30);
+    frames(game, 1, (s) => { s.btn.jump = true; });       // short hop
+    frames(game, 6);
+    frames(game, 1, (s) => { s.btn.attack = true; });     // neutral air
+    for (let i = 0; i < 120 && !game.fighter.ground; i++) {
+      const pressNow = game.fighter.vy < 0 && game.fighter.y < 6; // shortly before touching down
+      frames(game, 1, (s) => { s.btn.z = pressNow && !s._done; });
+    }
+    return { lag: game.fighter.landLag, feed };
+  };
+  const dot = aerialLanding('dot'); const retro = aerialLanding('sir-retro');
+  check(dot.feed.some((x) => /^L-cancel ✓/.test(x)), 'dot: neutral air L-cancels');
+  check(retro.feed.some((x) => /can’t be L-cancelled/.test(x)) && !retro.feed.some((x) => /^L-cancel/.test(x)), 'sir-retro: neutral air can’t be L-cancelled (chip explains it)');
+  check(retro.lag > dot.lag, `sir-retro keeps the full landing lag (${retro.lag}f vs ${dot.lag}f)`);
+  const P = (id) => fighterPhysics(FIGHTERS.find((f) => f.id === id));
+  check(P('sir-retro').AIR_SPEED > P('dot').AIR_SPEED, 'sir-retro drifts faster in the air than dot');
+}
+
 if (failures) { console.error(`\n${failures} arena test(s) failed`); process.exit(1); }
 console.log('\nArena gameplay tests passed');

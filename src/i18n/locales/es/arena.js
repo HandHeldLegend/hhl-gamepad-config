@@ -408,4 +408,9 @@ export default {
   "{n} seen over USB · {r} recovered": "{n} vistos por USB · {r} recuperados",
   "Arena button mapping was reset: A and B now follow the labels printed on your controller.":
     "Se restableció la asignación de botones de la Arena: A y B ahora siguen las letras impresas en tu control.",
+  // ---- Sir Retro ----
+  "Featherweight · LCD style · neutral, back and up aerials can’t be L-cancelled":
+    "Peso pluma · estilo LCD · los aéreos neutral, hacia atrás y hacia arriba no se pueden L-cancelar",
+  "{move} can’t be L-cancelled · full landing lag":
+    "{move} no se puede L-cancelar · todo el lag de aterrizaje",
 };
