@@ -134,11 +134,8 @@ function ensureUi() {
       h('span', t('I understand that installing the wrong firmware can brick this controller, and recovery may require opening it up to reach BOOTSEL again.'))));
   picker.hidden = true;
 
-  const tips = callout({ tone: 'blue', title: t('In the folder dialog:') },
-    h('ol', { style: { margin: '6px 0 0', paddingLeft: '1.2em' } },
-      h('li', fillNodes(t('Open the drive named {drive} or {drive2}'), { drive: h('strong', 'RPI-RP2'), drive2: h('strong', 'RP2350') })),
-      h('li', fillNodes(t('Select that drive (you’ll see {file} inside)'), { file: h('strong', 'INFO_UF2.TXT') })),
-      h('li', t('Click Select / Open, not Downloads or Documents'))));
+  const tips = callout({ tone: 'blue', title: t('In the folder window:') },
+    h('ol', { style: { margin: '6px 0 0', paddingLeft: '1.2em' } }, driveSteps().map((s) => h('li', s))));
   tips.hidden = true;
 
   // Keep my settings / Start fresh (Reinstall + installer). Start fresh needs an explicit danger confirm.
@@ -201,6 +198,39 @@ function ensureUi() {
   });
   dlg.result.then(() => { ui = null; onFlashProgress(null); });
   return ui;
+}
+
+/**
+ * Where to find the boot drive in the browser's folder window, for this system. The window is a
+ * folder chooser, so it only lists folders: the drive looks empty (its INFO_UF2.TXT isn't shown),
+ * which the steps call out. Browsers give pages no option to show files there.
+ */
+function driveSteps() {
+  const ua = navigator.userAgent || '';
+  const platform = navigator.userAgentData?.platform || '';
+  const drives = { drive: h('strong', 'RPI-RP2'), drive2: h('strong', 'RP2350') };
+  const b = (text) => h('strong', text);
+  const allow = t('If the browser asks to let this site edit files, allow it. Writing starts right after.');
+  if (/Windows/i.test(platform) || /Windows/i.test(ua)) {
+    return [
+      fillNodes(t('In the left sidebar, click {place}.'), { place: b(t('This PC')) }),
+      fillNodes(t('Click the drive named {drive} (or {drive2}) once to select it.'), drives),
+      fillNodes(t('Press {button}. The drive looks empty in this window because it only shows folders. That’s normal.'), { button: b(t('Select Folder')) }),
+      allow,
+    ];
+  }
+  if (/mac/i.test(platform) || /Macintosh/.test(ua)) {
+    return [
+      fillNodes(t('In the left sidebar under {section}, click {drive} (or {drive2}).'), { section: b(t('Locations')), ...drives }),
+      fillNodes(t('Press {button}. The drive may look empty in this window. That’s normal.'), { button: b(t('Select')) }),
+      allow,
+    ];
+  }
+  return [
+    fillNodes(t('Find {drive} (or {drive2}) in the sidebar with your other drives and select it.'), drives),
+    fillNodes(t('Press {button}. The drive may look empty in this window. That’s normal.'), { button: b(t('Select')) }),
+    allow,
+  ];
 }
 
 function paint(title, text, { tone = 'blue', icon = 'firmware' } = {}) {

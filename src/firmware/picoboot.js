@@ -351,7 +351,8 @@ export async function pico_write_uf2_via_picker(uf2Data) {
 
     let dirHandle;
     try {
-        dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+        // id: the browser reopens this picker where it was last used (usually the boot drive again).
+        dirHandle = await window.showDirectoryPicker({ id: 'hhl-boot-drive', mode: 'readwrite' });
     } catch (error) {
         if (isUserCancelled(error)) throw error;
         const msg = String(error?.message || error);
@@ -365,7 +366,7 @@ export async function pico_write_uf2_via_picker(uf2Data) {
     try {
         await dirHandle.getFileHandle('INFO_UF2.TXT');
     } catch (_) {
-        throw new Error(N_('That folder is not a Pico boot drive. Look for INFO_UF2.TXT on RPI-RP2 or RP2350 and try again.'));
+        throw new Error(N_('That isn’t the controller’s drive. Choose the drive named RPI-RP2 (or RP2350) itself, not a folder on your computer.'));
     }
 
     updateProgress(30, true, t('Writing UF2 to RPI-RP2...'));

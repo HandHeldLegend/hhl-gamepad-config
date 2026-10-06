@@ -141,11 +141,12 @@ The app checks for new firmware each time a controller connects; Home and [Firmw
 available**. Downloads need an internet connection. Keep the controller plugged in throughout.
 
 1. Press **Update now** → **Enter update mode**. The controller restarts into its bootloader.
-2. Flashing usually starts by itself. If the browser asks, press **Update** and allow access to the Pico
-   bootloader (shown as **RP2 Boot**).
+2. Flashing starts by itself if the browser already knows the bootloader. Otherwise the dialog says **One more
+   step: press Update**: press it and pick **RP2 Boot** (or **RP2350 Boot**) in the browser's window.
 3. If direct USB flashing is blocked (common on Windows), the app switches to the **RPI-RP2 drive** method: press
-   **Select RPI-RP2**, and in the folder dialog open the drive named **RPI-RP2** (or **RP2350**; you should see
-   `INFO_UF2.TXT` inside) and choose it. Don’t pick Downloads or Documents.
+   **Select RPI-RP2** and choose the drive itself in the folder window. On Windows it's under **This PC** in the
+   sidebar (then **Select Folder**); on a Mac under **Locations** (then **Select**). The window only lists folders,
+   so the drive looks empty; that's normal. Allow the browser's "edit files" prompt if it appears.
 4. Last resort (no folder picker): **Download UF2**, then copy the file onto the RPI-RP2/RP2350 drive in your file
    manager. The controller reboots when the copy finishes and the drive disappears. That’s normal.
 5. When it says **Update complete**, give the controller a moment to restart and press **Connect**.

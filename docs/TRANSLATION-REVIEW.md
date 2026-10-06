@@ -52,7 +52,7 @@ Japanese
 - [ ] "対戦アクション風" wording in the Arena summary
 
 Both
-- [ ] Text naming OS/browser menus: iOS "Agregar a inicio", Chrome "Instalar app", folder dialog "Select / Open"
+- [ ] Text naming OS/browser menus: iOS "Agregar a inicio", Chrome "Instalar app", folder window "This PC" / "Select Folder" (Windows), "Locations" / "Select" (Mac)
       (Seleccionar / Abrir, 「選択」「開く」); real labels vary by OS version
 - [ ] Setting-validation errors in the apply dialog stay English on purpose (they include setting keys and are shared with AI assistants)
 
