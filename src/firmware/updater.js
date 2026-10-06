@@ -361,7 +361,8 @@ function showBootloaderFlash() {
   panels();
   paint(t('Writing firmware'), t('Don’t unplug the controller. If direct USB flashing is blocked, you’ll get simple steps to pick the RPI-RP2 drive.'));
   setUpdateStatus(t('Bootloader detected'), 40, true);
-  actions({ primary: { label: t('Update'), icon: 'download', run: () => startBootloaderFlash({ allowRequestDevice: true }) }, restart: true });
+  // While writing, Update and Restart would interrupt the write: show Update disabled, no Restart.
+  actions({ primary: { label: t('Update'), icon: 'download', enabled: false, run: () => {} }, dismiss: false });
 }
 
 function showUf2DriveStep() {
@@ -493,13 +494,27 @@ function applyFlashResult(result) {
 
 async function startBootloaderFlash({ allowRequestDevice = true } = {}) {
   if (!st.pendingUrl) { setUpdateStatus(t('No firmware selected.'), 0, false); return false; }
+  if (st.flashing) return false; // a write is already running (auto-start or an earlier click)
   st.stagedImage = null;
   showBootloaderFlash();
   st.mode = 'bootloader-flash';
   // The nuke picked on its own in the installer has no .bin either.
   const uf2Only = st.pendingUrl === NUKE_BUILD.uf2Url;
-  const result = await pico_update_attempt_flash(st.pendingUrl, st.pendingChecksum, { allowRequestDevice, uf2Only });
-  return applyFlashResult(result);
+  let result = false;
+  st.flashing = true;
+  try {
+    result = await pico_update_attempt_flash(st.pendingUrl, st.pendingChecksum, { allowRequestDevice, uf2Only });
+  } finally {
+    st.flashing = false;
+  }
+  if (applyFlashResult(result)) return true;
+  showFlashRetry(() => startBootloaderFlash({ allowRequestDevice: true }));
+  return false;
+}
+
+/** A write ended without finishing: offer Update (retry) and Restart again; picoboot.js left the reason in the status line. */
+function showFlashRetry(run) {
+  actions({ primary: { label: t('Update'), icon: 'download', run }, restart: true });
 }
 
 function showEraseFlash() {
@@ -507,15 +522,24 @@ function showEraseFlash() {
   panels();
   paint(t('Erasing the controller'), t('Wiping settings, calibration and pairings. Don’t unplug the controller. When the erase finishes, it restarts into the bootloader on its own.'), { tone: 'red', icon: 'trash' });
   setUpdateStatus(t('Preparing the erase…'), 0, true);
-  actions({ primary: { label: t('Erase'), icon: 'trash', variant: 'danger', run: () => startEraseFlash({ allowRequestDevice: true }) }, restart: true });
+  actions({ primary: { label: t('Erase'), icon: 'trash', variant: 'danger', enabled: false, run: () => {} }, dismiss: false });
 }
 
 /** Write the universal flash nuke. It has no .bin, so it always goes through the UF2 path. */
 async function startEraseFlash({ allowRequestDevice = true } = {}) {
+  if (st.flashing) return false;
   st.stagedImage = null;
   showEraseFlash();
-  const result = await pico_update_attempt_flash(NUKE_BUILD.uf2Url, null, { allowRequestDevice, uf2Only: true });
-  return applyFlashResult(result);
+  let result = false;
+  st.flashing = true;
+  try {
+    result = await pico_update_attempt_flash(NUKE_BUILD.uf2Url, null, { allowRequestDevice, uf2Only: true });
+  } finally {
+    st.flashing = false;
+  }
+  if (applyFlashResult(result)) return true;
+  actions({ primary: { label: t('Erase'), icon: 'trash', variant: 'danger', run: () => startEraseFlash({ allowRequestDevice: true }) }, restart: true });
+  return false;
 }
 
 function showEraseWait() {
