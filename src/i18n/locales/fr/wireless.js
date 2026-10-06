@@ -121,4 +121,6 @@ export default {
   "Translation for reference only. The English statement above is the official text.": "Traduction fournie à titre indicatif uniquement. La déclaration en anglais ci-dessus fait foi.",
   "Four-digit pairing PIN (0000–9999). Set the same PIN on your WLAN dongle so they pair.": "Code PIN d’appairage à quatre chiffres (0000–9999). Définissez le même code PIN sur votre dongle WLAN pour qu’ils s’appairent.",
   "Only controllers that support the Raspberry Pi WLAN dongle use this. The PIN keeps your dongle from pairing with someone else’s controller nearby. Leading zeros count: 0420 is stored as 420.": "Seules les manettes compatibles avec le dongle WLAN Raspberry Pi l’utilisent. Le code PIN empêche votre dongle de s’appairer avec la manette de quelqu’un d’autre à proximité. Les zéros initiaux comptent : 0420 est enregistré sous la forme 420.",
+  // ---- Wii mode ----
+  "The Wii console paired in Wii mode.": "La console Wii appairée en mode Wii.",
 };

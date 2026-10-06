@@ -12,6 +12,9 @@ import { glyphUrl, TRANSLATED_LABELS } from './mapping.js';
  */
 export const outputName = (label) => (TRANSLATED_LABELS.has(label) ? t(label) : label);
 
+/** Display name of an output mode: brand names (Switch, XInput…) as-is, the descriptive Wii ones translated. */
+export const modeName = (mode) => (mode.family === 'wii' ? t(mode.label) : mode.label);
+
 /**
  * Turn a translated sentence with {placeholders} into DOM children, so parts of it can be markup
  * while the sentence stays whole for translators: rich(t(…), { button: h('strong', …) }).

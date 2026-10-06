@@ -43,7 +43,7 @@ Without USB you can still explore everything with the demo controller (`?demo`, 
 use the [Arena](#/arena).
 
 ## Hold A or B while plugging in
-<!-- topic: config-mode; keywords: hold a, hold b, east, south, plug in, boot mode, config mode, start in, recover mode, wrong mode, default mode -->
+<!-- topic: config-mode; keywords: hold a, hold b, east, south, plug in, boot mode, config mode, start in, recover mode, wrong mode, default mode, d-pad, wii -->
 
 The boot buttons follow the **labels** printed on the face buttons, not their position: **A** = Switch,
 **B** = Steam, **X** = XInput, **Y** = Slippi (on GameCube-style controllers the A button is in the middle, and
@@ -52,22 +52,31 @@ controller in. Controllers without lettered buttons use position instead (East =
 
 - the controller doesn’t show up or won’t connect;
 - you changed **Default mode** on the [Gamepad](#/gamepad) page to something other than Switch or Steam
-  (XInput, Slippi, GameCube, N64, SNES); those modes don’t talk to the app.
+  (XInput, Slippi, GameCube, N64, SNES, Wii); those modes don’t talk to the app.
 
 Keep holding the button until the controller has powered up, then press **Connect**.
 
+Console modes start from the d-pad instead: hold **d-pad left** for SNES, **down** for N64, **right** for
+GameCube and, on controllers with Wii mode, **up** for Wii (see `modes`).
+
 ## Which modes work with the app
-<!-- topic: modes; keywords: mode, output mode, switch, steam, sinput, xinput, slippi, gamecube, n64, snes, default mode, which modes -->
+<!-- topic: modes; keywords: mode, output mode, switch, steam, sinput, xinput, slippi, gamecube, n64, snes, wii, wii remote, nunchuk, classic controller, default mode, which modes -->
 
 Only **Switch** and **Steam** modes talk to HHL Gamepad Config (Steam mode is also called SInput in firmware and older docs). The other output modes, **XInput**
-(Xbox-style for Windows PCs), **Slippi** (GameCube adapter mode for Slippi/Dolphin), **GameCube**, **N64** and
-**SNES**, are for playing, not configuring.
+(Xbox-style for Windows PCs), **Slippi** (GameCube adapter mode for Slippi/Dolphin), **GameCube**, **N64**,
+**SNES** and **Wii**, are for playing, not configuring.
 
 - **Default mode** ([Gamepad](#/gamepad)) chooses the mode the controller starts in. After changing it to a
   non-config mode, hold A or B while plugging in to get back to the app (see `config-mode`).
 - Button mapping is stored **per output mode**: on the [Input](#/input) page choose the profile
-  (`#/input?mode=switch|xinput|snes|n64|gamecube|sinput`) before remapping.
+  (`#/input?mode=switch|xinput|snes|n64|gamecube|sinput|wii-nunchuk|wii-classic|wii-sideways`) before remapping.
 - Native GameCube/N64 and SNES output only exist on controllers with that hardware support.
+- **Wii** mode (controllers with the RM2 wireless module; the app shows it only when the controller supports
+  it) makes the controller a Wii Remote over Bluetooth. Hold **d-pad up** while turning it on (the status LED
+  turns pink), then press **SYNC** on the Wii to pair. A short tap of the power button cycles Nunchuk →
+  Classic Controller Pro → sideways Wii Remote (the LED flashes white / blue / yellow). Each has its own layout
+  under **Wii** on the [Input](#/input) page. The gyro always aims the pointer; gyro sensitivity on
+  [Motion](#/motion) scales it.
 
 ## USB data cables
 <!-- topic: data-cables; keywords: cable, usb cable, charge only, charging cable, data cable, hub, adapter, nothing happens -->
@@ -194,7 +203,7 @@ status and, on controllers with an updatable external wireless module (ESP32), i
   it can break existing pairings, so it isn’t settable by link.
 - The app doesn’t pair the controller with a console or PC itself; follow the controller’s manual for the pairing
   steps (the Firmware page links it when available). The firmware remembers the paired host separately for
-  Switch and Steam modes.
+  Switch and Steam modes (and Wii mode, where supported).
 
 ## Battery status
 <!-- topic: battery-status; keywords: battery, charging, charged, discharging, pmic, fuel gauge, not present, not responding, no battery, unconfirmed, led color, percent, n/a -->
@@ -247,7 +256,7 @@ plays a pulse so you can feel it. HD-haptics controllers also offer **Trigger ha
 Press **Save** to keep them.
 
 ## Pairing over Bluetooth
-<!-- topic: bluetooth-pairing; keywords: bluetooth, pair, pairing, sync, wireless, switch, steam, change grip, pro controller wired communication -->
+<!-- topic: bluetooth-pairing; keywords: bluetooth, pair, pairing, sync, wireless, switch, steam, wii, change grip, pro controller wired communication -->
 
 Bluetooth works in **Switch** and **Steam** modes (XInput, GameCube, N64 and Slippi go wireless through the WLAN
 dongle). Unplug the controller, then hold the mode button **plus Start (+)** while turning it on:
@@ -256,8 +265,9 @@ dongle). Unplug the controller, then hold the mode button **plus Start (+)** whi
   first. Next time it reconnects on its own.
 - **Steam (PC, Steam Deck, phone):** hold **B + Start (+)**, then pair
   from the device’s Bluetooth settings.
+- **Wii** (controllers with Wii mode): hold **d-pad up** while turning it on, then press **SYNC** on the Wii.
 
-The controller remembers one Switch and one Steam host; pairing again replaces it ([Wireless](#/wireless) shows
-both). For **wired** play on a Switch, turn on System Settings → Controllers and Sensors → **Pro Controller Wired
+The controller remembers one Switch and one Steam host (and one Wii on controllers with Wii mode); pairing
+again replaces it ([Wireless](#/wireless) shows them). For **wired** play on a Switch, turn on System Settings → Controllers and Sensors → **Pro Controller Wired
 Communication**, or the Switch only charges the controller. The full guide opens from the Wireless page’s pairing
 tip and the Gamepad page’s Default mode card (“How to connect”).

@@ -48,6 +48,7 @@ export const CAPABILITY_NOTES = {
   externalBaseband: 'the controller has an updatable external wireless module (ESP32)',
   snes: 'the controller supports SNES output',
   joybus: 'the controller supports N64/GameCube (Joybus) output',
+  wii: 'the controller supports Wii mode (Wii Remote over Bluetooth, RM2 wireless module)',
 };
 
 export const capabilityNote = (flag) => (flag ? CAPABILITY_NOTES[flag] || `capability "${flag}"` : null);
@@ -110,7 +111,7 @@ export function describeRange(def) {
     case 'boolean': return 'on | off';
     case 'enum': return (def.options || []).map((o) => {
       const alias = (o.aliases || []).length ? ` (also: ${o.aliases.join(', ')})` : '';
-      return `${o.value} = ${o.label}${alias}`;
+      return `${o.value} = ${o.label}${alias}${o.requires ? ` (needs ${o.requires})` : ''}`;
     }).join('; ');
     case 'color': return 'hex color like #ff8800';
     case 'text': return `text${def.maxLength ? `, up to ${def.maxLength} bytes` : ''}`;

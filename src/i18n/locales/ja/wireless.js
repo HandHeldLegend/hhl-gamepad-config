@@ -124,4 +124,6 @@ export default {
   "Translation for reference only. The English statement above is the official text.": "参考訳です。正式な文言は上記の英文です。",
   "Four-digit pairing PIN (0000–9999). Set the same PIN on your WLAN dongle so they pair.": "4桁のペアリングPIN（0000〜9999）。ペアリングするには、WLANドングルにも同じPINを設定してください。",
   "Only controllers that support the Raspberry Pi WLAN dongle use this. The PIN keeps your dongle from pairing with someone else’s controller nearby. Leading zeros count: 0420 is stored as 420.": "Raspberry PiのWLANドングルに対応したコントローラーでのみ使用します。PINにより、ドングルが近くにある他人のコントローラーとペアリングするのを防ぎます。先頭のゼロも有効です（0420は420として保存されます）。",
+  // ---- Wii mode ----
+  "The Wii console paired in Wii mode.": "WiiモードでペアリングしたWii本体です。",
 };

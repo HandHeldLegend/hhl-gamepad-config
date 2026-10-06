@@ -7,7 +7,8 @@
  *   static  `input`  inputInfoStatic_s: which of the 36 input slots this build has (type + name).
  *                    Only those are shown: every custom build has its own layout.
  *   config  `input`  inputConfig_s: one remap profile per output mode (Switch, XInput, SNES, N64,
- *                    GameCube, SInput), 36 inputConfigSlot_s each, indexed by input code.
+ *                    GameCube, SInput, and the three Wii profiles on Wii-capable builds),
+ *                    36 inputConfigSlot_s each, indexed by input code.
  *   config  `hover`  hoverConfig_s: analog input calibration; hover_calibration_set == 0 makes the
  *                    app show an attention badge (session.refreshAttention()).
  *
@@ -20,7 +21,8 @@
  *   reset mode     MAPPER_CMD_DEFAULT_<MODE> (or DEFAULT_ALL) → re-read the `input` block.
  *   calibrate      hover block commands, see calibration.js.
  *
- * URL state: #/input?tab=remap|calibrate&mode=<switch|xinput|snes|n64|gamecube|sinput (alias steam)>&input=<code key>
+ * URL state: #/input?tab=remap|calibrate&mode=<switch|xinput|snes|n64|gamecube|sinput (alias steam)|
+ * wii-nunchuk (alias wii)|wii-classic|wii-sideways>&input=<code key>
  * (e.g. #/input?mode=xinput&input=lt_analog). Input keys are mapper_input_code_t names without
  * INPUT_CODE_, lower-cased; the build's own input name (e.g. "zl") also works.
  */
@@ -33,10 +35,10 @@ import { decodeText } from '../../device/struct.js';
 import { t, fmt, N_ } from '../../i18n/index.js';
 import { onInputReport } from '../../device/reports.js';
 import {
-  MODES, INPUT_CODES, INPUT_TYPE, OUTPUT_MODE, ANALOG_FULL, getMode, modeForReportFormat, outputOf, readProfile,
+  modesFor, INPUT_CODES, INPUT_TYPE, OUTPUT_MODE, ANALOG_FULL, getMode, modeForReportFormat, outputOf, readProfile,
   effectiveMode, isAnalogInput,
 } from './mapping.js';
-import { glyph, meter, outputName } from './parts.js';
+import { glyph, meter, outputName, modeName, rich } from './parts.js';
 import { createEditor } from './editor.js';
 import { createPopover } from './popover.js';
 import { createCalibration, renderCalibrationTab } from './calibration.js';
@@ -77,8 +79,11 @@ export function mount(root, ctx) {
   };
 
   // ---- State -------------------------------------------------------------------------------------
+  /** Modes this controller has (Wii modes only with Wii support), and a lookup limited to them. */
+  const modes = modesFor(session.caps);
+  const findMode = (id) => { const m = getMode(id); return m && modes.includes(m) ? m : null; };
   const state = {
-    mode: getMode(ctx.params.mode)?.id || modeForReportFormat(session.config.gamepad.gamepad_default_mode),
+    mode: findMode(ctx.params.mode)?.id || findMode(modeForReportFormat(session.config.gamepad.gamepad_default_mode))?.id || 'switch',
     selected: null, // input code being edited
   };
   const calib = createCalibration(session);
@@ -146,7 +151,7 @@ export function mount(root, ctx) {
   // ---- Mode -------------------------------------------------------------------------------------
 
   function setMode(id, { updateUrl = true } = {}) {
-    const mode = getMode(id); // also resolves aliases (?mode=steam)
+    const mode = findMode(id); // also resolves aliases (?mode=steam)
     if (!mode || mode.id === state.mode) return;
     state.mode = mode.id;
     if (updateUrl) ctx.setParams({ mode: id });
@@ -158,10 +163,12 @@ export function mount(root, ctx) {
   async function resetModes(all) {
     const mode = getMode(state.mode);
     const ok = await confirmDialog({
-      title: all ? t('Reset every mode?') : t('Reset {mode} mode?', { mode: mode.label }),
+      title: all ? t('Reset every mode?') : t('Reset {mode} mode?', { mode: modeName(mode) }),
       message: all
-        ? t('All six layouts go back to this controller\'s defaults. Your changes in every mode are lost.')
-        : t('Every input in {mode} mode goes back to this controller\'s default layout and settings. Other modes are not affected.', { mode: mode.label }),
+        ? (modes.some((m) => m.family === 'wii')
+          ? t('All layouts, including the three Wii layouts, go back to this controller\'s defaults. Your changes in every mode are lost.')
+          : t('All six layouts go back to this controller\'s defaults. Your changes in every mode are lost.'))
+        : t('Every input in {mode} mode goes back to this controller\'s default layout and settings. Other modes are not affected.', { mode: modeName(mode) }),
       confirmLabel: t('Reset'), danger: true,
     });
     if (!ok) return;
@@ -184,15 +191,31 @@ export function mount(root, ctx) {
   function renderRemap(panel) {
     const tiles = new Map();
 
+    // The three Wii profiles sit behind one "Wii" entry, which reveals a small Wii controller switch.
+    const wiiModes = modes.filter((m) => m.family === 'wii');
+    const topOptions = [
+      ...modes.filter((m) => m.family !== 'wii').map((m) => ({ value: m.id, label: m.label })),
+      ...(wiiModes.length ? [{ value: 'wii', label: 'Wii' }] : []),
+    ];
+    const topValue = () => (getMode(state.mode).family === 'wii' ? 'wii' : state.mode);
+    let lastWii = wiiModes[0]?.id;
+    const pickTop = (v) => setMode(v === 'wii' ? lastWii : v);
     const modeSeg = segmented({
-      options: MODES.map((m) => ({ value: m.id, label: m.label })), value: state.mode, tone: 'lavender', ariaLabel: t('Output mode'),
-      onChange: (id) => setMode(id),
+      options: topOptions, value: topValue(), tone: 'lavender', ariaLabel: t('Output mode'), onChange: pickTop,
     });
     // Six modes don't fit a phone-width segmented control, so phones get a select (CSS picks one).
     const modeSelect = select({
-      options: MODES.map((m) => ({ value: m.id, label: t('{mode} mode', { mode: m.label }) })), value: state.mode, ariaLabel: t('Output mode'),
+      options: topOptions.map((o) => ({ value: o.value, label: t('{mode} mode', { mode: o.label }) })), value: topValue(), ariaLabel: t('Output mode'),
+      onChange: pickTop,
+    });
+    const wiiSeg = wiiModes.length > 0 && segmented({
+      options: wiiModes.map((m) => ({ value: m.id, label: t(m.tab) })), value: lastWii, tone: 'lavender', ariaLabel: t('Wii controller'),
       onChange: (id) => setMode(id),
     });
+    const wiiRow = wiiSeg && h('div.inp-wii', wiiSeg);
+    const wiiNote = wiiSeg && session.caps.imu && h('p.muted.small',
+      rich(t('In Wii mode the gyro always aims the pointer. Gyro sensitivity on the {motion} page scales it.'),
+        { motion: h('a', { href: '#/motion' }, t('Motion')) }));
     const where = h('p.muted.small');
     const unsupported = h('div');
     const resetBtn = button({ label: t('Reset this mode'), icon: 'refresh', size: 'sm', variant: 'tonal', onClick: () => resetModes(false) });
@@ -201,7 +224,7 @@ export function mount(root, ctx) {
 
     const modeCard = card({ title: t('Output mode'), icon: 'gamepad', tone: 'lavender',
       subtitle: t('Each mode has its own layout. Pick the one you play in, then tap a button below to change it.') },
-    h('div.inp-mode-seg', modeSeg), h('div.inp-mode-select', modeSelect), where, unsupported, h('div.row', resetBtn, resetAll));
+    h('div.inp-mode-seg', modeSeg), h('div.inp-mode-select', modeSelect), wiiRow, where, wiiNote, unsupported, h('div.row', resetBtn, resetAll));
 
     const grid = h('div.inp-groups');
     const inputsCard = card({ title: t('Buttons & inputs'), icon: 'input', tone: 'lavender', subtitle: t('What each input sends.') }, grid);
@@ -236,8 +259,8 @@ export function mount(root, ctx) {
       el.update = () => {
         const s = readProfile(session, state.mode)[input.code];
         const out = outputOf(state.mode, s.output_code);
-        const modeLabel = getMode(state.mode).label;
-        outG.set(out ? out.label : 'Off', !out);
+        const modeLabel = modeName(getMode(state.mode));
+        outG.set(out ? out.glyph : 'Off', !out);
         el.classList.toggle('is-off', !out);
         // No "remapped" highlight: each board can override its default maps (hoja config defaults_<mode>),
         // so the app can't know the true default. The glyph pair + tooltip state the mapping exactly.
@@ -290,14 +313,18 @@ export function mount(root, ctx) {
 
     function setModeUI() {
       const mode = getMode(state.mode);
-      modeSeg.value = mode.id;
-      modeSelect.value = mode.id;
-      where.replaceChildren(h('strong', t('{mode}:', { mode: mode.label })), ' ', t(mode.where));
+      const wii = mode.family === 'wii';
+      if (wii) lastWii = mode.id;
+      modeSeg.value = topValue();
+      modeSelect.value = topValue();
+      if (wiiRow) { wiiSeg.value = lastWii; wiiRow.hidden = !wii; }
+      if (wiiNote) wiiNote.hidden = !wii;
+      where.replaceChildren(h('strong', t('{mode}:', { mode: modeName(mode) })), ' ', t(mode.where));
       unsupported.replaceChildren(mode.requires && !session.caps[mode.requires]
-        ? callout({ tone: 'blue', text: t('This controller doesn\'t have a {mode} connection, so this layout is only kept for completeness.', { mode: mode.label }) })
+        ? callout({ tone: 'blue', text: t('This controller doesn\'t have a {mode} connection, so this layout is only kept for completeness.', { mode: modeName(mode) }) })
         : '');
-      resetBtn.setLabel(t('Reset {mode}', { mode: mode.label }));
-      subtitle.textContent = t('What each input sends in {mode} mode. Pressed inputs light up.', { mode: mode.label });
+      resetBtn.setLabel(t('Reset {mode}', { mode: modeName(mode) }));
+      subtitle.textContent = t('What each input sends in {mode} mode. Pressed inputs light up.', { mode: modeName(mode) });
       for (const t of tiles.values()) t.update();
     }
 

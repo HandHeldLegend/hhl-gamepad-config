@@ -63,7 +63,7 @@ function seed() {
   s.battery.pmic_part_number = encodeText('BQ25180', 24);
   s.battery.fuelgauge_status = 1;
   s.battery.fuelgauge_part_number = encodeText('MAX17048', 24);
-  Object.assign(s.bluetooth, { bluetooth_bdr_supported: 1, bluetooth_ble_supported: 1, external_update_supported: 1, wireless_part_status: 2, wlan_supported: 1 });
+  Object.assign(s.bluetooth, { bluetooth_bdr_supported: 1, bluetooth_ble_supported: 1, external_update_supported: 1, wireless_part_status: 2, wlan_supported: 1, wii_supported: 1 });
   s.bluetooth.part_number = encodeText('ESP32-C3', 24);
   s.bluetooth.external_version_number = 0xffff; // newest possible, so no update badge in demo
   s.bluetooth.fcc_id = encodeText('2A-DEMO-0001', 24);

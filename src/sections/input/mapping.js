@@ -81,7 +81,13 @@ export const INPUT_CODES = enumValues('mapper_input_code_t')
  *   WEBUSB_<MODE>   make the WebUSB raw input stream run that profile, so the live view reflects the
  *                   mode being edited (ends automatically when the app disconnects)
  * `formats` are core_reportformat_t values that use this profile (for picking the initial tab from
- * gamepad_default_mode). `where` is customer-facing copy.
+ * gamepad_default_mode). `where` is customer-facing copy. `only` is a capability flag (session.caps)
+ * without which the mode is hidden entirely (`requires` only adds a note).
+ *
+ * Wii modes (`family: 'wii'`): Wii console mode has three controller profiles (a power-button tap
+ * cycles them on the controller) that share one output enum, mapper_wii_code_t. Their labels are
+ * descriptive, so they are translated (modeName() in parts.js); `tab` is the short Wii sub-tab text
+ * and `groups` lists the Wii output groups (WII_GROUPS) this profile offers in the picker.
  */
 export const MODES = [
   { id: 'switch', label: 'Switch', profile: 'input_profile_switch', enumName: 'mapper_switch_code_t', prefix: 'SWITCH_CODE_',
@@ -102,7 +108,22 @@ export const MODES = [
   { id: 'sinput', label: 'Steam', aliases: ['steam'], profile: 'input_profile_sinput', enumName: 'mapper_sinput_code_t', prefix: 'SINPUT_CODE_',
     reset: 'DEFAULT_SINPUT', preview: 'WEBUSB_SINPUT', formats: ['SINPUT'],
     where: N_('Steam mode for Steam and SDL games on PC (supports paddles and extra buttons).') },
+  { id: 'wii-nunchuk', family: 'wii', only: 'wii', label: N_('Wii Remote + Nunchuk'), tab: N_('Remote + Nunchuk'),
+    aliases: ['wii', 'nunchuk'], profile: 'input_profile_wii_nunchuk', enumName: 'mapper_wii_code_t', prefix: 'WII_CODE_',
+    reset: 'DEFAULT_WII_NUNCHUK', preview: 'WEBUSB_WII_NUNCHUK', formats: ['WII'], groups: ['remote', 'nunchuk', 'pointer'],
+    where: N_('Wii mode, as a Wii Remote with a Nunchuk attached.') },
+  { id: 'wii-classic', family: 'wii', only: 'wii', label: N_('Wii Classic Pro'), tab: N_('Classic Pro'),
+    aliases: ['classic'], profile: 'input_profile_wii_classic', enumName: 'mapper_wii_code_t', prefix: 'WII_CODE_',
+    reset: 'DEFAULT_WII_CLASSIC', preview: 'WEBUSB_WII_CLASSIC', formats: [], groups: ['remote', 'classic', 'pointer'],
+    where: N_('Wii mode, as a Wii Remote with a Classic Controller Pro attached.') },
+  { id: 'wii-sideways', family: 'wii', only: 'wii', label: N_('Wii Sideways Remote'), tab: N_('Sideways Remote'),
+    aliases: ['sideways'], profile: 'input_profile_wii_sideways', enumName: 'mapper_wii_code_t', prefix: 'WII_CODE_',
+    reset: 'DEFAULT_WII_SIDEWAYS', preview: 'WEBUSB_WII_SIDEWAYS', formats: [], groups: ['remote', 'pointer'],
+    where: N_('Wii mode, as a Wii Remote held sideways with nothing attached.') },
 ];
+
+/** Modes this controller has (the Wii modes need Wii support). */
+export const modesFor = (caps) => MODES.filter((m) => !m.only || caps?.[m.only]);
 
 /** Mode by id or alias (`steam` → the SInput profile, shown to customers as "Steam"). */
 export const getMode = (id) => MODES.find((m) => m.id === id || m.aliases?.includes(id));
@@ -156,11 +177,55 @@ const MODE_HINTS = {
     MISC_3: N_('Misc 3 (power)'), MISC_4: N_('Misc 4'), MISC_5: N_('Misc 5'), MISC_6: N_('Misc 6'), TP_1: N_('Touchpad 1'), TP_2: N_('Touchpad 2'),
   },
 };
+/**
+ * Wii outputs (mapper_wii_code_t, shared by the three Wii profiles), keyed by enum suffix:
+ * [picker group, label, glyph, output type]. Types mirror `_wii_output_types` in mapper.c. The
+ * labels are too long for a tile, so `glyph` is a glyph name (assets/glyphs) or short chip text.
+ */
+const WII_OUTPUTS = (() => {
+  const D = OUTPUT_TYPE.DIGITAL, P = OUTPUT_TYPE.DPAD, J = OUTPUT_TYPE.JOYSTICK;
+  return {
+    A: ['remote', N_('Remote A'), 'A', D], B: ['remote', N_('Remote B'), 'B', D],
+    ONE: ['remote', N_('Remote 1'), '1', D], TWO: ['remote', N_('Remote 2'), '2', D],
+    UP: ['remote', N_('Remote Up'), 'D Up', P], DOWN: ['remote', N_('Remote Down'), 'D Down', P],
+    LEFT: ['remote', N_('Remote Left'), 'D Left', P], RIGHT: ['remote', N_('Remote Right'), 'D Right', P],
+    PLUS: ['remote', N_('Remote +'), 'Plus', D], MINUS: ['remote', N_('Remote −'), 'Minus', D], HOME: ['remote', N_('Remote Home'), 'Home', D],
+    C: ['nunchuk', N_('Nunchuk C'), 'C', D], Z: ['nunchuk', N_('Nunchuk Z'), 'Z', D],
+    NUNCHUK_X_RIGHT: ['nunchuk', N_('Nunchuk Stick Right'), 'X+', J], NUNCHUK_X_LEFT: ['nunchuk', N_('Nunchuk Stick Left'), 'X-', J],
+    NUNCHUK_Y_UP: ['nunchuk', N_('Nunchuk Stick Up'), 'Y+', J], NUNCHUK_Y_DOWN: ['nunchuk', N_('Nunchuk Stick Down'), 'Y-', J],
+    CC_A: ['classic', N_('Classic A'), 'A', D], CC_B: ['classic', N_('Classic B'), 'B', D],
+    CC_X: ['classic', N_('Classic X'), 'X', D], CC_Y: ['classic', N_('Classic Y'), 'Y', D],
+    CC_UP: ['classic', N_('Classic Up'), 'D Up', P], CC_DOWN: ['classic', N_('Classic Down'), 'D Down', P],
+    CC_LEFT: ['classic', N_('Classic Left'), 'D Left', P], CC_RIGHT: ['classic', N_('Classic Right'), 'D Right', P],
+    CC_L: ['classic', N_('Classic L'), 'L', D], CC_R: ['classic', N_('Classic R'), 'R', D],
+    CC_ZL: ['classic', N_('Classic ZL'), 'ZL', D], CC_ZR: ['classic', N_('Classic ZR'), 'ZR', D],
+    CC_PLUS: ['classic', N_('Classic +'), 'Plus', D], CC_MINUS: ['classic', N_('Classic −'), 'Minus', D],
+    CC_HOME: ['classic', N_('Classic Home'), 'Home', D],
+    CC_LX_RIGHT: ['classic', N_('Classic LS Right'), 'LX+', J], CC_LX_LEFT: ['classic', N_('Classic LS Left'), 'LX-', J],
+    CC_LY_UP: ['classic', N_('Classic LS Up'), 'LY+', J], CC_LY_DOWN: ['classic', N_('Classic LS Down'), 'LY-', J],
+    CC_RX_RIGHT: ['classic', N_('Classic RS Right'), 'RX+', J], CC_RX_LEFT: ['classic', N_('Classic RS Left'), 'RX-', J],
+    CC_RY_UP: ['classic', N_('Classic RS Up'), 'RY+', J], CC_RY_DOWN: ['classic', N_('Classic RS Down'), 'RY-', J],
+    POINTER_RIGHT: ['pointer', N_('Pointer Right (stick aim)'), 'PX+', J], POINTER_LEFT: ['pointer', N_('Pointer Left (stick aim)'), 'PX-', J],
+    POINTER_UP: ['pointer', N_('Pointer Up (stick aim)'), 'PY+', J], POINTER_DOWN: ['pointer', N_('Pointer Down (stick aim)'), 'PY-', J],
+    POINTER_RECENTER: ['pointer', N_('Pointer Recenter'), 'CTR', D], SHAKE: ['pointer', N_('Shake Remote'), 'SHK', D],
+    NUNCHUK_SHAKE: ['nunchuk', N_('Shake Nunchuk'), 'NSHK', D],
+  };
+})();
+
+/** Wii output picker groups, in order. */
+export const WII_GROUPS = [
+  { id: 'remote', title: N_('Wii Remote') },
+  { id: 'nunchuk', title: N_('Nunchuk') },
+  { id: 'classic', title: N_('Classic Controller Pro') },
+  { id: 'pointer', title: N_('Pointer & Motion') },
+];
+
 /** Hints that come from the firmware enums' doc comments (e.doc), listed so they get translated. */
 N_('Stick left'); N_('Stick right');
 
 /** Descriptive output labels that are translated for display (see outputName() in parts.js). */
 export const TRANSLATED_LABELS = new Set([
+  ...Object.values(WII_OUTPUTS).map((w) => w[1]),
   ...['UP', 'DOWN', 'LEFT', 'RIGHT', 'PLUS', 'MINUS', 'CAPTURE', 'BACK', 'GUIDE', 'SHARE', 'SOUTH', 'EAST', 'WEST', 'NORTH']
     .map((k) => COMMON_LABELS[k]),
   ...Object.values(MODE_LABELS.n64).filter((l) => l.startsWith('C ')),
@@ -184,8 +249,9 @@ const prettify = (suffix) => suffix.toLowerCase().replace(/_/g, ' ').replace(/\b
 const outputCache = new Map();
 
 /**
- * Every output a mode can send, from its firmware enum.
- * @returns {Array<{code:number, key:string, label:string, hint:string, type:number}>}
+ * Every output a mode can send, from its firmware enum. `glyph` is what the tile/picker glyph draws
+ * (the label itself, except for Wii outputs); Wii outputs also carry their picker `group`.
+ * @returns {Array<{code:number, key:string, label:string, glyph:string, group?:string, hint:string, type:number}>}
  */
 export function outputsFor(modeId) {
   if (outputCache.has(modeId)) return outputCache.get(modeId);
@@ -194,8 +260,10 @@ export function outputsFor(modeId) {
     .filter((e) => e.value >= 0 && !e.name.endsWith('_MAX'))
     .map((e) => {
       const key = e.name.replace(mode.prefix, '');
+      const wii = mode.family === 'wii' && WII_OUTPUTS[key];
+      if (wii) return { code: e.value, key, label: wii[1], glyph: wii[2], group: wii[0], hint: '', type: wii[3] };
       const label = MODE_LABELS[modeId]?.[key] ?? COMMON_LABELS[key] ?? (key.length <= 2 ? key : prettify(key));
-      return { code: e.value, key, label, hint: MODE_HINTS[modeId]?.[key] || e.doc || '', type: outputTypeOf(key) };
+      return { code: e.value, key, label, glyph: label, hint: MODE_HINTS[modeId]?.[key] || e.doc || '', type: outputTypeOf(key) };
     });
   outputCache.set(modeId, list);
   return list;

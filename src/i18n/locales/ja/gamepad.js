@@ -95,4 +95,7 @@ export default {
   'Rebooting…': '再起動中…',
   'Rebooting into the bootloader…': 'ブートローダーで再起動しています…',
   'Couldn’t reboot the controller.': 'コントローラーを再起動できませんでした。',
+  // ---- Wii mode ----
+  "Wii Remote over Bluetooth, with a Nunchuk or Classic Controller Pro.": "Bluetooth接続のWiiリモコン（ヌンチャクまたはクラシックコントローラPRO付き）。",
+  "Wii": "Wii",
 };

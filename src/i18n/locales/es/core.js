@@ -326,4 +326,11 @@ export default {
   "Find {drive} (or {drive2}) in the sidebar with your other drives and select it.": "Busca {drive} (o {drive2}) en la barra lateral junto a tus otras unidades y selecciónala.",
   "If the browser asks to let this site edit files, allow it. Writing starts right after.": "Si el navegador pregunta si este sitio puede editar archivos, permítelo. La escritura empieza justo después.",
   "That isn’t the controller’s drive. Choose the drive named RPI-RP2 (or RP2350) itself, not a folder on your computer.": "Esa no es la unidad del control. Elige la propia unidad llamada RPI-RP2 (o RP2350), no una carpeta de tu computadora.",
+  // ---- Wii mode ----
+  "Nintendo Wii (Bluetooth, Wii mode)": "Nintendo Wii (Bluetooth, modo Wii)",
+  "Hold {button} while you turn the controller on. The status LED turns pink.": "Mantén {button} mientras enciendes el control. El LED de estado se pone rosa.",
+  "Press the SYNC button on the Wii. The controller pairs and connects as a Wii Remote.": "Presiona el botón SYNC de la Wii. El control se empareja y se conecta como un Wii Remote.",
+  "Tap the power button to switch between Nunchuk, Classic Controller Pro and sideways Wii Remote. The LED flashes white, blue or yellow to show which.": "Toca el botón de encendido para cambiar entre Nunchuk, Classic Controller Pro y Wii Remote de lado. El LED parpadea en blanco, azul o amarillo para indicar cuál.",
+  "Bluetooth works in Switch, Steam and Wii modes.": "El Bluetooth funciona en los modos Switch, Steam y Wii.",
+  "The controller remembers one Switch, one Steam host and one Wii. Pairing again replaces it. The Wireless page shows all three.": "El control recuerda una Switch, un equipo de Steam y una Wii. Volver a emparejar lo reemplaza; la página Inalámbrico muestra los tres.",
 };

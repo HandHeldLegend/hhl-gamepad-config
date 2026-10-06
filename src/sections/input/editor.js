@@ -18,10 +18,10 @@ import { icon } from '../../ui/icons.js';
 import { t, fmt, N_ } from '../../i18n/index.js';
 import {
   INPUT_TYPE, OUTPUT_TYPE, OUTPUT_MODE, ANALOG_FULL, GAMECUBE_MIN_ANALOG, MODE_LABEL, MODE_CLIP_NAME, CLIPBOARD_HEADER,
-  INPUT_TYPE_LABEL, OUTPUT_TYPE_LABEL, getMode, outputsFor, outputOf, readProfile, writeSlot,
+  INPUT_TYPE_LABEL, OUTPUT_TYPE_LABEL, WII_GROUPS, getMode, outputsFor, outputOf, readProfile, writeSlot,
   modeOptions, defaultOutputMode, effectiveMode, usesThreshold, usesStaticOutput, isAnalogInput,
 } from './mapping.js';
-import { glyph, meter, outputName } from './parts.js';
+import { glyph, meter, outputName, modeName } from './parts.js';
 
 /** Order and headings of the output picker groups. */
 const PICKER_GROUPS = [
@@ -99,26 +99,28 @@ export function createEditor(o) {
       const present = new Set(inputs.map((i) => i.code));
       outputs = outputs.filter((x) => present.has(x.code) || x.code === current);
     }
+    // Wii profiles share one output list: offer the groups this profile uses (the firmware accepts
+    // any Wii code in any Wii profile, so keep showing the current one even from another group).
+    const groups = mode.groups
+      ? WII_GROUPS.map((g) => [outputs.filter((x) => x.group === g.id && (mode.groups.includes(g.id) || x.code === current)), g.title])
+      : PICKER_GROUPS.map(([type, heading]) => [outputs.filter((x) => x.type === type), heading]);
 
-    // `label` is the glyph name (English); the text shows its translation.
-    const choice = (code, label, type, hint) => h('button.inp-choice', {
+    // `label` and `glyphName` are English data; the text shows the label's translation.
+    const choice = (code, label, glyphName, hint) => h('button.inp-choice', {
       type: 'button', 'aria-pressed': String(code === current), title: hint ? t(hint) : null,
       onclick: () => choose(code),
     },
-    glyph(label, { shape: 'square', size: 30, off: code < 0 }),
+    glyph(glyphName, { shape: 'square', size: 30, off: code < 0 }),
     h('span.inp-choice-text', h('span.inp-choice-label', code < 0 ? t('None') : outputName(label)),
       code >= 0 && usedBy.has(code) && h('span.inp-choice-used', t('used by {inputs}', { inputs: fmt.list(usedBy.get(code)) }))));
 
-    return h('div.inp-picker', { role: 'group', 'aria-label': t('Outputs in {mode} mode', { mode: mode.label }) },
-      h('div.inp-picker-head', h('strong', t('Send in {mode} mode', { mode: mode.label })),
+    return h('div.inp-picker', { role: 'group', 'aria-label': t('Outputs in {mode} mode', { mode: modeName(mode) }) },
+      h('div.inp-picker-head', h('strong', t('Send in {mode} mode', { mode: modeName(mode) })),
         button({ label: t('Cancel'), size: 'sm', variant: 'ghost', onClick: () => { pickerOpen = false; render(); } })),
-      h('div.inp-choices', choice(-1, 'None', OUTPUT_TYPE.DISABLED, N_('Disable this input in this mode'))),
-      PICKER_GROUPS.map(([type, heading]) => {
-        const list = outputs.filter((x) => x.type === type);
-        return list.length > 0 && h('div.inp-picker-group',
-          h('div.inp-picker-title', t(heading)),
-          h('div.inp-choices', list.map((x) => choice(x.code, x.label, x.type, x.hint))));
-      }));
+      h('div.inp-choices', choice(-1, 'None', 'None', N_('Disable this input in this mode'))),
+      groups.map(([list, heading]) => list.length > 0 && h('div.inp-picker-group',
+        h('div.inp-picker-title', t(heading)),
+        h('div.inp-choices', list.map((x) => choice(x.code, x.label, x.glyph, x.hint))))));
   }
 
   // ---- Copy / paste (hoja2-compatible JSON) -------------------------------------------------
@@ -170,7 +172,7 @@ export function createEditor(o) {
     const outBtn = h('button.inp-out-btn', {
       type: 'button', 'aria-expanded': String(pickerOpen), onclick: () => { pickerOpen = !pickerOpen; render(); },
     },
-    glyph(out ? out.label : 'Off', { shape: 'square', size: 44, off: !out }),
+    glyph(out ? out.glyph : 'Off', { shape: 'square', size: 44, off: !out }),
     h('span.inp-out-text',
       h('span.inp-out-label', out ? outputName(out.label) : t('Nothing')),
       h('span.inp-out-kind', out ? t(out.hint || OUTPUT_TYPE_LABEL[out.type]) : t('Input disabled in this mode'))),
@@ -179,7 +181,7 @@ export function createEditor(o) {
     const head = h('div.inp-ed-head',
       h('div.inp-ed-in', glyph(input.name, { size: 44 }),
         h('span.inp-out-text', h('span.inp-out-label', input.label), h('span.inp-out-kind', t(INPUT_TYPE_LABEL[input.type])))),
-      h('span.inp-ed-arrow', icon('chevron-down'), t('sends in {mode} mode', { mode: mode.label })),
+      h('span.inp-ed-arrow', icon('chevron-down'), t('sends in {mode} mode', { mode: modeName(mode) })),
       outBtn);
 
     // Live view of the focused input.
@@ -282,7 +284,7 @@ export function createEditor(o) {
 
   return {
     el,
-    title: t('{input} in {mode} mode', { input: input.label, mode: mode.label }),
+    title: t('{input} in {mode} mode', { input: input.label, mode: modeName(mode) }),
     /** Paint the live meter from the focused-input field of a raw report (0..4095). */
     live(focused) {
       if (!focused || !liveMeter) return;

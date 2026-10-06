@@ -8,7 +8,7 @@
  *                       button + the separate hoja_baseband/ esptool page)
  *   WLAN dongle         wlan_supported only: the 4-digit pairing PIN (authoritative editor;
  *                       setting `wireless.dongleKey` in settings.js)
- *   Paired hosts        host_mac_switch / host_mac_sinput (read-only)
+ *   Paired hosts        host_mac_switch / host_mac_sinput, plus host_mac_wii on Wii-capable builds (read-only)
  *   Regulatory          FCC ID + Part 15 statement when the controller reports an FCC ID
  *
  * Deep links: #/wireless?update=1 opens the module update dialog (when supported);
@@ -137,6 +137,7 @@ export function mount(root, ctx) {
   kv([
     ['Nintendo Switch', macCell(cfg.host_mac_switch)],
     [t('Steam host'), h('span.wl-inline', macCell(cfg.host_mac_sinput), infoTip(t('The PC or device paired in Steam mode.')))],
+    session.caps.wii && ['Wii', h('span.wl-inline', macCell(cfg.host_mac_wii), infoTip(t('The Wii console paired in Wii mode.')))],
   ]));
 
   // ---- Regulatory ----------------------------------------------------------------------------

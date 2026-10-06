@@ -82,7 +82,8 @@ function settingsTables(cat) {
 }
 
 function capabilityList(cat) {
-  const used = new Set([...cat.pages.map((p) => p.requires), ...cat.settings.map((s) => s.requires)].filter(Boolean));
+  const used = new Set([...cat.pages.map((p) => p.requires), ...cat.settings.map((s) => s.requires),
+    ...cat.settings.flatMap((s) => (s.options || []).map((o) => o.requires))].filter(Boolean));
   return [...used].sort().map((f) => `- ${code(f)}: ${capabilityNote(f)}`).join('\n');
 }
 

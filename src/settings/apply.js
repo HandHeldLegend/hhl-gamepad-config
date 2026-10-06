@@ -37,6 +37,12 @@ export function planChanges(params) {
   return { changes, errors };
 }
 
+/** Capability flag the setting (or this enum value) needs but the controller lacks, or null. */
+function missingCapability(def, value) {
+  const need = def.requires || (def.type === 'enum' && def.options.find((o) => o.value === value)?.requires);
+  return need && !session.caps[need] ? need : null;
+}
+
 /**
  * Apply already-validated changes to the connected controller. Returns a report.
  * Callers must have obtained the user's consent first; use confirmAndApply() for that.
@@ -46,7 +52,8 @@ export async function applyChanges(changes, { save = false } = {}) {
   const skipped = [];
   const blocks = new Set();
   for (const { def, value } of changes) {
-    if (def.requires && !session.caps[def.requires]) { skipped.push({ key: def.key, reason: `controller has no ${def.requires} support` }); continue; }
+    const need = missingCapability(def, value);
+    if (need) { skipped.push({ key: def.key, reason: `controller has no ${need} support` }); continue; }
     def.set(session, value);
     blocks.add(def.block);
     applied.push({ key: def.key, value });
@@ -102,7 +109,7 @@ export async function confirmAndApply(changes, errors = [], { source = 'link', s
   const list = h('ul.change-list');
   const renderList = () => {
     list.replaceChildren(...changes.map(({ def, value }) => {
-      const unsupported = session.connected && def.requires && !session.caps[def.requires];
+      const unsupported = session.connected && !!missingCapability(def, value);
       const before = session.connected ? displayValue(def, def.get(session)) : '–';
       return h('li', { class: unsupported ? 'unsupported' : null },
         h('span.change-label', t(def.label), h('span.faint.xs', ` ${def.key}`)),

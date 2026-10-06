@@ -51,6 +51,14 @@
   .inp-mode-seg { display: none; }
   .inp-mode-select { display: block; }
 }
+/* Wii: the three Wii controller profiles, shown under the mode picker while "Wii" is selected. */
+.inp-wii { display: flex; }
+.inp-wii[hidden] { display: none; }
+@media (max-width: 640px) {
+  /* Three equal columns that wrap their labels instead of scrolling sideways. */
+  .inp-wii .seg { width: 100%; }
+  .inp-wii .seg button { flex: 1 1 0; min-width: 0; padding: 4px var(--space-2); white-space: normal; line-height: 1.2; text-align: center; }
+}
 
 /* ---- Layout: all input groups use the full page width ----------------------------------- */
 /* The editor opens in a popover, so the page can widen and show every group at once. */

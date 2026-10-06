@@ -326,4 +326,11 @@ export default {
   "Find {drive} (or {drive2}) in the sidebar with your other drives and select it.": "Trouvez {drive} (ou {drive2}) dans la barre latérale avec vos autres lecteurs et sélectionnez-le.",
   "If the browser asks to let this site edit files, allow it. Writing starts right after.": "Si le navigateur demande d’autoriser ce site à modifier des fichiers, acceptez. L’écriture commence juste après.",
   "That isn’t the controller’s drive. Choose the drive named RPI-RP2 (or RP2350) itself, not a folder on your computer.": "Ce n’est pas le lecteur de la manette. Choisissez le lecteur nommé RPI-RP2 (ou RP2350) lui-même, pas un dossier de votre ordinateur.",
+  // ---- Wii mode ----
+  "Nintendo Wii (Bluetooth, Wii mode)": "Nintendo Wii (Bluetooth, mode Wii)",
+  "Hold {button} while you turn the controller on. The status LED turns pink.": "Maintenez {button} en allumant la manette. Le voyant d’état devient rose.",
+  "Press the SYNC button on the Wii. The controller pairs and connects as a Wii Remote.": "Appuyez sur le bouton SYNC de la Wii. La manette s’appaire et se connecte comme une Wii Remote.",
+  "Tap the power button to switch between Nunchuk, Classic Controller Pro and sideways Wii Remote. The LED flashes white, blue or yellow to show which.": "Appuyez brièvement sur le bouton d’alimentation pour passer de Nunchuk à Classic Controller Pro puis à Wii Remote à l’horizontale. Le voyant clignote en blanc, bleu ou jaune pour l’indiquer.",
+  "Bluetooth works in Switch, Steam and Wii modes.": "Le Bluetooth fonctionne en modes Switch, Steam et Wii.",
+  "The controller remembers one Switch, one Steam host and one Wii. Pairing again replaces it. The Wireless page shows all three.": "La manette mémorise une Switch, un hôte Steam et une Wii. Un nouvel appairage remplace l’ancien. La page Sans fil affiche les trois.",
 };

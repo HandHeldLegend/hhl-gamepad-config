@@ -1,13 +1,15 @@
 /**
- * connect-guide.js ("How to connect" dialog): Switch (wired and Bluetooth) and Bluetooth pairing in
- * Steam mode. Opened from the Wireless page (pairing tip) and the Gamepad page (Default mode card).
+ * connect-guide.js ("How to connect" dialog): Switch (wired and Bluetooth), Bluetooth pairing in
+ * Steam mode, and Wii mode on controllers that support it. Opened from the Wireless page (pairing
+ * tip) and the Gamepad page (Default mode card).
  *
  * The guide shows only what applies to the connected controller:
  *   - Button names come from the controller itself (static input info: the names printed on the
  *     hardware), so it says "A + Plus" or "East + Start" as appropriate. Without a controller it
  *     falls back to "A", "B", "Start (+)".
  *   - Bluetooth parts appear only on controllers with a radio; USB-cable pairing only on the RPi RM2
- *     module (Switch mode); the WLAN dongle note only when the build supports a dongle.
+ *     module (Switch mode); the WLAN dongle note only when the build supports a dongle; Wii mode only
+ *     when the controller reports it (session.caps.wii, RM2 builds).
  *
  * Firmware facts (HOJA-LIB-RP2040 utilities/boot.c, hal/rp2040/bluetooth_hal.c, device main.c files):
  *   - Holding Start (sync_on_boot_code = INPUT_CODE_START) while powering on enters Bluetooth pairing;
@@ -23,6 +25,9 @@
  *     the WLAN dongle where supported. Plugged in, every mode is wired.
  *   - One host per mode is remembered (Paired hosts card); pairing again replaces it.
  *   - The controller doesn't wake on a button press: turn it on to reconnect.
+ *   - Wii mode (core_wii.c, boot.c): d-pad up at boot, always Bluetooth, status LED pink. Pair by pressing
+ *     SYNC on the Wii. A short power-button tap cycles Nunchuk → Classic Pro → Sideways (the LED flashes
+ *     white / blue / yellow).
  * The Switch only reads a wired Pro Controller with "Pro Controller Wired Communication" turned on.
  */
 import { h, fillNodes } from '../ui/dom.js';
@@ -58,8 +63,8 @@ function modeButton(session, label, fallbackKey) {
 
 /**
  * What to tell this controller's owner. Without a connected controller everything is generic.
- * @returns {{known: boolean, east: string, south: string, start: string,
- *            radio: 'rm2'|'esp32'|'other'|'none'|'unknown', wlan: boolean}}
+ * @returns {{known: boolean, east: string, south: string, start: string, up: string,
+ *            radio: 'rm2'|'esp32'|'other'|'none'|'unknown', wlan: boolean, wii: boolean}}
  */
 export function connectProfile(session) {
   const known = !!session?.connected;
@@ -67,6 +72,7 @@ export function connectProfile(session) {
   const east = (known && modeButton(session, 'A', 'EAST')) || t('A');
   const south = (known && modeButton(session, 'B', 'SOUTH')) || t('B');
   const start = (known && inputName(session, 'START')) || t('Start (+)');
+  const up = (known && inputName(session, 'UP')) || t('D-pad up');
   let radio = 'unknown';
   if (known) {
     const bt = session.static?.bluetooth || {};
@@ -77,7 +83,7 @@ export function connectProfile(session) {
     else radio = 'other';
   }
   // The WLAN dongle pairs with the RM2 radio only (not ESP32 or wired-only builds).
-  return { known, east, south, start, radio, wlan: radio === 'rm2' && !!session.caps?.wlan };
+  return { known, east, south, start, up, radio, wlan: radio === 'rm2' && !!session.caps?.wlan, wii: known && !!session.caps?.wii };
 }
 
 /** "A + Plus" style combo, bold. */
@@ -123,10 +129,17 @@ export function openConnectGuide(o = {}) {
     h('span', fillNodes(t('Unplug the controller, then hold {buttons} while you turn it on.'), { buttons: combo(p.south, p.start) })),
     t('Pair it from the device’s Bluetooth settings.'));
 
+  const wii = p.wii && section(t('Nintendo Wii (Bluetooth, Wii mode)'),
+    h('span', fillNodes(t('Hold {button} while you turn the controller on. The status LED turns pink.'), { button: combo(p.up) })),
+    t('Press the SYNC button on the Wii. The controller pairs and connects as a Wii Remote.'),
+    t('Tap the power button to switch between Nunchuk, Classic Controller Pro and sideways Wii Remote. The LED flashes white, blue or yellow to show which.'));
+
   const notes = h('ul.guide-notes',
-    bt && h('li', t('Bluetooth works in Switch and Steam modes.')),
+    bt && h('li', p.wii ? t('Bluetooth works in Switch, Steam and Wii modes.') : t('Bluetooth works in Switch and Steam modes.')),
     p.wlan && h('li', t('XInput, GameCube, N64 and Slippi modes go wireless through the WLAN dongle instead.')),
-    bt && h('li', t('The controller remembers one Switch and one Steam host. Pairing again replaces it. The Wireless page shows both.')),
+    bt && h('li', p.wii
+      ? t('The controller remembers one Switch, one Steam host and one Wii. Pairing again replaces it. The Wireless page shows all three.')
+      : t('The controller remembers one Switch and one Steam host. Pairing again replaces it. The Wireless page shows both.')),
     bt && h('li', t('Erasing the controller (“Start fresh” firmware install) forgets its pairings, so pair again afterwards.')),
     !bt && h('li', t('This controller is wired only.')));
 
@@ -134,7 +147,7 @@ export function openConnectGuide(o = {}) {
     title: t('How to connect'), icon: 'link', tone: 'blue', wide: true,
     body: [
       !p.known && h('p.muted.small', t('Connect your controller to see the exact buttons and options for it.')),
-      wired, btSwitch, btSteam, notes,
+      wired, btSwitch, btSteam, wii, notes,
     ].filter(Boolean),
     actions: [{ label: t('Done'), variant: 'primary' }],
   });

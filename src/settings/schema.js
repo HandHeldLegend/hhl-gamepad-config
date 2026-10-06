@@ -20,7 +20,8 @@
  * @property {string} block         Config block the value lives in ('gamepad', 'haptic', ...).
  * @property {'number'|'boolean'|'enum'|'color'|'text'} type
  * @property {number} [min] @property {number} [max] @property {number} [step] @property {string} [unit]
- * @property {Array<{value: (number|string), label: string, aliases?: string[]}>} [options]  for 'enum'
+ * @property {Array<{value: (number|string), label: string, aliases?: string[], requires?: string}>} [options]  for 'enum'
+ *           (an option's `requires` is a capability flag that one value needs, e.g. Wii default mode)
  * @property {number} [maxLength]   for 'text'
  * @property {string|null} [requires] capability flag (session.caps) needed for this setting
  * @property {(s: {config: object, static: object, caps: object}) => any} get   read UI value from structs

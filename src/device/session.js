@@ -47,12 +47,14 @@ export function computeCaps(s) {
     externalBaseband: bt.external_update_supported > 0,
     snes: !!s.device.snes_supported,
     joybus: !!s.device.joybus_supported,
+    // Older firmware sends a 55-byte bluetooth block; the struct starts zeroed, so the byte reads 0.
+    wii: bt.wii_supported === 1,
   };
 }
 
 const NO_CAPS = Object.freeze(Object.fromEntries(
   ['analog', 'leftStick', 'rightStick', 'triggers', 'invertAllowed', 'rgb', 'imu', 'haptics', 'hapticHD',
-    'battery', 'bluetooth', 'wlan', 'wireless', 'externalBaseband', 'snes', 'joybus'].map((k) => [k, false]),
+    'battery', 'bluetooth', 'wlan', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii'].map((k) => [k, false]),
 ));
 
 class Session extends EventTarget {

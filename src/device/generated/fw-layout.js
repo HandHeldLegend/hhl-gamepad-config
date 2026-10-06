@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@b840192)
-// Validated 4 size assertion(s) from the firmware headers.
+// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@828d43f)
+// Validated 5 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "local",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "b840192"
+  "ref": "828d43f"
  },
  "blocks": {
   "config": [
@@ -120,7 +120,13 @@ export default {
    "WEBUSB_SNES": 10,
    "WEBUSB_N64": 11,
    "WEBUSB_GAMECUBE": 12,
-   "WEBUSB_SINPUT": 13
+   "WEBUSB_SINPUT": 13,
+   "DEFAULT_WII_NUNCHUK": 14,
+   "DEFAULT_WII_CLASSIC": 15,
+   "DEFAULT_WII_SIDEWAYS": 16,
+   "WEBUSB_WII_NUNCHUK": 17,
+   "WEBUSB_WII_CLASSIC": 18,
+   "WEBUSB_WII_SIDEWAYS": 19
   },
   "analog": {
    "REFRESH": 0,
@@ -528,7 +534,7 @@ export default {
      "name": "gamepad_default_mode",
      "offset": 1,
      "type": "u8",
-     "doc": "core_reportformat_t value (0=SWPRO .. 6=SINPUT)"
+     "doc": "core_reportformat_t value (0=SWPRO .. 7=WII)"
     },
     {
      "name": "gamepad_mac_address",
@@ -584,10 +590,17 @@ export default {
      "doc": "WLAN dongle pairing pin (0000-9999)"
     },
     {
-     "name": "reserved",
+     "name": "host_mac_wii",
      "offset": 39,
      "type": "u8",
-     "count": 25
+     "count": 6,
+     "doc": "Mac address of the Wii we are paired to"
+    },
+    {
+     "name": "reserved",
+     "offset": 45,
+     "type": "u8",
+     "count": 19
     }
    ]
   },
@@ -728,16 +741,35 @@ export default {
      "count": 36
     },
     {
-     "name": "input_profile_reserved_2",
+     "name": "input_profile_wii_nunchuk",
      "offset": 1081,
+     "struct": "inputConfigSlot_s",
+     "count": 36,
+     "doc": "(was input_profile_reserved_2)"
+    },
+    {
+     "name": "input_profile_wii_classic",
+     "offset": 1261,
      "struct": "inputConfigSlot_s",
      "count": 36
     },
     {
-     "name": "reserved",
-     "offset": 1261,
+     "name": "input_profile_wii_sideways",
+     "offset": 1441,
+     "struct": "inputConfigSlot_s",
+     "count": 36
+    },
+    {
+     "name": "wii_profile_version",
+     "offset": 1621,
      "type": "u8",
-     "count": 787
+     "doc": "CFG_INPUT_WII_PROFILE_VERSION once the Wii profiles hold defaults"
+    },
+    {
+     "name": "reserved",
+     "offset": 1622,
+     "type": "u8",
+     "count": 426
     }
    ]
   },
@@ -1075,7 +1107,7 @@ export default {
    ]
   },
   "bluetoothInfoStatic_s": {
-   "size": 55,
+   "size": 56,
    "fields": [
     {
      "name": "part_number",
@@ -1119,6 +1151,12 @@ export default {
      "offset": 54,
      "type": "u8",
      "doc": "1 when RPI RM2 WLAN dongle transport is available"
+    },
+    {
+     "name": "wii_supported",
+     "offset": 55,
+     "type": "u8",
+     "doc": "1 when Wii console mode is available (RM2 Bluetooth HAL)"
     }
    ]
   },
@@ -1204,8 +1242,12 @@ export default {
     "value": 6
    },
    {
-    "name": "CORE_REPORTFORMAT_MAX",
+    "name": "CORE_REPORTFORMAT_WII",
     "value": 7
+   },
+   {
+    "name": "CORE_REPORTFORMAT_MAX",
+    "value": 8
    }
   ],
   "gamepad_method_t": [
@@ -2127,6 +2169,222 @@ export default {
     "value": 38
    }
   ],
+  "mapper_wii_code_t": [
+   {
+    "name": "WII_CODE_UNUSED",
+    "value": -1
+   },
+   {
+    "name": "WII_CODE_A",
+    "value": 0
+   },
+   {
+    "name": "WII_CODE_B",
+    "value": 1
+   },
+   {
+    "name": "WII_CODE_ONE",
+    "value": 2
+   },
+   {
+    "name": "WII_CODE_TWO",
+    "value": 3
+   },
+   {
+    "name": "WII_CODE_UP",
+    "value": 4
+   },
+   {
+    "name": "WII_CODE_DOWN",
+    "value": 5
+   },
+   {
+    "name": "WII_CODE_LEFT",
+    "value": 6
+   },
+   {
+    "name": "WII_CODE_RIGHT",
+    "value": 7
+   },
+   {
+    "name": "WII_CODE_PLUS",
+    "value": 8
+   },
+   {
+    "name": "WII_CODE_MINUS",
+    "value": 9
+   },
+   {
+    "name": "WII_CODE_HOME",
+    "value": 10
+   },
+   {
+    "name": "WII_CODE_C",
+    "value": 11
+   },
+   {
+    "name": "WII_CODE_Z",
+    "value": 12
+   },
+   {
+    "name": "WII_CODE_NUNCHUK_X_RIGHT",
+    "value": 13
+   },
+   {
+    "name": "WII_CODE_NUNCHUK_X_LEFT",
+    "value": 14
+   },
+   {
+    "name": "WII_CODE_NUNCHUK_Y_UP",
+    "value": 15
+   },
+   {
+    "name": "WII_CODE_NUNCHUK_Y_DOWN",
+    "value": 16
+   },
+   {
+    "name": "WII_CODE_CC_A",
+    "value": 17
+   },
+   {
+    "name": "WII_CODE_CC_B",
+    "value": 18
+   },
+   {
+    "name": "WII_CODE_CC_X",
+    "value": 19
+   },
+   {
+    "name": "WII_CODE_CC_Y",
+    "value": 20
+   },
+   {
+    "name": "WII_CODE_CC_UP",
+    "value": 21
+   },
+   {
+    "name": "WII_CODE_CC_DOWN",
+    "value": 22
+   },
+   {
+    "name": "WII_CODE_CC_LEFT",
+    "value": 23
+   },
+   {
+    "name": "WII_CODE_CC_RIGHT",
+    "value": 24
+   },
+   {
+    "name": "WII_CODE_CC_L",
+    "value": 25
+   },
+   {
+    "name": "WII_CODE_CC_R",
+    "value": 26
+   },
+   {
+    "name": "WII_CODE_CC_ZL",
+    "value": 27
+   },
+   {
+    "name": "WII_CODE_CC_ZR",
+    "value": 28
+   },
+   {
+    "name": "WII_CODE_CC_PLUS",
+    "value": 29
+   },
+   {
+    "name": "WII_CODE_CC_MINUS",
+    "value": 30
+   },
+   {
+    "name": "WII_CODE_CC_HOME",
+    "value": 31
+   },
+   {
+    "name": "WII_CODE_CC_LX_RIGHT",
+    "value": 32
+   },
+   {
+    "name": "WII_CODE_CC_LX_LEFT",
+    "value": 33
+   },
+   {
+    "name": "WII_CODE_CC_LY_UP",
+    "value": 34
+   },
+   {
+    "name": "WII_CODE_CC_LY_DOWN",
+    "value": 35
+   },
+   {
+    "name": "WII_CODE_CC_RX_RIGHT",
+    "value": 36
+   },
+   {
+    "name": "WII_CODE_CC_RX_LEFT",
+    "value": 37
+   },
+   {
+    "name": "WII_CODE_CC_RY_UP",
+    "value": 38
+   },
+   {
+    "name": "WII_CODE_CC_RY_DOWN",
+    "value": 39
+   },
+   {
+    "name": "WII_CODE_POINTER_RIGHT",
+    "value": 40
+   },
+   {
+    "name": "WII_CODE_POINTER_LEFT",
+    "value": 41
+   },
+   {
+    "name": "WII_CODE_POINTER_UP",
+    "value": 42
+   },
+   {
+    "name": "WII_CODE_POINTER_DOWN",
+    "value": 43
+   },
+   {
+    "name": "WII_CODE_POINTER_RECENTER",
+    "value": 44
+   },
+   {
+    "name": "WII_CODE_SHAKE",
+    "value": 45
+   },
+   {
+    "name": "WII_CODE_NUNCHUK_SHAKE",
+    "value": 46
+   },
+   {
+    "name": "WII_CODE_MAX",
+    "value": 47
+   }
+  ],
+  "mapper_wii_profile_t": [
+   {
+    "name": "WII_PROFILE_NUNCHUK",
+    "value": 0
+   },
+   {
+    "name": "WII_PROFILE_CLASSIC",
+    "value": 1
+   },
+   {
+    "name": "WII_PROFILE_SIDEWAYS",
+    "value": 2
+   },
+   {
+    "name": "WII_PROFILE_MAX",
+    "value": 3
+   }
+  ],
   "analog_scaler_t": [
    {
     "name": "ANALOG_SCALER_ROUND",
@@ -2281,6 +2539,30 @@ export default {
    {
     "name": "MAPPER_CMD_WEBUSB_SINPUT",
     "value": 13
+   },
+   {
+    "name": "MAPPER_CMD_DEFAULT_WII_NUNCHUK",
+    "value": 14
+   },
+   {
+    "name": "MAPPER_CMD_DEFAULT_WII_CLASSIC",
+    "value": 15
+   },
+   {
+    "name": "MAPPER_CMD_DEFAULT_WII_SIDEWAYS",
+    "value": 16
+   },
+   {
+    "name": "MAPPER_CMD_WEBUSB_WII_NUNCHUK",
+    "value": 17
+   },
+   {
+    "name": "MAPPER_CMD_WEBUSB_WII_CLASSIC",
+    "value": 18
+   },
+   {
+    "name": "MAPPER_CMD_WEBUSB_WII_SIDEWAYS",
+    "value": 19
    }
   ],
   "analog_cmd_t": [
@@ -2383,6 +2665,7 @@ export default {
   "CFG_BLOCK_HAPTIC_VERSION": 17,
   "CFG_BLOCK_USER_VERSION": 17,
   "CFG_BLOCK_INPUT_VERSION": 20,
+  "CFG_INPUT_WII_PROFILE_VERSION": 2,
   "CFG_BLOCK_SWITCHPAIR_VERSION": 16,
   "IMU_SENSITIVITY_MIN": 50,
   "IMU_SENSITIVITY_MAX": 200,

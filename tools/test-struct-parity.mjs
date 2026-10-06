@@ -3,7 +3,9 @@
  * test-struct-parity.mjs: Cross-check the generic struct runtime against hoja2's generated parsers.
  *
  * Fills random buffers, then compares every field both implementations know about. Fields that
- * exist only on one side are listed (usually new firmware fields hoja2 never got).
+ * exist only on one side are listed (usually new firmware fields hoja2 never got). Fields whose
+ * layout changed because newer firmware carved new fields out of them are listed in CHANGED and
+ * skipped; every other shared field is still compared.
  * Skips gracefully when ../hoja2 is not present.
  */
 import { readdir, access } from 'node:fs/promises';
@@ -13,6 +15,12 @@ import { createStruct, LAYOUT } from '../src/device/struct.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OLD_DIR = path.resolve(HERE, '../../hoja2/factory/parsers');
+
+// Shared field names that newer firmware resized, so hoja2's parsers read them at the old size.
+const CHANGED = {
+  'gamepadConfig_s.reserved': 'shrank from 25 to 19 bytes: host_mac_wii (Wii mode) took the first 6',
+  'inputConfig_s.reserved': 'moved and shrank: the three Wii input profiles and wii_profile_version took its start',
+};
 
 function same(a, b) {
   if (ArrayBuffer.isView(a) || Array.isArray(a)) {
@@ -45,6 +53,8 @@ export async function run() {
 
       for (const name of proto) {
         if (!newFields.includes(name)) { if (trial === 0) console.log(`parity: ${structName}.${name} only in hoja2`); continue; }
+        const changed = CHANGED[`${structName}.${name}`];
+        if (changed) { if (trial === 0) console.log(`parity: ${structName}.${name} skipped (${changed})`); continue; }
         if (!same(oldObj[name], newObj[name])) {
           failures++;
           console.error(`parity FAIL ${structName}.${name}: old=${oldObj[name]} new=${newObj[name]}`);

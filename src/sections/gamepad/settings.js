@@ -19,7 +19,8 @@ const fmt = (name) => (LAYOUT.enums.core_reportformat_t || []).find((e) => e.nam
 
 /**
  * Output modes in firmware order. Labels match hoja2 (with tidier capitalization); `about` is a
- * short explanation used by the Gamepad page's mode picker.
+ * short explanation used by the Gamepad page's mode picker. `requires` is the capability flag
+ * (session.caps) a mode needs; without it the mode isn't offered (the firmware falls back to Switch).
  */
 export const DEFAULT_MODES = [
   { value: fmt('SWPRO'), label: 'Switch', aliases: ['switch', 'swpro', 'pro', 'nintendo switch', 'switch pro'], about: N_('Nintendo Switch Pro Controller. Works with this app.') },
@@ -29,6 +30,7 @@ export const DEFAULT_MODES = [
   { value: fmt('N64'), label: 'N64', aliases: ['n64', 'nintendo 64'], about: N_('Native Nintendo 64 (Joybus) output.') },
   { value: fmt('SNES'), label: 'SNES', aliases: ['snes', 'sfc', 'super famicom', 'super nintendo', 'nes'], about: N_('Native SNES / Super Famicom output.') },
   { value: fmt('SINPUT'), label: 'Steam', aliases: ['steam', 'sinput', 's-input'], about: N_('Steam mode, for Steam and SDL games on PC. Works with this app.') },
+  { value: fmt('WII'), label: 'Wii', aliases: ['wii', 'wiimote', 'wii remote'], requires: 'wii', about: N_('Wii Remote over Bluetooth, with a Nunchuk or Classic Controller Pro.') },
 ].filter((m) => m.value != null);
 
 /** Switch color fields, in the order hoja2 showed them. */
@@ -46,7 +48,7 @@ export default [
     description: 'The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here.',
     block: 'gamepad',
     type: 'enum',
-    options: DEFAULT_MODES.map(({ value, label, aliases }) => ({ value, label, aliases })),
+    options: DEFAULT_MODES.map(({ value, label, aliases, requires }) => ({ value, label, aliases, requires })),
     get: (s) => s.config.gamepad.gamepad_default_mode,
     set: (s, v) => { s.config.gamepad.gamepad_default_mode = v; },
   },

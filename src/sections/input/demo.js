@@ -54,6 +54,26 @@ const DEFAULTS = {
   },
 };
 
+/**
+ * Wii defaults are derived from the Switch defaults by Switch output, like _wii_defaults_from_switch
+ * in mapper.c ({ SWITCH_SUFFIX: WII_SUFFIX }; missing = unused).
+ */
+const WII_COMMON = { PLUS: 'PLUS', MINUS: 'MINUS', HOME: 'HOME', CAPTURE: 'POINTER_RECENTER', RS: 'POINTER_RECENTER',
+  RX_RIGHT: 'POINTER_RIGHT', RX_LEFT: 'POINTER_LEFT', RY_UP: 'POINTER_UP', RY_DOWN: 'POINTER_DOWN' };
+const WII_FROM_SWITCH = {
+  'wii-nunchuk': { ...WII_COMMON, A: 'A', B: 'B', X: 'TWO', Y: 'ONE', ...DPAD, L: 'C', R: 'SHAKE', ZL: 'Z', ZR: 'B', LS: 'NUNCHUK_SHAKE',
+    LX_RIGHT: 'NUNCHUK_X_RIGHT', LX_LEFT: 'NUNCHUK_X_LEFT', LY_UP: 'NUNCHUK_Y_UP', LY_DOWN: 'NUNCHUK_Y_DOWN' },
+  'wii-classic': { ...WII_COMMON, A: 'CC_A', B: 'CC_B', X: 'CC_X', Y: 'CC_Y', UP: 'CC_UP', DOWN: 'CC_DOWN', LEFT: 'CC_LEFT', RIGHT: 'CC_RIGHT',
+    L: 'CC_ZL', R: 'CC_ZR', ZL: 'CC_L', ZR: 'CC_R', PLUS: 'CC_PLUS', MINUS: 'CC_MINUS', HOME: 'CC_HOME',
+    LX_RIGHT: 'CC_LX_RIGHT', LX_LEFT: 'CC_LX_LEFT', LY_UP: 'CC_LY_UP', LY_DOWN: 'CC_LY_DOWN',
+    RX_RIGHT: 'CC_RX_RIGHT', RX_LEFT: 'CC_RX_LEFT', RY_UP: 'CC_RY_UP', RY_DOWN: 'CC_RY_DOWN' },
+  'wii-sideways': { ...WII_COMMON, A: 'TWO', B: 'ONE', X: 'A', Y: 'B', UP: 'RIGHT', DOWN: 'LEFT', LEFT: 'UP', RIGHT: 'DOWN',
+    L: 'A', R: 'SHAKE', ZL: 'B', ZR: 'SHAKE', LX_RIGHT: 'DOWN', LX_LEFT: 'UP', LY_UP: 'RIGHT', LY_DOWN: 'LEFT' },
+};
+for (const [id, map] of Object.entries(WII_FROM_SWITCH)) {
+  DEFAULTS[id] = Object.fromEntries(Object.entries(DEFAULTS.switch).filter(([, sw]) => map[sw]).map(([key, sw]) => [key, map[sw]]));
+}
+
 /** Reset one mode's profile on the demo device, as MAPPER_CMD_DEFAULT_<MODE> does on hardware. */
 function resetProfile(device, mode) {
   const cfg = device.config.input;
@@ -73,6 +93,7 @@ export function seed(device) {
   device.static.input.input_info = infos;
 
   device.config.input.input_config_version = fwDefine('CFG_BLOCK_INPUT_VERSION', 0);
+  device.config.input.wii_profile_version = fwDefine('CFG_INPUT_WII_PROFILE_VERSION', 0);
   for (const mode of MODES) resetProfile(device, mode);
 
   // A typical customer tweak: hall-effect triggers press ZL/ZR at 40% travel instead of rapid trigger.

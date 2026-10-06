@@ -56,6 +56,7 @@ export function mount(root, { session, navigate }) {
   // ---- 1. Default mode -----------------------------------------------------------------------
   const modeDef = getSetting('gamepad.defaultMode');
   const modePicker = modeTiles({
+    modes: DEFAULT_MODES.filter((m) => !m.requires || session.caps[m.requires]),
     value: modeDef.get(session),
     onChange: (v) => {
       // No toast: the warning above the tiles already explains how to get back to this app.
@@ -199,12 +200,13 @@ export function mount(root, { session, navigate }) {
 }
 
 /**
- * Grid of radio tiles for the 7 output modes (more readable than a 7-way segmented control).
- * @param {{value: number, onChange: (v: number) => void}} o
+ * Grid of radio tiles for the output modes this controller has (more readable than a 7-way segmented control).
+ * @param {{modes: Array, value: number, onChange: (v: number) => void}} o
  */
 function modeTiles(o) {
+  const modes = o.modes;
   let current = o.value;
-  const tiles = DEFAULT_MODES.map((m) => h('button.gp-mode', {
+  const tiles = modes.map((m) => h('button.gp-mode', {
     type: 'button', role: 'radio', 'aria-checked': 'false', dataset: { value: m.value },
     onclick: () => select(m.value, true),
   },
@@ -226,10 +228,10 @@ function modeTiles(o) {
     const dir = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
     if (!dir) return;
     e.preventDefault();
-    const i = DEFAULT_MODES.findIndex((m) => m.value === current);
-    const next = DEFAULT_MODES[(i + dir + DEFAULT_MODES.length) % DEFAULT_MODES.length];
+    const i = modes.findIndex((m) => m.value === current);
+    const next = modes[(i + dir + modes.length) % modes.length];
     select(next.value, true);
-    tiles[DEFAULT_MODES.indexOf(next)].focus();
+    tiles[modes.indexOf(next)].focus();
   });
   select(current, false);
   Object.defineProperty(el, 'value', { get: () => current, set: (v) => select(v, false) });

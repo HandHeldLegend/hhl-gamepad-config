@@ -50,7 +50,7 @@ const ready = loadCatalog().then((cat) => {
 /** Knowledge base is re-read on demand so edits to docs/KNOWLEDGE.md apply without a restart. */
 async function kb() { return loadKnowledge((await ready).base); }
 
-const MODES = ['switch', 'xinput', 'snes', 'n64', 'gamecube', 'sinput'];
+const MODES = ['switch', 'xinput', 'snes', 'n64', 'gamecube', 'sinput', 'wii-nunchuk', 'wii-classic', 'wii-sideways'];
 
 const INSTRUCTIONS = `HHL Gamepad Config is Hand Held Legend's web app for configuring HOJA-firmware controllers over USB.
 Use these tools to help customers: find the right page (list_pages, build_page_link), explain settings (list_settings,
@@ -391,7 +391,7 @@ ${await topicText('snapback')}`;
   {
     name: 'remap-for-mode',
     title: 'Remap buttons for an output mode',
-    description: 'Help a customer remap buttons for one output mode (Switch, XInput, SNES, N64, GameCube or SInput/Steam).',
+    description: 'Help a customer remap buttons for one output mode (Switch, XInput, SNES, N64, GameCube, SInput/Steam, or a Wii profile: Remote + Nunchuk, Classic Pro, Sideways Remote).',
     arguments: [
       { name: 'mode', description: `Output mode: ${MODES.join(' | ')}`, required: true },
       { name: 'goal', description: 'What they want to achieve, e.g. "swap A and B" (optional).', required: false },
