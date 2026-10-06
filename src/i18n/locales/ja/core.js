@@ -102,7 +102,6 @@ export default {
   "A newer firmware is available. First the controller restarts into update mode, then the new firmware is written. Keep it plugged in the whole time.": "新しいファームウェアがあります。まずコントローラーがアップデートモードで再起動し、その後新しいファームウェアが書き込まれます。完了するまで接続したままにしてください。",
   "Enter update mode": "アップデートモードに入る",
   "Entering update mode": "アップデートモードに移行中",
-  "Restarting into update mode. When the bootloader appears, flashing starts automatically. If your browser asks for permission, press Update.": "アップデートモードで再起動しています。ブートローダーが表示されると書き込みが自動で始まります。ブラウザーが許可を求めた場合は「アップデート」を押してください。",
   "Sending reboot to bootloader…": "ブートローダーへの再起動を送信中…",
   "Update": "アップデート",
   "Waiting for the bootloader…": "ブートローダーを待っています…",
@@ -315,4 +314,8 @@ export default {
   "XInput, GameCube, N64 and Slippi modes go wireless through the WLAN dongle instead.": "XInput・ゲームキューブ・N64・Slippiモードは、代わりにWLANドングルでワイヤレス接続します。",
   "This controller is wired only.": "このコントローラーは有線専用です。",
   "Connect your controller to see the exact buttons and options for it.": "コントローラーを接続すると、そのコントローラーに合ったボタンや項目が表示されます。",
+  "Restarting into update mode. This takes a few seconds.": "アップデートモードで再起動しています。数秒かかります。",
+  "One more step: press Update": "あと1ステップ：「アップデート」を押してください",
+  "Your controller is now in update mode. Press Update, then choose “RP2 Boot” (or “RP2350 Boot”) in the window your browser opens and press Connect.": "コントローラーがアップデートモードになりました。「アップデート」を押し、ブラウザーに表示されるウィンドウで「RP2 Boot」（または「RP2350 Boot」）を選んで「接続」を押してください。",
+  "Waiting for you to press Update": "「アップデート」が押されるのを待っています",
 };

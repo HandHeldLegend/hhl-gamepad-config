@@ -102,7 +102,6 @@ export default {
   "A newer firmware is available. First the controller restarts into update mode, then the new firmware is written. Keep it plugged in the whole time.": "Hay un firmware más reciente. Primero el control se reinicia en modo de actualización y luego se escribe el nuevo firmware. Mantenlo conectado todo el tiempo.",
   "Enter update mode": "Entrar en modo de actualización",
   "Entering update mode": "Entrando en modo de actualización",
-  "Restarting into update mode. When the bootloader appears, flashing starts automatically. If your browser asks for permission, press Update.": "Reiniciando en modo de actualización. Cuando aparezca el bootloader, la escritura empezará automáticamente; si tu navegador pide permiso, presiona Actualizar.",
   "Sending reboot to bootloader…": "Enviando el reinicio al bootloader…",
   "Update": "Actualizar",
   "Waiting for the bootloader…": "Esperando el bootloader…",
@@ -315,4 +314,8 @@ export default {
   "XInput, GameCube, N64 and Slippi modes go wireless through the WLAN dongle instead.": "Los modos XInput, GameCube, N64 y Slippi funcionan de forma inalámbrica mediante el adaptador WLAN.",
   "This controller is wired only.": "Este control solo funciona con cable.",
   "Connect your controller to see the exact buttons and options for it.": "Conecta tu control para ver los botones y opciones exactos que le corresponden.",
+  "Restarting into update mode. This takes a few seconds.": "Reiniciando en modo de actualización. Tarda unos segundos.",
+  "One more step: press Update": "Un paso más: pulsa Actualizar",
+  "Your controller is now in update mode. Press Update, then choose “RP2 Boot” (or “RP2350 Boot”) in the window your browser opens and press Connect.": "Tu control ya está en modo de actualización. Pulsa Actualizar, elige “RP2 Boot” (o “RP2350 Boot”) en la ventana que abre el navegador y pulsa Conectar.",
+  "Waiting for you to press Update": "Esperando a que pulses Actualizar",
 };

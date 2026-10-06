@@ -102,7 +102,6 @@ export default {
   "A newer firmware is available. First the controller restarts into update mode, then the new firmware is written. Keep it plugged in the whole time.": "Un firmware plus récent est disponible. La manette redémarre d’abord en mode de mise à jour, puis le nouveau firmware est écrit. Laissez-la branchée pendant toute l’opération.",
   "Enter update mode": "Passer en mode de mise à jour",
   "Entering update mode": "Passage en mode de mise à jour",
-  "Restarting into update mode. When the bootloader appears, flashing starts automatically. If your browser asks for permission, press Update.": "Redémarrage en mode de mise à jour. Quand le bootloader apparaît, l’écriture démarre automatiquement. Si votre navigateur demande l’autorisation, appuyez sur Mettre à jour.",
   "Sending reboot to bootloader…": "Envoi du redémarrage vers le bootloader…",
   "Update": "Mettre à jour",
   "Waiting for the bootloader…": "En attente du bootloader…",
@@ -315,4 +314,8 @@ export default {
   "XInput, GameCube, N64 and Slippi modes go wireless through the WLAN dongle instead.": "Les modes XInput, GameCube, N64 et Slippi passent plutôt en sans-fil via le dongle WLAN.",
   "This controller is wired only.": "Cette manette est uniquement filaire.",
   "Connect your controller to see the exact buttons and options for it.": "Connectez votre manette pour voir ses boutons et options exacts.",
+  "Restarting into update mode. This takes a few seconds.": "Redémarrage en mode mise à jour. Cela prend quelques secondes.",
+  "One more step: press Update": "Encore une étape : appuyez sur Mettre à jour",
+  "Your controller is now in update mode. Press Update, then choose “RP2 Boot” (or “RP2350 Boot”) in the window your browser opens and press Connect.": "Votre manette est maintenant en mode mise à jour. Appuyez sur Mettre à jour, choisissez « RP2 Boot » (ou « RP2350 Boot ») dans la fenêtre ouverte par le navigateur, puis appuyez sur Connexion.",
+  "Waiting for you to press Update": "En attente de votre appui sur Mettre à jour",
 };

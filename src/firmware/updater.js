@@ -326,7 +326,7 @@ function updateAvailableActions() {
 
 async function enterBootloader() {
   st.mode = 'awaiting-bootloader';
-  paint(t('Entering update mode'), t('Restarting into update mode. When the bootloader appears, flashing starts automatically. If your browser asks for permission, press Update.'));
+  paint(t('Entering update mode'), t('Restarting into update mode. This takes a few seconds.'));
   setUpdateStatus(t('Sending reboot to bootloader…'), 10, true);
   panels();
   actions({ primary: { label: t('Update'), icon: 'download', run: () => flashNext({ allowRequestDevice: true }) } });
@@ -338,6 +338,22 @@ async function enterBootloader() {
     console.warn('[fw] reboot command:', err?.message || err);
   }
   setUpdateStatus(t('Waiting for the bootloader…'), 30, true);
+  // If the browser already trusts the bootloader, flashing starts by itself within a second or two.
+  // Otherwise it needs a click (WebUSB only shows a new device after a user gesture), so don't leave
+  // a busy spinner up: after a short wait, ask for the click clearly.
+  clearTimeout(st.nudgeTimer);
+  st.nudgeTimer = setTimeout(showPressUpdate, NUDGE_MS);
+}
+
+/** How long to wait for an automatic start before asking the user to press Update. */
+const NUDGE_MS = 3500;
+
+/** awaiting-bootloader, and nothing started on its own: make the next action unmistakable. */
+function showPressUpdate() {
+  if (st.mode !== 'awaiting-bootloader') return;
+  paint(t('One more step: press Update'), t('Your controller is now in update mode. Press Update, then choose “RP2 Boot” (or “RP2350 Boot”) in the window your browser opens and press Connect.'), { icon: 'download' });
+  setUpdateStatus(t('Waiting for you to press Update'), 30, false);
+  ui?.dlg.action('primary')?.classList.add('btn-attention');
 }
 
 function showBootloaderFlash() {
