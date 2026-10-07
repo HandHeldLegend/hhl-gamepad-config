@@ -10,7 +10,7 @@ import { icon } from '../../ui/icons.js';
 import { card, kv, button } from '../../ui/controls.js';
 import { pwa, loadVersion } from '../../app/pwa.js';
 import { LAYOUT } from '../../device/struct.js';
-import { ATTRIBUTIONS } from './attributions.js';
+import { ATTRIBUTIONS, REFERENCES } from './attributions.js';
 import { t, N_ } from '../../i18n/index.js';
 import { explainLinux } from '../../app/linux.js';
 import { openConnectGuide } from '../../app/connect-guide.js';
@@ -73,6 +73,11 @@ export function mount(root, ctx = {}) {
       h('ul.attributions', ATTRIBUTIONS.map((a) => h('li',
         h('div', h('strong', a.name), ' · ', a.author, ' · ', h('span.badge', a.license)),
         h('div.muted.small', t(a.usedFor), ' · ', h('a', { href: a.url, target: '_blank', rel: 'noopener' }, t('source')))))),
+      h('h3.refs-title', t('References')),
+      h('p.muted.small', t('Behavior and data we learned from. Nothing is copied from these.')),
+      h('ul.attributions', REFERENCES.map((r) => h('li',
+        h('div', h('strong', r.name), ' · ', r.author),
+        h('div.muted.small', t(r.usedFor), ' · ', h('a', { href: r.url, target: '_blank', rel: 'noopener' }, t('source')))))),
       h('p.faint.xs', t('Super Famicom-inspired colors are a tribute; this app is not affiliated with or endorsed by Nintendo.'))),
   );
 
@@ -89,5 +94,6 @@ export function mount(root, ctx = {}) {
     .attributions { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px 24px; grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr)); }
     .attributions li { min-width: 0; overflow-wrap: anywhere; }
     .attributions .badge { white-space: normal; }
+    .refs-title { font-size: var(--text-md); margin: 16px 0 2px; }
   `));
 }

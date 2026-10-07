@@ -70,3 +70,40 @@ export const ATTRIBUTIONS = [
     usedFor: N_('Config/static memory layouts are generated from its headers (src/device/generated/fw-layout.js)'),
   },
 ];
+
+/**
+ * Work we learned from but did not copy (behavior references, facts and numbers from public data).
+ * Rendered under Attributions as "References". Add sources here when a feature is tuned from them.
+ */
+export const REFERENCES = [
+  {
+    name: "doldecomp/melee",
+    author: "Melee decompilation contributors",
+    url: "https://github.com/doldecomp/melee",
+    usedFor: N_("Behavior reference for the Arena (input processing, techniques). No code, comments or data tables copied."),
+  },
+  {
+    name: "n64decomp/sm64",
+    author: "SM64 decompilation contributors",
+    url: "https://github.com/n64decomp/sm64",
+    usedFor: N_("Behavior reference for the 3D Platformer's movement. No code, comments or data tables copied."),
+  },
+  {
+    name: "SM64 movement write-ups (pannenkoek2012, Ukikipedia)",
+    author: "pannenkoek2012 and Ukikipedia contributors",
+    url: "https://ukikipedia.net",
+    usedFor: N_("Cross-checking the 3D Platformer's movement numbers."),
+  },
+  {
+    name: "Melee Frame Data",
+    author: "meleeframedata.com",
+    url: "https://meleeframedata.com",
+    usedFor: N_("Frame data for the Arena fighters (IASA frames, dodges, rolls)."),
+  },
+  {
+    name: "SmashWiki",
+    author: "SmashWiki contributors",
+    url: "https://www.ssbwiki.com",
+    usedFor: N_("Arena movement numbers (initial dash, shield, weights) and move behavior."),
+  },
+];

@@ -45,4 +45,11 @@ export default {
 
   // ---- meleelight ----
   "The Arena’s game engine: physics, collision, action states, hit detection and character data, ported to src/sections/arena/engine/": "El motor de juego de la Arena: física, colisiones, estados de acción, detección de golpes y datos de personajes, portados a src/sections/arena/engine/",
+  "References": "Referencias",
+  "Behavior and data we learned from. Nothing is copied from these.": "Comportamiento y datos de los que aprendimos. No se copió nada de estas fuentes.",
+  "Behavior reference for the Arena (input processing, techniques). No code, comments or data tables copied.": "Referencia de comportamiento para la Arena (procesamiento de entradas, técnicas). No se copió código, comentarios ni tablas de datos.",
+  "Behavior reference for the 3D Platformer's movement. No code, comments or data tables copied.": "Referencia de comportamiento para el movimiento de Plataformas 3D. No se copió código, comentarios ni tablas de datos.",
+  "Cross-checking the 3D Platformer's movement numbers.": "Para contrastar las cifras de movimiento de Plataformas 3D.",
+  "Frame data for the Arena fighters (IASA frames, dodges, rolls).": "Datos de frames de los luchadores de la Arena (frames de IASA, esquivas, rodadas).",
+  "Arena movement numbers (initial dash, shield, weights) and move behavior.": "Cifras de movimiento de la Arena (dash inicial, escudo, pesos) y comportamiento de los movimientos.",
 };

@@ -20,12 +20,24 @@ The Super Famicom-inspired palette is a tribute; this project is not affiliated 
 The Gameplay Arena's engine is a port of meleelight, an open-source fan recreation of a classic platform fighter
 (MIT, see above and `docs/ARENA-ENGINE.md`). Its fighters, stage art, coach and the rest of the Arena are original
 work; it contains no game files or assets, and its fighters are original characters (no names or likenesses).
-The doldecomp/melee decompilation was used as a behaviour reference only (input processing notes); no code from it
+The doldecomp/melee decompilation was used as a behavior reference only (input processing notes); no code from it
 is used.
 The 3D Platformer is original work: its hero, course, art and code were written for this app. Its movement
 (speeds, jump heights, frame windows) was tuned using the [n64decomp/sm64](https://github.com/n64decomp/sm64)
-decompilation and public movement write-ups as a **behaviour reference only**; no code, comments, data tables or
+decompilation and public movement write-ups as a **behavior reference only**; no code, comments, data tables or
 assets were copied (see `src/sections/platformer/constants.js`).
+
+## References
+
+Behavior and data we learned from. No code, comments, data tables or assets were copied from these.
+
+| Reference | By | Used for |
+|---|---|---|
+| [doldecomp/melee](https://github.com/doldecomp/melee) | Melee decompilation contributors | Behavior reference for the Arena (input processing, techniques). No code, comments or data tables copied. |
+| [n64decomp/sm64](https://github.com/n64decomp/sm64) | SM64 decompilation contributors | Behavior reference for the 3D Platformer's movement. No code, comments or data tables copied. |
+| [SM64 movement write-ups (pannenkoek2012, Ukikipedia)](https://ukikipedia.net) | pannenkoek2012 and Ukikipedia contributors | Cross-checking the 3D Platformer's movement numbers. |
+| [Melee Frame Data](https://meleeframedata.com) | meleeframedata.com | Frame data for the Arena fighters (IASA frames, dodges, rolls). |
+| [SmashWiki](https://www.ssbwiki.com) | SmashWiki contributors | Arena movement numbers (initial dash, shield, weights) and move behavior. |
 
 ## meleelight (MIT License)
 

@@ -45,4 +45,11 @@ export default {
 
   // ---- meleelight ----
   "The Arena’s game engine: physics, collision, action states, hit detection and character data, ported to src/sections/arena/engine/": "アリーナのゲームエンジン：物理、衝突判定、アクションステート、ヒット判定、キャラクターデータを src/sections/arena/engine/ に移植",
+  "References": "参考資料",
+  "Behavior and data we learned from. Nothing is copied from these.": "動作やデータの参考にした資料です。これらからは何もコピーしていません。",
+  "Behavior reference for the Arena (input processing, techniques). No code, comments or data tables copied.": "アリーナの動作の参考（入力処理、テクニック）。コード、コメント、データ表はコピーしていません。",
+  "Behavior reference for the 3D Platformer's movement. No code, comments or data tables copied.": "3Dアクションの移動の動作の参考。コード、コメント、データ表はコピーしていません。",
+  "Cross-checking the 3D Platformer's movement numbers.": "3Dアクションの移動の数値の確認。",
+  "Frame data for the Arena fighters (IASA frames, dodges, rolls).": "アリーナのファイターのフレームデータ（IASAフレーム、その場回避、転がり回避）。",
+  "Arena movement numbers (initial dash, shield, weights) and move behavior.": "アリーナの移動の数値（初速ダッシュ、シールド、重さ）と技の動作。",
 };
