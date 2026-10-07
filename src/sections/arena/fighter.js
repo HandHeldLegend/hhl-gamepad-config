@@ -34,10 +34,11 @@ export function poseOf(state) {
   return 'idle';
 }
 
-/** Reflector / counter windows (drawn as a hexagon). */
-function windowOf(state, template) {
+/** Reflector / counter windows (drawn as a hexagon); Sir Retro's bucket while it can absorb. */
+function windowOf(state, template, pl) {
   if (/^DOWNSPECIAL/.test(state) && (template === 2 || template === 3)) return 'reflect';
   if (/^DOWNSPECIAL/.test(state) && template === 0) return 'counter';
+  if (/^DOWNSPECIAL/.test(state) && template === 5 && pl?.phys.absorbing) return 'absorb';
   return null;
 }
 
@@ -70,7 +71,7 @@ export class Body {
     const ph = this.pl.phys;
     return { x: ph.shieldPositionReal.x, y: ph.shieldPositionReal.y, r: ph.shieldSize, hp: ph.shieldHP / 60, analog: ph.shieldAnalog };
   }
-  get windowOn() { return windowOf(this.pl.actionState, this.game.templateOf(this.port)); }
+  get windowOn() { return windowOf(this.pl.actionState, this.game.templateOf(this.port), this.pl); }
   /** Ledge the fighter is hanging from ({x, y, dir}) or null. */
   get ledge() {
     const i = this.pl.phys.onLedge;

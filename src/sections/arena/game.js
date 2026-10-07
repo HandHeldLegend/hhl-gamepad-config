@@ -161,6 +161,12 @@ export class Game {
 
     this.coach.frame({ before, after, input: f.input, pad: p, real: f.real, offered: f.offered, frame: this.frame, pl });
     this.fighter.afterStep();
+    // Sir Retro: the number his side special shows, and his bucket filling up.
+    if (pl.retro) {
+      if (/^SIDESPECIAL/.test(after.state) && !/^SIDESPECIAL/.test(before.state)) this.feedback(t('Side special · number {n}', { n: pl.retro.number }), pl.retro.number === 9 ? 'green' : 'lavender');
+      if (pl.retro.bucket > (this.lastBucket ?? 0)) this.feedback(t('Bucket {n}/3', { n: pl.retro.bucket }), 'yellow');
+      this.lastBucket = pl.retro.bucket;
+    }
 
     // Targets: hitboxes (swept) and projectiles.
     for (const i of w.targetHits(this.targets, TARGET_R)) this.breakTarget(this.targets[i]);

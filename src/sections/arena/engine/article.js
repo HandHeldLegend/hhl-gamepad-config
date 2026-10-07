@@ -1,5 +1,6 @@
 /**
- * article.js: projectiles ("articles"): lasers and the side-special afterimage hitbox.
+ * article.js: projectiles ("articles"): lasers and the side-special afterimage hitbox (Sir Retro's
+ * sausages are registered here by sirretro.js).
  *
  * Ported from meleelight (MIT, (c) 2016 Will Blackett, https://github.com/schmooblidon/meleelight).
  * Mechanically converted (Flow types, sounds, visual effects and debug output removed; imports
@@ -12,6 +13,8 @@ import { findCollision, sweepCircleVsAABB, sweepCircleVsSweepCircle } from './co
 import { getHitstun, getKnockback, knockbackSounds } from './hit.js';
 import { activeStage, characterSelections, player, playerType } from './ml.js';
 import { actionStates } from './shortcuts.js';
+/** HOJA: Sir Retro's absorb circle (in front of him, see sirretro.js); kept here to avoid an import cycle. */
+export const ABSORB = { x: 4.5, y: 6, r: 5.5 };
 import { Vec2D, createHitbox, moveECB, pickSmallestSweep, subtract } from './util.js';
 
 // ---- physics/article.js ----
@@ -33,6 +36,7 @@ export const articles = {
   "LASER": {
     name: "LASER",
     canTurboCancel: false,
+    absorbable: true, // HOJA: an energy projectile (Sir Retro's bucket absorbs it)
     init: function (options) {
       const p = options.p;
       const x = options.x;
@@ -179,6 +183,19 @@ export function articlesHitDetection() {
           }
         }
         if (!attackerClank) {
+          // HOJA: absorb (Sir Retro's bucket): an energy projectile that reaches the absorb circle is caught.
+          const vState = actionStates[characterSelections[v]][player[v].actionState];
+          if (vState && vState.onAbsorb && player[v].phys.absorbing && articles[aArticles[a].name].absorbable) {
+            const c = new Vec2D(player[v].phys.pos.x + ABSORB.x * player[v].phys.face, player[v].phys.pos.y + ABSORB.y);
+            const inst = aArticles[a].instance;
+            const near = (q) => Math.pow(q.x - c.x, 2) + Math.pow(q.y - c.y, 2) <= Math.pow(inst.hb.size + ABSORB.r, 2);
+            if (near(inst.pos) || interpolate && (near(inst.posPrev) || interpolatedArticleCircleCollision(a, c, ABSORB.r))) {
+              vState.onAbsorb(v, inst.hb.dmg);
+              destroyArticleQueue.push(a);
+              articleDestroyed = true;
+              continue;
+            }
+          }
           var reflected = false;
           for (var i = 0; i < 4; i++) {
             if (player[v].hitboxes.active[i]) {

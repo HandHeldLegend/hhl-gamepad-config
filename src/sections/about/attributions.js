@@ -80,7 +80,7 @@ export const REFERENCES = [
     name: "doldecomp/melee",
     author: "Melee decompilation contributors",
     url: "https://github.com/doldecomp/melee",
-    usedFor: N_("Behavior reference for the Arena (input processing, techniques). No code, comments or data tables copied."),
+    usedFor: N_("Behavior reference for the Arena (input processing, techniques, and how Sir Retro picks his numbers and food arcs and fills his bucket). No code, comments or data tables copied."),
   },
   {
     name: "n64decomp/sm64",
@@ -98,12 +98,24 @@ export const REFERENCES = [
     name: "Melee Frame Data",
     author: "meleeframedata.com",
     url: "https://meleeframedata.com",
-    usedFor: N_("Frame data for the Arena fighters (IASA frames, dodges, rolls)."),
+    usedFor: N_("Frame data for the Arena fighters (IASA frames, dodges, rolls) and every Sir Retro move (startup, active frames, landing lag, autocancel)."),
   },
   {
     name: "SmashWiki",
     author: "SmashWiki contributors",
     url: "https://www.ssbwiki.com",
-    usedFor: N_("Arena movement numbers (initial dash, shield, weights) and move behavior."),
+    usedFor: N_("Arena movement numbers (initial dash, shield, weights), move behavior, and Sir Retro's hitbox tables, frame timing and special moves."),
+  },
+  {
+    name: "IKneeData",
+    author: "Schmoo (Will Blackett)",
+    url: "https://ikneedata.com",
+    usedFor: N_("Sir Retro's hitbox values (damage, angle, knockback growth, base and set knockback, element) and attributes."),
+  },
+  {
+    name: "Definitive shield sizes (Smashboards)",
+    author: "Smashboards community",
+    url: "https://smashboards.com/threads/definitive-shield-sizes.444049/",
+    usedFor: N_("Sir Retro's shield size."),
   },
 ];

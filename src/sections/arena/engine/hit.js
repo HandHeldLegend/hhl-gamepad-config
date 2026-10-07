@@ -319,7 +319,7 @@ export function cssHits(input) {
 }
 export function executeShieldHit(input, v, a, h, damage) {
   if (!player[v].phys.powerShieldActive) {
-    player[v].phys.shieldHP -= damage;
+    player[v].phys.shieldHP -= damage + (player[a].hitboxes.id[h].sd || 0); // HOJA: per-hitbox shield damage (Sir Retro's Judge 3)
     if (player[v].phys.shieldHP < 0) {
       player[v].phys.shielding = false;
       player[v].phys.cVel.y = 2.5;
@@ -519,6 +519,9 @@ export function hitEffect(type, v) {
       break;
     case 4:
       player[v].shocked = 20;
+      break;
+    case 9: // HOJA: freezing (Sir Retro's Judge 8), drawn as a tint
+      player[v].frozen = 20;
       break;
     default:
       break;

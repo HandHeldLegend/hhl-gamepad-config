@@ -20,7 +20,10 @@ const { STEP_MS, FIGHTERS, TRIGGER } = await import('../constants.js');
 const { meleeStick, meleeStickUnits, meleeTrigger } = await import('../melee.js');
 const { actionStates } = await import('../engine/shortcuts.js');
 const { getKnockback } = await import('../engine/hit.js');
-const { charAttributes } = await import('../engine/ml.js');
+const { charAttributes, CHARIDS } = await import('../engine/ml.js');
+const { World, inputData } = await import('../engine/world.js');
+const { engineStage } = await import('../stage.js');
+const { setRetroSeed, rollJudge } = await import('../engine/sirretro.js');
 const { ENGINE_ID } = await import('../engine/roster.js');
 const { Vec2D } = await import('../engine/util.js');
 
@@ -264,7 +267,7 @@ console.log('L-cancel');
   const late = landing('vix', 9);
   check(late.lc.lag === late.full.lag && late.lc.feed.some((x) => /^L-cancel missed · 9f early \(window 7f\)/.test(x)), 'pressed 9f early (window 7f) → full lag, chip says so');
   const retro = landing('sir-retro', 2);
-  check(retro.lc.lag === retro.full.lag && retro.lc.feed.some((x) => /can’t be L-cancelled/.test(x)), 'sir-retro: neutral air can’t be L-cancelled (approximation rule)');
+  check(retro.lc.lag === retro.full.lag && retro.lc.feed.some((x) => /can’t be L-cancelled/.test(x)), 'sir-retro: neutral air can’t be L-cancelled (the chip says so)');
 }
 
 console.log('Ledge');
@@ -466,6 +469,161 @@ console.log('Melee input processing');
   check(run([1]) === 'DASH', 'dash: neutral → full in one frame');
   check(run([0.45, 1]) === 'DASH', 'dash: one frame in the tilt zone (0.625) still dashes');
   check(run([0.45, 0.45, 1]) === 'WALK', 'walk: two frames in the tilt zone → no dash');
+}
+
+console.log('Sir Retro (Mr. Game & Watch data)');
+{
+  const R = charAttributes[ENGINE_ID['sir-retro']];
+  check(ENGINE_ID['sir-retro'] === CHARIDS.RETRO_ID && R.weight === 60 && R.gravity === 0.095 && R.terminalV === 1.7 && R.fastFallV === 2.3,
+    'a full character of its own (not a template): weight 60, gravity 0.095, fall 1.7 / 2.3');
+  // Jump heights: full hop 29, short hop 11.025 (SmashWiki).
+  const hop = (hold) => {
+    const { game, pl } = newGame({ fighter: 'sir-retro' });
+    frames(game, 20);
+    const y0 = pl.phys.pos.y; let peak = y0;
+    frames(game, 70, (s, i) => { s.btn.jump = i < hold; peak = Math.max(peak, pl.phys.pos.y); });
+    return peak - y0;
+  };
+  const sh = hop(1); const fh = hop(8);
+  check(Math.abs(fh - 29) < 0.6 && Math.abs(sh - 11.025) < 0.6, `full hop ${fh.toFixed(2)} (Melee 29), short hop ${sh.toFixed(2)} (Melee 11.025)`);
+
+  // Weight: the same hit launches him (60) further than a heavyweight (104). Vix jabs each one.
+  const kbOn = (target, pct) => {
+    const w = new World({ stage: engineStage(), fighter: ENGINE_ID.vix, dummy: ENGINE_ID[target] });
+    const step = (a) => { const i0 = inputData(); if (a) a(i0); w.step([i0, inputData()]); };
+    for (let i = 0; i < 5; i++) step();
+    w.player[1].phys.pos = new Vec2D(w.player[0].phys.pos.x + 8, 0.00001);
+    w.player[1].percent = pct;
+    for (let i = 0; i < 12; i++) { const b = w.player[1].percent; step((x) => { x.a = i === 0; }); if (w.player[1].percent > b) break; }
+    const hb = w.player[0].charHitboxes.jab1.id0;
+    return { kb: w.player[1].hit.knockback, want: getKnockback(hb, hb.dmg, hb.dmg, pct, w.player[1].charAttributes.weight, false, false) };
+  };
+  const light = kbOn('sir-retro', 80); const heavy = kbOn('rally', 80);
+  check(light.kb > 0 && Math.abs(light.kb - light.want) < 1e-9 && light.kb > heavy.kb * 1.15,
+    `same jab at 80%: KB ${light.kb.toFixed(1)} on him (weight 60) vs ${heavy.kb.toFixed(1)} on weight 104`);
+
+  // L-cancel: forward air (25 → 12) can be L-cancelled; neutral air (15) can't.
+  const lag = (stick, pressAt) => {
+    const { game, pl } = newGame({ fighter: 'sir-retro' });
+    frames(game, 20);
+    frames(game, 1, (s) => { s.btn.jump = true; });
+    until(game, () => pl.actionState === 'JUMPF', 20);
+    frames(game, 1, (s) => { s.lx = stick; s.btn.attack = true; });
+    let n = 0;
+    while (!/^LANDING/.test(pl.actionState) && n < 120) { frames(game, 1, (s) => { if (n === pressAt) s.r = 1; }); n++; }
+    let lagF = 0;
+    while (/^LANDINGATTACKAIR/.test(pl.actionState) && lagF < 60) { lagF++; frames(game, 1); }
+    return { lagF, landed: n };
+  };
+  const withLc = (stick) => { const full = lag(stick, -1); return [full.lagF, lag(stick, full.landed - 3).lagF]; };
+  const [fFull, fLc] = withLc(0.5); const [nFull, nLc] = withLc(0);
+  check(fFull === 25 && fLc === 12, `forward air: ${fFull}f landing lag, L-cancelled ${fLc}f (Melee 25 / 12)`);
+  check(nFull === 15 && nLc === 15, `neutral air: ${nFull}f landing lag, still ${nLc}f with an L-cancel (flagged as a special move in Melee)`);
+
+  // Judge: never one of the last two numbers; each of the other seven 1/7 (seeded).
+  setRetroSeed(12345);
+  const first = rollJudge({});
+  const two = {}; const firstTwo = [rollJudge(two), rollJudge(two)];
+  const fake = {};
+  let repeat = 0; let hist = [];
+  const counts = Array(10).fill(0); const after = Array(10).fill(0);
+  const n = 70000;
+  for (let i = 0; i < n; i++) {
+    const v = rollJudge(fake);
+    if (hist.includes(v)) repeat++;
+    counts[v]++;
+    if (hist[0] === 5 && hist[1] === 9) after[v]++;
+    hist = [v, hist[0]];
+  }
+  const freq = counts.slice(1).map((c) => c / n);
+  const afterN = after.reduce((a, b) => a + b, 0);
+  const cond = after.slice(1).filter((_, i) => i !== 4 && i !== 8).map((c) => c / afterN);
+  check(first !== 1 && !firstTwo.includes(2) && repeat === 0, 'Judge: never repeats either of the last two numbers (and opens without a 1 or 2)');
+  check(cond.length === 7 && cond.every((f) => Math.abs(f - 1 / 7) < 0.03) && after[5] === 0 && after[9] === 0,
+    `Judge: after a 9 then a 5, each of the other seven comes up ≈ 1/7 (${cond.map((f) => (f * 100).toFixed(1)).join(' ')}%)`);
+  check(freq.every((f) => Math.abs(f - 1 / 9) < 0.006), `Judge: over ${n} seeded rolls every number ≈ 1/9 overall (${freq.map((f) => (f * 100).toFixed(1)).join(' ')}%)`);
+  // A 9 against a 1, in the engine (Judge on the dummy at 0%). A fresh fighter's first number can't be
+  // a 1, so each try swings once at nothing, then at the dummy.
+  const judgeHit = (want) => {
+    for (let sd = 1; sd < 400; sd++) {
+      setRetroSeed(sd);
+      const { game, pl } = newGame({ fighter: 'sir-retro' });
+      const d = game.world.player[1];
+      frames(game, 5);
+      frames(game, 1, (x) => { x.lx = -1; x.btn.special = true; });
+      frames(game, 60);
+      const selfBefore = pl.percent;
+      place(game, d.phys.pos.x - 9, 0, { face: 1 });
+      frames(game, 1, (x) => { x.lx = 1; x.btn.special = true; });
+      if (pl.retro.number !== want) continue;
+      for (let i = 0; i < 30; i++) {
+        frames(game, 1);
+        if (d.percent > 0) return { dmg: d.percent, kb: d.hit.knockback, self: pl.percent - selfBefore };
+      }
+      return { dmg: 0, kb: 0, self: pl.percent - selfBefore };
+    }
+    return null;
+  };
+  const j1 = judgeHit(1); const j9 = judgeHit(9);
+  check(j1 && j9 && j9.dmg === 32 && j1.dmg === 2 && j1.kb === 0 && j9.kb > 150, `Judge 9: 32% and KB ${j9?.kb.toFixed(0)}; Judge 1: 2% and no knockback`);
+  check(j1 && j1.self === 12 && j9.self === 0, 'Judge 1 also deals 12% to Sir Retro');
+
+  // Fire: rises, then helpless (no jump, no attack), 6-frame landing.
+  {
+    const { game, pl } = newGame({ fighter: 'sir-retro' });
+    frames(game, 10);
+    frames(game, 1, (s) => { s.ly = 1; s.btn.special = true; });
+    let top = 0;
+    const t = 1 + until(game, () => pl.actionState === 'FALLSPECIAL', 60, () => { top = Math.max(top, pl.phys.pos.y); });
+    frames(game, 3, (s, i) => { s.btn.jump = i === 1; });
+    const helpless = pl.actionState === 'FALLSPECIAL';
+    frames(game, 2, (s, i) => { s.btn.attack = i === 0; });
+    const stillHelpless = pl.actionState === 'FALLSPECIAL';
+    until(game, () => pl.actionState === 'LANDINGFALLSPECIAL', 200);
+    let lagF = 0;
+    while (pl.actionState === 'LANDINGFALLSPECIAL' && lagF < 60) { lagF++; frames(game, 1); }
+    check(t === 40 && top > 45 && helpless && stillHelpless, `Fire: ${t - 1} frames of rise (to ${top.toFixed(0)} units), then helpless (jump and attack do nothing)`);
+    check(lagF === 6, `Fire: landing from the free fall takes ${lagF} frames (Melee 6)`);
+  }
+
+  // Oil Panic: absorbs Vix's lasers (no damage), three fill the bucket, the spill hits for floor(9 × 1.5) + 5.
+  {
+    const w = new World({ stage: engineStage(), fighter: ENGINE_ID.vix, dummy: ENGINE_ID['sir-retro'] });
+    const vx = w.player[0]; const r = w.player[1];
+    const step = (a, b) => { const i0 = inputData(); const i1 = inputData(); if (a) a(i0); if (b) b(i1); w.step([i0, i1]); };
+    for (let i = 0; i < 10; i++) step();
+    const fills = [];
+    for (let k = 0; k < 3; k++) {
+      for (let i = 0; i < 70; i++) step((x) => { x.b = i === 0; }, (x) => { x.b = true; x.lsY = i < 2 ? -1 : 0; });
+      fills.push(r.retro.bucket);
+      for (let i = 0; i < 30; i++) step();
+    }
+    check(fills.join() === '1,2,3' && r.percent === 0 && r.retro.oil === 9, `Oil Panic absorbs the laser (bucket ${fills.join(' → ')}, ${r.percent}% taken, 9% stored)`);
+    r.phys.pos = new Vec2D(vx.phys.pos.x + 20, r.phys.pos.y);
+    const before = vx.percent;
+    for (let i = 0; i < 60; i++) step(null, (x) => { x.b = i === 0; x.lsY = i < 2 ? -1 : 0; });
+    check(vx.percent - before === 18 && r.retro.bucket === 0, `the full bucket spills for ${vx.percent - before}% (floor(9 × 1.5) + 5 = 18) and empties`);
+  }
+
+  // A smash at a given percent: forward smash on the dummy (weight 60) at 50% follows the formula.
+  {
+    const { game } = newGame({ fighter: 'sir-retro' });
+    const d = game.world.player[1];
+    frames(game, 5);
+    d.percent = 50;
+    place(game, d.phys.pos.x - 12, 0, { face: 1 });
+    frames(game, 2);
+    let got = null;
+    for (let i = 0; i < 40 && !got; i++) {
+      const b = d.percent;
+      frames(game, 1, (s) => { s.cx = i < 2 ? 1 : 0; });
+      if (d.percent > b) got = { dmg: d.percent - b, kb: d.hit.knockback };
+    }
+    const hb = game.world.player[0].charHitboxes.fsmashClean.id0; // 18%, 55°, KBG 100, BKB 44
+    const p = 50 + hb.dmg; // the formula uses the percent after the hit
+    const want = ((((p / 10) + (p * hb.dmg) / 20) * (200 / (60 + 100)) * 1.4) + 18) * (hb.kg / 100) + hb.bk;
+    check(got && got.dmg === 18 && Math.abs(got.kb - want) < 1e-9, `forward smash (torch, 18%) on weight 60 at 50% (68% after): KB ${got?.kb.toFixed(2)} = formula ${want.toFixed(2)}`);
+  }
 }
 
 console.log('Performance');

@@ -216,7 +216,7 @@ function controlsCard() {
 function techCard(app) {
   const P = app.game.fighter.P;
   const tech = [
-    [t('Fighters'), t('Vix, Quill, Sable, Rally and Mochi use meleelight’s character data. Dot, Rosette, Rime and Sir Retro are approximations: their own published movement numbers on top of another fighter’s moves.')],
+    [t('Fighters'), t('Vix, Quill, Sable, Rally and Mochi use meleelight’s character data. Sir Retro is a full character of our own on the same engine, built from public frame and hitbox data. Dot, Rosette and Rime are approximations: their own published movement numbers on top of another fighter’s moves.')],
     [t('Walk vs dash'), t('Push the stick slowly to walk (speed follows how far you push). Flick it past {threshold} within {n} frames of leaving the center to dash.', { threshold: 0.79, n: STICK.SMASH_WINDOW })],
     [t('Dash back / dash dance'), t('During a dash, flick the other way (past 0.79 within 2 frames) to dash back; keep alternating for a dash dance. The feedback counts how many frames the stick was seen in the "tilt zone" on the way. Stick bounce (snapback) shows up here too.')],
     [t('Short hop vs full hop'), t('Release jump within {n} frames (≈{ms} ms) of pressing it for a short hop; hold it for a full hop.', { n: P.JUMPSQUAT, ms: Math.round(P.JUMPSQUAT * 16.7) })],
@@ -228,6 +228,9 @@ function techCard(app) {
     [t('Ledge'), t('Fall next to a ledge to grab it. Then: toward the stage or up to climb, jump to leap off, away or down to let go.')],
     [t('Smash attacks & the training dummy'), t('Press A as the stick crosses 0.79 (within 2 frames of leaving the center), flick the C-stick, or press A in the first 3 frames of a dash for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy is a second fighter that takes damage, hitlag, hitstun and knockback from the engine, and each hit shows move · damage · knockback.')],
   ];
+  if (app.game.fighter.profile.id === 'sir-retro') {
+    tech.splice(1, 0, [t('Sir Retro’s specials'), t('Neutral special flips up to five sausages (press B again for more). Side special swings a hammer and shows a number from 1 to 9, never one of the last two: 9 is a home run, 1 barely hits and costs him 12%. Up special bounces him high on a trampoline, then he falls helpless. Down special holds out a bucket that catches energy shots such as lasers; after three, down special again spills them as a strong oil splash.')]);
+  }
   return card({ title: t('Technique guide'), subtitle: t('What each feedback message is measuring. Frame windows shown for {fighter}.', { fighter: app.game.fighter.profile.name }), icon: 'help', tone: 'red' },
     h('dl.arena-tech', tech.flatMap(([k, v]) => [h('dt', k), h('dd', v)])));
 }
@@ -235,7 +238,7 @@ function techCard(app) {
 function aboutCard() {
   return card({ title: t('About this arena'), icon: 'info', tone: 'lavender' },
     h('p.small', t('The Arena is a place to put your HOJA controller through its paces. It reads only the controller connected to this app (never other gamepads), so what you see is exactly what your controller sends.')),
-    h('p.small', t('It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. Its engine is a port of meleelight, an open-source fan recreation by Will Blackett (MIT license), so movement, physics and hits behave like it. Five fighters use meleelight’s character data; the others put their own published movement attributes on top of one of those. The characters, stage art and the rest of the app are our own, and no game files or assets are used.')),
+    h('p.small', t('It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. Its engine is a port of meleelight, an open-source fan recreation by Will Blackett (MIT license), so movement, physics and hits behave like it. Five fighters use meleelight’s character data, Sir Retro is our own character built from public frame and hitbox data, and the others put their own published movement attributes on top of one of those. The characters, stage art and the rest of the app are our own, and no game files or assets are used.')),
     h('p.small', t('Not affiliated with or endorsed by Nintendo or HAL Laboratory.')),
     h('p.small.muted', t('meleelight closely recreates the classic game, so this is a good place to try a new stick module, gate or setting, but results won’t exactly match the original game.')));
 }

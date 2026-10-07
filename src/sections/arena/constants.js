@@ -4,7 +4,7 @@
  * the input buffer.
  *
  * The simulation itself (physics, action states, hit detection, every character number of the five
- * ported fighters) is the meleelight port in engine/ (see docs/ARENA-ENGINE.md). Units there are
+ * ported fighters and of Sir Retro) is the meleelight port in engine/ (see docs/ARENA-ENGINE.md). Units there are
  * meleelight's (the main platform is 136.8 units wide); timings are frames of the fixed 60 Hz
  * simulation (1 frame = 16.67 ms).
  *
@@ -107,8 +107,9 @@ export const PHYS = {
 // ---------------------------------------------------------------------------------------------
 /*
  * Original fighters (the round "Dot" body with different colours and accessories). Five run on the
- * character data of meleelight's open-source recreation (engine/roster.js); the other four use the
- * publicly documented Melee attributes below on top of a template, so players can test their
+ * character data of meleelight's open-source recreation (engine/roster.js); Sir Retro is a full
+ * character of our own built from public Mr. Game & Watch data (engine/sirretro.js); the other three use
+ * the publicly documented Melee attributes below on top of a template, so players can test their
  * controller with a familiar feel. Not affiliated with or endorsed by Nintendo or HAL Laboratory; no
  * game files or assets are used.
  *
@@ -125,15 +126,16 @@ export const PHYS = {
  *   float            https://www.ssbwiki.com/Float (hold jump, then press down; up to 2.5 s)
  *   Sir Retro        https://www.ssbwiki.com/Mr._Game_%26_Watch_(SSBM) (attribute table; neutral, back
  *                    and up aerials are special-type moves that can't be L-cancelled) and
- *                    https://www.ssbwiki.com/Weight (weight 60, the second-lightest in Melee)
+ *                    https://www.ssbwiki.com/Weight (weight 60, the second-lightest in Melee); his full
+ *                    data and every move's sources are in engine/sirretro.js
  * Behaviour reference only (how jumpsquat → airborne, fast fall, airdodge and traction interact):
  *   doldecomp/melee https://github.com/doldecomp/melee (no code or data copied).
  * Notes: Rosette's fast fall is listed inconsistently on the wiki table (1.85 vs a +33% column); we
  * use 2.0. Vix's short-hop height isn't in the table; ~10.6 is derived from the commonly quoted
  * short-hop velocity of 2.1 and gravity 0.23. Both NEED REVIEW.
  * Sir Retro: the wiki's movement numbers are almost the same as the all-rounder's (gravity 0.095, fall
- * 1.7 / 2.3, jumpsquat 4); what sets him apart is air speed 1.0, a light build (weight 60: the training
- * dummy flies further) and aerials that can't be L-cancelled (noLcancel below).
+ * 1.7 / 2.3, jumpsquat 4); what sets him apart is air speed 1.0, a light build (weight 60), aerials that
+ * can't be L-cancelled and his own moves (engine/sirretro.js; this row is shown in the picker / help).
  * weight (w)       https://www.ssbwiki.com/Weight (Melee: Mario 100, Fox 75, Falco 80, Marth 87, Peach 90,
  *                  Popo 88, Captain Falcon 104, Jigglypuff 60, Mr. Game & Watch 60), used by the dummy.
  * initial dash     https://www.ssbwiki.com/Dash (Melee table: "Dash Frames" → dashF, "Max Acceleration" →
@@ -143,8 +145,9 @@ export const PHYS = {
  *                  "Forward Roll"): spot / roll.
  *
  * How the engine uses these (engine/roster.js): vix, quill, sable, rally and mochi run on meleelight's
- * own character data (these rows are then only shown in the picker / help); dot, rosette, rime and
- * sir-retro are approximations built on a meleelight template character with these numbers on top.
+ * own character data and sir-retro on engine/sirretro.js (these rows are then only shown in the picker /
+ * help); dot, rosette and rime are approximations built on a meleelight template character with these
+ * numbers on top.
  * Values are in the game's units and frames.
  */
 

@@ -77,9 +77,10 @@ export function blendColours(start, end, opacity) {
 // ---------------------------------------------------------------------------------------------
 // Character registry (main/characters.js)
 // ---------------------------------------------------------------------------------------------
-export const CHARIDS = { MARTH_ID: 0, PUFF_ID: 1, FOX_ID: 2, FALCO_ID: 3, FALCON_ID: 4 };
-/** HOJA: which meleelight character an engine id is built on (itself for the five ported ones). */
-export const templateOf = [0, 1, 2, 3, 4];
+/** HOJA: RETRO_ID is Sir Retro, our own character (sirretro.js), not a meleelight one. */
+export const CHARIDS = { MARTH_ID: 0, PUFF_ID: 1, FOX_ID: 2, FALCO_ID: 3, FALCON_ID: 4, RETRO_ID: 5 };
+/** HOJA: which character an engine id is built on (itself for the six full characters). */
+export const templateOf = [0, 1, 2, 3, 4, 5];
 
 export const chars = [];
 export function setChars(index, val) { chars[index] = val; }

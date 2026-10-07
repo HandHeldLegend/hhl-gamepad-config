@@ -5,23 +5,25 @@
  * unchanged), only drawn as our own original round characters:
  *   vix → Fox, quill → Falco, sable → Marth, rally → Captain Falcon, mochi → Jigglypuff.
  *
- * Four fighters have no meleelight counterpart. They are APPROXIMATIONS: a meleelight character's
- * moves, hitboxes, frame data and ECB are used as a template, with that fighter's own published Melee
+ * Sir Retro is a full character of our own on the same engine (sirretro.js): his attributes, moves,
+ * hitboxes and frame data follow Mr. Game & Watch in Melee from public data.
+ *
+ * Three fighters have no counterpart. They are APPROXIMATIONS: a meleelight character's moves,
+ * hitboxes, frame data and ECB are used as a template, with that fighter's own published Melee
  * movement attributes (constants.js FIGHTERS: gravity, fall speeds, jumpsquat, dash / run / walk,
  * air speed and acceleration, traction, jump heights, weight, initial dash frames) on top:
  *   dot (all-rounder)        → Fox template
  *   rosette (floaty, float)  → Marth template, plus float (hold jump, then press down)
  *   rime (low traction)      → Falco template (a single climber)
- *   sir-retro (featherweight)→ Captain Falcon template, neutral / back / up aerials can't be L-cancelled
  * Attributes the public tables don't list (dash acceleration split, jump horizontal speeds, double jump
- * multiplier, walk acceleration, air friction) come from the template, scaled where noted. Phase 2 will
- * give Sir Retro his own moves.
+ * multiplier, walk acceleration, air friction) come from the template, scaled where noted.
  */
 import './fox.js';
 import './falco.js';
 import './falcon.js';
 import './marth.js';
 import './puff.js';
+import { THROWN, retroEcb } from './sirretro.js';
 import { CHARIDS, templateOf, charAttributes, hitboxes, offsets, framesData, intangibility, actionSounds, ecb, chars, charObject } from './ml.js';
 import { actionStates } from './shortcuts.js';
 
@@ -32,6 +34,7 @@ export const ENGINE_ID = {
   sable: CHARIDS.MARTH_ID,
   rally: CHARIDS.FALCON_ID,
   mochi: CHARIDS.PUFF_ID,
+  'sir-retro': CHARIDS.RETRO_ID,
 };
 
 /** Approximated fighters: template character and extra (non-attribute) behaviour. */
@@ -39,7 +42,6 @@ const APPROX = {
   dot: { template: CHARIDS.FOX_ID },
   rosette: { template: CHARIDS.MARTH_ID, floatFrames: 150 },
   rime: { template: CHARIDS.FALCO_ID },
-  'sir-retro': { template: CHARIDS.FALCON_ID, noLcancel: ['ATTACKAIRN', 'ATTACKAIRB', 'ATTACKAIRU'] },
 };
 
 /** Initial jump speed that reaches height h under gravity g with per-frame steps (fox: 31.28 → 3.68). */
@@ -88,7 +90,16 @@ let built = false;
 export function buildRoster(fighters) {
   if (built) return ENGINE_ID;
   built = true;
-  let next = 5;
+  // Any fighter can be thrown by Sir Retro: give every state table his THROWNRETRO* states (meleelight
+  // keeps "thrown by X" states per character; ours are generic) with an ECB and a length.
+  for (let c = 0; c < 5; c++) {
+    for (const [k, st] of Object.entries(THROWN)) {
+      if (!actionStates[c][k]) actionStates[c][k] = { ...st };
+      if (!ecb[c][k]) ecb[c][k] = ecb[c].DAMAGEFALL || retroEcb(k);
+      if (framesData[c][k] == null) framesData[c][k] = 60;
+    }
+  }
+  let next = CHARIDS.RETRO_ID + 1;
   for (const f of fighters) {
     if (ENGINE_ID[f.id] != null) continue;
     const a = APPROX[f.id] || APPROX.dot;
@@ -110,4 +121,4 @@ export function buildRoster(fighters) {
 }
 
 /** Template name of a roster id (for docs / the help tab). */
-export const TEMPLATE_NAME = { 0: 'marth', 1: 'puff', 2: 'fox', 3: 'falco', 4: 'falcon' };
+export const TEMPLATE_NAME = { 0: 'marth', 1: 'puff', 2: 'fox', 3: 'falco', 4: 'falcon', 5: 'sir-retro' };

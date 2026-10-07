@@ -2365,7 +2365,7 @@ S.LANDINGATTACKAIRN = {
     const pl = player[p];
     pl.actionState = "LANDINGATTACKAIRN";
     pl.timer = 0;
-    if (pl.phys.lCancel && !(pl.charAttributes.noLcancel || []).includes("ATTACKAIRN")) { // HOJA: noLcancel (approximated Sir Retro)
+    if (pl.phys.lCancel && !(pl.charAttributes.noLcancel || []).includes("ATTACKAIRN")) { // HOJA: noLcancel (Sir Retro: these aerials ignore L-cancel)
       pl.phys.landingLagScaling = 2;
     } else {
       pl.phys.landingLagScaling = 1;
@@ -2397,7 +2397,7 @@ S.LANDINGATTACKAIRF = {
     const pl = player[p];
     pl.actionState = "LANDINGATTACKAIRF";
     pl.timer = 0;
-    if (pl.phys.lCancel && !(pl.charAttributes.noLcancel || []).includes("ATTACKAIRF")) { // HOJA: noLcancel (approximated Sir Retro)
+    if (pl.phys.lCancel && !(pl.charAttributes.noLcancel || []).includes("ATTACKAIRF")) { // HOJA: noLcancel (Sir Retro: these aerials ignore L-cancel)
       pl.phys.landingLagScaling = 2;
     } else {
       pl.phys.landingLagScaling = 1;
@@ -2429,7 +2429,7 @@ S.LANDINGATTACKAIRB = {
     const pl = player[p];
     pl.actionState = "LANDINGATTACKAIRB";
     pl.timer = 0;
-    if (pl.phys.lCancel && !(pl.charAttributes.noLcancel || []).includes("ATTACKAIRB")) { // HOJA: noLcancel (approximated Sir Retro)
+    if (pl.phys.lCancel && !(pl.charAttributes.noLcancel || []).includes("ATTACKAIRB")) { // HOJA: noLcancel (Sir Retro: these aerials ignore L-cancel)
       pl.phys.landingLagScaling = 2;
     } else {
       pl.phys.landingLagScaling = 1;
@@ -2461,7 +2461,7 @@ S.LANDINGATTACKAIRD = {
     const pl = player[p];
     pl.actionState = "LANDINGATTACKAIRD";
     pl.timer = 0;
-    if (pl.phys.lCancel && !(pl.charAttributes.noLcancel || []).includes("ATTACKAIRD")) { // HOJA: noLcancel (approximated Sir Retro)
+    if (pl.phys.lCancel && !(pl.charAttributes.noLcancel || []).includes("ATTACKAIRD")) { // HOJA: noLcancel (Sir Retro: these aerials ignore L-cancel)
       pl.phys.landingLagScaling = 2;
     } else {
       pl.phys.landingLagScaling = 1;
@@ -2493,7 +2493,7 @@ S.LANDINGATTACKAIRU = {
     const pl = player[p];
     pl.actionState = "LANDINGATTACKAIRU";
     pl.timer = 0;
-    if (pl.phys.lCancel && !(pl.charAttributes.noLcancel || []).includes("ATTACKAIRU")) { // HOJA: noLcancel (approximated Sir Retro)
+    if (pl.phys.lCancel && !(pl.charAttributes.noLcancel || []).includes("ATTACKAIRU")) { // HOJA: noLcancel (Sir Retro: these aerials ignore L-cancel)
       pl.phys.landingLagScaling = 2;
     } else {
       pl.phys.landingLagScaling = 1;

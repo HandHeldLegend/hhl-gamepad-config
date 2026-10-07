@@ -33,11 +33,13 @@ Behavior and data we learned from. No code, comments, data tables or assets were
 
 | Reference | By | Used for |
 |---|---|---|
-| [doldecomp/melee](https://github.com/doldecomp/melee) | Melee decompilation contributors | Behavior reference for the Arena (input processing, techniques). No code, comments or data tables copied. |
+| [doldecomp/melee](https://github.com/doldecomp/melee) | Melee decompilation contributors | Behavior reference for the Arena (input processing, techniques, and how Sir Retro picks his numbers and food arcs and fills his bucket). No code, comments or data tables copied. |
 | [n64decomp/sm64](https://github.com/n64decomp/sm64) | SM64 decompilation contributors | Behavior reference for the 3D Platformer's movement. No code, comments or data tables copied. |
 | [SM64 movement write-ups (pannenkoek2012, Ukikipedia)](https://ukikipedia.net) | pannenkoek2012 and Ukikipedia contributors | Cross-checking the 3D Platformer's movement numbers. |
-| [Melee Frame Data](https://meleeframedata.com) | meleeframedata.com | Frame data for the Arena fighters (IASA frames, dodges, rolls). |
-| [SmashWiki](https://www.ssbwiki.com) | SmashWiki contributors | Arena movement numbers (initial dash, shield, weights) and move behavior. |
+| [Melee Frame Data](https://meleeframedata.com) | meleeframedata.com | Frame data for the Arena fighters (IASA frames, dodges, rolls) and every Sir Retro move (startup, active frames, landing lag, autocancel). |
+| [SmashWiki](https://www.ssbwiki.com) | SmashWiki contributors | Arena movement numbers (initial dash, shield, weights), move behavior, and Sir Retro's hitbox tables, frame timing and special moves. |
+| [IKneeData](https://ikneedata.com) | Schmoo (Will Blackett) | Sir Retro's hitbox values (damage, angle, knockback growth, base and set knockback, element) and attributes. |
+| [Definitive shield sizes (Smashboards)](https://smashboards.com/threads/definitive-shield-sizes.444049/) | Smashboards community | Sir Retro's shield size. |
 
 ## meleelight (MIT License)
 

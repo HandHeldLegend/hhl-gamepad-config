@@ -16,6 +16,7 @@ modes, fighters' look and stage art.
 | `article.js` | `src/physics/article.js` | projectiles (lasers, side-special afterimage hitbox); drawing removed |
 | `shared.js` | `src/characters/shared/moves/*` (79 states) | every shared action state: wait / walk / dash / run / turn, jumps, landing, L-cancel landing, airdodge, shield, rolls, ledge, hitstun / tumble / tech, grabs, death and respawn |
 | `fox.js`, `falco.js`, `falcon.js`, `marth.js`, `puff.js` | `src/characters/<c>/` (attributes, ECB, index, moves, helpers) | attributes, hitbox tables and offsets, frame counts, intangibility, ECB per frame, each character's own moves |
+| `sirretro.js` | the structure of `src/characters/<c>/` (no data) | Sir Retro, our own character: new data from public Mr. Game & Watch sources (see below) in meleelight's format |
 | `player.js` | `src/main/player.js` | the player object |
 | `util.js` | `src/main/util/*`, `src/main/linAlg.js`, `src/stages/util/*`, `src/stages/stage.js` | vectors, boxes, ECB transforms, hitbox constructors |
 | `ml.js` | parts of `src/main/main.js`, `main/characters.js`, `settings.js`, `main/vfx/blendColours.js` | the globals the engine reads, plus HOJA glue (world swap, stubs, ECB decoder, float) |
@@ -38,6 +39,10 @@ ECB data. From here on the files are maintained by hand; every behavioural chang
 - each Game owns its world (`useArticles`, `useEcbSquashData`, `setWorldGlobals`), so tests can run several.
 - template characters: ECB frames past the template's data hold the last frame; `templateOf` keeps
   character-specific branches; `noLcancel` (L-cancel ignored for listed aerials); `floatFrames` (float).
+- Sir Retro: `article.js` absorbs `absorbable` projectiles (the laser) that reach his bucket's circle
+  (`ABSORB`) while his state has `onAbsorb` and `phys.absorbing`; `hit.js` adds a hitbox's `sd` (extra
+  shield damage) and a freezing element (type 9, drawn only); `roster.js` gives every fighter his
+  `THROWNRETRO*` states (meleelight keeps "thrown by X" states per character, ours are generic).
 
 ## Character mapping
 
@@ -50,10 +55,10 @@ The UI never uses the original characters' names or likenesses: every fighter is
 | Sable | meleelight Marth | ported data |
 | Rally | meleelight Captain Falcon | ported data |
 | Mochi | meleelight Jigglypuff | ported data |
+| Sir Retro | `sirretro.js`: our own character from public Mr. Game & Watch (Melee NTSC 1.02) data | full character |
 | Dot | Fox template + own attributes | **approximation** (all-rounder) |
 | Rosette | Marth template + own attributes + float | **approximation** |
 | Rime | Falco template + own attributes (one climber) | **approximation** |
-| Sir Retro | Captain Falcon template + own attributes, neutral / back / up air can't be L-cancelled | **approximation** (rebuilt in phase 2) |
 
 Approximations (`engine/roster.js approxAttributes`) take the template's attribute set and override what the public
 Melee attribute tables give (`constants.js FIGHTERS`): gravity, terminal and fast-fall speed, jumpsquat, full / short hop
@@ -61,6 +66,65 @@ initial speed (from the published heights: `v = sqrt(2gh + g²/4) - g/2`), initi
 speed, air acceleration (split into meleelight's A / B in the template's ratio), dash acceleration (same), traction,
 weight and initial dash frames. Double jump multiplier is 0.9; jump horizontal speeds, air friction, walk acceleration
 (scaled by walk speed), hitboxes, frame data, ECB, ledge boxes and specials are the template's.
+
+## Sir Retro
+
+A full character on the engine (`engine/sirretro.js`, engine id 5), modelled on Mr. Game & Watch in Melee
+(NTSC 1.02). The code follows meleelight's character files; every number is new and comes from public data.
+Drawn as our own flat dark round LCD figure with simple original props (render.js `#retroProp`); no names,
+likenesses or assets of the original.
+
+Sources, by area:
+
+| Area | Source |
+|---|---|
+| Attributes (weight 60, gravity 0.095, fall 1.7 / 2.3, jumpsquat 4, jumps 29 / 11.025, double jump 2.23 and 0.9, dash 1.5 / 1.5 with 8 dash frames and 0.02 + 0.06 acceleration, walk 1.1, traction 0.06, air speed 1.0, air acceleration 0.02 + 0.03, air friction 0.016) | SmashWiki attribute pages and the G&W (SSBM) page; ikneedata.com `charAttributes.js` |
+| Shield (size 10.75, scale 1.02: the smallest max shield) | Smashboards "Definitive shield sizes" (quoted via a search result; the thread itself wasn't reachable) |
+| Frame data: startup, active frames, IASA, landing lag, L-cancel lag, autocancel, grabs, dodges, airdodge | meleeframedata.com (`/mr._game_&_watch`) and the SmashWiki move subpages |
+| Hitboxes: damage, angle (361 = Sakurai), BKB, KBG, WDSK, radius, bone / offset, element, ground / air | SmashWiki `Mr. Game & Watch (SSBM)/<move>` hitbox tables, cross-checked with ikneedata.com `hitboxDBJSON.js` |
+| Judge odds, Chef arcs, Oil Panic flow and formula (floor(absorbed × 1.5) + 5), Fire's landing lag | SmashWiki "Judge", "Chef", "Oil Panic", "Fire" and the special subpages; doldecomp/melee as a behavior reference only |
+
+Moves (frames are 1-based; damage / angle / BKB / KBG):
+
+| Move | Frames | Hitboxes |
+|---|---|---|
+| Jab | hit 4-6, IASA 16, 17 total; A again from frame 8 → rapid jab | 3% 83°/85° KBG 100 WDSK 20; rapid 3% 70° WDSK 18, hits every 12 frames (loop est.) |
+| Side tilt | 13-30, IASA 42, 44 | 10% 361 BKB 10 KBG 100 (4 boxes) |
+| Up tilt | 9-29, 29 | 9% 100° BKB 30 KBG 127 / 125 / 123 |
+| Down tilt | 6-13, IASA 26, 29 (ends crouched) | 12% 85° BKB 65 KBG 100 (grounded foes), 9% 361 BKB 80 KBG 40 (airborne foes) |
+| Dash attack | 6-29, 37; boost grab 2-4 | 9% 120° BKB 70 KBG 30 |
+| Forward smash | charge 8, clean 13-16, late 17-33, IASA 42, 44 | torch 18% 55° BKB 44 KBG 100 fire, body 14% 361; late 6% fire |
+| Up smash | charge 18, 24-28, IASA 40, 45 | 18% 83° BKB 40 KBG 96 |
+| Down smash | charge 8, 15-19, 34 | handles 10% 20° BKB 10 KBG 50 (priority), hammers 16% 80° BKB 60 KBG 90 |
+| Neutral air | 20-29, 44; autocancel 1-2; landing 15, **no L-cancel** | 16% 361 BKB 20 KBG 100, radius 11.7 |
+| Forward air | clean 10-12, late 13-32, 44; AC 1-2; landing 25 (12 L-cancelled) | 16% 361 BKB 30 KBG 80; late 6% BKB 10 |
+| Back air | hits 10-12, 13-15, 16-18, 19-21; 39; AC 1-9; landing 18 (hitbox on frame 1), **no L-cancel** | 5% 68° BKB 60 KBG 60 slash; landing 3% BKB 80 |
+| Up air | 7-16, 21-22; 39; AC 1-6; landing 15, **no L-cancel** | 7% 94° BKB 12 KBG 100, then 9% 90° BKB 55 KBG 100 |
+| Down air | clean 12, late 13-38; 49; AC 1-5; landing 20 (10 L-cancelled, hitbox frame 2 / 1) | 14% 270° (meteor) + 13% 60°, late 13% 60°, BKB 20 KBG 100; landing 6% 40° BKB 50 KBG 30 |
+| Grab / dash grab | 7-8 of 30 / 11-12 of 40 | |
+| Pummel | 13 of 30 | 3% 80° KBG 100 WDSK 30 |
+| Throws (all 8%) | release at 0.55 × the foe's weight, end at 0.69 × weight | forward 68° / back 68° backwards / up 90° (BKB 100 KBG 40), down 88° BKB 80 KBG 40 |
+| Ledge attack | 42-47 of 55, intangible 1-39 (slow: est.) | 8% / 8% / 6% 361 BKB 80 KBG 50 |
+| Floor attack | est. 18-19 front, 26-27 back, 49 | 6% 361 BKB 80 KBG 50 |
+| Chef (neutral B) | pan 18-21 and a sausage on 18, 49; up to 5 sausages, B again from 21 (20 apart) or held (34 apart) | pan 5% 10° BKB 60 KBG 30 fire; sausage 4% 70° BKB 20 KBG 50 r 1.95, 80 frames, five arcs never one of the last two |
+| Judge (side B) | 16-29 (5: hits 16-18, 19-21, 22-24, 25-27), 49; air: ends in a normal fall | 1: 2% no KB, 12% recoil · 2: 4% 361 BKB 10 KBG 40 · 3: 6% 140° BKB 45 KBG 50, +20 shield damage · 4: 8% 40° BKB 50 KBG 40 slash · 5: 4 × 3% 75° BKB 30 KBG 80 electric · 6: 12% 20° BKB 30 KBG 80 fire · 7: 14% 361 BKB 30 KBG 50 · 8: 4% 80° WDSK 70 KBG 100 freezing · 9: 32% 361 BKB 100 KBG 80 (smaller hitbox). Number: never one of the last two (start: 2 then 1), so each allowed number is 1/7 |
+| Fire (up B) | hitbox 1-37, 39 frames of rise, then helpless (FALLSPECIAL); landing 40 during the move, 6 after | 6% 80° BKB 50 KBG 80 |
+| Oil Panic (down B) | absorbs from frame 5 (radius 5.5 at 4.5 forward, 6 up), loops 38 → 5 while B is held, 49; catch 25 frames intangible; 3 catches fill the bucket (kept on respawn) | spill 2-10 / 11-22 / 23-37, 49: floor(absorbed × 1.5) + 5; ground BKB 30 KBG 80, air BKB 40 KBG 100 with 1% on the 2nd / 3rd boxes (Melee bug) |
+| Dodges | spot dodge 32 (intangible 2-12), rolls 35 (4-19), airdodge 49 (4-29), wavedash landing 10 | |
+
+Estimated (no public number found; tune against footage if better data appears):
+- Hitbox positions for hand / head bones (jab puff, chair, flag, hammer, helmet): bone-0 offsets are used
+  as published (forward = the offset's z or x axis, up = y), the rest are placed where the LCD pose holds
+  the prop.
+- Hurtbox 10 × 14 (meleelight has one box per fighter) and ECB (12 tall, 7 crouched, 4 lying down).
+- Animation-driven motion: Fire's rise (about 57 units over 39 frames, stick tilt up to ~20°), dash attack
+  slide, roll / tech / getup distances (26 / 30 / 28), ledge climb paths, slow ledge options, floor attack
+  timing, the rapid jab loop, Chef's five arcs and sausage gravity, Judge's air hop (1.0, once per airtime)
+  and air slowdown (half speed), Oil Panic's slowed fall in the air.
+- Jump horizontal speed (ground-to-air 0.8, 0.8 initial, 1.0 max), walk initial speed and acceleration,
+  initial dash animation length (21).
+- Judge 7's food and Judge 8's freeze are not simulated beyond the hit (the Arena has no items; freezing
+  is drawn only).
 
 ## Input
 
@@ -89,7 +153,7 @@ per-axis deadzone, 0..140 triggers). Differences from meleelight's own input cod
 - Units are meleelight's (the main platform is 136.8 wide); timings are 60 Hz frames.
 
 Size: about 1.0 MB of plain JavaScript (≈ 150 KB gzipped), lazy-loaded with the Arena. The five character files are
-120 to 185 KB each, mostly move code.
+120 to 185 KB each, mostly move code; Sir Retro's `sirretro.js` is about 52 KB (15 KB gzipped).
 
 ## Known differences from meleelight
 
@@ -101,8 +165,9 @@ Size: about 1.0 MB of plain JavaScript (≈ 150 KB gzipped), lazy-loaded with th
 ## Adding a fighter
 
 1. Add the roster entry to `constants.js FIGHTERS` (id, name, `feel`, published attributes, `look`).
-2. In `engine/roster.js`, either map it to a ported character in `ENGINE_ID`, or add it to `APPROX` with a template
-   (and `floatFrames` / `noLcancel` if needed). Approximations are registered by `buildRoster()`.
+2. In `engine/roster.js`, either map it to a full character in `ENGINE_ID` (a ported one, or one of our own like
+   `sirretro.js`), or add it to `APPROX` with a template (and `floatFrames` / `noLcancel` if needed).
+   Approximations are registered by `buildRoster()`.
 3. For a new template character, port its attributes, ECB and moves into a new `engine/<c>.js` in the same shape as
    `fox.js` (call `setupActionStates` with `{ ...S, ...M }`), add a `CHARIDS` entry in `ml.js` and import it in
    `roster.js`.

@@ -86,7 +86,10 @@ export class Renderer {
     for (const tg of game.targets) if (tg.alive) this.#target(ctx, tg, game.frame);
     for (const e of game.effects) this.#effect(ctx, e, game.frame + a);
     if (game.dummy) this.#dummy(ctx, game.dummy, a, game.frame);
-    for (const sp of game.projectiles) if (sp.kind === 'LASER') this.#spark(ctx, sp, a);
+    for (const sp of game.projectiles) {
+      if (sp.kind === 'LASER') this.#spark(ctx, sp, a);
+      else if (sp.kind === 'SAUSAGE') this.#sausage(ctx, sp, a, game.frame);
+    }
     if (!dead) this.#fighter(ctx, f, fx, fy, game, opts);
     if (opts.showHitboxes) this.#debug(ctx, f, game);
   }
@@ -426,6 +429,9 @@ export class Renderer {
     }
     ctx.restore();
 
+    // Sir Retro's props (bucket, hammer and sign, trampoline, pan...): flat LCD shapes.
+    if (lcd) this.#retroProp(ctx, f, fx, fy, col(lk.body), game);
+
     // Attack swoosh on active hitboxes.
     for (const b of boxes) {
       ctx.strokeStyle = alpha(t.yellow, 0.75);
@@ -442,7 +448,7 @@ export class Renderer {
       ctx.lineWidth = 1.4;
       ctx.beginPath(); ctx.arc(fx, fy + R, R + 1.5 + (this.reduced ? 0 : (game.frame & 4 ? 0.8 : 0)), 0, Math.PI * 2); ctx.stroke();
     }
-    if (f.windowOn) {
+    if (f.windowOn && f.windowOn !== 'absorb') { // absorb: Sir Retro's bucket shows it
       const c = { reflect: t.blue, counter: t.accent, absorb: t.yellow }[f.windowOn];
       ctx.strokeStyle = alpha(c, 0.85); ctx.fillStyle = alpha(c, 0.18); ctx.lineWidth = 1.4;
       ctx.beginPath();
@@ -470,6 +476,150 @@ export class Renderer {
         star(ctx, fx + Math.cos(ang) * 7, fy + 2 * R + 3 + Math.sin(ang) * 1.6, 1.6, t.yellow);
       }
     }
+  }
+
+  /** A sausage (Sir Retro's neutral special): a small rounded stick that tumbles. */
+  #sausage(ctx, sp, a, frame) {
+    const x = lerp(sp.prevX, sp.x, a);
+    const y = lerp(sp.prevY, sp.y, a);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(this.reduced ? 0.6 : frame * 0.35);
+    ctx.fillStyle = this.t.text;
+    roundRect(ctx, -2.6, -1, 5.2, 2, 1);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /** A short number in world space (y up), centered on (x, y). */
+  #digit(ctx, n, x, y, size, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(size / 64, -size / 64);
+    ctx.font = '700 64px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = color;
+    ctx.fillText(String(n), 0, 4);
+    ctx.restore();
+  }
+
+  /**
+   * Sir Retro's per-move props, flat dark LCD-style shapes in world space (y up). Original simple shapes
+   * only: spray pump, chair, flag, manhole cover, helmet, torch, diving helmet, two hammers, parachute,
+   * box, turtle, key, bell, frying pan, hammer with a numbered sign, trampoline, bucket and oil.
+   */
+  #retroProp(ctx, f, fx, fy, ink, game) {
+    const pl = f.pl;
+    const st = pl.actionState;
+    const tm = pl.timer;
+    const d = f.facing;
+    const t = this.t;
+    const X = (dx) => fx + d * dx;
+    const on = pl.hitboxes.active.some(Boolean);
+    ctx.save();
+    ctx.fillStyle = ink; ctx.strokeStyle = ink; ctx.lineWidth = 1.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const line = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(X(x1), fy + y1); ctx.lineTo(X(x2), fy + y2); ctx.stroke(); };
+    const disc = (x, y, r, fill = true) => { ctx.beginPath(); ctx.arc(X(x), fy + y, r, 0, Math.PI * 2); if (fill) ctx.fill(); else ctx.stroke(); };
+    const rect = (x, y, w, h) => { ctx.fillRect(Math.min(X(x), X(x + w)), fy + y, w, h); };
+    const puff = (x, y, r) => { ctx.globalAlpha = 0.45; disc(x, y, r); disc(x + 1.6, y + 1, r * 0.7); ctx.globalAlpha = 1; };
+
+    if (/^JAB/.test(st)) { // spray pump and its puff
+      rect(5, 5, 5, 2.4); line(10, 6.2, 12.5, 6.2); line(5, 6.2, 3, 4);
+      if (on) puff(13, 6, 3);
+    } else if (st === 'FORWARDTILT') { // chair held out
+      const k = tm >= 13 && tm <= 30 ? 1 : 0.5;
+      line(3, 7, 4 + 5 * k, 7);
+      rect(4 + 5 * k, 1.5, 1.2, 9);
+      line(4.6 + 5 * k, 5, 4 + 10 * k, 5);
+      line(4 + 10 * k, 5, 4 + 10 * k, 1.5);
+    } else if (st === 'UPTILT') { // flag with a number one
+      const up = tm >= 9 ? 1 : tm / 9;
+      const tx = 3 + 1.5 * up; const ty = 8 + 11 * up;
+      line(3, 8, tx, ty);
+      rect(tx, ty - 5, 6, 5);
+      this.#digit(ctx, 1, X(tx + 3), fy + ty - 2.5, 4.6, t.onAccent);
+    } else if (st === 'DOWNTILT') { // manhole cover flipping up
+      ctx.beginPath(); ctx.ellipse(X(9), fy + 1 + (on ? 2.5 : 0), 5.5, on ? 2.6 : 1, 0, 0, Math.PI * 2); ctx.fill();
+    } else if (st === 'ATTACKDASH') { // helmet, diving forward
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(X(1), fy + 8, 7.8, 0.12 * Math.PI, 0.88 * Math.PI); ctx.stroke();
+    } else if (st === 'FORWARDSMASH') { // torch
+      const out = tm >= 13 ? 1 : 0.4;
+      line(3, 7, 3 + 10 * out, 7);
+      ctx.fillStyle = t.yellow; disc(4 + 11 * out, 7.5, tm >= 13 && tm <= 33 ? 3.4 : 2);
+    } else if (st === 'UPSMASH') { // diving helmet
+      const lift = tm >= 24 && tm <= 28 ? 3 : 0;
+      ctx.lineWidth = 1.6; disc(1.5, 13 + lift, 6, false);
+      ctx.globalAlpha = 0.35; disc(2.5, 13.5 + lift, 2.4); ctx.globalAlpha = 1;
+    } else if (st === 'DOWNSMASH') { // two hammers, both sides
+      const k = tm >= 15 ? 1 : 0.4;
+      for (const sx of [1, -1]) {
+        line(sx * 2, 7, sx * (9 * k + 2), 4 * k + 3);
+        ctx.fillRect(X(sx * (9 * k + 2)) - 2, fy + 1.5, 4, 3.5);
+      }
+    } else if (st === 'ATTACKAIRN') { // parachute
+      ctx.beginPath(); ctx.arc(fx, fy + 15, 10, 0, Math.PI); ctx.closePath(); ctx.fill();
+      ctx.lineWidth = 0.8;
+      for (const sx of [-9, -3, 3, 9]) { ctx.beginPath(); ctx.moveTo(fx + sx, fy + 15); ctx.lineTo(fx, fy + 9); ctx.stroke(); }
+    } else if (st === 'ATTACKAIRF') { // box swung down in front
+      const k = tm >= 10 ? 1 : 0.5;
+      rect(6 * k + 2, 1 + 4 * (1 - k), 7, 7);
+    } else if (st === 'ATTACKAIRB' || st === 'LANDINGATTACKAIRB') { // turtle behind
+      ctx.beginPath(); ctx.ellipse(X(-11), fy + 3, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+      disc(-16.5, 3 + (on && (tm & 2) ? 1 : 0), 1.8);
+    } else if (st === 'ATTACKAIRU') { // blowing upwards
+      line(1, 10, 2, 13);
+      if (on) { puff(0, 15, 3.5); puff(1, 19, 2.6); }
+    } else if (st === 'ATTACKAIRD' || st === 'LANDINGATTACKAIRD') { // key, plunging down
+      rect(-0.6, -5, 1.2, 9); disc(0, 5.5, 2.4, false); rect(0.6, -4.5, 2, 1); rect(0.6, -2.5, 1.5, 1);
+    } else if (st === 'CATCHATTACK') { // bell
+      ctx.beginPath(); ctx.arc(X(9), fy + 8, 3, Math.PI, 0); ctx.lineTo(X(12.5), fy + 6.5); ctx.lineTo(X(5.5), fy + 6.5); ctx.closePath(); ctx.fill();
+    } else if (/^(GRAB|CATCH|THROW[A-Z])/.test(st)) { // reaching hand
+      line(3, 7, 9, 7); disc(9.5, 7, 1.4);
+    } else if (/^NEUTRALSPECIAL/.test(st)) { // frying pan
+      const k = tm >= 18 && tm <= 21 ? 1 : 0.6;
+      line(3, 7, 6, 7 + 2 * k);
+      ctx.beginPath(); ctx.ellipse(X(9), fy + 7 + 2 * k, 3.4, 1.3, -d * 0.3 * k, 0, Math.PI * 2); ctx.fill();
+    } else if (/^SIDESPECIAL/.test(st)) { // hammer and the numbered sign
+      const n = pl.retro?.number || 0;
+      const k = tm >= 16 ? 1 : tm / 16;
+      line(3, 9, 3 + 6 * k, 13 - 6 * k);
+      ctx.fillRect(X(3 + 6 * k) - 2, fy + 13 - 6 * k - 1.5, 4, 3.5);
+      if (tm >= 6) {
+        line(-3, 8, -3, 17);
+        ctx.fillRect(X(-3) - 4.5, fy + 17, 9, 8);
+        ctx.fillStyle = t.onAccent; ctx.fillRect(X(-3) - 3.8, fy + 17.7, 7.6, 6.6);
+        this.#digit(ctx, n, X(-3), fy + 21, 6, n === 9 ? t.red : ink);
+      }
+    } else if (st === 'UPSPECIAL' && tm <= 16 && pl.phys.fireBase) { // trampoline left behind, two helpers
+      const b = pl.phys.fireBase;
+      ctx.globalAlpha = 1 - tm / 18;
+      ctx.fillRect(b.x - 7, b.y + 1, 14, 1.4);
+      for (const sx of [-8, 8]) ctx.fillRect(b.x + sx - 1.2, b.y, 2.4, 5);
+      ctx.globalAlpha = 1;
+    } else if (/^DOWNSPECIAL/.test(st)) { // bucket (fill level) or the oil spill
+      const fill = pl.retro?.bucket || 0;
+      if (/SHOOT/.test(st)) {
+        const k = Math.min(1, tm / 30);
+        ctx.globalAlpha = 0.75 * (1 - Math.max(0, tm - 36) / 13);
+        ctx.beginPath(); ctx.ellipse(X(6 + 22 * k), fy + 7 - 2 * k, 3 + 8 * k, 1.6 + 3.5 * k, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+        rect(7, 6, 6, 6);
+      } else {
+        ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(X(7), fy + 12); ctx.lineTo(X(8), fy + 3); ctx.lineTo(X(14), fy + 3); ctx.lineTo(X(15), fy + 12); ctx.stroke();
+        line(7, 12, 11, 15); line(11, 15, 15, 12); // handle
+        for (let i = 0; i < fill; i++) rect(8.4, 3.8 + i * 2.6, 5.2, 2);
+        if (pl.phys.absorbing && !this.reduced) { ctx.strokeStyle = alpha(t.yellow, 0.7); ctx.lineWidth = 0.8; disc(4.5, 6, 5.5, false); }
+      }
+    }
+    // A full bucket: a slow flashing ring.
+    if ((pl.retro?.bucket || 0) >= 3 && !this.reduced && (game.frame & 8)) {
+      ctx.strokeStyle = alpha(t.yellow, 0.8); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(fx, fy + R, R + 2, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
   }
 
   #debug(ctx, f, game) {
