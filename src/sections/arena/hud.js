@@ -111,7 +111,7 @@ export function announcer(label = t('Announce position')) {
 /**
  * Octagonal gate outline + axes + Melee's stick thresholds. Coordinates in CSS pixels.
  * k: where Melee's 1.0 (80 units) sits as a fraction of R: 1 when plotting what the game sees,
- * 80 / 110 when plotting raw controller output (then the 80-unit clamp circle is drawn too).
+ * 80 / GC_STICK_FULL (90) when plotting raw controller output (then the 80-unit clamp circle is drawn too).
  * Overlay: the per-axis deadzone cross (|x| or |y| < 0.2875), dash lines (x = ±0.8) and the tap-jump /
  * fast-fall lines (y = ±0.6625).
  */

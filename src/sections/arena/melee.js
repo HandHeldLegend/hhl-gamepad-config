@@ -4,9 +4,9 @@
  * Pipeline, every simulation frame (original code; behaviour described in the sources listed in
  * constants.js → "Input pipeline sources"):
  *
- *   1. GameCube byte. The HOJA firmware's GameCube core turns a full-scale stick (±2048, 12-bit) into
- *      ±110 around a center of 128 (core_gamecube.c: target_max = 110 / 2048), and an analog trigger
- *      into 0..255 (12-bit >> 4; a digital press sends 255). We do the same from the browser's −1..1 /
+ *   1. GameCube byte. A full-scale stick becomes ±90 around a center of 128, like meleelight's controller
+ *      simulation (80 steps + 10 leniency), so Melee's 80-unit edge is reached at ~89% of travel. An analog
+ *      trigger becomes 0..255 (12-bit >> 4 as in HOJA's GameCube core; a digital press sends 255). We do the same from the browser's −1..1 /
  *      0..1 values or the HOJA USB stream, so 1.0 here = what the controller would send at full scale.
  *   2. Stick units. The game subtracts the origin (128) and clamps the vector radially to 80 units
  *      (longer vectors are scaled back onto the circle, both axes together). 1.0 = 80 units, so every

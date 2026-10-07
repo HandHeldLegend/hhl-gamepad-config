@@ -21,7 +21,8 @@
  *     (23 units), dash/smash x at 0.8 (64 units), tap jump / fast fall y at 0.6625 (53 units).
  *     These match the thresholds controller modders target (e.g. UCF, notched-gate guides) but we could
  *     not confirm them from a fetchable primary source. NEEDS REVIEW against the game data.
- *   - HOJA firmware core_gamecube.c: full-scale stick → ±110 around 128; trigger 12-bit >> 4 → 0..255.
+ *   - meleelight src/input/meleeInputs.js: full-scale stick → ±90 around 128 (80 steps + 10 leniency).
+ *   - HOJA firmware core_gamecube.c: trigger 12-bit >> 4 → 0..255 (its stick sends ±110; see GC_STICK_FULL).
  * Values marked "approx." below are our tuning, not verified game constants.
  */
 
@@ -41,7 +42,10 @@ export const MAX_STEPS_PER_RAF = 5;
 /** GameCube emulation + Melee processing constants (see melee.js and the sources above). */
 export const MELEE = {
   GC_CENTER: 128,          // GameCube stick origin
-  GC_STICK_FULL: 110,      // HOJA GameCube core: full-scale stick = ±110 around the origin
+  // Full-scale stick in GameCube units. meleelight's controller simulation uses 80 steps + 10 units of
+  // leniency = 90, so the 80-unit clamp is reached at ~89% of travel. (HOJA's GameCube core sends ±110,
+  // which would cap at 73% of travel and feels like the stick maxes out far too early.)
+  GC_STICK_FULL: 90,
   STICK_MAX: 80,           // radial clamp: 80 units = 1.0 (steps of 0.0125)
   DEADZONE_UNITS: 23,      // per axis: |units| < 23 reads as 0 (22 → 0, 23 → 0.2875)
   TRIGGER_MAX: 140,        // analog L/R range 0..140 (value = n / 140)
