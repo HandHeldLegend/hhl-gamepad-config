@@ -11,16 +11,38 @@ Third-party work used by HHL Gamepad Config. This list is mirrored in the app (*
 | [esptool-js](https://github.com/espressif/esptool-js) 0.4.3 | Espressif Systems | Apache-2.0 (`vendor/esptool-js/LICENSE`) | ESP32 wireless module updates (`vendor/esptool-js/`) |
 | [pako](https://github.com/nodeca/pako) 2.1.0 (bundled in esptool-js) | Andrei Tuputcyn, Vitaly Puzrin | MIT AND Zlib (`vendor/esptool-js/LICENSE-pako`, `NOTICE.txt`) | Compression while writing ESP32 firmware |
 | CH340 WebUSB serial driver | ported from `hoja_esptool/src/plugin/niceSerial.js` (Hand Held Legend) | n/a | Android ESP32 updates without Web Serial (`src/sections/wireless/ch34x-webusb.js`) |
+| [meleelight](https://github.com/schmooblidon/meleelight) | Will Blackett and contributors | MIT (below) | The Arena's engine, ported to `src/sections/arena/engine/`: physics step, ECB and environmental collision, the action-state machine (shared and per-character moves), hit detection, knockback / hitlag / hitstun, projectiles, target collision, and the character data (attributes, hitboxes, frame counts, ECB) of its five characters. Stage geometry from its Battlefield layout. Sounds, visuals, menus, netplay and model animations were not ported |
 | [pico-universal-flash-nuke](https://github.com/Gadgetoid/pico-universal-flash-nuke) | Phil Howard | BSD 3-Clause (below) | Recovery image (`firmware/universal_flash_nuke.uf2`) |
 | [PICOBOOT protocol](https://github.com/raspberrypi/pico-bootrom-rp2040) | Raspberry Pi Ltd | BSD 3-Clause | Reference for the USB bootloader commands (`src/firmware/picoboot.js`) |
 | [HOJA-LIB-RP2040](https://github.com/HandHeldLegend/HOJA-LIB-RP2040) | Hand Held Legend | see repository | Memory layouts generated from its headers (`src/device/generated/fw-layout.js`) |
 
 The Super Famicom-inspired palette is a tribute; this project is not affiliated with or endorsed by Nintendo.
-The Gameplay Arena is original work inspired by classic platform fighters and contains no game code or assets.
+The Gameplay Arena's engine is a port of meleelight, an open-source fan recreation of a classic platform fighter
+(MIT, see above and `docs/ARENA-ENGINE.md`). Its fighters, stage art, coach and the rest of the Arena are original
+work; it contains no game files or assets, and its fighters are original characters (no names or likenesses).
+The doldecomp/melee decompilation was used as a behaviour reference only (input processing notes); no code from it
+is used.
 The 3D Platformer is original work: its hero, course, art and code were written for this app. Its movement
 (speeds, jump heights, frame windows) was tuned using the [n64decomp/sm64](https://github.com/n64decomp/sm64)
 decompilation and public movement write-ups as a **behaviour reference only**; no code, comments, data tables or
 assets were copied (see `src/sections/platformer/constants.js`).
+
+## meleelight (MIT License)
+
+Copyright (c) 2016 Will Blackett
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## pico-universal-flash-nuke (BSD 3-Clause License)
 

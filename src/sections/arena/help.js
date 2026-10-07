@@ -186,12 +186,12 @@ function optionsCard(app) {
       control: toggle({ checked: store.get('tapJump'), tone: 'yellow', label: t('Tap jump'), onChange: (v) => { store.set('tapJump', v); app.game.tapJump = v; } }) }),
     // Deliberate non-Melee convenience for browser / USB latency (see FRAMES.INPUT_BUFFER).
     field({ label: t('Input buffer'), stacked: true,
-      description: t('A jump, attack, special, shield or smash input pressed up to this many frames before your fighter can act comes out on the first frame it can, and A may come this many frames before or after a smash flick. A deliberate convenience for browser and USB latency: the classic games have no buffer (0 = strict). L-cancel timing is never buffered.'),
+      description: t('A jump, attack, special, Z, shield or C-stick press that your fighter couldn’t act on yet is tried again on each of the next frames, up to this many. A deliberate convenience for browser and USB latency on top of the engine: the classic games have no buffer (0 = strict). L-cancel timing is never buffered.'),
       control: slider({ min: 0, max: FRAMES.INPUT_BUFFER_MAX, step: 1, value: app.game.inputBuffer, unit: t('frames'), tone: 'yellow', ariaLabel: t('Input buffer'),
         onInput: (v) => { app.game.setInputBuffer(v); store.set('inputBuffer', app.game.inputBuffer); } }) }),
     field({ label: t('Technique feedback'), description: t('Show short messages about what you just did (wavedash angle, L-cancel timing…). Off by default.'),
       control: toggle({ checked: !!store.get('techFeedback'), tone: 'yellow', label: t('Technique feedback'), onChange: (v) => store.set('techFeedback', v) }) }),
-    field({ label: t('Show hitboxes'), description: t('Draw attack hitboxes (colored by damage), the dummy’s hurtbox, the collision point and ledge-grab boxes.'),
+    field({ label: t('Show hitboxes'), description: t('Draw attack hitboxes (colored by damage), hurtboxes, the environmental collision diamond (ECB) and ledge-grab boxes.'),
       control: toggle({ checked: store.get('showHitboxes'), tone: 'yellow', label: t('Show hitboxes'), onChange: (v) => store.set('showHitboxes', v) }) }),
     field({ label: t('Target test record'), description: t('Your best time is kept in this browser.'),
       control: [best, button({ label: t('Clear'), size: 'sm', variant: 'ghost', onClick: () => { store.set('bestTime', null); app.game.bestTime = null; best.textContent = formatTime(null); } })] }));
@@ -216,16 +216,17 @@ function controlsCard() {
 function techCard(app) {
   const P = app.game.fighter.P;
   const tech = [
-    [t('Walk vs dash'), t('Push the stick slowly to walk (speed follows how far you push). Flick it past {threshold} within {n} frames of leaving the center to dash.', { threshold: STICK.SMASH_X, n: STICK.SMASH_WINDOW })],
-    [t('Dash back / dash dance'), t('During the first {n} frames of a dash, flick the other way. The feedback counts how many frames the stick was seen in the "tilt zone" on the way. At 2 or more, it reads as a slow turn instead. Stick bounce (snapback) shows up here too.', { n: P.DASH })],
+    [t('Fighters'), t('Vix, Quill, Sable, Rally and Mochi use meleelight’s character data. Dot, Rosette, Rime and Sir Retro are approximations: their own published movement numbers on top of another fighter’s moves.')],
+    [t('Walk vs dash'), t('Push the stick slowly to walk (speed follows how far you push). Flick it past {threshold} within {n} frames of leaving the center to dash.', { threshold: 0.79, n: STICK.SMASH_WINDOW })],
+    [t('Dash back / dash dance'), t('During a dash, flick the other way (past 0.79 within 2 frames) to dash back; keep alternating for a dash dance. The feedback counts how many frames the stick was seen in the "tilt zone" on the way. Stick bounce (snapback) shows up here too.')],
     [t('Short hop vs full hop'), t('Release jump within {n} frames (≈{ms} ms) of pressing it for a short hop; hold it for a full hop.', { n: P.JUMPSQUAT, ms: Math.round(P.JUMPSQUAT * 16.7) })],
     [t('Double jump & fast fall'), t('Jump again in the air. At or after the top of a jump, flick down to fall faster. The feedback shows how many frames after the peak you were.')],
     [t('Airdodge, wavedash & waveland'), t('Press shield in the air; the stick picks the direction. Jump and airdodge diagonally into the ground on the first airborne frame to wavedash. The angle is shown (shallower = longer slide). Airdodging onto a platform from a fall is a waveland; letting go of the ledge, double jumping and airdodging onto the stage is a ledgedash.')],
     [t('L-cancel'), t('Press shield or Z within {n} frames before an aerial lands to halve the landing lag.', { n: FRAMES.LCANCEL })],
     [t('Shield & light shield'), t('Press a trigger past {threshold} to shield. A lighter press gives a bigger shield. The shield shrinks as it wears down, and if you hold it too long it breaks.', { threshold: `${MELEE.TRIGGER_MIN}/${MELEE.TRIGGER_MAX}` })],
-    [t('Shield drop'), t('Shield on a platform, then push the stick down at {min}–{max}° from straight down (a down-diagonal notch is ideal). Straight down flicks spot dodge instead.', { min: STICK.SPOTDODGE_CONE, max: STICK.SHIELD_DROP_MAX })],
+    [t('Shield drop'), t('Shield on a platform, then bring the stick down past −0.65 within 6 frames without reaching −0.7 within 4 frames (that spot dodges). A down-diagonal notch is made for this.')],
     [t('Ledge'), t('Fall next to a ledge to grab it. Then: toward the stage or up to climb, jump to leap off, away or down to let go.')],
-    [t('Smash attacks & the training dummy'), t('Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.', { n: STICK.SMASH_ATTACK + app.game.inputBuffer })],
+    [t('Smash attacks & the training dummy'), t('Press A as the stick crosses 0.79 (within 2 frames of leaving the center), flick the C-stick, or press A in the first 3 frames of a dash for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy is a second fighter that takes damage, hitlag, hitstun and knockback from the engine, and each hit shows move · damage · knockback.')],
   ];
   return card({ title: t('Technique guide'), subtitle: t('What each feedback message is measuring. Frame windows shown for {fighter}.', { fighter: app.game.fighter.profile.name }), icon: 'help', tone: 'red' },
     h('dl.arena-tech', tech.flatMap(([k, v]) => [h('dt', k), h('dd', v)])));
@@ -234,9 +235,9 @@ function techCard(app) {
 function aboutCard() {
   return card({ title: t('About this arena'), icon: 'info', tone: 'lavender' },
     h('p.small', t('The Arena is a place to put your HOJA controller through its paces. It reads only the controller connected to this app (never other gamepads), so what you see is exactly what your controller sends.')),
-    h('p.small', t('It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. The fighters are original characters whose movement is modelled on publicly documented attributes of classic platform-fighter characters (speeds, gravity, jumpsquat, traction), and the input handling follows the documented behaviour of the classic GameCube games. It was written from scratch for this app: the characters, stage, art and code are all our own, and it uses no game code, data files or assets of any kind.')),
+    h('p.small', t('It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. Its engine is a port of meleelight, an open-source fan recreation by Will Blackett (MIT license), so movement, physics and hits behave like it. Five fighters use meleelight’s character data; the others put their own published movement attributes on top of one of those. The characters, stage art and the rest of the app are our own, and no game files or assets are used.')),
     h('p.small', t('Not affiliated with or endorsed by Nintendo or HAL Laboratory.')),
-    h('p.small.muted', t('Frame windows and thresholds are tuned to feel familiar and to demand a lot of a controller, so it’s a good place to try a new stick module, gate or setting, but results won’t exactly match any particular game.')));
+    h('p.small.muted', t('meleelight closely recreates the classic game, so this is a good place to try a new stick module, gate or setting, but results won’t exactly match the original game.')));
 }
 
 export function renderHelp(panel, app) {

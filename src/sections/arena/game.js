@@ -1,18 +1,28 @@
 /**
- * game.js (The simulation): fighter + targets + training dummy (free play) + projectiles + timer,
- * advanced one 60 Hz frame at a time.
+ * game.js (The simulation): the ported meleelight engine (engine/world.js) running one fighter, the
+ * training dummy (free play), projectiles, targets and the target-test timer, one 60 Hz frame at a time.
  *
- * The Game knows nothing about the DOM or the canvas. view/play.js feeds it input snapshots from a
+ * Per frame: the input snapshot goes through PadState (edges, smash detection, snapback watch) and
+ * EngineInput (meleelight's input record + the optional input buffer), the engine steps, then the
+ * technique coach (techniques.js) explains what happened, targets and dummy hits are scored.
+ *
+ * The Game knows nothing about the DOM or the canvas. play.js feeds it input snapshots from a
  * fixed-timestep accumulator and render.js draws whatever state it is in.
  */
 import { store } from './store.js';
-import { FRAMES, STEP_MS } from './constants.js';
-import { STAGE, TARGETS, TARGET_R } from './stage.js';
-import { Fighter } from './fighter.js';
-import { Dummy } from './dummy.js';
-import { PadState } from './controller.js';
+import { FRAMES, STEP_MS, FIGHTERS } from './constants.js';
+import { engineStage, TARGETS, TARGET_R } from './stage.js';
+import { World, inputData } from './engine/world.js';
+import { buildRoster } from './engine/roster.js';
+import { templateOf } from './engine/ml.js';
+import { aArticles } from './engine/article.js';
+import { Fighter, Body } from './fighter.js';
+import { Coach, pressUsed, moveName } from './techniques.js';
+import { PadState, EngineInput } from './controller.js';
 import { SnapbackWatch, describeSnap } from './analysis.js';
 import { t } from '../../i18n/index.js';
+
+buildRoster(FIGHTERS);
 
 export function newStats() {
   return {
@@ -28,6 +38,13 @@ export function newStats() {
     snapback: 0,
     hits: 0,
   };
+}
+
+/** The training dummy (port 1): a second player of the same fighter that never presses anything. */
+class Dummy extends Body {
+  constructor(game) { super(game, 1); this.last = null; }
+  get hittable() { return this.pose !== 'dead'; }
+  get state() { return this.pose === 'dead' ? 'dead' : this.pose === 'hitstun' ? 'hitstun' : 'stand'; }
 }
 
 export class Game {
@@ -46,10 +63,11 @@ export class Game {
     this.stats = newStats();
     this.frame = 0;
     this.pad = new PadState();
+    this.engineInput = new EngineInput();
     // Warn about stick snapback as the game sees it (once per 60 Hz frame).
     this.snapWatch = new SnapbackWatch((e) => { this.stats.snapback++; this.feedback(describeSnap(e), 'red'); });
     this.fighter = new Fighter(this, o.fighter);
-    this.sparks = [];
+    this.coach = new Coach(this);
     this.effects = [];
     this.resetRun();
   }
@@ -61,20 +79,24 @@ export class Game {
   }
 
   feedback(text, tone = 'lavender') {
-    if (!store.get('techFeedback')) return; // off by default (owner: noisy, and not 1:1 with Melee)
+    if (!store.get('techFeedback')) return; // off by default (owner: noisy)
     this.onFeedback({ text, tone, frame: this.frame });
   }
 
-  /** Reset fighter + targets (+ timer in target mode). */
+  /** Reset fighter, dummy and targets (+ timer in target mode): a fresh engine world. */
   resetRun() {
-    this.fighter.spawn(STAGE.spawn, false);
-    this.targets = TARGETS.map((t, i) => ({ ...t, id: i, alive: true, brokenAt: -1 }));
-    this.sparks = [];
-    this.dummy = this.mode === 'free' ? new Dummy(this.fighter.profile) : null;
+    const id = this.fighter.engineId;
+    this.world = new World({ stage: engineStage(), fighter: id, dummy: this.mode === 'free' ? id : null });
+    this.dummy = this.mode === 'free' ? new Dummy(this) : null;
+    this.fighter.trail = [];
+    this.targets = TARGETS.map((tg, i) => ({ ...tg, id: i, alive: true, brokenAt: -1 }));
     this.timer = { state: this.mode === 'targets' ? 'ready' : 'off', start: 0, end: 0 };
+    this.engineInput.clear();
+    this.coach.reset();
+    this.effects = [];
   }
 
-  /** Switch the fighter's movement profile (restarts the run). */
+  /** Switch fighter (restarts the run). */
   setFighter(id) {
     this.fighter.setProfile(id);
     this.resetRun();
@@ -87,20 +109,23 @@ export class Game {
 
   resetStats() { this.stats = newStats(); }
 
+  /** The meleelight character a port's fighter is built on (roster.js). */
+  templateOf(port) { return templateOf[this.world.characterSelections[port]]; }
+
+  /** Projectiles in flight: [{x, y, prevX, prevY, kind}]. */
+  get projectiles() {
+    return aArticles.map((a) => ({ x: a.instance.pos.x, y: a.instance.pos.y, prevX: a.instance.posPrev.x, prevY: a.instance.posPrev.y, kind: a.name, r: a.instance.hb.size }));
+  }
+
   /** Elapsed target-test time in ms (live while running). */
   elapsedMs() {
-    const t = this.timer;
-    if (t.state === 'running') return (this.frame - t.start) * STEP_MS;
-    if (t.state === 'done') return (t.end - t.start) * STEP_MS;
+    const tm = this.timer;
+    if (tm.state === 'running') return (this.frame - tm.start) * STEP_MS;
+    if (tm.state === 'done') return (tm.end - tm.start) * STEP_MS;
     return 0;
   }
 
-  get targetsLeft() { return this.targets.filter((t) => t.alive).length; }
-
-  /** Projectiles ("sparks"): {x, y, vx, vy, g, bounce, life, r, look, hit: {dmg, angle, bkb, kbg, flinch, name}}. */
-  spawnProjectile(o) {
-    this.sparks.push({ vy: 0, g: 0, bounce: 0, r: 3, ...o, prevX: o.x, prevY: o.y });
-  }
+  get targetsLeft() { return this.targets.filter((tg) => tg.alive).length; }
 
   /** Advance one frame with an InputManager snapshot. */
   step(snapshot) {
@@ -108,73 +133,65 @@ export class Game {
     const p = this.pad;
     p.update(snapshot);
     this.snapWatch.update(p.x, p.y, this.frame * STEP_MS);
-    const f = this.fighter;
+    const w = this.world;
+    const pl = w.player[0];
 
     // Target test: the clock starts on the first real input after a reset.
     if (this.timer.state === 'ready' && p.any) { this.timer.state = 'running'; this.timer.start = this.frame - 1; }
 
-    f.step(p);
+    const before = { state: pl.actionState, timer: pl.timer, fastfalled: pl.phys.fastfalled };
+    const N = this.inputBuffer;
+    const f = this.engineInput.frame(p, inputData, pl.actionState, N);
+    const dummyPct = this.dummy ? w.player[1].percent : 0;
+    const dummyState = this.dummy ? w.player[1].actionState : '';
+    w.step([f.input], { tapJump: this.tapJump, edges: f.edges });
+    const after = { state: pl.actionState, timer: pl.timer };
 
-    // Projectiles: fly (with gravity / bounces off the floor) and fade.
-    for (const s of this.sparks) {
-      s.prevX = s.x; s.prevY = s.y;
-      s.vy -= s.g; s.x += s.vx; s.y += s.vy; s.life--;
-      const M = STAGE.main;
-      if (s.y < M.y + s.r && s.prevY >= M.y + s.r && s.x > M.x1 && s.x < M.x2) {
-        if (s.bounce) { s.y = M.y + s.r; s.vy = s.bounce; } else if (s.g) s.life = 0;
-      }
-    }
-    this.sparks = this.sparks.filter((s) => s.life > 0 && s.x > STAGE.blast.left && s.x < STAGE.blast.right && s.y > STAGE.blast.bottom);
-
-    // Hits: fighter hitboxes and projectiles vs targets.
-    const boxes = f.activeHitboxes();
-    for (const t of this.targets) {
-      if (!t.alive) continue;
-      let hit = boxes.some((b) => Math.hypot(b.x - t.x, b.y - t.y) <= b.r + TARGET_R);
-      for (const s of this.sparks) {
-        if (s.life > 0 && segDist(s, t.x, t.y) <= TARGET_R + s.r) { hit = true; s.life = 0; }
-      }
-      if (hit) this.breakTarget(t);
+    // Input buffer bookkeeping and "why didn't my jump come out".
+    const used = pressUsed(before, after);
+    const canBuffer = (k) => !/^(DEAD|REBIRTH)/.test(before.state)
+      && !(k === 'jump' && before.state === 'KNEEBEND')
+      && !(k === 'shield' && /^ATTACKAIR/.test(before.state));
+    const res = this.engineInput.settle(f, used, N, canBuffer);
+    for (const u of res.used) if (u.kind === 'jump') this.feedback(t('Buffered jump · pressed {n}f early', { n: u.age }), 'lavender');
+    if ('jump' in res.expired) {
+      const why = this.coach.jumpBlockedReason(pl);
+      if (why) this.feedback(why, 'yellow');
     }
 
-    // Training dummy: the first active hitbox of each hit group that touches it connects.
-    const d = this.dummy;
-    if (d) {
-      for (const b of boxes) {
-        if (b.grab || f.hitGroups.has(b.g) || !d.touches(b.x, b.y, b.r)) continue;
-        this.hitDummy(b, Math.sign(d.x - f.x) || f.facing);
-        f.onHit(b);
-      }
-      for (const s of this.sparks) {
-        if (s.life > 0 && d.hittable && segDist(s, d.x, d.y + 7) <= s.r + 7) { this.hitDummy(s.hit, Math.sign(s.vx) || 1); s.life = 0; }
-      }
-      if (d.step() === 'ko') this.feedback(t('Dummy KO at {pct}%', { pct: Math.floor(d.percent) }), 'green');
-    }
+    this.coach.frame({ before, after, input: f.input, pad: p, real: f.real, offered: f.offered, frame: this.frame, pl });
+    this.fighter.afterStep();
 
-    // Free play: targets come back after a while.
+    // Targets: hitboxes (swept) and projectiles.
+    for (const i of w.targetHits(this.targets, TARGET_R)) this.breakTarget(this.targets[i]);
     if (this.mode === 'free') {
-      for (const t of this.targets) if (!t.alive && this.frame - t.brokenAt >= FRAMES.TARGET_RESPAWN) t.alive = true;
+      for (const tg of this.targets) if (!tg.alive && this.frame - tg.brokenAt >= FRAMES.TARGET_RESPAWN) tg.alive = true;
     }
 
-    // Blast zones.
-    const b = STAGE.blast;
-    if (f.state !== 'dead' && f.state !== 'respawn' && (f.x < b.left || f.x > b.right || f.y < b.bottom || f.y > b.top)) f.ko();
+    // Training dummy: report hits and KOs.
+    if (this.dummy) {
+      const d = w.player[1];
+      if (d.percent > dummyPct + 1e-9) this.reportHit(d, d.percent - dummyPct);
+      if (/^DEAD/.test(d.actionState) && !/^DEAD/.test(dummyState)) {
+        this.feedback(t('Dummy KO at {pct}%', { pct: Math.floor(dummyPct) }), 'green');
+      }
+      this.dummy.afterStep();
+    }
 
     // Age effects.
     this.effects = this.effects.filter((e) => this.frame - e.frame < e.life);
   }
 
-  /** Apply a hit to the dummy and show "Move · dmg% · KB n · tag". */
-  hitDummy(h, dir) {
-    const d = this.dummy;
-    const res = d.takeHit(h, dir);
+  /** The dummy took damage this frame: "Move · dmg% · KB n" chip (+ "charged nf" for a charged smash). */
+  reportHit(d, dmg) {
+    const a = this.world.player[0];
     this.stats.hits++;
-    const parts = [t('{move} · {dmg}% · KB {kb}', { move: h.name, dmg: +h.dmg.toFixed(1), kb: Math.round(res.kb) })];
-    if (h.flinch === false) parts.push(t('no flinch'));
-    if (h.tag) parts.push(t(h.tag));
-    if (h.charged) parts.push(t('charged {n}f', { n: h.charged }));
-    d.last = { text: parts.join(' · '), ...res, frame: this.frame };
-    this.feedback(d.last.text, 'blue');
+    const kb = d.hit.knockback;
+    const parts = [t('{move} · {dmg}% · KB {kb}', { move: moveName(a.actionState), dmg: +dmg.toFixed(1), kb: Math.round(kb) })];
+    if (a.phys.chargeFrames > 0) parts.push(t('charged {n}f', { n: a.phys.chargeFrames }));
+    this.dummy.last = { text: parts.join(' · '), kb, stun: d.hit.hitstun, dmg, frame: this.frame };
+    this.effects.push({ kind: 'hit', x: d.hit.hitPoint.x, y: d.hit.hitPoint.y, frame: this.frame, life: 14 });
+    this.feedback(this.dummy.last.text, 'blue');
   }
 
   breakTarget(target) {
@@ -193,14 +210,6 @@ export class Game {
   }
 }
 
-/** Closest distance from (cx, cy) to a projectile's path this frame (prev → current). */
-function segDist(s, cx, cy) {
-  const dx = s.x - s.prevX; const dy = s.y - s.prevY;
-  const len2 = dx * dx + dy * dy;
-  const k = len2 ? Math.max(0, Math.min(1, ((cx - s.prevX) * dx + (cy - s.prevY) * dy) / len2)) : 0;
-  return Math.hypot(s.prevX + dx * k - cx, s.prevY + dy * k - cy);
-}
-
 export function formatTime(ms) {
   if (ms == null || !Number.isFinite(ms)) return '–';
   const s = ms / 1000;
@@ -208,4 +217,3 @@ export function formatTime(ms) {
   const rest = (s - m * 60).toFixed(2).padStart(5, '0');
   return m ? `${m}:${rest}` : `${s.toFixed(2)}s`;
 }
-

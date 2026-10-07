@@ -1,14 +1,12 @@
 /**
- * constants.js: Every tunable number in the Arena, in one place.
+ * constants.js: The Arena's tunable numbers outside the engine: input thresholds, the fighter roster
+ * (with the published Melee attributes the approximated fighters use), the coach's frame windows and
+ * the input buffer.
  *
- * Units: positions are "stage units" (the main platform is 136 units wide), velocities are units per
- * frame and every timing is in frames of the fixed 60 Hz simulation (1 frame = 16.67 ms).
- *
- * The thresholds below are what make the Arena a controller test: a technique only "comes out" when
- * the stick or trigger crosses the right line inside the right number of frames, exactly the kind of
- * precision a competitive platform fighter asks of a controller. All values are our own tuning for
- * this original sandbox. The input pipeline and stick/trigger thresholds follow publicly documented
- * Melee behaviour (see "Input pipeline sources" below); no game code, data tables or assets are used.
+ * The simulation itself (physics, action states, hit detection, every character number of the five
+ * ported fighters) is the meleelight port in engine/ (see docs/ARENA-ENGINE.md). Units there are
+ * meleelight's (the main platform is 136.8 units wide); timings are frames of the fixed 60 Hz
+ * simulation (1 frame = 16.67 ms).
  *
  * Input pipeline sources (behaviour reference only; our code is original; see melee.js):
  *   - doldecomp/melee, src/sysdolphin/baselib/controller.c: read for HOW the pad library processes
@@ -94,47 +92,21 @@ export const TRIGGER = {
 export const HOJA_FULL_SCALE = 2048;
 
 // ---------------------------------------------------------------------------------------------
-// Fighter physics (units / frame)
+// Drawing
 // ---------------------------------------------------------------------------------------------
 export const PHYS = {
-  BODY_R: 7,               // fighter body radius; feet are at (x, y), center at (x, y + BODY_R)
-  GRAVITY: 0.11,
-  MAX_FALL: 1.9,
-  FAST_FALL: 2.6,
-
-  WALK_MAX: 1.1,           // walk speed scales with stick |x| up to this
-  WALK_ACCEL: 0.15,
-  DASH_INITIAL: 1.7,       // speed on the first dash frame
-  RUN_SPEED: 1.55,
-  RUN_ACCEL: 0.1,
-  FRICTION: 0.08,          // doubled while sliding faster than WALK_MAX (gives wavedashes a crisp stop)
-
-  FULL_HOP: 3.0,           // initial jump speed (≈ 41 units high, ~54 frames in the air)
-  SHORT_HOP: 1.9,          // (≈ 16 units high, ~35 frames in the air)
-  DOUBLE_JUMP: 2.8,
-  JUMP_H_INIT: 0.75,       // horizontal speed added from stick x on take-off
-  JUMP_H_MAX: 1.45,
-  GROUND_TO_AIR: 0.8,      // share of ground speed kept on take-off
-  DJ_H: 0.9,
-
-  AIR_SPEED: 1.0,
-  AIR_ACCEL: 0.06,
-  AIR_FRICTION: 0.02,
-
-  AIRDODGE_SPEED: 3.1,
-  AIRDODGE_DECAY: 0.9,     // velocity multiplier per frame during the dodge
-  ROLL_DISTANCE: 32,
-  LEDGE_JUMP: 2.9,
+  BODY_R: 7,               // drawn body radius; feet are at (x, y), center at (x, y + BODY_R)
 };
 
 // ---------------------------------------------------------------------------------------------
 // Fighter roster: movement profiles modelled on well-known classic platform-fighter movement
 // ---------------------------------------------------------------------------------------------
 /*
- * Original fighters (the round "Dot" body with different colours and accessories) whose MOVEMENT is
- * modelled on publicly documented character attributes from Super Smash Bros. Melee, so players can
- * test their controller with a familiar feel. Not affiliated with or endorsed by Nintendo or HAL
- * Laboratory; no game code, data files or assets are used, only the published attribute numbers.
+ * Original fighters (the round "Dot" body with different colours and accessories). Five run on the
+ * character data of meleelight's open-source recreation (engine/roster.js); the other four use the
+ * publicly documented Melee attributes below on top of a template, so players can test their
+ * controller with a familiar feel. Not affiliated with or endorsed by Nintendo or HAL Laboratory; no
+ * game files or assets are used.
  *
  * Attribute sources (SmashWiki attribute tables, NTSC Melee rows), fetched 2026-10:
  *   gravity          https://www.ssbwiki.com/Gravity
@@ -166,10 +138,11 @@ export const PHYS = {
  * spot dodge, roll total frames from https://meleeframedata.com (character pages, "Spot Dodge" /
  *                  "Forward Roll"): spot / roll.
  *
- * Values are in the game's units; FIGHTER_SCALE converts them to arena units (our stage is smaller),
- * chosen so the all-rounder matches the arena's original tuning. Frames are the same 60 Hz frames.
+ * How the engine uses these (engine/roster.js): vix, quill, sable, rally and mochi run on meleelight's
+ * own character data (these rows are then only shown in the picker / help); dot, rosette, rime and
+ * sir-retro are approximations built on a meleelight template character with these numbers on top.
+ * Values are in the game's units and frames.
  */
-export const FIGHTER_SCALE = 1.15;
 
 /**
  * g gravity · fall / ff max fall / fast-fall speed · jsq jumpsquat frames · dash initial dash ·
@@ -219,85 +192,27 @@ export const FIGHTERS = [
     look: { body: 'text', band: 'muted', feet: 'text', acc: 'lcd' } },
 ];
 
-/** Arena physics for a roster entry: PHYS with the profile's movement (scaled to arena units). */
-export function fighterPhysics(f) {
-  const k = FIGHTER_SCALE;
-  const g = f.g * k;
-  // Initial jump speed that reaches height h under gravity g with per-frame steps (v + v-g + … ≈ h).
-  const jumpV = (h) => Math.sqrt(2 * g * h * k + (g * g) / 4) - g / 2;
-  const fullHop = jumpV(f.fh);
-  return {
-    ...PHYS,
-    GRAVITY: g, MAX_FALL: f.fall * k, FAST_FALL: f.ff * k,
-    WALK_MAX: f.walk * k, DASH_INITIAL: f.dash * k, RUN_SPEED: f.run * k,
-    FRICTION: f.traction * k,
-    FULL_HOP: fullHop, SHORT_HOP: jumpV(f.sh), DOUBLE_JUMP: fullHop * (f.jumps > 1 ? 0.8 : 0.93),
-    AIR_SPEED: f.air * k, AIR_ACCEL: f.airAcc * k,
-    JUMPSQUAT: f.jsq, JUMPS: f.jumps, FLOAT: f.float,
-    DASH: f.dashF ?? FRAMES.DASH, RUN_ACCEL: (f.dashAcc ?? PHYS.RUN_ACCEL) * k,
-    SPOTDODGE: f.spot ?? FRAMES.SPOTDODGE, ROLL: f.roll ?? FRAMES.ROLL,
-  };
-}
-
 export const fighterById = (id) => FIGHTERS.find((f) => f.id === id) || FIGHTERS[0];
 
 // ---------------------------------------------------------------------------------------------
-// Frame windows (frames)
+// Frame windows used by the technique coach and the Arena (frames)
 // ---------------------------------------------------------------------------------------------
-/*
- * Frame-count convention: a state entered while handling input on frame 1 (shield release, roll, a ground
- * attack…) with N frames of lag can act again on frame N + 1, and acts ON that frame (the frame the lag
- * ends is also the frame the next input is read: no extra idle frame in between). Landing is entered by
- * the collision step after the input was handled, so its lag counts from the next frame.
- * Sources: SmashWiki "Shield" (Melee shield drop lag 15 frames, shield stays up at least 8 frames),
- * "Wavedash" / "Air dodge" (airdodge landing = 10 frames of special landing lag), "Dash" (initial dash
- * options), meleeframedata.com (spot dodge / roll totals per character, see FIGHTERS).
- */
+/* The engine owns every gameplay window (jumpsquat, landing lag, airdodge, shield...). These only say
+ * how the coach (techniques.js) labels what happened, plus the Arena's own conveniences. */
 export const FRAMES = {
-  JUMPSQUAT: 4,            // crouch before leaving the ground. Release jump before it ends → short hop
-  DASH: 12,                // default initial dash (profiles override: FIGHTERS.dashF); a smash the other way inside it is a dash back
-  TURN: 6,                 // slow "tilt turn" when a dash back was too slow
-  RUN_BRAKE: 10,
-  RUN_TURN: 18,
-  LAND: 4,                 // normal landing lag
-  WAVELAND: 10,            // landing lag after an airdodge touches down (wavedash / waveland)
-  SPECIAL_LAND: 10,
-  LCANCEL: 7,              // press shield/Z within this many frames before landing to halve aerial lag
-  AIRDODGE: 30,            // then helpless fall
-  AIRDODGE_INTANGIBLE: [4, 26],
-  WAVEDASH_MAX_AIR: 3,     // airdodge on airborne frame ≤ this (straight from a jump) counts as a wavedash
+  LCANCEL: 7,              // meleelight's L-cancel window (physics.js lCancelUpdate), shown in the help text
+  WAVEDASH_MAX_AIR: 3,     // airdodge within this many frames of leaving the ground counts as a wavedash
   LEDGEDASH_MAX: 45,       // ledge release → wave-land within this many frames counts as a ledgedash
-  ROLL: 31, ROLL_MOVE: [4, 22], ROLL_INTANGIBLE: [4, 19],     // default; profiles override (FIGHTERS.roll)
-  SPOTDODGE: 22, SPOTDODGE_INTANGIBLE: [2, 16],               // default; profiles override (FIGHTERS.spot)
-  SHIELD_RELEASE: 15,      // shield drop lag (jump and spot dodge still work during it, like Melee)
-  SHIELD_MIN: 8,           // the shield stays up at least this long once raised (jump out of shield works throughout)
-  SHIELD_BREAK: 150,
-  LEDGE_WAIT: 8,           // frames hanging before ledge options are accepted
-  LEDGE_REGRAB: 30,
-  LEDGE_GETUP: 26,
-  DROP_THROUGH: 10,        // platforms are ignored for this long after a drop
-  RESPAWN_DELAY: 50,
-  RESPAWN_WAIT: 180,
   TARGET_RESPAWN: 180,     // free play: broken targets come back after this long
   /**
-   * Input buffer (a deliberate convenience, NOT Melee behaviour; Melee reads a press only on the frame it
-   * happens). Browser + USB polling adds latency and jitter, so a jump / attack / special / shield /
-   * C-stick / dash press made up to this many frames before the fighter can act is carried forward and
-   * comes out on the first frame it can. L-cancel timing is never buffered. Set in Controls & help (0–6).
+   * Input buffer (a deliberate convenience, NOT Melee; Melee reads a press only on the frame it
+   * happens). Browser + USB polling adds latency and jitter, so a jump / attack / special / Z / shield /
+   * C-stick press that didn't change what the fighter is doing is offered again for up to this many
+   * frames (controller.js EngineInput). L-cancel timing is never buffered. Set in Controls & help (0–6).
    */
   INPUT_BUFFER: 3,
   INPUT_BUFFER_MAX: 6,
 };
-
-export const SHIELD = {
-  MAX: 60,
-  DECAY: 0.28,             // per frame while held
-  REGEN: 0.07,             // per frame while not shielding
-  RADIUS: 11.5,            // full-health hard shield radius (units)
-  LIGHT_GROWTH: 0.35,      // light shield is up to 35% larger (but you can see it's weaker)
-};
-
-export const LEDGE = { REACH_X: 14, REACH_Y: 24, HANG_X: 5, HANG_Y: 13 };
 
 // ---------------------------------------------------------------------------------------------
 // Keyboard shortcuts (KeyboardEvent.code). The keyboard never drives the character. The Arena is

@@ -9,8 +9,10 @@
  * Module map:
  *   constants.js   every tunable number (thresholds, frame windows, physics)
  *   input.js       matched Gamepad API pad / HOJA USB stream → one snapshot per animation frame
- *   controller.js  per-60 Hz-frame input state: edges, smash detection, tilt-zone frame counts
- *   fighter.js     the fighter's state machine; game.js the simulation; stage.js / movesets.js data
+ *   controller.js  per-60 Hz-frame input state (edges, smash detection) and the engine input + buffer
+ *   engine/        the simulation: a port of meleelight (MIT, (c) 2016 Will Blackett); see docs/ARENA-ENGINE.md
+ *   game.js        runs the engine (fighter, dummy, targets, timer); fighter.js a read-only view of a player
+ *   techniques.js  the technique coach (feedback chips, stats); stage.js geometry + targets
  *   render.js      canvas drawing; hud.js input display; analysis.js snapback detection
  *   play.js / help.js   the two tabs; theme.js CSS-token colors; store.js prefs
  *

@@ -5,7 +5,7 @@
  * (no shake, no sudden cuts). Positions are interpolated between simulation frames for smoothness
  * on high-refresh displays.
  */
-import { PHYS, SHIELD } from './constants.js';
+import { PHYS } from './constants.js';
 import { STAGE, TARGET_R } from './stage.js';
 import { readTheme, reducedMotion, alpha, fitCanvas } from './theme.js';
 
@@ -56,7 +56,8 @@ export class Renderer {
     const now = performance.now();
     const dt = this.lastT ? Math.min(0.1, (now - this.lastT) / 1000) : 0;
     this.lastT = now;
-    const target = this.#cameraTarget(f.state === 'dead' ? 0 : fx, f.state === 'dead' ? 20 : fy, w, h);
+    const dead = f.pose === 'dead';
+    const target = this.#cameraTarget(dead ? 0 : fx, dead ? 20 : fy, w, h);
     if (!this.cam || this.cam.w !== w || this.cam.h !== h) this.cam = { ...target, w, h };
     else {
       const k = 1 - Math.exp(-dt * (this.reduced ? 2 : 3));
@@ -85,8 +86,8 @@ export class Renderer {
     for (const tg of game.targets) if (tg.alive) this.#target(ctx, tg, game.frame);
     for (const e of game.effects) this.#effect(ctx, e, game.frame + a);
     if (game.dummy) this.#dummy(ctx, game.dummy, a, game.frame);
-    for (const sp of game.sparks) this.#spark(ctx, sp, a);
-    if (f.state !== 'dead') this.#fighter(ctx, f, fx, fy, game, opts);
+    for (const sp of game.projectiles) if (sp.kind === 'LASER') this.#spark(ctx, sp, a);
+    if (!dead) this.#fighter(ctx, f, fx, fy, game, opts);
     if (opts.showHitboxes) this.#debug(ctx, f, game);
   }
 
@@ -140,18 +141,13 @@ export class Renderer {
   #stage(ctx) {
     const t = this.t;
     const M = STAGE.main;
-    // Main body: a tapered slab.
-    const g = ctx.createLinearGradient(0, 0, 0, -M.depth - 12);
+    // Main body: the stage's underside polygon (engine geometry), filled with a soft gradient.
+    const g = ctx.createLinearGradient(0, 0, 0, -44);
     g.addColorStop(0, t.surface3);
     g.addColorStop(1, t.surface);
     ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.moveTo(M.x1, 0);
-    ctx.lineTo(M.x2, 0);
-    ctx.lineTo(M.x2 - 4, -10);
-    ctx.quadraticCurveTo(M.x2 - 14, -M.depth, 34, -M.depth - 8);
-    ctx.lineTo(-34, -M.depth - 8);
-    ctx.quadraticCurveTo(M.x1 + 14, -M.depth, M.x1 + 4, -10);
+    STAGE.underside.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
     ctx.closePath();
     ctx.fill();
     ctx.lineWidth = 1.5 * this.px;
@@ -165,7 +161,7 @@ export class Renderer {
     const sw = (M.x2 - M.x1 - 16) / 4;
     stripe.forEach((c, i) => { ctx.fillStyle = alpha(c, 0.85); ctx.fillRect(M.x1 + 8 + i * sw, -5.2, sw - 1, 1.4); });
     // Face-button cluster on the front.
-    const cx = 0; const cy = -18; const d = 5;
+    const cx = 0; const cy = -16; const d = 4.4;
     [[0, d, t.blue], [d, 0, t.red], [0, -d, t.yellow], [-d, 0, t.green]].forEach(([dx, dy, c]) => {
       ctx.fillStyle = c;
       ctx.beginPath(); ctx.arc(cx + dx, cy + dy, 2.6, 0, Math.PI * 2); ctx.fill();
@@ -198,6 +194,14 @@ export class Renderer {
   #effect(ctx, e, frame) {
     const t = this.t;
     const k = clamp((frame - e.frame) / e.life, 0, 1);
+    if (e.kind === 'hit') { // a hit on the dummy: a quick flash at the hit point
+      const r = this.reduced ? 4 : 3 + 6 * k;
+      ctx.strokeStyle = alpha(t.yellow, 1 - k);
+      ctx.lineWidth = 1.6 * this.px;
+      ctx.beginPath(); ctx.arc(e.x, e.y, r, 0, Math.PI * 2); ctx.stroke();
+      if (!this.reduced) star(ctx, e.x, e.y, 2.6 * (1 - k), alpha(t.yellow, 1 - k));
+      return;
+    }
     if (this.reduced) {
       // Calm version: a fading ring, no flying pieces.
       ctx.strokeStyle = alpha(t.yellow, 1 - k);
@@ -220,20 +224,21 @@ export class Renderer {
     }
   }
 
+  /** A projectile (laser): a short streak along its path, in our colours. */
   #spark(ctx, sp, a) {
     const t = this.t;
     const x = lerp(sp.prevX, sp.x, a);
     const y = lerp(sp.prevY, sp.y, a);
-    const fade = Math.min(1, sp.life / 12);
-    const c = { fire: t.red, laser: t.green, ice: t.blue, arc: t.accent }[sp.look] || t.yellow;
-    const r = sp.r;
-    const len = Math.hypot(sp.vx, sp.vy) || 1;
-    ctx.strokeStyle = alpha(c, 0.35 * fade);
-    ctx.lineWidth = sp.look === 'laser' ? 1.6 : 2.4;
-    ctx.beginPath(); ctx.moveTo(x - (sp.vx / len) * r * 3, y - (sp.vy / len) * r * 3); ctx.lineTo(x, y); ctx.stroke();
-    ctx.fillStyle = alpha(c, fade);
+    const c = t.green;
+    const vx = sp.x - sp.prevX; const vy = sp.y - sp.prevY;
+    const len = Math.hypot(vx, vy) || 1;
+    const r = Math.max(1.6, sp.r);
+    ctx.strokeStyle = alpha(c, 0.35);
+    ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(x - (vx / len) * r * 4, y - (vy / len) * r * 4); ctx.lineTo(x, y); ctx.stroke();
+    ctx.fillStyle = c;
     ctx.beginPath();
-    ctx.moveTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.lineTo(x, y - r);
+    ctx.moveTo(x + r, y); ctx.lineTo(x, y + r * 0.6); ctx.lineTo(x - r, y); ctx.lineTo(x, y - r * 0.6);
     ctx.closePath(); ctx.fill();
   }
 
@@ -242,7 +247,7 @@ export class Renderer {
     if (d.state === 'dead') return;
     const t = this.t;
     const x = lerp(d.prevX, d.x, a); const y = lerp(d.prevY, d.y, a);
-    const stun = d.state === 'hitstun';
+    const stun = d.pose === 'hitstun';
     ctx.fillStyle = alpha(this.ink, 0.15);
     ctx.beginPath(); ctx.ellipse(x, y + 0.6, 6, 1.4, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = stun && !this.reduced && (frame & 2) ? t.surface3 : t.muted;
@@ -325,9 +330,13 @@ export class Renderer {
     }
   }
 
-  #fighter(ctx, f, fx, fy, game, opts) {
+  #fighter(ctx, f, fx0, fy0, game, opts) {
+    let fx = fx0; let fy = fy0;
     const t = this.t;
-    const st = f.state;
+    const st = f.pose;
+    // Hanging from a ledge: draw the body just below the corner (the engine's position is its own anchor).
+    const L = f.ledge;
+    if (L) { fx = L.x - L.dir * 5; fy = L.y - 13; }
 
     // Respawn halo.
     if (st === 'respawn') {
@@ -350,15 +359,14 @@ export class Renderer {
     let sx = 1; let sy = 1; let lean = 0;
     if (st === 'jumpsquat') { sx = 1.16; sy = 0.8; }
     else if (st === 'crouch') { sx = 1.18; sy = 0.72; }
-    else if (st === 'landing') { const k = 0.22 * f.squash; sx = 1 + k; sy = 1 - k; }
-    else if (!f.ground && st !== 'ledge' && st !== 'ledgeGetup') { const k = clamp(Math.abs(f.vy) * 0.045, 0, 0.12); sx = 1 - k; sy = 1 + k; }
-    // No dash lean while a late A could still turn the flick into a smash attack (fighter.dashPending).
-    if ((st === 'dash' && !f.dashPending) || st === 'run') lean = -f.facing * 0.14;
+    else if (st === 'landing') { const k = 0.22 * Math.max(0, 1 - f.pl.timer / 6); sx = 1 + k; sy = 1 - k; }
+    else if (!f.grounded && st !== 'ledge' && st !== 'ledgeGetup') { const k = clamp(Math.abs(f.vy) * 0.045, 0, 0.12); sx = 1 - k; sy = 1 + k; }
+    if (st === 'dash' || st === 'run') lean = -f.facing * 0.14;
     if (st === 'skid') lean = f.facing * 0.12;
-    const hb0 = f.move?.hitboxes[0];
-    if (hb0) lean = clamp(-hb0.x * f.facing * 0.012, -0.18, 0.18);
+    const boxes = f.activeHitboxes();
+    if (boxes[0]) lean = clamp(-(boxes[0].x - f.x) * 0.012, -0.18, 0.18);
     if (lcd) { sx = 1; sy = 1; lean = 0; }
-    this.lcdPose = lcd && !this.reduced && (f.ground ? Math.abs(f.vx) > 0.05 : true) ? (Math.floor(game.frame / 8) & 1) : 0;
+    this.lcdPose = lcd && !this.reduced && (f.grounded ? Math.abs(f.vx) > 0.05 : true) ? (Math.floor(game.frame / 8) & 1) : 0;
 
     const cy = fy + R * sy;
     ctx.save();
@@ -369,13 +377,13 @@ export class Renderer {
     const col = (k) => t[k] || t.red;
 
     // Hanging from the ledge: a little arm to the corner.
-    if (st === 'ledge' && f.ledge) {
+    if (L) {
       ctx.strokeStyle = col(lk.feet); ctx.lineWidth = 2; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(fx + f.facing * 4, cy + 3); ctx.lineTo(f.ledge.x, f.ledge.y - 0.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(fx + f.facing * 4, cy + 3); ctx.lineTo(L.x, L.y - 0.5); ctx.stroke();
     }
 
     // Feet (yellow), stepping while moving on the ground.
-    const moving = f.ground && Math.abs(f.vx) > 0.05 && st !== 'landing';
+    const moving = f.grounded && Math.abs(f.vx) > 0.05 && st !== 'landing';
     const phase = moving ? fx * 0.55 : 0;
     ctx.fillStyle = col(lk.feet);
     for (const side of [-1, 1]) {
@@ -419,7 +427,6 @@ export class Renderer {
     ctx.restore();
 
     // Attack swoosh on active hitboxes.
-    const boxes = f.activeHitboxes();
     for (const b of boxes) {
       ctx.strokeStyle = alpha(t.yellow, 0.75);
       ctx.lineWidth = 1.8;
@@ -443,13 +450,13 @@ export class Renderer {
       ctx.closePath(); ctx.fill(); ctx.stroke();
     }
 
-    // Shield bubble: shrinks with health, larger + paler with a light press.
-    if (st === 'shield') {
-      const r = f.shieldRadius();
-      const strength = 0.18 + 0.22 * f.shieldPressure;
-      const hp = f.shieldHP / SHIELD.MAX;
+    // Shield bubble (the engine's size and position): shrinks with health, larger + paler with a light press.
+    if (f.shielding) {
+      const sh = f.shield;
+      const strength = 0.18 + 0.22 * clamp((sh.analog - 0.3) / 0.7, 0, 1);
+      const hp = sh.hp;
       ctx.fillStyle = alpha(hp < 0.3 ? t.red : t.accent, strength);
-      ctx.beginPath(); ctx.arc(fx, fy + R, r, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(sh.x + (fx - f.x), sh.y + (fy - f.y), sh.r, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = alpha(hp < 0.3 ? t.red : t.accent, 0.85);
       ctx.lineWidth = 1.6 * this.px * 1.2;
       ctx.stroke();
@@ -467,36 +474,37 @@ export class Renderer {
 
   #debug(ctx, f, game) {
     const t = this.t;
-    // Hitboxes coloured by damage (blue < 5% · green < 10% · yellow < 15% · red), active ones solid.
+    // Active hitboxes coloured by damage (blue < 5% · green < 10% · yellow < 15% · red; grabs in lavender).
     const dmgColor = (d) => (d < 5 ? t.blue : d < 10 ? t.green : d < 15 ? t.yellow : t.red);
-    if (f.move) {
-      for (const hb of f.move.hitboxes) {
-        const on = f.moveFrame >= hb.from && f.moveFrame <= hb.to;
+    const bodies = [f, game.dummy].filter((b) => b && b.pose !== 'dead');
+    for (const b of bodies) {
+      for (const hb of b.activeHitboxes()) {
         const c = hb.grab ? t.accent : dmgColor(hb.dmg);
-        ctx.fillStyle = alpha(c, on ? 0.5 : 0.08);
-        ctx.beginPath(); ctx.arc(f.x + hb.x * f.facing, f.y + hb.y, hb.r, 0, Math.PI * 2); ctx.fill();
-        if (on) { ctx.strokeStyle = c; ctx.lineWidth = this.px; ctx.stroke(); }
+        ctx.fillStyle = alpha(c, 0.45);
+        ctx.beginPath(); ctx.arc(hb.x, hb.y, hb.r, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = c; ctx.lineWidth = this.px; ctx.stroke();
       }
+      // Hurtbox (meleelight uses one box per fighter), intangible = dashed.
+      const hu = b.hurtbox();
+      ctx.strokeStyle = alpha(t.yellow, 0.9); ctx.lineWidth = 1.2 * this.px;
+      if (b.intangible) ctx.setLineDash([3 * this.px, 2 * this.px]);
+      ctx.strokeRect(hu.x1, hu.y2, hu.x2 - hu.x1, hu.y1 - hu.y2);
+      ctx.setLineDash([]);
+      // ECB (environmental collision diamond).
+      const e = b.ecb();
+      ctx.strokeStyle = alpha(t.green, 0.9); ctx.lineWidth = this.px;
+      ctx.beginPath(); e.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.closePath(); ctx.stroke();
     }
-    for (const sp of game.sparks) {
-      ctx.strokeStyle = dmgColor(sp.hit.dmg); ctx.lineWidth = this.px;
+    for (const sp of game.projectiles) {
+      ctx.strokeStyle = t.yellow; ctx.lineWidth = this.px;
       ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2); ctx.stroke();
     }
-    // Dummy hurtbox.
-    const d = game.dummy;
-    if (d && d.state !== 'dead') {
-      ctx.strokeStyle = alpha(t.yellow, 0.9); ctx.lineWidth = 1.2 * this.px;
-      ctx.setLineDash([3 * this.px, 2 * this.px]);
-      ctx.beginPath(); ctx.arc(d.x, d.y + R, R, 0, Math.PI * 2); ctx.stroke();
-      ctx.setLineDash([]);
-    }
-    // Feet point (collision) and ledge-grab boxes.
-    ctx.fillStyle = t.green;
-    ctx.beginPath(); ctx.arc(f.x, f.y, 1.2, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = alpha(t.green, 0.5); ctx.lineWidth = this.px;
-    for (const L of STAGE.ledges) {
-      const x0 = L.dir > 0 ? L.x - 14 : L.x - 1;
-      ctx.strokeRect(x0, L.y - 24, 15, 23);
+    // Ledge-grab boxes (in front of and behind the fighter, meleelight ledgeSnapBox).
+    if (f.pose !== 'dead') {
+      const o = f.pl.charAttributes.ledgeSnapBoxOffset;
+      ctx.strokeStyle = alpha(t.blue, 0.6); ctx.lineWidth = this.px;
+      ctx.strokeRect(f.x, f.y + o[1], o[0], o[2] - o[1]);
+      ctx.strokeRect(f.x - o[0], f.y + o[1], o[0], o[2] - o[1]);
     }
   }
 }

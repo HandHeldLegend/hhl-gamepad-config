@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@828d43f)
+// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@7dadf9b)
 // Validated 5 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "local",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "828d43f"
+  "ref": "7dadf9b"
  },
  "blocks": {
   "config": [
@@ -2363,8 +2363,13 @@ export default {
     "value": 46
    },
    {
+    "name": "WII_CODE_EXTENSION_TOGGLE",
+    "value": 47,
+    "doc": "Plug / unplug the current mode's extension"
+   },
+   {
     "name": "WII_CODE_MAX",
-    "value": 47
+    "value": 48
    }
   ],
   "mapper_wii_profile_t": [
@@ -2665,7 +2670,7 @@ export default {
   "CFG_BLOCK_HAPTIC_VERSION": 17,
   "CFG_BLOCK_USER_VERSION": 17,
   "CFG_BLOCK_INPUT_VERSION": 20,
-  "CFG_INPUT_WII_PROFILE_VERSION": 2,
+  "CFG_INPUT_WII_PROFILE_VERSION": 3,
   "CFG_BLOCK_SWITCHPAIR_VERSION": 16,
   "IMU_SENSITIVITY_MIN": 50,
   "IMU_SENSITIVITY_MAX": 200,

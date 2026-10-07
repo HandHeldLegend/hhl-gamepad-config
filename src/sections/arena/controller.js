@@ -91,6 +91,7 @@ export class PadState {
 
     // Triggers: combined analog value (digital shield = full press).
     const btnShield = !!s.btn.shield;
+    this.trigL = s.l || 0; this.trigR = s.r || 0;
     this.trigger = Math.max(s.l || 0, s.r || 0, btnShield ? 1 : 0);
     const shieldHeld = this.trigger >= TRIGGER.SHIELD_MIN;
     this.shieldHeld = shieldHeld;
@@ -166,4 +167,95 @@ export function angleDeg(x, y) {
   let a = (Math.atan2(y, x) * 180) / Math.PI;
   if (a < 0) a += 360;
   return a;
+}
+
+// ---------------------------------------------------------------------------------------------
+// The engine's view of the pad (meleelight input record) + the optional input buffer
+// ---------------------------------------------------------------------------------------------
+/*
+ * Mapping into meleelight's per-frame input (engine/world.js inputData):
+ *   lsX / lsY, csX / csY  the Melee-processed sticks from input.js (1/80 steps, per-axis deadzone)
+ *   lA / rA               analog triggers 0..1 (0 below the light-shield minimum); the digital shield
+ *                         button reads as a full press
+ *   l / r                 an L / R "press": a digital click, or an analog trigger past the shield minimum
+ *                         (Melee counts an analog press for airdodge and teching; meleelight only took the
+ *                         digital click, which most USB controllers don't have)
+ *   a, b, x (jump), z     buttons; y is unused (both jump buttons map to x)
+ *
+ * Input buffer (a deliberate convenience on top of the engine, NOT Melee; FRAMES.INPUT_BUFFER, 0 = off):
+ * a jump / attack / special / Z / shield / C-stick press that didn't change what the fighter is doing is
+ * re-offered (as a fresh press) on each of the next N frames until it does. L-cancel timing is never
+ * buffered (a shield press during an aerial isn't carried), nor is a jump during jumpsquat.
+ */
+const BUF_KINDS = ['jump', 'attack', 'special', 'z', 'shield', 'cstick'];
+
+export class EngineInput {
+  constructor() {
+    this.buf = {};
+    this.prev = null;
+  }
+
+  /**
+   * This frame's engine input and the edges to force (buffered presses), for the fighter in `state`.
+   * @returns {{input: object, edges: object, real: object, offered: object}}
+   */
+  frame(pad, inputData, state, buffer) {
+    const i = inputData();
+    i.lsX = pad.x; i.lsY = pad.y; i.rawX = pad.x; i.rawY = pad.y;
+    i.csX = pad.cx; i.csY = pad.cy; i.rawcsX = pad.cx; i.rawcsY = pad.cy;
+    const l = pad.trigL ?? pad.trigger; const r = pad.trigR ?? 0;
+    i.lA = l >= TRIGGER.SHIELD_MIN ? Math.min(1, l) : 0;
+    i.rA = pad.held.shield ? 1 : (r >= TRIGGER.SHIELD_MIN ? Math.min(1, r) : 0);
+    i.l = i.lA > 0;
+    i.r = i.rA > 0;
+    i.a = pad.held.attack; i.b = pad.held.special; i.x = pad.held.jump; i.z = pad.held.z;
+    const real = {
+      jump: pad.pressed.jump, attack: pad.pressed.attack, special: pad.pressed.special, z: pad.pressed.z,
+      shield: pad.shieldPressed, cstick: pad.cDir ? { x: pad.cx, y: pad.cy } : null,
+    };
+    const offered = {};
+    for (const k of BUF_KINDS) {
+      if (real[k]) offered[k] = real[k];
+      else if (buffer > 0 && this.buf[k]) offered[k] = this.buf[k].v;
+    }
+    // A press (real, latched or buffered) is an edge: held this frame, released on the previous one.
+    const edges = {};
+    if (offered.jump) { i.x = true; edges.x = true; }
+    if (offered.attack) { i.a = true; edges.a = true; }
+    if (offered.special) { i.b = true; edges.b = true; }
+    if (offered.z) { i.z = true; edges.z = true; }
+    if (offered.shield) {
+      if (!i.l && !i.r) { i.r = true; i.rA = Math.max(i.rA, TRIGGER.SHIELD_MIN); }
+      edges.shield = true;
+    }
+    if (offered.cstick) { i.csX = offered.cstick.x; i.csY = offered.cstick.y; edges.cstick = true; }
+    this.state = state;
+    return { input: i, edges, real, offered };
+  }
+
+  /**
+   * After the step: a press that changed the fighter's action (new state or a restarted one) is used up;
+   * one that didn't is carried for up to `buffer` frames. Returns {used: kinds consumed from the buffer,
+   * expired: {kind: age} that ran out unused}.
+   */
+  settle(f, consumed, buffer, canBuffer) {
+    const used = []; const expired = {};
+    for (const k of BUF_KINDS) {
+      const b = this.buf[k];
+      if (!f.offered[k]) continue;
+      if (consumed) {
+        if (b && !f.real[k]) used.push({ kind: k, age: b.age + 1 });
+        this.buf[k] = null;
+      } else if (f.real[k]) {
+        if (buffer > 0 && canBuffer(k)) this.buf[k] = { v: f.real[k], age: 0 };
+        else { this.buf[k] = null; expired[k] = 0; }
+      } else if (b && ++b.age >= buffer) {
+        this.buf[k] = null;
+        expired[k] = b.age;
+      }
+    }
+    return { used, expired };
+  }
+
+  clear() { this.buf = {}; }
 }

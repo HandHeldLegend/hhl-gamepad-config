@@ -42,4 +42,7 @@ export default {
   "Wired play on a Switch needs Pro Controller Wired Communication turned on. To pair over Bluetooth, hold the mode button and Start while turning the controller on.": "Pour jouer en filaire sur une Switch, activez la communication filaire de la manette Pro. Pour appairer en Bluetooth, maintenez le bouton du mode et Start enfoncés en allumant la manette.",
   "I’m on an iPhone or iPad": "J’utilise un iPhone ou un iPad",
   "iPhone and iPad browsers can’t use WebUSB, so they can’t connect to the controller. This is Apple’s choice and out of our hands. The demo still works.": "Les navigateurs de l’iPhone et de l’iPad ne peuvent pas utiliser WebUSB, ils ne peuvent donc pas se connecter à la manette. C’est un choix d’Apple qui ne dépend pas de nous. La démo fonctionne quand même.",
+
+  // ---- meleelight ----
+  "The Arena’s game engine: physics, collision, action states, hit detection and character data, ported to src/sections/arena/engine/": "Le moteur de jeu de l’Arena : physique, collisions, états d’action, détection des coups et données de personnages, portés dans src/sections/arena/engine/",
 };

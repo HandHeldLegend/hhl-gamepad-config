@@ -115,7 +115,6 @@ export default {
   "L-cancel {n}f late": "L-cancel {n}f tarde",
   "Shield broke! Let go of the trigger a little sooner": "¡Se rompió el escudo! Suelta el gatillo un poco antes",
   "Shield drop ✓ · stick {angle}° from straight down": "Shield drop ✓ · palanca a {angle}° de abajo recto",
-  "No shield drop · {angle}° from straight down (window {min}–{max}°)": "Sin shield drop · {angle}° de abajo recto (ventana {min}–{max}°)",
   "Fast fall · frame-perfect": "Fast fall · frame perfecto",
   "Fast fall · {n}f after the peak": "Fast fall · {n}f después del punto más alto",
   "Fast fall too early · {n}f before the peak": "Fast fall demasiado pronto · {n}f antes del punto más alto",
@@ -157,10 +156,6 @@ export default {
     "El navegador aún no muestra {name} como gamepad (suele aparecer después de presionar un botón), así que la entrada llega directamente de los datos USB del control.",
   "This controller is read straight from its USB data stream.": "Este control se lee directamente de su flujo de datos USB.",
   "USB stream": "Flujo USB",
-  "Buttons + sticks gives every button and analog trigger, with sticks at 7 bits per direction. Sticks only gives full 12-bit stick positions but no buttons or triggers. (The Play tab always uses Buttons + sticks.)":
-    "Botones + palancas incluye todos los botones y gatillos analógicos, con las palancas a 7 bits por dirección. Solo palancas da la posición completa de 12 bits, pero sin botones ni gatillos. (La pestaña Jugar siempre usa Botones + palancas).",
-  "Buttons + sticks": "Botones + palancas",
-  "Sticks only (12-bit)": "Solo palancas (12 bits)",
   "{n} other controller is connected to this computer and ignored.": "Hay {n} control más conectado a esta computadora y se ignora.",
   "{n} other controllers are connected to this computer and ignored.": "Hay {n} controles más conectados a esta computadora y se ignoran.",
   "Button mapping": "Asignación de botones",
@@ -251,8 +246,6 @@ export default {
   "Push the stick slowly to walk (speed follows how far you push). Flick it past {threshold} within {n} frames of leaving the center to dash.":
     "Empuja la palanca despacio para caminar (la velocidad depende de cuánto la empujes). Para hacer dash, llévala más allá de {threshold} en menos de {n} frames desde que sale del centro.",
   "Dash back / dash dance": "Dash back / dash dance",
-  "During the first {n} frames of a dash, flick the other way. The feedback counts how many frames the stick was seen in the \"tilt zone\" on the way. At 2 or more, it reads as a slow turn instead. Stick bounce (snapback) shows up here too.":
-    "Durante los primeros {n} frames de un dash, mueve rápido la palanca al otro lado. El mensaje cuenta cuántos frames estuvo la palanca en la \"zona de tilt\" en el camino: con 2 o más se interpreta como un giro lento. El rebote de la palanca (snapback) también aparece aquí.",
   "Short hop vs full hop": "Short hop vs. full hop",
   "Release jump within {n} frames (≈{ms} ms) of pressing it for a short hop; hold it for a full hop.":
     "Suelta el salto antes de {n} frames (≈{ms} ms) después de presionarlo para un short hop; mantenlo presionado para un full hop.",
@@ -269,8 +262,6 @@ export default {
   "Press a trigger past {threshold} to shield. A lighter press gives a bigger shield. The shield shrinks as it wears down, and if you hold it too long it breaks.":
     "Presiona un gatillo más allá de {threshold} para cubrirte con el escudo. Una presión más ligera da un escudo más grande. El escudo se encoge a medida que se desgasta: si lo mantienes demasiado, se rompe.",
   "Shield drop": "Shield drop",
-  "Shield on a platform, then push the stick down at {min}–{max}° from straight down (a down-diagonal notch is ideal). Straight down flicks spot dodge instead.":
-    "Usa el escudo sobre una plataforma y luego empuja la palanca hacia abajo a {min}–{max}° de abajo recto (la muesca diagonal inferior es ideal). Un movimiento rápido recto hacia abajo hace un spotdodge.",
   "Ledge": "Borde",
   "Fall next to a ledge to grab it. Then: toward the stage or up to climb, jump to leap off, away or down to let go.":
     "Cae junto a un borde para agarrarlo. Luego: hacia el escenario o arriba para subir, salto para saltar desde ahí, hacia afuera o abajo para soltarte.",
@@ -279,63 +270,11 @@ export default {
   "About this arena": "Acerca de esta arena",
   "The Arena is a place to put your HOJA controller through its paces. It reads only the controller connected to this app (never other gamepads), so what you see is exactly what your controller sends.":
     "La Arena es un lugar para poner a prueba tu control HOJA. Solo lee el control conectado a esta app (nunca otros gamepads), así que lo que ves es exactamente lo que envía tu control.",
-  "Frame windows and thresholds are tuned to feel familiar and to demand a lot of a controller, so it’s a good place to try a new stick module, gate or setting, but results won’t exactly match any particular game.":
-    "Las ventanas de frames y los umbrales están ajustados para sentirse familiares y exigirle mucho a un control, así que es un buen lugar para probar un nuevo módulo de palanca, gate o ajuste, aunque los resultados no coincidirán exactamente con ningún juego en particular.",
 
   // ---- Input lab ----
-  "From nearest 45°": "Desde el 45° más cercano",
-  "Shield starts": "Empieza el escudo",
-  "Hard press": "Presión a fondo",
   "Sticks": "Palancas",
   "Axes": "Ejes",
-  "Triggers & raw inputs": "Gatillos y entradas sin procesar",
-  "Traced stick outline compared to a perfect circle": "Contorno trazado de la palanca comparado con un círculo perfecto",
-  "Stick roundness": "Redondez de la palanca",
-  "Slowly roll the stick around the rim two or three times. The shape is compared with a perfect circle.":
-    "Gira la palanca despacio por el borde dos o tres veces. La forma se compara con un círculo perfecto.",
-  "Stick to test": "Palanca a probar",
-  "Histogram of update intervals": "Histograma de intervalos de actualización",
-  "Measuring…": "Midiendo…",
-  "Measure poll rate": "Medir tasa de sondeo",
-  "The probe measures the browser’s gamepad data, and {name} isn’t visible there yet. Press a button on it. (Over USB, the report rate is shown below.)":
-    "La prueba mide los datos de gamepad del navegador y {name} todavía no aparece ahí: presiona un botón en él. (Por USB, la tasa de reportes se muestra abajo).",
-  "Keep moving the stick in circles…": "Sigue moviendo la palanca en círculos…",
-  "Not enough updates.": "No hay suficientes actualizaciones.",
-  "Most browsers only report new data when something changes, so keep moving the stick in circles while measuring.":
-    "La mayoría de los navegadores solo reportan datos nuevos cuando algo cambia; sigue moviendo la palanca en círculos mientras se mide.",
-  "Estimated rate": "Tasa estimada",
-  "Median interval": "Intervalo mediano",
-  "95th percentile": "Percentil 95",
-  "Jitter (std. dev.)": "Jitter (desv. estándar)",
-  "Updates seen": "Actualizaciones vistas",
-  "Polling probe": "Prueba de sondeo",
-  "Turns the browser’s Gamepad timestamps into an update rate. Browsers sample controllers at their own pace (Chrome ≈ 250 Hz), so the result is the lower of the two.":
-    "Convierte las marcas de tiempo de Gamepad del navegador en una tasa de actualización. Los navegadores leen los controles a su propio ritmo (Chrome ≈ 250 Hz), así que el resultado es el menor de los dos.",
-  "Data age at frame start": "Antigüedad de los datos al iniciar el frame",
   "HOJA USB stream": "Flujo USB de HOJA",
-  "Flick the main stick to the rim and let go. If it bounces past the center to the other side, it’s listed here. (Sampled once per display frame, as a game would.)":
-    "Lleva rápido la palanca principal al borde y suéltala. Si rebota más allá del centro hacia el otro lado, aparece aquí. (Se muestrea una vez por frame de pantalla, como lo haría un juego).",
-  "Snapback watch": "Monitor de snapback",
-  "Catches stick rebound after release.": "Detecta el rebote de la palanca al soltarla.",
-  "The sticks-only USB stream carries no buttons. Switch the USB stream back to Buttons + sticks.":
-    "El flujo USB de solo palancas no incluye botones: vuelve a cambiar el flujo USB a Botones + palancas.",
-  "No axes reported.": "No se reportan ejes.",
-  "Over USB the sticks arrive as the LX/LY/RX/RY direction inputs above (7 bits per direction), or as 12-bit values in the sticks-only stream.":
-    "Por USB, las palancas llegan como las entradas de dirección LX/LY/RX/RY de arriba (7 bits por dirección) o como valores de 12 bits en el flujo de solo palancas.",
-  "Every mapper input sent over USB (value 0–127)": "Todas las entradas del mapeador enviadas por USB (valor 0–127)",
-  "Buttons (Gamepad API)": "Botones (Gamepad API)",
-  "Axes (Gamepad API)": "Ejes (Gamepad API)",
-  "{ms} ms (median, while moving)": "{ms} ms (mediana, en movimiento)",
-  "Not receiving": "Sin recibir datos",
-  "{n} reports/s (joystick stream)": "{n} reportes/s (flujo de palancas)",
-  "{n} reports/s (raw stream)": "{n} reportes/s (flujo sin procesar)",
-  "Waiting for the stick to reach the rim…": "Esperando a que la palanca llegue al borde…",
-  "Coverage": "Cobertura",
-  "Average reach": "Alcance promedio",
-  "Min / max": "Mín. / máx.",
-  "Out of round": "Desviación del círculo",
-  "Diagonal vs cardinal": "Diagonal vs. cardinal",
-  "Corners found": "Esquinas encontradas",
 
   // ---- Fighters, jump explanations, Steam tip, Melee input view ----
   "Restart run": "Reiniciar ronda",
@@ -361,7 +300,6 @@ export default {
   "helpless fall (until you land or grab a ledge)": "caída indefensa (hasta aterrizar o agarrar un borde)",
   "attack": "ataque",
   "special": "especial",
-  "shield release": "soltando el escudo",
   "roll": "roll",
   "spot dodge": "spotdodge",
   "shield break": "escudo roto",
@@ -374,32 +312,15 @@ export default {
   "Steam mode sends USB reports up to {x}× as often as Switch mode ({fast} Hz vs {slow} Hz). For the most responsive testing, set Default mode to Steam on the Gamepad page.":
     "El modo Steam envía reportes USB hasta {x}× más seguido que el modo Switch ({fast} Hz vs. {slow} Hz). Para probar con la mejor respuesta, elige Steam como modo predeterminado en la página Gamepad.",
   "Open the Gamepad page": "Abrir la página Gamepad",
-  "(Measured here: {hz} Hz.)": "(Medido aquí: {hz} Hz).",
-  "(Measure it with the polling probe in the Input lab.)": "(Mídelo con la prueba de sondeo del Laboratorio de entrada).",
   "What each feedback message is measuring. Frame windows shown for {fighter}.":
     "Qué mide cada mensaje de retroalimentación. Ventanas de frames para {fighter}.",
-  "It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. The fighters are original characters whose movement is modelled on publicly documented attributes of classic platform-fighter characters (speeds, gravity, jumpsquat, traction), and the input handling follows the documented behaviour of the classic GameCube games. It was written from scratch for this app: the characters, stage, art and code are all our own, and it uses no game code, data files or assets of any kind.":
-    "Es un sandbox original de juego de pelea de plataformas, inspirado en los clásicos competitivos del género y en las técnicas de movimiento que sus jugadores adoran. Los luchadores son personajes originales cuyo movimiento se basa en atributos documentados públicamente de personajes clásicos del género (velocidades, gravedad, jumpsquat, tracción), y el manejo de la entrada sigue el comportamiento documentado de los clásicos de GameCube. Se escribió desde cero para esta app: los personajes, el escenario, el arte y el código son todos propios, y no usa código, archivos de datos ni recursos de ningún juego.",
   "Not affiliated with or endorsed by Nintendo or HAL Laboratory.": "Sin afiliación ni respaldo de Nintendo o HAL Laboratory.",
   "X raw": "X sin procesar",
   "Y raw": "Y sin procesar",
   "L raw": "L sin procesar",
   "R raw": "R sin procesar",
-  "Past the 80-unit circle: the game pulls it back to 100%.": "Más allá del círculo de 80 unidades: el juego lo devuelve al 100%.",
   "Melee processing": "Procesamiento de Melee",
   "Raw": "Sin procesar",
-  "Stick and trigger values": "Valores de palancas y gatillos",
-  "What the game sees: GameCube values clamped to an 80-unit circle (steps of 0.0125), with the per-axis deadzone below 23 units (0.2875). Shaded cross: deadzone. Dashed lines: dash (x ±0.8) and tap jump / fast fall (y ±0.6625).":
-    "Lo que ve el juego: valores de GameCube limitados a un círculo de 80 unidades (pasos de 0.0125), con la zona muerta por eje por debajo de 23 unidades (0.2875). Cruz sombreada: zona muerta. Líneas punteadas: dash (x ±0.8) y tap jump / fast fall (y ±0.6625).",
-  "Your controller’s raw output (1.0 = full scale). The solid dashed circle is where the game’s 80-unit clamp sits; the shaded cross and lines are the game’s thresholds in raw terms.":
-    "La salida sin procesar de tu control (1.0 = escala completa). El círculo punteado marca dónde está el límite de 80 unidades del juego; la cruz sombreada y las líneas son los umbrales del juego en valores sin procesar.",
-  "Compare what the game reads with your controller’s raw output.": "Compara lo que lee el juego con la salida sin procesar de tu control.",
-  "Analog triggers read 0–140 in the game: the light shield starts at {min} ({pct}%) and 140 is a full press; a digital press always counts as full. Below: every input your controller reports through the active source.":
-    "En el juego, los gatillos analógicos leen de 0 a 140: el escudo ligero empieza en {min} ({pct}%) y 140 es presión a fondo; una presión digital siempre cuenta como a fondo. Abajo: todas las entradas que reporta tu control por la fuente activa.",
-  "Taps between browser polls": "Toques entre lecturas del navegador",
-  "Taps that started and ended between two Gamepad API polls are invisible to the browser. When the HOJA USB stream is running they are still seen there, counted here, and handed to the game (with the default button mapping).":
-    "Los toques que empiezan y terminan entre dos lecturas de la Gamepad API son invisibles para el navegador. Cuando el flujo USB de HOJA está activo, se siguen viendo ahí, se cuentan aquí y se pasan al juego (con la asignación de botones predeterminada).",
-  "{n} seen over USB · {r} recovered": "{n} vistos por USB · {r} recuperados",
   "Arena button mapping was reset: A and B now follow the labels printed on your controller.":
     "Se restableció la asignación de botones de la Arena: A y B ahora siguen las letras impresas en tu control.",
   // ---- Sir Retro ----
@@ -413,25 +334,33 @@ export default {
   "Forward smash": "Smash lateral",
   "Up smash": "Smash hacia arriba",
   "Down smash": "Smash hacia abajo",
-  "tipper": "tipper",
-  "sourspot": "sourspot",
-  "sweetspot": "sweetspot",
-  "clean hit": "golpe limpio",
-  "late hit": "golpe tardío",
-  "meteor": "meteoro",
-  "knee": "rodilla",
-  "no flinch": "sin retroceso",
   "charged {n}f": "cargado {n}f",
   "{move} · {dmg}% · KB {kb}": "{move} · {dmg}% · KB {kb}",
   "Dummy KO at {pct}%": "Muñeco KO al {pct}%",
   "Autocancel · {move} landed on frame {n}": "Autocancel · {move} aterrizó en el frame {n}",
-  "Draw attack hitboxes (colored by damage), the dummy’s hurtbox, the collision point and ledge-grab boxes.": "Dibuja las hitboxes de los ataques (con color según el daño), la hurtbox del muñeco, el punto de colisión y las zonas de agarre al borde.",
   "Aerials · smash attacks (direction)": "Aéreos · smash (dirección)",
   "Smash attacks & the training dummy": "Smash y el muñeco de práctica",
-  "Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.": "Mueve el stick de golpe y presiona A dentro de {n} frames (o mueve el C-stick) para un smash; mantén A para cargarlo hasta 60 frames (×1.367 de daño). En Juego libre el muñeco recibe daño y knockback con la fórmula clásica, y cada golpe muestra movimiento · daño · knockback.",
   'Technique feedback': 'Retroalimentación de técnica',
   'Show short messages about what you just did (wavedash angle, L-cancel timing…). Off by default.': 'Muestra mensajes breves sobre lo que acabas de hacer (ángulo del wavedash, timing del L-cancel…). Desactivado por defecto.',
   "Input buffer": "Buffer de entrada",
-  "A jump, attack, special, shield or smash input pressed up to this many frames before your fighter can act comes out on the first frame it can, and A may come this many frames before or after a smash flick. A deliberate convenience for browser and USB latency: the classic games have no buffer (0 = strict). L-cancel timing is never buffered.": "Un salto, ataque, especial, escudo o smash presionado hasta esta cantidad de frames antes de que tu luchador pueda actuar sale en el primer frame posible, y A puede llegar esa misma cantidad de frames antes o después de mover el stick de golpe para un smash. Es una ayuda deliberada para la latencia del navegador y del USB: los juegos clásicos no tienen buffer (0 = estricto). El timing del L-cancel nunca usa el buffer.",
   "frames": "frames",
+
+  // ---- Engine port (meleelight) ----
+  "A jump, attack, special, Z, shield or C-stick press that your fighter couldn’t act on yet is tried again on each of the next frames, up to this many. A deliberate convenience for browser and USB latency on top of the engine: the classic games have no buffer (0 = strict). L-cancel timing is never buffered.": "Una pulsación de salto, ataque, especial, Z, escudo o C-stick que tu luchador todavía no pudo usar se vuelve a intentar en cada uno de los frames siguientes, hasta esta cantidad. Es una ayuda deliberada para la latencia del navegador y del USB, por encima del motor: los juegos clásicos no tienen buffer (0 = estricto). El timing del L-cancel nunca usa el buffer.",
+  "Draw attack hitboxes (colored by damage), hurtboxes, the environmental collision diamond (ECB) and ledge-grab boxes.": "Dibuja las hitboxes de los ataques (con color según el daño), las hurtboxes, el rombo de colisión con el escenario (ECB) y las zonas para agarrar el borde.",
+  "Fighters": "Luchadores",
+  "Vix, Quill, Sable, Rally and Mochi use meleelight’s character data. Dot, Rosette, Rime and Sir Retro are approximations: their own published movement numbers on top of another fighter’s moves.": "Vix, Quill, Sable, Rally y Mochi usan los datos de personaje de meleelight. Dot, Rosette, Rime y Sir Retro son aproximaciones: sus propios valores de movimiento publicados sobre los ataques de otro luchador.",
+  "During a dash, flick the other way (past 0.79 within 2 frames) to dash back; keep alternating for a dash dance. The feedback counts how many frames the stick was seen in the \"tilt zone\" on the way. Stick bounce (snapback) shows up here too.": "Durante un dash, mueve la palanca de golpe al otro lado (más allá de 0.79 en 2 frames) para hacer un dash back; sigue alternando para un dash dance. El aviso cuenta cuántos frames se vio la palanca en la \"zona de tilt\" en el camino. El rebote de la palanca (snapback) también aparece aquí.",
+  "Shield on a platform, then bring the stick down past −0.65 within 6 frames without reaching −0.7 within 4 frames (that spot dodges). A down-diagonal notch is made for this.": "Usa el escudo sobre una plataforma y luego baja la palanca más allá de −0.65 en 6 frames sin llegar a −0.7 en 4 frames (eso hace un spotdodge). Un notch en la diagonal de abajo está pensado para esto.",
+  "Press A as the stick crosses 0.79 (within 2 frames of leaving the center), flick the C-stick, or press A in the first 3 frames of a dash for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy is a second fighter that takes damage, hitlag, hitstun and knockback from the engine, and each hit shows move · damage · knockback.": "Presiona A justo cuando la palanca cruza 0.79 (en 2 frames desde el centro), mueve el C-stick o presiona A en los primeros 3 frames de un dash para un ataque smash; mantén A para cargarlo hasta 60 frames (×1.367 de daño). En Juego libre el muñeco es un segundo luchador que recibe daño, hitlag, hitstun y knockback del motor, y cada golpe muestra ataque · daño · knockback.",
+  "It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. Its engine is a port of meleelight, an open-source fan recreation by Will Blackett (MIT license), so movement, physics and hits behave like it. Five fighters use meleelight’s character data; the others put their own published movement attributes on top of one of those. The characters, stage art and the rest of the app are our own, and no game files or assets are used.": "Es un sandbox original de juego de pelea de plataformas, inspirado en los clásicos competitivos y en las técnicas de movimiento que tanto gustan a sus jugadores. Su motor es un port de meleelight, una recreación fan de código abierto de Will Blackett (licencia MIT), así que el movimiento, la física y los golpes se comportan como en ella. Cinco luchadores usan los datos de personaje de meleelight; los demás ponen sus propios atributos de movimiento publicados sobre uno de ellos. Los personajes, el arte del escenario y el resto de la app son nuestros, y no se usan archivos ni recursos de ningún juego.",
+  "meleelight closely recreates the classic game, so this is a good place to try a new stick module, gate or setting, but results won’t exactly match the original game.": "meleelight recrea muy de cerca el juego clásico, así que es un buen lugar para probar un módulo de palanca, un gate o un ajuste nuevo, aunque los resultados no coincidirán exactamente con el juego original.",
+  "Throw": "Lanzamiento",
+  "Neutral special": "Especial neutral",
+  "Side special": "Especial lateral",
+  "Up special": "Especial hacia arriba",
+  "Down special": "Especial hacia abajo",
+  "Getup attack": "Ataque al levantarse",
+  "Hit": "Golpe",
+  "Spot dodge instead of a shield drop: stop the stick between −0.65 and −0.7": "Spotdodge en vez de shield drop: deja la palanca entre −0.65 y −0.7",
 };

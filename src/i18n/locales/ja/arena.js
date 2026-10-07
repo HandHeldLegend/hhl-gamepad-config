@@ -117,7 +117,6 @@ export default {
   "L-cancel {n}f late": "Lキャンセル {n}F 遅れ",
   "Shield broke! Let go of the trigger a little sooner": "シールドブレイク！トリガーをもう少し早く離しましょう",
   "Shield drop ✓ · stick {angle}° from straight down": "シールドドロップ ✓ · 真下から {angle}°",
-  "No shield drop · {angle}° from straight down (window {min}–{max}°)": "シールドドロップ不成立 · 真下から {angle}°（受付 {min}–{max}°）",
   "Fast fall · frame-perfect": "急降下 · 最速",
   "Fast fall · {n}f after the peak": "急降下 · 頂点から {n}F 後",
   "Fast fall too early · {n}f before the peak": "急降下が早すぎます · 頂点の {n}F 前",
@@ -159,10 +158,6 @@ export default {
     "ブラウザーがまだ {name} をゲームパッドとして認識していないため（通常はボタンを押すと認識されます）、コントローラーの USB データから直接入力を読み取っています。",
   "This controller is read straight from its USB data stream.": "このコントローラーは USB データストリームから直接読み取られます。",
   "USB stream": "USB ストリーム",
-  "Buttons + sticks gives every button and analog trigger, with sticks at 7 bits per direction. Sticks only gives full 12-bit stick positions but no buttons or triggers. (The Play tab always uses Buttons + sticks.)":
-    "「ボタン + スティック」はすべてのボタンとアナログトリガーを含み、スティックは方向ごとに 7 ビットです。「スティックのみ」は 12 ビットのフル精度のスティック位置を送りますが、ボタンとトリガーは含みません。（プレイタブは常に「ボタン + スティック」を使います。）",
-  "Buttons + sticks": "ボタン + スティック",
-  "Sticks only (12-bit)": "スティックのみ（12 ビット）",
   "{n} other controller is connected to this computer and ignored.": "このコンピューターにはほかに {n} 台のコントローラーが接続されていますが、無視されます。",
   "{n} other controllers are connected to this computer and ignored.": "このコンピューターにはほかに {n} 台のコントローラーが接続されていますが、無視されます。",
   "Button mapping": "ボタン割り当て",
@@ -253,8 +248,6 @@ export default {
   "Push the stick slowly to walk (speed follows how far you push). Flick it past {threshold} within {n} frames of leaving the center to dash.":
     "スティックをゆっくり倒すと歩きます（倒した量で速度が変わります）。中央を離れてから {n}F 以内に {threshold} を越えるようにはじくとダッシュします。",
   "Dash back / dash dance": "ダッシュバック / ステップ（ダッシュダンス）",
-  "During the first {n} frames of a dash, flick the other way. The feedback counts how many frames the stick was seen in the \"tilt zone\" on the way. At 2 or more, it reads as a slow turn instead. Stick bounce (snapback) shows up here too.":
-    "ダッシュの最初の {n}F の間に反対方向へはじきます。フィードバックでは、その途中でスティックが「傾け入力ゾーン」に何フレームいたかを数えます。2F 以上だとゆっくりした振り向きと判定されます。スティックの跳ね返り（スナップバック）もここに表れます。",
   "Short hop vs full hop": "小ジャンプと大ジャンプ",
   "Release jump within {n} frames (≈{ms} ms) of pressing it for a short hop; hold it for a full hop.":
     "ジャンプを押してから {n}F（約 {ms} ms）以内に離すと小ジャンプ、押し続けると大ジャンプになります。",
@@ -271,8 +264,6 @@ export default {
   "Press a trigger past {threshold} to shield. A lighter press gives a bigger shield. The shield shrinks as it wears down, and if you hold it too long it breaks.":
     "トリガーを {threshold} より深く押すとシールドします。軽く押すほどシールドが大きくなります。シールドは削れるほど小さくなり、張りすぎると割れます。",
   "Shield drop": "シールドドロップ",
-  "Shield on a platform, then push the stick down at {min}–{max}° from straight down (a down-diagonal notch is ideal). Straight down flicks spot dodge instead.":
-    "足場の上でシールドし、スティックを真下から {min}–{max}° の方向へ倒します（斜め下のノッチが理想的です）。真下にはじくとその場回避になります。",
   "Ledge": "崖",
   "Fall next to a ledge to grab it. Then: toward the stage or up to climb, jump to leap off, away or down to let go.":
     "崖の近くに落ちるとつかまります。その後、ステージ方向か上で崖上がり、ジャンプで崖ジャンプ、外側か下で崖離しです。",
@@ -281,63 +272,11 @@ export default {
   "About this arena": "このアリーナについて",
   "The Arena is a place to put your HOJA controller through its paces. It reads only the controller connected to this app (never other gamepads), so what you see is exactly what your controller sends.":
     "アリーナは HOJA コントローラーの実力を試すための場所です。このアプリに接続されたコントローラーだけを読み取り、ほかのゲームパッドは一切読まないので、表示される内容はコントローラーが送っているそのままの値です。",
-  "Frame windows and thresholds are tuned to feel familiar and to demand a lot of a controller, so it’s a good place to try a new stick module, gate or setting, but results won’t exactly match any particular game.":
-    "受付フレームやしきい値は、なじみのある操作感とコントローラーへの高い要求を両立するよう調整されています。新しいスティックモジュールやゲート、設定を試すのに最適ですが、結果が特定のゲームと完全に一致するわけではありません。",
 
   // ---- Input lab ----
-  "From nearest 45°": "最寄りの 45° から",
-  "Shield starts": "シールド開始",
-  "Hard press": "押し込み",
   "Sticks": "スティック",
   "Axes": "軸",
-  "Triggers & raw inputs": "トリガーと生の入力",
-  "Traced stick outline compared to a perfect circle": "なぞったスティックの外周と真円の比較",
-  "Stick roundness": "スティックの真円度",
-  "Slowly roll the stick around the rim two or three times. The shape is compared with a perfect circle.":
-    "スティックを外周に沿ってゆっくり 2〜3 周回してください。その形を真円と比較します。",
-  "Stick to test": "テストするスティック",
-  "Histogram of update intervals": "更新間隔のヒストグラム",
-  "Measuring…": "計測中…",
-  "Measure poll rate": "ポーリングレートを計測",
-  "The probe measures the browser’s gamepad data, and {name} isn’t visible there yet. Press a button on it. (Over USB, the report rate is shown below.)":
-    "このプローブはブラウザーのゲームパッドデータを計測しますが、{name} はまだそこに表示されていません。ボタンを押してください。（USB のレポートレートは下に表示されます。）",
-  "Keep moving the stick in circles…": "スティックを回し続けてください…",
-  "Not enough updates.": "更新が足りません。",
-  "Most browsers only report new data when something changes, so keep moving the stick in circles while measuring.":
-    "多くのブラウザーは変化があったときだけ新しいデータを報告します。計測中はスティックを回し続けてください。",
-  "Estimated rate": "推定レート",
-  "Median interval": "間隔の中央値",
-  "95th percentile": "95 パーセンタイル",
-  "Jitter (std. dev.)": "ジッター（標準偏差）",
-  "Updates seen": "検出した更新数",
-  "Polling probe": "ポーリングプローブ",
-  "Turns the browser’s Gamepad timestamps into an update rate. Browsers sample controllers at their own pace (Chrome ≈ 250 Hz), so the result is the lower of the two.":
-    "ブラウザーの Gamepad タイムスタンプから更新レートを求めます。ブラウザーは独自のペース（Chrome は約 250 Hz）でコントローラーを読み取るため、結果は両者のうち低い方になります。",
-  "Data age at frame start": "フレーム開始時のデータの古さ",
   "HOJA USB stream": "HOJA USB ストリーム",
-  "Flick the main stick to the rim and let go. If it bounces past the center to the other side, it’s listed here. (Sampled once per display frame, as a game would.)":
-    "メインスティックを端まではじいて離してください。中心を越えて反対側に跳ね返ると、ここに記録されます。（ゲームと同じく、画面のフレームごとに 1 回読み取ります。）",
-  "Snapback watch": "スナップバック監視",
-  "Catches stick rebound after release.": "離したあとのスティックの跳ね返りを検出します。",
-  "The sticks-only USB stream carries no buttons. Switch the USB stream back to Buttons + sticks.":
-    "「スティックのみ」の USB ストリームにはボタンが含まれません。USB ストリームを「ボタン + スティック」に戻してください。",
-  "No axes reported.": "軸は報告されていません。",
-  "Over USB the sticks arrive as the LX/LY/RX/RY direction inputs above (7 bits per direction), or as 12-bit values in the sticks-only stream.":
-    "USB ではスティックは上の LX/LY/RX/RY の方向入力（方向ごとに 7 ビット）として届くか、「スティックのみ」ストリームでは 12 ビット値として届きます。",
-  "Every mapper input sent over USB (value 0–127)": "USB で送られるすべてのマッパー入力（値 0–127）",
-  "Buttons (Gamepad API)": "ボタン（Gamepad API）",
-  "Axes (Gamepad API)": "軸（Gamepad API）",
-  "{ms} ms (median, while moving)": "{ms} ms（操作中の中央値）",
-  "Not receiving": "受信していません",
-  "{n} reports/s (joystick stream)": "{n} レポート/秒（スティックストリーム）",
-  "{n} reports/s (raw stream)": "{n} レポート/秒（生ストリーム）",
-  "Waiting for the stick to reach the rim…": "スティックが外周に届くのを待っています…",
-  "Coverage": "カバー率",
-  "Average reach": "平均到達量",
-  "Min / max": "最小 / 最大",
-  "Out of round": "真円からのずれ",
-  "Diagonal vs cardinal": "斜め / 上下左右の比",
-  "Corners found": "検出した角",
 
   // ---- Fighters, jump explanations, Steam tip, Melee input view ----
   "Restart run": "やり直し",
@@ -363,7 +302,6 @@ export default {
   "helpless fall (until you land or grab a ledge)": "しりもち落下（着地か崖つかまりまで）",
   "attack": "攻撃中",
   "special": "必殺ワザ中",
-  "shield release": "シールド解除中",
   "roll": "回避中",
   "spot dodge": "その場回避中",
   "shield break": "シールドブレイク",
@@ -376,31 +314,14 @@ export default {
   "Steam mode sends USB reports up to {x}× as often as Switch mode ({fast} Hz vs {slow} Hz). For the most responsive testing, set Default mode to Steam on the Gamepad page.":
     "Steam モードは Switch モードの最大 {x} 倍の頻度で USB レポートを送ります（{fast} Hz 対 {slow} Hz）。最も応答性の高いテストには、ゲームパッドページでデフォルトモードを Steam にしてください。",
   "Open the Gamepad page": "ゲームパッドページを開く",
-  "(Measured here: {hz} Hz.)": "（ここでの計測値：{hz} Hz）",
-  "(Measure it with the polling probe in the Input lab.)": "（入力ラボのポーリングプローブで計測できます）",
   "What each feedback message is measuring. Frame windows shown for {fighter}.": "各フィードバックが何を計測しているかの説明です。フレーム数は {fighter} の値です。",
-  "It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. The fighters are original characters whose movement is modelled on publicly documented attributes of classic platform-fighter characters (speeds, gravity, jumpsquat, traction), and the input handling follows the documented behaviour of the classic GameCube games. It was written from scratch for this app: the characters, stage, art and code are all our own, and it uses no game code, data files or assets of any kind.":
-    "対戦アクションの名作と、そのプレイヤーたちが愛する移動テクニックに着想を得たオリジナルのサンドボックスです。ファイターはオリジナルキャラクターで、その動きは往年の対戦アクションのキャラクターについて公開されている性能値（速度、重力、ジャンプ踏切、摩擦）を参考にしています。入力処理も GameCube の名作について公開されている挙動に沿っています。このアプリのためにゼロから作られており、キャラクター、ステージ、アート、コードはすべて独自のもので、ゲームのコード・データファイル・素材は一切使っていません。",
   "Not affiliated with or endorsed by Nintendo or HAL Laboratory.": "任天堂およびハル研究所とは関係なく、承認も受けていません。",
   "X raw": "X（生）",
   "Y raw": "Y（生）",
   "L raw": "L（生）",
   "R raw": "R（生）",
-  "Past the 80-unit circle: the game pulls it back to 100%.": "80 ユニットの円を超えています。ゲームでは 100% に戻されます。",
   "Melee processing": "Melee の処理",
   "Raw": "生の値",
-  "Stick and trigger values": "スティックとトリガーの値",
-  "What the game sees: GameCube values clamped to an 80-unit circle (steps of 0.0125), with the per-axis deadzone below 23 units (0.2875). Shaded cross: deadzone. Dashed lines: dash (x ±0.8) and tap jump / fast fall (y ±0.6625).":
-    "ゲームから見た値：GameCube の値を 80 ユニットの円に制限（0.0125 刻み）し、軸ごとに 23 ユニット（0.2875）未満をデッドゾーンとして 0 にします。網掛けの十字：デッドゾーン。破線：ダッシュ（x ±0.8）とスティックジャンプ / 急降下（y ±0.6625）。",
-  "Your controller’s raw output (1.0 = full scale). The solid dashed circle is where the game’s 80-unit clamp sits; the shaded cross and lines are the game’s thresholds in raw terms.":
-    "コントローラーの生の出力（1.0 = フルスケール）。破線の円はゲームの 80 ユニット制限の位置、網掛けの十字と線は生の値に換算したゲームのしきい値です。",
-  "Compare what the game reads with your controller’s raw output.": "ゲームが読み取る値とコントローラーの生の出力を比較できます。",
-  "Analog triggers read 0–140 in the game: the light shield starts at {min} ({pct}%) and 140 is a full press; a digital press always counts as full. Below: every input your controller reports through the active source.":
-    "ゲーム内のアナログトリガーは 0〜140 で読み取られます。ライトシールドは {min}（{pct}%）から、140 で押し込みです。デジタル押下は常に押し込み扱いです。下には、現在のソースでコントローラーが報告しているすべての入力を表示します。",
-  "Taps between browser polls": "ブラウザーの読み取り間の入力",
-  "Taps that started and ended between two Gamepad API polls are invisible to the browser. When the HOJA USB stream is running they are still seen there, counted here, and handed to the game (with the default button mapping).":
-    "Gamepad API の 2 回の読み取りの間に始まって終わった入力は、ブラウザーからは見えません。HOJA USB ストリームが動作していればそこで検出でき、ここで数えてゲームに渡します（デフォルトのボタン割り当ての場合）。",
-  "{n} seen over USB · {r} recovered": "USB で {n} 件検出 · {r} 件復元",
   "Arena button mapping was reset: A and B now follow the labels printed on your controller.": "アリーナのボタン割り当てをリセットしました。A と B はコントローラーに印字された表記どおりになります。",
   // ---- Sir Retro ----
   "Featherweight · LCD style · neutral, back and up aerials can’t be L-cancelled":
@@ -413,25 +334,33 @@ export default {
   "Forward smash": "横スマ",
   "Up smash": "上スマ",
   "Down smash": "下スマ",
-  "tipper": "先端",
-  "sourspot": "カス当たり",
-  "sweetspot": "クリーンヒット",
-  "clean hit": "出始め",
-  "late hit": "持続",
-  "meteor": "メテオ",
-  "knee": "膝",
-  "no flinch": "ひるみなし",
   "charged {n}f": "ホールド {n}f",
   "{move} · {dmg}% · KB {kb}": "{move} · {dmg}% · ふっとばし {kb}",
   "Dummy KO at {pct}%": "{pct}% でダミーを撃墜",
   "Autocancel · {move} landed on frame {n}": "着地キャンセル · {move} が {n}F 目に着地",
-  "Draw attack hitboxes (colored by damage), the dummy’s hurtbox, the collision point and ledge-grab boxes.": "攻撃判定（ダメージ別の色）、ダミーのやられ判定、接地判定の点、崖つかまり判定を表示します。",
   "Aerials · smash attacks (direction)": "空中攻撃 · スマッシュ攻撃（方向）",
   "Smash attacks & the training dummy": "スマッシュ攻撃とトレーニングダミー",
-  "Flick the stick and press A within {n} frames (or flick the C-stick) for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy takes damage and knockback from the classic knockback formula, and each hit shows move · damage · knockback.": "スティックをはじいて {n} フレーム以内に A を押す（または C スティックをはじく）とスマッシュ攻撃。A を押し続けると最大 60 フレームまでホールドできます（ダメージ ×1.367）。フリープレイではダミーが従来のふっとばし計算式どおりにダメージとふっとばしを受け、ヒットごとに技 · ダメージ · ふっとばしを表示します。",
   'Technique feedback': 'テクニックのフィードバック',
   'Show short messages about what you just did (wavedash angle, L-cancel timing…). Off by default.': '直前の操作について短いメッセージを表示します（絶の角度、Lキャンセルのタイミングなど）。初期設定はオフです。',
   "Input buffer": "先行入力",
-  "A jump, attack, special, shield or smash input pressed up to this many frames before your fighter can act comes out on the first frame it can, and A may come this many frames before or after a smash flick. A deliberate convenience for browser and USB latency: the classic games have no buffer (0 = strict). L-cancel timing is never buffered.": "キャラクターが行動できるようになる最大この F 数前までに押したジャンプ・攻撃・必殺ワザ・シールド・スマッシュ入力は、行動可能になった最初の F で出ます。また、スマッシュ攻撃の A はスティックをはじく前後この F 数までずれても受け付けます。ブラウザと USB の遅延を補うための意図的な補助で、往年の作品には先行入力はありません（0 = 厳密）。Lキャンセルのタイミングは先行入力の対象外です。",
   "frames": "F",
+
+  // ---- Engine port (meleelight) ----
+  "A jump, attack, special, Z, shield or C-stick press that your fighter couldn’t act on yet is tried again on each of the next frames, up to this many. A deliberate convenience for browser and USB latency on top of the engine: the classic games have no buffer (0 = strict). L-cancel timing is never buffered.": "キャラクターがまだ使えなかったジャンプ・攻撃・必殺ワザ・Z・シールド・Cスティックの入力を、続く F ごとに最大この F 数まで再度試します。エンジンの上に加えた、ブラウザと USB の遅延を補うための意図的な補助で、往年の作品には先行入力はありません（0 = 厳密）。Lキャンセルのタイミングは先行入力の対象外です。",
+  "Draw attack hitboxes (colored by damage), hurtboxes, the environmental collision diamond (ECB) and ledge-grab boxes.": "攻撃の当たり判定（ダメージで色分け）、やられ判定、地形との衝突判定のひし形（ECB）、崖つかまり判定の範囲を表示します。",
+  "Fighters": "ファイター",
+  "Vix, Quill, Sable, Rally and Mochi use meleelight’s character data. Dot, Rosette, Rime and Sir Retro are approximations: their own published movement numbers on top of another fighter’s moves.": "Vix、Quill、Sable、Rally、Mochi は meleelight のキャラクターデータを使います。Dot、Rosette、Rime、Sir Retro は近似で、公開されている自分の移動性能を別のファイターのワザに当てはめています。",
+  "During a dash, flick the other way (past 0.79 within 2 frames) to dash back; keep alternating for a dash dance. The feedback counts how many frames the stick was seen in the \"tilt zone\" on the way. Stick bounce (snapback) shows up here too.": "ダッシュ中にスティックを反対側へはじく（2F 以内に 0.79 を超える）とダッシュバック、続けて切り返すとステップになります。途中でスティックが「傾け入力ゾーン」に何 F 見えたかを表示します。スティックの跳ね返り（スナップバック）もここに現れます。",
+  "Shield on a platform, then bring the stick down past −0.65 within 6 frames without reaching −0.7 within 4 frames (that spot dodges). A down-diagonal notch is made for this.": "すり抜け床の上でシールドを張り、6F 以内にスティックを −0.65 より下へ倒します。ただし 4F 以内に −0.7 まで届くとその場回避になります。斜め下のノッチはこのためのものです。",
+  "Press A as the stick crosses 0.79 (within 2 frames of leaving the center), flick the C-stick, or press A in the first 3 frames of a dash for a smash attack; hold A to charge it for up to 60 frames (×1.367 damage). In Free play the dummy is a second fighter that takes damage, hitlag, hitstun and knockback from the engine, and each hit shows move · damage · knockback.": "スティックが 0.79 を超える瞬間（中央から 2F 以内）に A、Cスティックをはじく、またはダッシュの最初の 3F に A でスマッシュ攻撃。A を押し続けると最大 60F ためられます（ダメージ ×1.367）。フリープレイのダミーは 2 人目のファイターで、エンジンからダメージ・ヒットストップ・のけぞり・ふっとばしを受け、ヒットごとにワザ · ダメージ · ふっとばし力を表示します。",
+  "It is an original platform-fighter sandbox inspired by classic competitive platform fighters and the movement techniques their players love. Its engine is a port of meleelight, an open-source fan recreation by Will Blackett (MIT license), so movement, physics and hits behave like it. Five fighters use meleelight’s character data; the others put their own published movement attributes on top of one of those. The characters, stage art and the rest of the app are our own, and no game files or assets are used.": "往年の対戦アクションと、プレイヤーに愛される移動テクニックに着想を得たオリジナルのサンドボックスです。エンジンは Will Blackett によるオープンソースのファン再現作 meleelight（MIT ライセンス）の移植なので、移動・物理・攻撃の挙動はそれと同じです。5 体のファイターは meleelight のキャラクターデータを使い、残りは公開されている自分の移動性能をそのいずれかに当てはめています。キャラクター、ステージのアート、アプリのほかの部分はすべてオリジナルで、ゲームのファイルや素材は一切使っていません。",
+  "meleelight closely recreates the classic game, so this is a good place to try a new stick module, gate or setting, but results won’t exactly match the original game.": "meleelight は往年のゲームをかなり忠実に再現しているので、新しいスティックモジュールやゲート、設定を試すのに向いていますが、結果が元のゲームと完全に一致するわけではありません。",
+  "Throw": "投げ",
+  "Neutral special": "通常必殺ワザ",
+  "Side special": "横必殺ワザ",
+  "Up special": "上必殺ワザ",
+  "Down special": "下必殺ワザ",
+  "Getup attack": "起き上がり攻撃",
+  "Hit": "ヒット",
+  "Spot dodge instead of a shield drop: stop the stick between −0.65 and −0.7": "シールドドロップではなくその場回避：スティックを −0.65 と −0.7 の間で止めてください",
 };

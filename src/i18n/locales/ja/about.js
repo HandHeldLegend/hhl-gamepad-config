@@ -42,4 +42,7 @@ export default {
   "Wired play on a Switch needs Pro Controller Wired Communication turned on. To pair over Bluetooth, hold the mode button and Start while turning the controller on.": "Switchで有線プレイするには「Proコントローラーの有線通信」をオンにする必要があります。Bluetoothでペアリングするには、モードのボタンとスタートを押しながらコントローラーの電源を入れてください。",
   "I’m on an iPhone or iPad": "iPhone・iPadを使っている",
   "iPhone and iPad browsers can’t use WebUSB, so they can’t connect to the controller. This is Apple’s choice and out of our hands. The demo still works.": "iPhone・iPadのブラウザーはWebUSBを使えないため、コントローラーに接続できません。これはAppleの判断で、私たちには変えられません。デモは使えます。",
+
+  // ---- meleelight ----
+  "The Arena’s game engine: physics, collision, action states, hit detection and character data, ported to src/sections/arena/engine/": "アリーナのゲームエンジン：物理、衝突判定、アクションステート、ヒット判定、キャラクターデータを src/sections/arena/engine/ に移植",
 };

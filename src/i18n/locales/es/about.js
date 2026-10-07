@@ -42,4 +42,7 @@ export default {
   "Wired play on a Switch needs Pro Controller Wired Communication turned on. To pair over Bluetooth, hold the mode button and Start while turning the controller on.": "Para jugar con cable en una Switch hay que activar la Comunicación por cable del Mando Pro. Para emparejar por Bluetooth, mantén pulsados el botón del modo y Start mientras enciendes el control.",
   "I’m on an iPhone or iPad": "Uso un iPhone o un iPad",
   "iPhone and iPad browsers can’t use WebUSB, so they can’t connect to the controller. This is Apple’s choice and out of our hands. The demo still works.": "Los navegadores del iPhone y el iPad no pueden usar WebUSB, así que no pueden conectarse al control. Es una decisión de Apple y no está en nuestras manos. La demo sigue funcionando.",
+
+  // ---- meleelight ----
+  "The Arena’s game engine: physics, collision, action states, hit detection and character data, ported to src/sections/arena/engine/": "El motor de juego de la Arena: física, colisiones, estados de acción, detección de golpes y datos de personajes, portados a src/sections/arena/engine/",
 };

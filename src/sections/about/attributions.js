@@ -42,6 +42,13 @@ export const ATTRIBUTIONS = [
     usedFor: N_('Compression while writing ESP32 firmware (vendor/esptool-js/)'),
   },
   {
+    name: 'meleelight',
+    author: 'Will Blackett (and meleelight contributors)',
+    url: 'https://github.com/schmooblidon/meleelight',
+    license: 'MIT, Copyright (c) 2016 Will Blackett',
+    usedFor: N_('The Arena’s game engine: physics, collision, action states, hit detection and character data, ported to src/sections/arena/engine/'),
+  },
+  {
     name: 'pico-universal-flash-nuke',
     author: 'Phil Howard',
     url: 'https://github.com/Gadgetoid/pico-universal-flash-nuke',
