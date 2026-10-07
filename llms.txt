@@ -48,6 +48,8 @@ Capability flags used in “Needs” columns (detected from the connected contro
 - `hapticHD`: the controller has HD (linear) haptics
 - `haptics`: the controller has rumble (HD or standard)
 - `imu`: the controller has a gyro/accelerometer (IMU)
+- `imuModeWii`: the controller has a gyro/accelerometer (IMU), Wii mode, and firmware that can turn motion on or off per output mode
+- `imuModes`: the controller has a gyro/accelerometer (IMU) and firmware that can turn motion on or off per output mode
 - `invertAllowed`: the firmware allows inverting stick axes
 - `leftStick`: the controller has a left analog stick
 - `rgb`: the controller has RGB LEDs
@@ -58,7 +60,7 @@ Capability flags used in “Needs” columns (detected from the connected contro
 
 ## Settings catalog
 
-68 settings can be read and proposed by key. Anything not listed (calibration, button remapping, angle maps, pairing, firmware) is done interactively on its page.
+71 settings can be read and proposed by key. Anything not listed (calibration, button remapping, angle maps, pairing, firmware) is done interactively on its page.
 
 ### Joysticks (`joysticks`)
 
@@ -88,7 +90,10 @@ Capability flags used in “Needs” columns (detected from the connected contro
 
 | Key | Label | Values | Needs | Description |
 |---|---|---|---|---|
-| `motion.enabled` | Motion controls | on \| off | imu | Turn the gyro and accelerometer on or off for every game. |
+| `motion.enabled` | Motion (all modes) | on \| off | imu | Turn the gyro and accelerometer on or off for every game. |
+| `motion.switchMotion` | Switch motion | on \| off | imuModes | Motion in Switch mode. Only applies while Motion (all modes) is on. |
+| `motion.steamMotion` | Steam motion | on \| off | imuModes | Motion in Steam (SInput) mode. Only applies while Motion (all modes) is on. |
+| `motion.wiiMotion` | Wii motion | on \| off | imuModeWii | Motion in Wii mode. Only applies while Motion (all modes) is on. |
 | `motion.gyroSensitivityX` | X axis | number 0.5 × – 2 ×, step 0.01 | imu | Gyro X-axis multiplier (default 1.20×). |
 | `motion.gyroSensitivityY` | Y axis | number 0.5 × – 2 ×, step 0.01 | imu | Gyro Y-axis multiplier (default 1.20×). |
 | `motion.gyroSensitivityZ` | Z axis | number 0.5 × – 2 ×, step 0.01 | imu | Gyro Z-axis multiplier (default 1.20×). |

@@ -2,14 +2,17 @@
  * Motion settings (imuConfig_s). Port of the scalar controls in hoja2/modules/motion-md.js.
  * Pure data + pure functions only; imported by Node for the MCP server.
  *
- *   imu_disabled                 0 = motion on, 1 = motion off (hoja2: "Enabled, Disabled" selector)
+ *   imu_disabled                 0 = motion on, 1 = motion off (hoja2: "Enabled, Disabled" selector).
+ *                                The master switch: when 1, motion is off in every mode.
+ *   imu_mode_disable_mask        (IMU block 0x13+) bit n set = motion off in core_reportformat_t n
+ *                                (bit 0 Switch, bit 6 SInput/Steam, bit 7 Wii). 0 = on everywhere.
  *   imu_gyro_sensitivity[3]      per-axis X/Y/Z multiplier in percent, IMU_SENSITIVITY_MIN..MAX (50..200)
  *   imu_accel_sensitivity[3]     same for the accelerometer
  *
  * Sensitivities are stored as integer percent (120 = 1.20×) and shown as a multiplier. The firmware
  * multiplies each raw IMU sample by value / IMU_SENSITIVITY_UNITY before sending it to games.
  */
-import { fwDefine } from '../../device/struct.js';
+import { fwDefine, enumValues } from '../../device/struct.js';
 import { clampInt } from '../../settings/schema.js';
 
 export const SENSITIVITY_MIN = fwDefine('IMU_SENSITIVITY_MIN', 50);
@@ -65,6 +68,41 @@ function axisDefs(sensor) {
   }));
 }
 
+/** Bit of imu_mode_disable_mask for a core_reportformat_t name (SWPRO → 0, SINPUT → 6, WII → 7). */
+export function modeBit(format) {
+  const v = enumValues('core_reportformat_t').find((e) => e.name === `CORE_REPORTFORMAT_${format}`)?.value;
+  return v >= 0 ? v : null;
+}
+
+/**
+ * Per-mode motion switches (imu_mode_disable_mask). Each toggles only its own bit, so the other
+ * modes (and any bits this app doesn't know) are left alone. Shown only when the controller's IMU
+ * block is 0x13 or later (`imuModes` capability); Wii also needs Wii mode.
+ */
+const MODE_SWITCHES = [
+  { key: 'motion.switchMotion', format: 'SWPRO', label: 'Switch motion', name: 'Switch', mode: 'Switch', requires: 'imuModes' },
+  { key: 'motion.steamMotion', format: 'SINPUT', label: 'Steam motion', name: 'Steam', mode: 'Steam (SInput)', requires: 'imuModes' },
+  { key: 'motion.wiiMotion', format: 'WII', label: 'Wii motion', name: 'Wii', mode: 'Wii', requires: 'imuModeWii' },
+];
+
+export const modeSwitchDefs = MODE_SWITCHES.map((m) => {
+  const bit = 1 << modeBit(m.format);
+  return {
+    key: m.key,
+    label: m.label,
+    modeName: m.name, // brand name shown on the Motion page, under the "Motion per mode" heading
+    description: `Motion in ${m.mode} mode. Only applies while Motion (all modes) is on.`,
+    block: 'imu',
+    type: 'boolean',
+    requires: m.requires,
+    get: (s) => !(s.config.imu.imu_mode_disable_mask & bit),
+    set: (s, v) => {
+      const mask = s.config.imu.imu_mode_disable_mask & 0xffff;
+      s.config.imu.imu_mode_disable_mask = v ? mask & ~bit : mask | bit;
+    },
+  };
+});
+
 /** Reset every sensitivity axis to the firmware defaults (hoja2 "Defaults → Reset"). */
 export function resetSensitivity(s) {
   s.config.imu.imu_gyro_sensitivity = AXES.map(() => GYRO_SENSITIVITY_DEFAULT);
@@ -74,7 +112,7 @@ export function resetSensitivity(s) {
 export default [
   {
     key: 'motion.enabled',
-    label: 'Motion controls',
+    label: 'Motion (all modes)',
     description: 'Turn the gyro and accelerometer on or off for every game.',
     tip: 'When off, the controller reports no motion at all. That\'s handy for games that use gyro aiming you don\'t want.',
     block: 'imu',
@@ -83,6 +121,7 @@ export default [
     get: (s) => !s.config.imu.imu_disabled,
     set: (s, v) => { s.config.imu.imu_disabled = v ? 0 : 1; },
   },
+  ...modeSwitchDefs,
   ...axisDefs('gyro'),
   ...axisDefs('accel'),
 ];

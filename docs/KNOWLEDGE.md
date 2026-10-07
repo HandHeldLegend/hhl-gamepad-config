@@ -251,11 +251,36 @@ the [Arena](#/arena). To configure or update the controller, use a computer or a
 browser (see `browser-support`).
 
 ## Motion (gyro) calibration
-<!-- topic: motion-calibration; keywords: gyro, motion, imu, accelerometer, motion controls, drifting gyro, calibrate gyro, sensitivity -->
+<!-- topic: motion-calibration; keywords: gyro, motion, imu, accelerometer, motion controls, drifting gyro, calibrate gyro, sensitivity, motion off, turn off gyro, per mode, gyro aiming -->
 
 On [Motion](#/motion) (controllers with an IMU): place the controller on a flat, solid surface, run calibration.
-**Motion controls** can be turned off, and gyro/accelerometer sensitivity is
+**Motion (all modes)** (`motion.enabled`) turns motion off everywhere, and gyro/accelerometer sensitivity is
 adjustable per axis (0.5×–2×). **Save** afterwards.
+
+With newer firmware the Motion page also has **per-mode** switches under it: **Switch** (`motion.switchMotion`),
+**Steam** (`motion.steamMotion`) and, on controllers with Wii mode, **Wii** (`motion.wiiMotion`). Use them to
+turn motion off in one mode only, for example to stop gyro aiming in Steam games while keeping it on the Switch.
+They only apply while Motion (all modes) is on (they are greyed out otherwise). With motion off, the controller
+reports lying still (Steam mode does not offer motion at all), but flick buttons still work (see `motion-flicks`).
+If the per-mode switches are missing, update the firmware.
+
+## Motion flicks (shake with a button)
+<!-- topic: motion-flicks; keywords: flick, flicks, shake, waggle, shake button, motion button, cap throw, mario odyssey, wii shake, nunchuk shake, no gyro, remap motion -->
+
+Flicks are outputs you can map to any button on the [Input](#/input) page: each press plays one short, sharp
+motion (up, down, left or right) that games see as you moving the controller. Holding the button does not
+repeat it; press again to flick again.
+
+- **Switch** profile: **Flick Up / Down / Left / Right** in the **Motion** group of the output picker
+  (`#/input?mode=switch`). Steam mode has no flicks.
+- **Wii** profiles: **Remote Flick** Up / Down / Left / Right (in Pointer & Motion, all three profiles) and
+  **Nunchuk Flick** Up / Down / Left / Right (Nunchuk group, Upright and Sideways). By default R (and ZR in
+  Sideways) is Remote Flick Down, and left stick click in Upright is Nunchuk Flick Down.
+- Games that only check for a shake (most Wii games, Kirby, party games) take a flick in any direction.
+  **Super Mario Odyssey** reads the direction: Flick Up and Flick Down give the upward and downward cap throws.
+- Flicks work even with motion turned off (`motion-calibration`) and on controllers without a gyro: the controller
+  then reads as lying still, face up, plus the flick. They never move the Wii pointer.
+- Older firmware ignores flick bindings (they do nothing until the firmware is updated).
 
 ## Rumble (haptics)
 <!-- topic: haptics; keywords: rumble, vibration, haptics, hd rumble, too strong, too weak, no rumble, test feedback -->

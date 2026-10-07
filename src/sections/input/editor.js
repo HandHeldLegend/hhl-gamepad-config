@@ -18,17 +18,21 @@ import { icon } from '../../ui/icons.js';
 import { t, fmt, N_ } from '../../i18n/index.js';
 import {
   INPUT_TYPE, OUTPUT_TYPE, OUTPUT_MODE, ANALOG_FULL, GAMECUBE_MIN_ANALOG, MODE_LABEL, MODE_CLIP_NAME, CLIPBOARD_HEADER,
-  INPUT_TYPE_LABEL, OUTPUT_TYPE_LABEL, WII_GROUPS, getMode, outputsFor, outputOf, readProfile, writeSlot,
+  INPUT_TYPE_LABEL, OUTPUT_TYPE_LABEL, WII_GROUPS, FLICK_TIP, getMode, outputsFor, outputOf, readProfile, writeSlot,
   modeOptions, defaultOutputMode, effectiveMode, usesThreshold, usesStaticOutput, isAnalogInput,
 } from './mapping.js';
 import { glyph, meter, outputName, modeName } from './parts.js';
 
-/** Order and headings of the output picker groups. */
+/**
+ * Order and headings of the output picker groups for non-Wii modes: by output type, except outputs
+ * that name their own group (Switch flicks → Motion). [match, heading, tip?]
+ */
 const PICKER_GROUPS = [
-  [OUTPUT_TYPE.DIGITAL, N_('Buttons')],
-  [OUTPUT_TYPE.DPAD, N_('D-pad')],
-  [OUTPUT_TYPE.HOVER, N_('Analog triggers')],
-  [OUTPUT_TYPE.JOYSTICK, N_('Stick directions')],
+  [(x) => !x.group && x.type === OUTPUT_TYPE.DIGITAL, N_('Buttons')],
+  [(x) => !x.group && x.type === OUTPUT_TYPE.DPAD, N_('D-pad')],
+  [(x) => !x.group && x.type === OUTPUT_TYPE.HOVER, N_('Analog triggers')],
+  [(x) => !x.group && x.type === OUTPUT_TYPE.JOYSTICK, N_('Stick directions')],
+  [(x) => x.group === 'motion', N_('Motion'), FLICK_TIP],
 ];
 
 const MODE_HELP = {
@@ -99,11 +103,13 @@ export function createEditor(o) {
       const present = new Set(inputs.map((i) => i.code));
       outputs = outputs.filter((x) => present.has(x.code) || x.code === current);
     }
+    // Flick outputs only on firmware that has them (older firmware treats the codes as unmapped).
+    if (!session.caps?.flicks) outputs = outputs.filter((x) => x.group !== 'motion' || x.code === current);
     // Wii profiles share one output list: offer the groups this profile uses (the firmware accepts
     // any Wii code in any Wii profile, so keep showing the current one even from another group).
     const groups = mode.groups
-      ? WII_GROUPS.map((g) => [outputs.filter((x) => x.group === g.id && (mode.groups.includes(g.id) || x.code === current)), g.title])
-      : PICKER_GROUPS.map(([type, heading]) => [outputs.filter((x) => x.type === type), heading]);
+      ? WII_GROUPS.map((g) => [outputs.filter((x) => x.group === g.id && (mode.groups.includes(g.id) || x.code === current)), g.title, g.tip])
+      : PICKER_GROUPS.map(([match, heading, tip]) => [outputs.filter(match), heading, tip]);
 
     // `label` and `glyphName` are English data; the text shows the label's translation.
     const choice = (code, label, glyphName, hint) => h('button.inp-choice', {
@@ -118,8 +124,9 @@ export function createEditor(o) {
       h('div.inp-picker-head', h('strong', t('Send in {mode} mode', { mode: modeName(mode) })),
         button({ label: t('Cancel'), size: 'sm', variant: 'ghost', onClick: () => { pickerOpen = false; render(); } })),
       h('div.inp-choices', choice(-1, 'None', 'None', N_('Disable this input in this mode'))),
-      groups.map(([list, heading]) => list.length > 0 && h('div.inp-picker-group',
+      groups.map(([list, heading, tip]) => list.length > 0 && h('div.inp-picker-group',
         h('div.inp-picker-title', t(heading)),
+        tip && h('p.inp-picker-tip', t(tip)),
         h('div.inp-choices', list.map((x) => choice(x.code, x.label, x.glyph, x.hint))))));
   }
 

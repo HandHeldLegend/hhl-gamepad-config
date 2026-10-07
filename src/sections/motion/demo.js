@@ -11,8 +11,9 @@ import { fwDefine } from '../../device/struct.js';
 
 export function seed(device) {
   const imu = device.config.imu;
-  imu.imu_config_version = fwDefine('CFG_BLOCK_IMU_VERSION', 0);
+  imu.imu_config_version = fwDefine('CFG_BLOCK_IMU_VERSION', 0); // 0x13: has imu_mode_disable_mask
   imu.imu_disabled = 0;
+  imu.imu_mode_disable_mask = 0; // motion on in every mode (per-mode switches need IMU block 0x13+)
   imu.imu_a_gyro_offsets = [3, -2, 1]; // a lightly drifting, uncalibrated gyro
 }
 

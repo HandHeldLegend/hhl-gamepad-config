@@ -60,4 +60,13 @@ export default {
   "Accelerometer Y-axis multiplier (default 1.00×).": "加速度センサーY軸の倍率（デフォルト 1.00×）。",
   "Accelerometer Z-axis multiplier (default 1.00×).": "加速度センサーZ軸の倍率（デフォルト 1.00×）。",
   'Sensitivity reset to defaults.': '感度を初期設定に戻しました。',
+  "Motion per mode": "モードごとのモーション",
+  "Flick buttons keep working while motion is off.": "モーションがオフでもフリックボタンは使えます。",
+  "Motion (all modes)": "モーション（全モード）",
+  "Motion in Switch mode. Only applies while Motion (all modes) is on.": "Switchモードのモーション。「モーション（全モード）」がオンのときだけ有効です。",
+  "Motion in Steam (SInput) mode. Only applies while Motion (all modes) is on.": "Steam（SInput）モードのモーション。「モーション（全モード）」がオンのときだけ有効です。",
+  "Motion in Wii mode. Only applies while Motion (all modes) is on.": "Wiiモードのモーション。「モーション（全モード）」がオンのときだけ有効です。",
+  "Switch motion": "Switchのモーション",
+  "Steam motion": "Steamのモーション",
+  "Wii motion": "Wiiのモーション",
 };

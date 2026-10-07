@@ -94,7 +94,10 @@ colors (`#rrggbb` or `#rgb`; encode `#` as `%23` in hand-written links), text (U
 
 | Key | Label | Values | Needs | Description |
 |---|---|---|---|---|
-| `motion.enabled` | Motion controls | on \| off | imu | Turn the gyro and accelerometer on or off for every game. |
+| `motion.enabled` | Motion (all modes) | on \| off | imu | Turn the gyro and accelerometer on or off for every game. |
+| `motion.switchMotion` | Switch motion | on \| off | imuModes | Motion in Switch mode. Only applies while Motion (all modes) is on. |
+| `motion.steamMotion` | Steam motion | on \| off | imuModes | Motion in Steam (SInput) mode. Only applies while Motion (all modes) is on. |
+| `motion.wiiMotion` | Wii motion | on \| off | imuModeWii | Motion in Wii mode. Only applies while Motion (all modes) is on. |
 | `motion.gyroSensitivityX` | X axis | number 0.5 × – 2 ×, step 0.01 | imu | Gyro X-axis multiplier (default 1.20×). |
 | `motion.gyroSensitivityY` | Y axis | number 0.5 × – 2 ×, step 0.01 | imu | Gyro Y-axis multiplier (default 1.20×). |
 | `motion.gyroSensitivityZ` | Z axis | number 0.5 × – 2 ×, step 0.01 | imu | Gyro Z-axis multiplier (default 1.20×). |
@@ -181,6 +184,8 @@ colors (`#rrggbb` or `#rgb`; encode `#` as `%23` in hand-written links), text (U
 - `hapticHD`: the controller has HD (linear) haptics
 - `haptics`: the controller has rumble (HD or standard)
 - `imu`: the controller has a gyro/accelerometer (IMU)
+- `imuModeWii`: the controller has a gyro/accelerometer (IMU), Wii mode, and firmware that can turn motion on or off per output mode
+- `imuModes`: the controller has a gyro/accelerometer (IMU) and firmware that can turn motion on or off per output mode
 - `invertAllowed`: the firmware allows inverting stick axes
 - `leftStick`: the controller has a left analog stick
 - `rgb`: the controller has RGB LEDs

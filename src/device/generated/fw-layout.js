@@ -1,7 +1,7 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
 // Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@7dadf9b)
-// Validated 5 size assertion(s) from the firmware headers.
+// Validated 6 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "local",
@@ -248,10 +248,16 @@ export default {
      "doc": "X, Y, Z — default 100 (1.00x)"
     },
     {
-     "name": "reserved",
+     "name": "imu_mode_disable_mask",
      "offset": 20,
+     "type": "u16",
+     "doc": "Bit n set = motion off in core_reportformat_t n"
+    },
+    {
+     "name": "reserved",
+     "offset": 22,
      "type": "u8",
-     "count": 12
+     "count": 10
     }
    ]
   },
@@ -1619,8 +1625,24 @@ export default {
     "value": 25
    },
    {
-    "name": "SWITCH_CODE_MAX",
+    "name": "SWITCH_CODE_FLICK_UP",
     "value": 26
+   },
+   {
+    "name": "SWITCH_CODE_FLICK_DOWN",
+    "value": 27
+   },
+   {
+    "name": "SWITCH_CODE_FLICK_LEFT",
+    "value": 28
+   },
+   {
+    "name": "SWITCH_CODE_FLICK_RIGHT",
+    "value": 29
+   },
+   {
+    "name": "SWITCH_CODE_MAX",
+    "value": 30
    }
   ],
   "mapper_snes_code_t": [
@@ -2355,21 +2377,45 @@ export default {
     "value": 44
    },
    {
-    "name": "WII_CODE_SHAKE",
-    "value": 45
-   },
-   {
-    "name": "WII_CODE_NUNCHUK_SHAKE",
-    "value": 46
-   },
-   {
     "name": "WII_CODE_EXTENSION_TOGGLE",
-    "value": 47,
+    "value": 45,
     "doc": "Plug / unplug the current mode's extension"
    },
    {
-    "name": "WII_CODE_MAX",
+    "name": "WII_CODE_REMOTE_FLICK_UP",
+    "value": 46
+   },
+   {
+    "name": "WII_CODE_REMOTE_FLICK_DOWN",
+    "value": 47
+   },
+   {
+    "name": "WII_CODE_REMOTE_FLICK_LEFT",
     "value": 48
+   },
+   {
+    "name": "WII_CODE_REMOTE_FLICK_RIGHT",
+    "value": 49
+   },
+   {
+    "name": "WII_CODE_NUNCHUK_FLICK_UP",
+    "value": 50
+   },
+   {
+    "name": "WII_CODE_NUNCHUK_FLICK_DOWN",
+    "value": 51
+   },
+   {
+    "name": "WII_CODE_NUNCHUK_FLICK_LEFT",
+    "value": 52
+   },
+   {
+    "name": "WII_CODE_NUNCHUK_FLICK_RIGHT",
+    "value": 53
+   },
+   {
+    "name": "WII_CODE_MAX",
+    "value": 54
    }
   ],
   "mapper_wii_profile_t": [
@@ -2666,7 +2712,8 @@ export default {
   "CFG_BLOCK_ANALOG_VERSION": 19,
   "CFG_BLOCK_RGB_VERSION": 18,
   "CFG_BLOCK_TRIGGER_VERSION": 17,
-  "CFG_BLOCK_IMU_VERSION": 18,
+  "CFG_BLOCK_IMU_VERSION": 19,
+  "CFG_BLOCK_IMU_VERSION_PREV": 18,
   "CFG_BLOCK_HAPTIC_VERSION": 17,
   "CFG_BLOCK_USER_VERSION": 17,
   "CFG_BLOCK_INPUT_VERSION": 20,

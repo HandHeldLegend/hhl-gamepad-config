@@ -60,4 +60,13 @@ export default {
   "Accelerometer Y-axis multiplier (default 1.00×).": "Multiplicateur de l’axe Y de l’accéléromètre (1,00× par défaut).",
   "Accelerometer Z-axis multiplier (default 1.00×).": "Multiplicateur de l’axe Z de l’accéléromètre (1,00× par défaut).",
   'Sensitivity reset to defaults.': 'Sensibilité réinitialisée aux valeurs par défaut.',
+  "Motion per mode": "Mouvement par mode",
+  "Flick buttons keep working while motion is off.": "Les boutons de secousse fonctionnent même quand le mouvement est désactivé.",
+  "Motion (all modes)": "Mouvement (tous les modes)",
+  "Motion in Switch mode. Only applies while Motion (all modes) is on.": "Mouvement en mode Switch. S’applique seulement si Mouvement (tous les modes) est activé.",
+  "Motion in Steam (SInput) mode. Only applies while Motion (all modes) is on.": "Mouvement en mode Steam (SInput). S’applique seulement si Mouvement (tous les modes) est activé.",
+  "Motion in Wii mode. Only applies while Motion (all modes) is on.": "Mouvement en mode Wii. S’applique seulement si Mouvement (tous les modes) est activé.",
+  "Switch motion": "Mouvement en Switch",
+  "Steam motion": "Mouvement en Steam",
+  "Wii motion": "Mouvement en Wii",
 };

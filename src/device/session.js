@@ -23,14 +23,20 @@ import { N_ } from '../i18n/index.js'; // attention texts are translated where d
 const WRITE_DEBOUNCE_MS = 120;
 const BASEBAND_MANIFEST = 'https://raw.githubusercontent.com/HandHeldLegend/HOJA-ESP32-Baseband/master/manifest.json';
 
-/** Capability flags: which features this controller build supports. Mirrors hoja2's icon gating. */
-export function computeCaps(s) {
+/** IMU config block version that added imu_mode_disable_mask (per-mode motion on/off). */
+export const IMU_MODE_MASK_VERSION = 0x13;
+
+/**
+ * Capability flags: which features this controller build supports. Mirrors hoja2's icon gating.
+ * Mostly from the static blocks `s`; a few firmware-version features come from the config blocks `c`.
+ */
+export function computeCaps(s, c) {
   const a = s.analog;
   const bt = s.bluetooth;
   const hd = !!s.haptic.haptic_hd;
   const sd = !!s.haptic.haptic_sd;
   const bluetooth = !!(bt.bluetooth_bdr_supported || bt.bluetooth_ble_supported);
-  return {
+  const caps = {
     analog: !!(a.axis_lx || a.axis_rx),
     leftStick: !!a.axis_lx,
     rightStick: !!a.axis_rx,
@@ -49,12 +55,19 @@ export function computeCaps(s) {
     joybus: !!s.device.joybus_supported,
     // Older firmware sends a 55-byte bluetooth block; the struct starts zeroed, so the byte reads 0.
     wii: bt.wii_supported === 1,
+    // Per-mode motion switch: only read imu_mode_disable_mask when the IMU block is 0x13 or later.
+    imuModes: !!s.imu.axis_gyro_a && (c?.imu?.imu_config_version ?? 0) >= IMU_MODE_MASK_VERSION,
+    // Motion flick outputs arrived in the same firmware as the per-mode mask (IMU block 0x13). They
+    // work without an IMU, so this doesn't check for one; older firmware would ignore the codes.
+    flicks: (c?.imu?.imu_config_version ?? 0) >= IMU_MODE_MASK_VERSION,
   };
+  caps.imuModeWii = caps.imuModes && caps.wii;
+  return caps;
 }
 
 const NO_CAPS = Object.freeze(Object.fromEntries(
   ['analog', 'leftStick', 'rightStick', 'triggers', 'invertAllowed', 'rgb', 'imu', 'haptics', 'hapticHD',
-    'battery', 'bluetooth', 'wlan', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii'].map((k) => [k, false]),
+    'battery', 'bluetooth', 'wlan', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'imuModes', 'imuModeWii', 'flicks'].map((k) => [k, false]),
 ));
 
 class Session extends EventTarget {
@@ -126,7 +139,7 @@ class Session extends EventTarget {
 
   #onConnect() {
     const s = device.static;
-    this.caps = computeCaps(s);
+    this.caps = computeCaps(s, device.config);
     this.info = {
       name: decodeText(s.device.name) || 'HOJA Controller',
       maker: decodeText(s.device.maker),

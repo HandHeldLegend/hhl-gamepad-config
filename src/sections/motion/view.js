@@ -3,7 +3,9 @@
  * imu-data-display.js).
  *
  * Cards:
- *   1. Motion controls: on/off (imu_disabled) and gyro calibration (IMU_CMD_CALIBRATE_START).
+ *   1. Motion controls: master on/off (imu_disabled), per-mode on/off (imu_mode_disable_mask, IMU
+ *                        block 0x13+; greyed out while the master is off) and gyro calibration
+ *                        (IMU_CMD_CALIBRATE_START).
  *   2. Live view:       3D controller model (three.js, lazy-loaded) + gyro/accel bars from the
  *                        input stream (bytes 3–14 of every report, either stream mode).
  *   3. Sensitivity:     per-axis gyro/accel multipliers (imu_gyro_sensitivity / imu_accel_sensitivity)
@@ -19,7 +21,7 @@ import { onInputReport } from '../../device/reports.js';
 import { createModelView } from './model-view.js';
 import { createImuReadout } from './imu-readout.js';
 import { t, fmt } from '../../i18n/index.js';
-import { AXES, resetSensitivity, GYRO_SENSITIVITY_DEFAULT, ACCEL_SENSITIVITY_DEFAULT, SENSITIVITY_UNITY } from './settings.js';
+import { AXES, resetSensitivity, modeSwitchDefs, GYRO_SENSITIVITY_DEFAULT, ACCEL_SENSITIVITY_DEFAULT, SENSITIVITY_UNITY } from './settings.js';
 
 loadStyles(new URL('./motion.css', import.meta.url));
 
@@ -49,6 +51,15 @@ export function mount(root, { session, device }) {
   // ---- 1. Motion controls ----------------------------------------------------------------
   const enabledRow = settingField('motion.enabled', { tone: TONE, onChange: () => syncDisabled() });
 
+  // Per-mode switches (firmware with IMU block 0x13+; Wii only on controllers with Wii mode). They
+  // only matter while the master switch is on, so they are greyed out otherwise.
+  const modeRows = modeSwitchDefs.filter((d) => session.caps[d.requires])
+    .map((d) => settingField(d, { tone: TONE, label: d.modeName, description: '' }));
+  const modesBox = modeRows.length > 0 && h('div.motion-modes', { role: 'group', 'aria-label': t('Motion per mode') },
+    h('div.motion-modes-title', t('Motion per mode')),
+    modeRows,
+    h('p.motion-modes-note', t('Flick buttons keep working while motion is off.')));
+
   const calibrateRow = field({
     label: t('Calibrate gyro'),
     description: t('Removes slow drift. Put the controller on a flat, solid surface first.'),
@@ -59,7 +70,7 @@ export function mount(root, { session, device }) {
   const controls = card({
     title: t('Motion controls'), icon: 'motion', tone: TONE,
     subtitle: t('Gyro aiming and tilt for games that support motion. Changes apply instantly. Press Save to keep them.'),
-  }, enabledRow, calibrateRow);
+  }, enabledRow, modesBox, calibrateRow);
 
   // ---- 2. Live view -----------------------------------------------------------------------
   const model = createModelView({ bodyColor: session.config.gamepad?.gamepad_color_body || null });
@@ -123,6 +134,10 @@ export function mount(root, { session, device }) {
   function syncDisabled() {
     const off = !!imu().imu_disabled;
     offNote.hidden = !off;
+    if (modesBox) {
+      modesBox.classList.toggle('is-off', off);
+      for (const row of modeRows) row.control.disabled = off;
+    }
     live.classList.toggle('motion-off', off);
   }
   syncDisabled();

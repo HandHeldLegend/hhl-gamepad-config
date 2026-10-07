@@ -49,6 +49,9 @@ export const CAPABILITY_NOTES = {
   snes: 'the controller supports SNES output',
   joybus: 'the controller supports N64/GameCube (Joybus) output',
   wii: 'the controller supports Wii mode (Wii Remote over Bluetooth, RM2 wireless module)',
+  imuModes: 'the controller has a gyro/accelerometer (IMU) and firmware that can turn motion on or off per output mode',
+  imuModeWii: 'the controller has a gyro/accelerometer (IMU), Wii mode, and firmware that can turn motion on or off per output mode',
+  flicks: 'the firmware has the motion flick outputs (Flick Up/Down/Left/Right in the Switch remap picker)',
 };
 
 export const capabilityNote = (flag) => (flag ? CAPABILITY_NOTES[flag] || `capability "${flag}"` : null);

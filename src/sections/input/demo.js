@@ -59,16 +59,17 @@ const DEFAULTS = {
  * in mapper.c ({ SWITCH_SUFFIX: WII_SUFFIX }; missing = unused).
  */
 const WII_COMMON = { PLUS: 'PLUS', MINUS: 'MINUS', HOME: 'HOME', CAPTURE: 'EXTENSION_TOGGLE', RS: 'POINTER_RECENTER',
-  RX_RIGHT: 'POINTER_RIGHT', RX_LEFT: 'POINTER_LEFT', RY_UP: 'POINTER_UP', RY_DOWN: 'POINTER_DOWN' };
+  RX_RIGHT: 'POINTER_RIGHT', RX_LEFT: 'POINTER_LEFT', RY_UP: 'POINTER_UP', RY_DOWN: 'POINTER_DOWN',
+  FLICK_UP: 'REMOTE_FLICK_UP', FLICK_DOWN: 'REMOTE_FLICK_DOWN', FLICK_LEFT: 'REMOTE_FLICK_LEFT', FLICK_RIGHT: 'REMOTE_FLICK_RIGHT' };
 const WII_FROM_SWITCH = {
-  'wii-nunchuk': { ...WII_COMMON, A: 'A', B: 'B', X: 'TWO', Y: 'ONE', ...DPAD, L: 'C', R: 'SHAKE', ZL: 'Z', ZR: 'B', LS: 'NUNCHUK_SHAKE',
+  'wii-nunchuk': { ...WII_COMMON, A: 'A', B: 'B', X: 'TWO', Y: 'ONE', ...DPAD, L: 'C', R: 'REMOTE_FLICK_DOWN', ZL: 'Z', ZR: 'B', LS: 'NUNCHUK_FLICK_DOWN',
     LX_RIGHT: 'NUNCHUK_X_RIGHT', LX_LEFT: 'NUNCHUK_X_LEFT', LY_UP: 'NUNCHUK_Y_UP', LY_DOWN: 'NUNCHUK_Y_DOWN' },
   'wii-classic': { ...WII_COMMON, A: 'CC_A', B: 'CC_B', X: 'CC_X', Y: 'CC_Y', UP: 'CC_UP', DOWN: 'CC_DOWN', LEFT: 'CC_LEFT', RIGHT: 'CC_RIGHT',
     L: 'CC_ZL', R: 'CC_ZR', ZL: 'CC_L', ZR: 'CC_R', PLUS: 'CC_PLUS', MINUS: 'CC_MINUS', HOME: 'CC_HOME',
     LX_RIGHT: 'CC_LX_RIGHT', LX_LEFT: 'CC_LX_LEFT', LY_UP: 'CC_LY_UP', LY_DOWN: 'CC_LY_DOWN',
     RX_RIGHT: 'CC_RX_RIGHT', RX_LEFT: 'CC_RX_LEFT', RY_UP: 'CC_RY_UP', RY_DOWN: 'CC_RY_DOWN' },
   'wii-sideways': { ...WII_COMMON, A: 'TWO', B: 'ONE', X: 'A', Y: 'B', UP: 'RIGHT', DOWN: 'LEFT', LEFT: 'UP', RIGHT: 'DOWN',
-    L: 'A', R: 'SHAKE', ZL: 'B', ZR: 'SHAKE', LX_RIGHT: 'DOWN', LX_LEFT: 'UP', LY_UP: 'RIGHT', LY_DOWN: 'LEFT' },
+    L: 'A', R: 'REMOTE_FLICK_DOWN', ZL: 'B', ZR: 'REMOTE_FLICK_DOWN', LX_RIGHT: 'DOWN', LX_LEFT: 'UP', LY_UP: 'RIGHT', LY_DOWN: 'LEFT' },
 };
 for (const [id, map] of Object.entries(WII_FROM_SWITCH)) {
   DEFAULTS[id] = Object.fromEntries(Object.entries(DEFAULTS.switch).filter(([, sw]) => map[sw]).map(([key, sw]) => [key, map[sw]]));

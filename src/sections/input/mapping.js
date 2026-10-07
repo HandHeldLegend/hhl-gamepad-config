@@ -181,6 +181,27 @@ const MODE_HINTS = {
   },
 };
 /**
+ * Motion flick outputs: each press plays one short motion gesture on the reported accelerometer and
+ * gyro (src/input/motion_gesture.c), on top of the real motion and even while motion is off.
+ */
+const FLICK_HINT = N_('Plays one quick motion gesture per press');
+/** One-line tips shown under the picker groups that offer flicks (Switch Motion, Wii Pointer & Motion). */
+export const FLICK_TIP = N_('Most games take any direction; in Super Mario Odyssey, Flick Up and Down throw the cap upward and downward.');
+const WII_FLICK_TIP = N_('Flicks stand in for shaking the controller; most games take any direction.');
+
+/**
+ * Non-Wii outputs that get their own picker group instead of the by-type groups, keyed by mode id and
+ * enum suffix: [picker group, label, glyph, hint]. All are digital (mapper.c `_switch_output_types`).
+ * Only Switch has flicks; Steam (SInput) mode has none.
+ */
+const GROUPED_OUTPUTS = {
+  switch: {
+    FLICK_UP: ['motion', N_('Flick Up'), 'FLU', FLICK_HINT], FLICK_DOWN: ['motion', N_('Flick Down'), 'FLD', FLICK_HINT],
+    FLICK_LEFT: ['motion', N_('Flick Left'), 'FLL', FLICK_HINT], FLICK_RIGHT: ['motion', N_('Flick Right'), 'FLR', FLICK_HINT],
+  },
+};
+
+/**
  * Wii outputs (mapper_wii_code_t, shared by the three Wii profiles), keyed by enum suffix:
  * [picker group, label, glyph, output type, hint?]. Types mirror `_wii_output_types` in mapper.c (Classic
  * L / R are analog, like GameCube L / R: the Wii also sees the click past ~95%). The
@@ -212,9 +233,12 @@ const WII_OUTPUTS = (() => {
     POINTER_RIGHT: ['pointer', N_('Pointer Right (stick aim)'), 'PX+', J], POINTER_LEFT: ['pointer', N_('Pointer Left (stick aim)'), 'PX-', J],
     POINTER_UP: ['pointer', N_('Pointer Up (stick aim)'), 'PY+', J], POINTER_DOWN: ['pointer', N_('Pointer Down (stick aim)'), 'PY-', J],
     POINTER_RECENTER: ['pointer', N_('Pointer Recenter'), 'CTR', D, N_('Recenters the pointer and levels the tilt')],
-    SHAKE: ['pointer', N_('Shake Remote'), 'SHK', D],
-    NUNCHUK_SHAKE: ['nunchuk', N_('Shake Nunchuk'), 'NSHK', D],
     EXTENSION_TOGGLE: ['pointer', N_('Extension Attach/Detach'), 'EXT', D, N_('Plugs the Nunchuk or Classic Controller in or out')],
+    REMOTE_FLICK_UP: ['pointer', N_('Remote Flick Up'), 'FLU', D, FLICK_HINT], REMOTE_FLICK_DOWN: ['pointer', N_('Remote Flick Down'), 'FLD', D, FLICK_HINT],
+    REMOTE_FLICK_LEFT: ['pointer', N_('Remote Flick Left'), 'FLL', D, FLICK_HINT], REMOTE_FLICK_RIGHT: ['pointer', N_('Remote Flick Right'), 'FLR', D, FLICK_HINT],
+    // The Nunchuk has no gyro, so its flicks are accelerometer only (same picker group as its other outputs).
+    NUNCHUK_FLICK_UP: ['nunchuk', N_('Nunchuk Flick Up'), 'NFLU', D, FLICK_HINT], NUNCHUK_FLICK_DOWN: ['nunchuk', N_('Nunchuk Flick Down'), 'NFLD', D, FLICK_HINT],
+    NUNCHUK_FLICK_LEFT: ['nunchuk', N_('Nunchuk Flick Left'), 'NFLL', D, FLICK_HINT], NUNCHUK_FLICK_RIGHT: ['nunchuk', N_('Nunchuk Flick Right'), 'NFLR', D, FLICK_HINT],
   };
 })();
 
@@ -223,7 +247,7 @@ export const WII_GROUPS = [
   { id: 'remote', title: N_('Wii Remote') },
   { id: 'nunchuk', title: N_('Nunchuk') },
   { id: 'classic', title: N_('Classic Controller') },
-  { id: 'pointer', title: N_('Pointer & Motion') },
+  { id: 'pointer', title: N_('Pointer & Motion'), tip: WII_FLICK_TIP },
 ];
 
 /** Hints that come from the firmware enums' doc comments (e.doc), listed so they get translated. */
@@ -232,6 +256,7 @@ N_('Stick left'); N_('Stick right');
 /** Descriptive output labels that are translated for display (see outputName() in parts.js). */
 export const TRANSLATED_LABELS = new Set([
   ...Object.values(WII_OUTPUTS).map((w) => w[1]),
+  ...Object.values(GROUPED_OUTPUTS).flatMap((m) => Object.values(m).map((g) => g[1])),
   ...['UP', 'DOWN', 'LEFT', 'RIGHT', 'PLUS', 'MINUS', 'CAPTURE', 'BACK', 'GUIDE', 'SHARE', 'SOUTH', 'EAST', 'WEST', 'NORTH']
     .map((k) => COMMON_LABELS[k]),
   ...Object.values(MODE_LABELS.n64).filter((l) => l.startsWith('C ')),
@@ -256,7 +281,7 @@ const outputCache = new Map();
 
 /**
  * Every output a mode can send, from its firmware enum. `glyph` is what the tile/picker glyph draws
- * (the label itself, except for Wii outputs); Wii outputs also carry their picker `group`.
+ * (the label itself, except for Wii and grouped outputs); those also carry their picker `group`.
  * @returns {Array<{code:number, key:string, label:string, glyph:string, group?:string, hint:string, type:number}>}
  */
 export function outputsFor(modeId) {
@@ -268,6 +293,8 @@ export function outputsFor(modeId) {
       const key = e.name.replace(mode.prefix, '');
       const wii = mode.family === 'wii' && WII_OUTPUTS[key];
       if (wii) return { code: e.value, key, label: wii[1], glyph: wii[2], group: wii[0], hint: wii[4] || '', type: wii[3] };
+      const grouped = GROUPED_OUTPUTS[modeId]?.[key];
+      if (grouped) return { code: e.value, key, label: grouped[1], glyph: grouped[2], group: grouped[0], hint: grouped[3], type: OUTPUT_TYPE.DIGITAL };
       const label = MODE_LABELS[modeId]?.[key] ?? COMMON_LABELS[key] ?? (key.length <= 2 ? key : prettify(key));
       return { code: e.value, key, label, glyph: label, hint: MODE_HINTS[modeId]?.[key] || e.doc || '', type: outputTypeOf(key) };
     });
