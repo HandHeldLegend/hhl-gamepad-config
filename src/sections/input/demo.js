@@ -58,7 +58,7 @@ const DEFAULTS = {
  * Wii defaults are derived from the Switch defaults by Switch output, like _wii_defaults_from_switch
  * in mapper.c ({ SWITCH_SUFFIX: WII_SUFFIX }; missing = unused).
  */
-const WII_COMMON = { PLUS: 'PLUS', MINUS: 'MINUS', HOME: 'HOME', CAPTURE: 'POINTER_RECENTER', RS: 'POINTER_RECENTER',
+const WII_COMMON = { PLUS: 'PLUS', MINUS: 'MINUS', HOME: 'HOME', CAPTURE: 'EXTENSION_TOGGLE', RS: 'POINTER_RECENTER',
   RX_RIGHT: 'POINTER_RIGHT', RX_LEFT: 'POINTER_LEFT', RY_UP: 'POINTER_UP', RY_DOWN: 'POINTER_DOWN' };
 const WII_FROM_SWITCH = {
   'wii-nunchuk': { ...WII_COMMON, A: 'A', B: 'B', X: 'TWO', Y: 'ONE', ...DPAD, L: 'C', R: 'SHAKE', ZL: 'Z', ZR: 'B', LS: 'NUNCHUK_SHAKE',

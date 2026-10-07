@@ -60,7 +60,7 @@ Console modes start from the d-pad instead: hold **d-pad left** for SNES, **down
 GameCube and, on controllers with Wii mode, **up** for Wii (see `modes`).
 
 ## Which modes work with the app
-<!-- topic: modes; keywords: mode, output mode, switch, steam, sinput, xinput, slippi, gamecube, n64, snes, wii, wii remote, nunchuk, classic controller, default mode, which modes -->
+<!-- topic: modes; keywords: mode, output mode, switch, steam, sinput, xinput, slippi, gamecube, n64, snes, wii, wii remote, nunchuk, classic controller, upright, sideways, extension, motionplus, default mode, which modes -->
 
 Only **Switch** and **Steam** modes talk to HHL Gamepad Config (Steam mode is also called SInput in firmware and older docs). The other output modes, **XInput**
 (Xbox-style for Windows PCs), **Slippi** (GameCube adapter mode for Slippi/Dolphin), **GameCube**, **N64**,
@@ -69,14 +69,23 @@ Only **Switch** and **Steam** modes talk to HHL Gamepad Config (Steam mode is al
 - **Default mode** ([Gamepad](#/gamepad)) chooses the mode the controller starts in. After changing it to a
   non-config mode, hold A or B while plugging in to get back to the app (see `config-mode`).
 - Button mapping is stored **per output mode**: on the [Input](#/input) page choose the profile
-  (`#/input?mode=switch|xinput|snes|n64|gamecube|sinput|wii-nunchuk|wii-classic|wii-sideways`) before remapping.
+  (`#/input?mode=switch|xinput|snes|n64|gamecube|sinput|wii-nunchuk|wii-sideways|wii-classic`) before remapping.
 - Native GameCube/N64 and SNES output only exist on controllers with that hardware support.
 - **Wii** mode (controllers with the RM2 wireless module; the app shows it only when the controller supports
   it) makes the controller a Wii Remote over Bluetooth. Hold **d-pad up** while turning it on (the status LED
-  turns pink), then press **SYNC** on the Wii to pair. A short tap of the power button cycles Nunchuk →
-  Classic Controller Pro → sideways Wii Remote (the LED flashes white / blue / yellow). Each has its own layout
-  under **Wii** on the [Input](#/input) page. The gyro always aims the pointer; gyro sensitivity on
-  [Motion](#/motion) scales it.
+  turns pink), then press **SYNC** on the Wii to pair. A short tap of the power button cycles **Upright** (Wii
+  Remote with a Nunchuk) → **Sideways** (Wii Remote alone) → **Classic** (Wii Remote with a Classic Controller,
+  analog L and R); the LED flashes white / yellow / blue. Each has its own layout under **Wii** on the
+  [Input](#/input) page (`wii-nunchuk` is Upright, also `upright`). **Capture** (by default, the Extension
+  Attach/Detach output) plugs in or unplugs the Nunchuk or Classic Controller for games that ask you to remove
+  it; the LED flashes green when attached, red when detached. It reports as a Wii Remote Plus (MotionPlus built
+  in), so games like Wii Sports Resort work. The controller turns itself off a few seconds after the Wii is
+  switched off.
+- In Wii mode the gyro always aims the pointer, in any grip (flat, rolled, pointed up or down). Pointer Recenter
+  (right stick click by default) recenters it and also makes the current pose level for tilt. Gyro sensitivity
+  on [Motion](#/motion) scales the pointer but also MotionPlus and tilt, so values far from the default can
+  make MotionPlus and tilt games feel off. In Nintendont, rumble with the Classic Controller needs the
+  **CC Rumble** setting turned on.
 
 ## USB data cables
 <!-- topic: data-cables; keywords: cable, usb cable, charge only, charging cable, data cable, hub, adapter, nothing happens -->
@@ -266,6 +275,7 @@ dongle). Unplug the controller, then hold the mode button **plus Start (+)** whi
 - **Steam (PC, Steam Deck, phone):** hold **B + Start (+)**, then pair
   from the device’s Bluetooth settings.
 - **Wii** (controllers with Wii mode): hold **d-pad up** while turning it on, then press **SYNC** on the Wii.
+  A power-button tap cycles Upright → Sideways → Classic (LED white / yellow / blue).
 
 The controller remembers one Switch and one Steam host (and one Wii on controllers with Wii mode); pairing
 again replaces it ([Wireless](#/wireless) shows them). For **wired** play on a Switch, turn on System Settings → Controllers and Sensors → **Pro Controller Wired

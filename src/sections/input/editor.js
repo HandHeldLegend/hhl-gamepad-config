@@ -230,10 +230,12 @@ export function createEditor(o) {
 
     if (showStatic) {
       const gcTrigger = modeId === 'gamecube' && out.type === OUTPUT_TYPE.HOVER;
+      const wiiTrigger = mode.family === 'wii' && out.type === OUTPUT_TYPE.HOVER; // Classic L / R
       parts.push(field({
         label: t('Output when pressed'), stacked: true,
         description: t('How far {output} is pushed when this input fires.', { output: outputName(out.label) }),
-        tip: gcTrigger ? t('In GameCube mode, analog triggers driven this way always output at least {min} (the console\'s resting minimum).', { min: pctText(toPct(GAMECUBE_MIN_ANALOG)) }) : null,
+        tip: gcTrigger ? t('In GameCube mode, analog triggers driven this way always output at least {min} (the console\'s resting minimum).', { min: pctText(toPct(GAMECUBE_MIN_ANALOG)) })
+          : wiiTrigger ? t('Classic L and R are analog. The Wii also sees the click once they pass about {pct}.', { pct: pctText(95) }) : null,
         control: slider({
           min: 0, max: 100, step: 1, unit: '%', value: toPct(s.static_output), tone: 'lavender', ariaLabel: t('Output when pressed'),
           onInput: (v) => write({ static_output: fromPct(v) }),

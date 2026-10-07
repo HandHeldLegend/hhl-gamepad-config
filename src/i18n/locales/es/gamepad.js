@@ -97,6 +97,6 @@ export default {
   'Rebooting into the bootloader…': 'Reiniciando en el bootloader…',
   'Couldn’t reboot the controller.': 'No se pudo reiniciar el control.',
   // ---- Wii mode ----
-  "Wii Remote over Bluetooth, with a Nunchuk or Classic Controller Pro.": "Wii Remote por Bluetooth, con Nunchuk o Classic Controller Pro.",
+  "Wii Remote over Bluetooth: upright with a Nunchuk, sideways, or with a Classic Controller.": "Wii Remote por Bluetooth: en vertical con Nunchuk, en horizontal o con un Classic Controller.",
   "Wii": "Wii",
 };

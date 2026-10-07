@@ -40,7 +40,7 @@ export const SECTIONS = [
     id: 'input', title: 'Input', icon: 'input', tone: 'lavender', group: 'controls', device: true, requires: null,
     summary: 'Remap buttons per output mode, analog trigger thresholds and rapid trigger.',
     keywords: ['remap', 'mapping', 'buttons', 'trigger', 'analog trigger', 'hall effect', 'tmr', 'rapid trigger', 'hover', 'calibrate triggers', 'wii', 'nunchuk'],
-    params: { mode: 'Output profile to edit (wii-* only on controllers with Wii mode): switch | xinput | snes | n64 | gamecube | sinput | wii-nunchuk | wii-classic | wii-sideways', input: 'Input to open in the editor: INPUT_CODE name (e.g. south, lt_analog), the build’s input name, or its number', tab: 'remap | calibrate' },
+    params: { mode: 'Output profile to edit (wii-* only on controllers with Wii mode): switch | xinput | snes | n64 | gamecube | sinput | wii-nunchuk (alias upright) | wii-sideways | wii-classic', input: 'Input to open in the editor: INPUT_CODE name (e.g. south, lt_analog), the build’s input name, or its number', tab: 'remap | calibrate' },
     load: () => import('./input/view.js'),
   },
   {

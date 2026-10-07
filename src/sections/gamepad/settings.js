@@ -30,7 +30,7 @@ export const DEFAULT_MODES = [
   { value: fmt('N64'), label: 'N64', aliases: ['n64', 'nintendo 64'], about: N_('Native Nintendo 64 (Joybus) output.') },
   { value: fmt('SNES'), label: 'SNES', aliases: ['snes', 'sfc', 'super famicom', 'super nintendo', 'nes'], about: N_('Native SNES / Super Famicom output.') },
   { value: fmt('SINPUT'), label: 'Steam', aliases: ['steam', 'sinput', 's-input'], about: N_('Steam mode, for Steam and SDL games on PC. Works with this app.') },
-  { value: fmt('WII'), label: 'Wii', aliases: ['wii', 'wiimote', 'wii remote'], requires: 'wii', about: N_('Wii Remote over Bluetooth, with a Nunchuk or Classic Controller Pro.') },
+  { value: fmt('WII'), label: 'Wii', aliases: ['wii', 'wiimote', 'wii remote'], requires: 'wii', about: N_('Wii Remote over Bluetooth: upright with a Nunchuk, sideways, or with a Classic Controller.') },
 ].filter((m) => m.value != null);
 
 /** Switch color fields, in the order hoja2 showed them. */

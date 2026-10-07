@@ -330,7 +330,9 @@ export default {
   "Nintendo Wii (Bluetooth, Wii mode)": "Nintendo Wii（Bluetooth、Wiiモード）",
   "Hold {button} while you turn the controller on. The status LED turns pink.": "{button}を押したままコントローラーの電源を入れます。ステータスLEDがピンクに点灯します。",
   "Press the SYNC button on the Wii. The controller pairs and connects as a Wii Remote.": "Wii本体のSYNCボタンを押します。コントローラーがWiiリモコンとしてペアリングされ、接続されます。",
-  "Tap the power button to switch between Nunchuk, Classic Controller Pro and sideways Wii Remote. The LED flashes white, blue or yellow to show which.": "電源ボタンを短く押すと、ヌンチャク、クラシックコントローラPRO、横持ちWiiリモコンが順に切り替わります。LEDが白、青、黄色に点滅して現在の設定を示します。",
+  "Tap the power button to switch between Upright (Wii Remote with Nunchuk), Sideways (Wii Remote alone) and Classic (with a Classic Controller). The LED flashes white, yellow or blue to show which.": "電源ボタンを短く押すと、縦持ち（Wiiリモコン＋ヌンチャク）、横持ち（Wiiリモコンのみ）、クラシック（クラシックコントローラ付き）が順に切り替わります。LEDが白、黄色、青に点滅して現在の設定を示します。",
+  "By default, {button} plugs in or unplugs the Nunchuk or Classic Controller, for games that ask you to remove it. The LED flashes green when it is attached and red when it is not.": "デフォルトでは、{button}でヌンチャクまたはクラシックコントローラを接続・取り外しできます。取り外しを求めるゲームで使います。接続時はLEDが緑、取り外し時は赤に点滅します。",
+  "It works as a Wii Remote Plus with MotionPlus built in, so MotionPlus games such as Wii Sports Resort work. It turns itself off a few seconds after the Wii is switched off.": "MotionPlus内蔵のWiiリモコンプラスとして動作するため、Wii Sports ResortなどのMotionPlus対応ゲームも遊べます。Wii本体の電源を切ると、数秒後に自動で電源が切れます。",
   "Bluetooth works in Switch, Steam and Wii modes.": "BluetoothはSwitchモード、Steamモード、Wiiモードで使えます。",
   "The controller remembers one Switch, one Steam host and one Wii. Pairing again replaces it. The Wireless page shows all three.": "コントローラーはSwitch 1台、Steamの接続先1台、Wii 1台を記憶します。再度ペアリングすると置き換わります。ワイヤレスのページで3つとも確認できます。",
 };

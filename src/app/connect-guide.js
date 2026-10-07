@@ -26,8 +26,11 @@
  *   - One host per mode is remembered (Paired hosts card); pairing again replaces it.
  *   - The controller doesn't wake on a button press: turn it on to reconnect.
  *   - Wii mode (core_wii.c, boot.c): d-pad up at boot, always Bluetooth, status LED pink. Pair by pressing
- *     SYNC on the Wii. A short power-button tap cycles Nunchuk → Classic Pro → Sideways (the LED flashes
- *     white / blue / yellow).
+ *     SYNC on the Wii. A short power-button tap cycles Upright (Remote + Nunchuk) → Sideways (Remote
+ *     alone) → Classic (Remote + Classic Controller); the LED flashes white / yellow / blue. The
+ *     Extension Attach/Detach output (Capture by default) plugs the extension in or out (LED green /
+ *     red). It reports as a Wii Remote Plus (MotionPlus built in) and turns itself off a few seconds
+ *     after the Wii is switched off.
  * The Switch only reads a wired Pro Controller with "Pro Controller Wired Communication" turned on.
  */
 import { h, fillNodes } from '../ui/dom.js';
@@ -63,7 +66,7 @@ function modeButton(session, label, fallbackKey) {
 
 /**
  * What to tell this controller's owner. Without a connected controller everything is generic.
- * @returns {{known: boolean, east: string, south: string, start: string, up: string,
+ * @returns {{known: boolean, east: string, south: string, start: string, up: string, capture: string,
  *            radio: 'rm2'|'esp32'|'other'|'none'|'unknown', wlan: boolean, wii: boolean}}
  */
 export function connectProfile(session) {
@@ -73,6 +76,7 @@ export function connectProfile(session) {
   const south = (known && modeButton(session, 'B', 'SOUTH')) || t('B');
   const start = (known && inputName(session, 'START')) || t('Start (+)');
   const up = (known && inputName(session, 'UP')) || t('D-pad up');
+  const capture = (known && inputName(session, 'CAPTURE')) || t('Capture');
   let radio = 'unknown';
   if (known) {
     const bt = session.static?.bluetooth || {};
@@ -83,7 +87,7 @@ export function connectProfile(session) {
     else radio = 'other';
   }
   // The WLAN dongle pairs with the RM2 radio only (not ESP32 or wired-only builds).
-  return { known, east, south, start, up, radio, wlan: radio === 'rm2' && !!session.caps?.wlan, wii: known && !!session.caps?.wii };
+  return { known, east, south, start, up, capture, radio, wlan: radio === 'rm2' && !!session.caps?.wlan, wii: known && !!session.caps?.wii };
 }
 
 /** "A + Plus" style combo, bold. */
@@ -132,7 +136,9 @@ export function openConnectGuide(o = {}) {
   const wii = p.wii && section(t('Nintendo Wii (Bluetooth, Wii mode)'),
     h('span', fillNodes(t('Hold {button} while you turn the controller on. The status LED turns pink.'), { button: combo(p.up) })),
     t('Press the SYNC button on the Wii. The controller pairs and connects as a Wii Remote.'),
-    t('Tap the power button to switch between Nunchuk, Classic Controller Pro and sideways Wii Remote. The LED flashes white, blue or yellow to show which.'));
+    t('Tap the power button to switch between Upright (Wii Remote with Nunchuk), Sideways (Wii Remote alone) and Classic (with a Classic Controller). The LED flashes white, yellow or blue to show which.'),
+    h('span', fillNodes(t('By default, {button} plugs in or unplugs the Nunchuk or Classic Controller, for games that ask you to remove it. The LED flashes green when it is attached and red when it is not.'), { button: combo(p.capture) })),
+    t('It works as a Wii Remote Plus with MotionPlus built in, so MotionPlus games such as Wii Sports Resort work. It turns itself off a few seconds after the Wii is switched off.'));
 
   const notes = h('ul.guide-notes',
     bt && h('li', p.wii ? t('Bluetooth works in Switch, Steam and Wii modes.') : t('Bluetooth works in Switch and Steam modes.')),

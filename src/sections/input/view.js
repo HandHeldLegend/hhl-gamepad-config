@@ -22,7 +22,7 @@
  *   calibrate      hover block commands, see calibration.js.
  *
  * URL state: #/input?tab=remap|calibrate&mode=<switch|xinput|snes|n64|gamecube|sinput (alias steam)|
- * wii-nunchuk (alias wii)|wii-classic|wii-sideways>&input=<code key>
+ * wii-nunchuk (aliases wii, upright)|wii-sideways|wii-classic>&input=<code key>
  * (e.g. #/input?mode=xinput&input=lt_analog). Input keys are mapper_input_code_t names without
  * INPUT_CODE_, lower-cased; the build's own input name (e.g. "zl") also works.
  */
@@ -214,7 +214,7 @@ export function mount(root, ctx) {
     });
     const wiiRow = wiiSeg && h('div.inp-wii', wiiSeg);
     const wiiNote = wiiSeg && session.caps.imu && h('p.muted.small',
-      rich(t('In Wii mode the gyro always aims the pointer. Gyro sensitivity on the {motion} page scales it.'),
+      rich(t('In Wii mode the gyro always aims the pointer, in any grip. Gyro sensitivity on the {motion} page scales it, and also MotionPlus and tilt, so keep it near the default for those games.'),
         { motion: h('a', { href: '#/motion' }, t('Motion')) }));
     const where = h('p.muted.small');
     const unsupported = h('div');
@@ -319,7 +319,7 @@ export function mount(root, ctx) {
       modeSelect.value = topValue();
       if (wiiRow) { wiiSeg.value = lastWii; wiiRow.hidden = !wii; }
       if (wiiNote) wiiNote.hidden = !wii;
-      where.replaceChildren(h('strong', t('{mode}:', { mode: modeName(mode) })), ' ', t(mode.where));
+      where.replaceChildren(h('strong', t('{mode}:', { mode: modeName(mode) })), ' ', t(mode.where), mode.tip ? ` ${t(mode.tip)}` : '');
       unsupported.replaceChildren(mode.requires && !session.caps[mode.requires]
         ? callout({ tone: 'blue', text: t('This controller doesn\'t have a {mode} connection, so this layout is only kept for completeness.', { mode: modeName(mode) }) })
         : '');

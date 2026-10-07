@@ -22,7 +22,7 @@ Add `?demo` before the `#` to try any page with a simulated controller, e.g. <ht
 | Route | Page | What it’s for | Needs | Deep-link params |
 |---|---|---|---|---|
 | `#/` | Home | Connect a controller and see its status at a glance. | – | `connect`: Set to 1 to open the controller picker immediately (needs a click in most browsers). |
-| `#/input` | Input | Remap buttons per output mode, analog trigger thresholds and rapid trigger. | Controller | `mode`: Output profile to edit (wii-* only on controllers with Wii mode): switch \| xinput \| snes \| n64 \| gamecube \| sinput \| wii-nunchuk \| wii-classic \| wii-sideways<br>`input`: Input to open in the editor: INPUT_CODE name (e.g. south, lt_analog), the build’s input name, or its number<br>`tab`: remap \| calibrate |
+| `#/input` | Input | Remap buttons per output mode, analog trigger thresholds and rapid trigger. | Controller | `mode`: Output profile to edit (wii-* only on controllers with Wii mode): switch \| xinput \| snes \| n64 \| gamecube \| sinput \| wii-nunchuk (alias upright) \| wii-sideways \| wii-classic<br>`input`: Input to open in the editor: INPUT_CODE name (e.g. south, lt_analog), the build’s input name, or its number<br>`tab`: remap \| calibrate |
 | `#/joysticks` | Joysticks | Calibrate sticks, set deadzones, response curve, invert axes and angle maps. | Controller + analog | `stick`: left \| right<br>`tab`: Sub-view to open: calibrate \| sensitivity \| angles \| axes (deadzone = old alias) |
 | `#/snapback` | Snapback | Tune the snapback filter that removes stick "bounce" when you let go. | Controller + analog | `stick`: left \| right |
 | `#/motion` | Motion | Gyro and accelerometer calibration, sensitivity and live view. | Controller + imu | – |
