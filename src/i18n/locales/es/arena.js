@@ -368,4 +368,5 @@ export default {
   "Getup attack": "Ataque al levantarse",
   "Hit": "Golpe",
   "Spot dodge instead of a shield drop: stop the stick between −0.65 and −0.7": "Spotdodge en vez de shield drop: deja la palanca entre −0.65 y −0.7",
+  "Start or Select: try again": "Start o Select: reintentar",
 };

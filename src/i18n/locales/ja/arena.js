@@ -368,4 +368,5 @@ export default {
   "Getup attack": "起き上がり攻撃",
   "Hit": "ヒット",
   "Spot dodge instead of a shield drop: stop the stick between −0.65 and −0.7": "シールドドロップではなくその場回避：スティックを −0.65 と −0.7 の間で止めてください",
+  "Start or Select: try again": "スタートかセレクトでもう一度",
 };

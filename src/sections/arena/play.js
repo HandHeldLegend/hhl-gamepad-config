@@ -199,14 +199,15 @@ export function renderPlay(panel, app) {
 
     const waiting = input.source === 'none';
 
-    // Overlay: prompt for input until something arrives; target-test results.
+    // Overlay: only the "press a button" prompt until input arrives. A cleared target test shows in the
+    // banner instead, so the stage stays visible and Start / Select (or the Restart button) tries again.
     let ov = '';
     if (!input.lastInputAt) ov = waiting ? 'prompt-wait' : 'prompt';
-    else if (game.timer.state === 'done') ov = 'done';
-    if (overlay.dataset.kind !== ov || ov === 'done') setOverlay(ov);
-    // Banner: paused / ready hints.
+    if (overlay.dataset.kind !== ov) setOverlay(ov);
+    // Banner: paused / ready hints, or the target-test result.
     const bn = app.paused ? t('Paused · Start / P resumes · D-pad → / . steps one frame')
-      : game.timer.state === 'ready' ? t('Target test: the clock starts when you move') : '';
+      : game.timer.state === 'done' ? clearedText()
+        : game.timer.state === 'ready' ? t('Target test: the clock starts when you move') : '';
     if (banner.textContent !== bn) { banner.textContent = bn; banner.hidden = !bn; }
     if (pauseBtn.dataset.paused !== String(app.paused)) {
       pauseBtn.dataset.paused = String(app.paused);
@@ -217,7 +218,14 @@ export function renderPlay(panel, app) {
     }
   }
 
-  let lastDoneText = '';
+  /** "Cleared in 12.34 · Best: 11.20 · Start or Select: try again" (or "New personal best!"). */
+  function clearedText() {
+    const ms = game.elapsedMs();
+    const best = game.bestTime;
+    const bestText = best != null && Math.abs(best - ms) < 1 ? t('New personal best!') : t('Best: {time}', { time: formatTime(best) });
+    return [t('Cleared in {time}', { time: formatTime(ms) }), bestText, t('Start or Select: try again')].join(' · ');
+  }
+
   function setOverlay(kind) {
     overlay.dataset.kind = kind;
     if (!kind) { overlay.hidden = true; overlay.replaceChildren(); return; }
@@ -229,14 +237,6 @@ export function renderPlay(panel, app) {
         h('p.muted.small', t('The Arena reads only the controller connected to this app. It uses the browser’s gamepad support when it can see the controller, otherwise it reads straight over USB.'))));
       return;
     }
-    const best = game.bestTime;
-    const txt = `${formatTime(game.elapsedMs())}|${best}`;
-    if (txt === lastDoneText) return;
-    lastDoneText = txt;
-    overlay.replaceChildren(h('div.arena-overlay-card',
-      h('div.arena-overlay-title', t('Cleared in {time}', { time: formatTime(game.elapsedMs()) })),
-      h('p.muted.small', best != null && Math.abs(best - game.elapsedMs()) < 1 ? t('New personal best!') : t('Best: {time}', { time: formatTime(best) })),
-      button({ label: t('Try again'), icon: 'refresh', variant: 'primary', size: 'sm', onClick: () => { game.resetRun(); lastDoneText = ''; refocus(); } })));
   }
 
   // ---- Loop --------------------------------------------------------------------------------------
@@ -261,7 +261,11 @@ export function renderPlay(panel, app) {
   const drawDue = frameGate();
   function tick(now, snap) {
     lastSnap = snap;
-    if (snap.edges.start) app.setPaused(!app.paused);
+    // Start pauses, except after a cleared target test, where it starts a new run (like Select).
+    if (snap.edges.start) {
+      if (game.timer.state === 'done' && !app.paused) game.resetRun();
+      else app.setPaused(!app.paused);
+    }
     // Presses made while paused (and not used by a frame step) shouldn't fire on resume.
     if (wasPaused && !app.paused) input.clearPresses();
     wasPaused = app.paused;

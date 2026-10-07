@@ -370,4 +370,5 @@ export default {
   "Getup attack": "Attaque en se relevant",
   "Hit": "Coup",
   "Spot dodge instead of a shield drop: stop the stick between −0.65 and −0.7": "Esquive sur place au lieu d’un shield drop : arrêtez le joystick entre −0,65 et −0,7",
+  "Start or Select: try again": "Start ou Select : réessayer",
 };
