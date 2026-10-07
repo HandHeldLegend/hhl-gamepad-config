@@ -14,13 +14,22 @@
   -webkit-mask: var(--glyph) center / contain no-repeat;
   mask: var(--glyph) center / contain no-repeat;
 }
-/* Text fallback when there is no glyph for a label: a chip shaped like the glyph set. */
-.inp-glyph.chip { border: 2px solid currentColor; border-radius: 50%; padding: 0 2px; }
-.inp-glyph.chip.square { border-radius: 28%; }
-.inp-glyph .glyph-text {
-  font-weight: 800; font-size: calc(var(--g) * 0.3); line-height: 1; letter-spacing: -0.02em;
-  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+/* Text fallback when there is no glyph for a label: drawn to match the glyph artwork, which fills
+   the middle 75% of its box (16 of 128 px margin) with a 1/16-box stroke. Longer text gets smaller. */
+.inp-glyph.chip { position: relative; }
+.inp-glyph.chip::before {
+  content: ""; position: absolute; inset: 12.5%;
+  border: calc(var(--g) * 0.0625) solid currentColor; border-radius: 50%;
 }
+.inp-glyph.chip.square::before { border-radius: 22%; }
+.inp-glyph .glyph-text {
+  position: relative; max-width: 66%;
+  font-weight: 800; font-size: calc(var(--g) * 0.3); line-height: 1; letter-spacing: -0.02em;
+  overflow: hidden; text-overflow: clip; white-space: nowrap;
+}
+.inp-glyph.chip[data-len="3"] .glyph-text { font-size: calc(var(--g) * 0.24); letter-spacing: -0.03em; }
+.inp-glyph.chip[data-len="4"] .glyph-text { font-size: calc(var(--g) * 0.2); letter-spacing: -0.05em; }
+.inp-glyph.chip .glyph-text { max-width: 70%; }
 .inp-glyph.off { color: var(--red); opacity: 0.85; }
 
 /* ---- Live meters ---------------------------------------------------------------------------- */

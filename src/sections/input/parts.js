@@ -41,6 +41,7 @@ export function glyph(label, o = {}) {
     const url = glyphUrl(off ? 'disabled' : text);
     el.classList.toggle('off', off);
     el.classList.toggle('chip', !url);
+    if (url) delete el.dataset.len; else el.dataset.len = String(Math.min(4, (text || '?').length)); // text chips size by length
     el.replaceChildren(url
       ? h('span.glyph', { style: { '--glyph': `url("${url}")` } })
       : h('span.glyph-text', text || '?'));
