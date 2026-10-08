@@ -15,6 +15,7 @@ import {
 } from '../../firmware/updater.js';
 import { t, N_ } from '../../i18n/index.js';
 import { openModuleUpdaterInUpdateMode } from '../wireless/module-updater.js';
+import { backupCard } from '../backup/card.js';
 
 const STATUS_TEXT = {
   unknown: [N_('Not checked'), null],
@@ -99,7 +100,8 @@ export function mount(root, { session, params }) {
   const slot = h('div');
   const render = () => slot.replaceChildren(controllerCard(session));
   render();
-  root.append(style, slot, installCard(params), recoveryCard(), wirelessModuleCard(params), downloadsCard());
-  const offs = [session.on('firmware', render), session.on('state', render)];
+  const backup = backupCard(session);
+  root.append(style, slot, backup, installCard(params), recoveryCard(), wirelessModuleCard(params), downloadsCard());
+  const offs = [session.on('firmware', render), session.on('state', render), session.on('state', () => backup.refresh())];
   return () => offs.forEach((f) => f());
 }

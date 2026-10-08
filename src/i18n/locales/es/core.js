@@ -342,4 +342,5 @@ export default {
   "Action needed": "Acción necesaria",
   "After this update:": "Después de esta actualización:",
   "Firmware changes, newest first. With a controller connected, shows what its update brings.": "Cambios del firmware, del más reciente al más antiguo. Con un control conectado, muestra lo que trae su actualización.",
+  "Settings reset by the update? Restore your backup from the Firmware page once connected.": "¿La actualización restableció los ajustes? Restaura tu copia de seguridad desde la página Firmware una vez conectado.",
 };

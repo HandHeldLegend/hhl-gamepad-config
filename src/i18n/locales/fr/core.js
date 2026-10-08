@@ -342,4 +342,5 @@ export default {
   "Action needed": "Action requise",
   "After this update:": "Après cette mise à jour :",
   "Firmware changes, newest first. With a controller connected, shows what its update brings.": "Changements du firmware, du plus récent au plus ancien. Avec une manette connectée, montre ce qu’apporte sa mise à jour.",
+  "Settings reset by the update? Restore your backup from the Firmware page once connected.": "Réglages réinitialisés par la mise à jour ? Restaurez votre sauvegarde depuis la page Firmware une fois connecté.",
 };

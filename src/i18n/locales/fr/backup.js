@@ -1,0 +1,31 @@
+/**
+ * French translations (backup). English source text → translation.
+ * Machine-drafted; NEEDS NATIVE REVIEW. Terminology: src/i18n/GLOSSARY.md.
+ */
+export default {
+  "This file isn’t a settings backup.": "Ce fichier n’est pas une sauvegarde de réglages.",
+  "This backup was made by a newer version of the app. Update the app and try again.": "Cette sauvegarde a été créée par une version plus récente de l’app. Mettez l’app à jour et réessayez.",
+  "Backup saved: {file}": "Sauvegarde enregistrée : {file}",
+  "Couldn’t create the backup.": "Impossible de créer la sauvegarde.",
+  "Restore settings": "Restaurer les réglages",
+  "From {source}": "Depuis {source}",
+  "a backup file": "un fichier de sauvegarde",
+  "This backup is from a different controller model. Settings that don’t exist here are skipped.": "Cette sauvegarde provient d’un autre modèle de manette. Les réglages absents ici sont ignorés.",
+  "Nothing to change: the controller already has these settings.": "Rien à changer : la manette a déjà ces réglages.",
+  "{n} item not restored": "{n} élément non restauré",
+  "{n} items not restored": "{n} éléments non restaurés",
+  "They don’t exist in this controller’s firmware.": "Ils n’existent pas dans le firmware de cette manette.",
+  "Restore and save": "Restaurer et enregistrer",
+  "Restoring…": "Restauration…",
+  "Settings restored and saved": "Réglages restaurés et enregistrés",
+  "Restore failed. Nothing was saved.": "La restauration a échoué. Rien n’a été enregistré.",
+  "Include calibration": "Inclure la calibration",
+  "Stick centers and angle maps, trigger ranges and gyro offsets. This backup is from this controller.": "Centres et cartes d’angles des sticks, plages des gâchettes et décalages du gyroscope. Cette sauvegarde provient de cette manette.",
+  "Stick centers and angle maps, trigger ranges and gyro offsets. Calibration belongs to one controller, so leave this off unless the backup is from this one.": "Centres et cartes d’angles des sticks, plages des gâchettes et décalages du gyroscope. La calibration est propre à une manette : laissez cette option désactivée sauf si la sauvegarde provient de celle-ci.",
+  "Save this controller’s settings to a file, and load them back after an update or onto another controller.": "Enregistrez les réglages de cette manette dans un fichier, puis rechargez-les après une mise à jour ou sur une autre manette.",
+  "Back up settings": "Sauvegarder les réglages",
+  "Restore from file": "Restaurer depuis un fichier",
+  "Connect a controller to back up or restore.": "Connectez une manette pour sauvegarder ou restaurer.",
+  "Backup & restore": "Sauvegarde et restauration",
+  "Updates can reset settings. Save a backup first so you can restore them afterwards.": "Les mises à jour peuvent réinitialiser les réglages. Enregistrez d’abord une sauvegarde pour pouvoir les restaurer ensuite.",
+};

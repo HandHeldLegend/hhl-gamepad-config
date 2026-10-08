@@ -112,7 +112,7 @@ export const SECTIONS = [
   {
     id: 'firmware', title: 'Firmware', icon: 'firmware', tone: 'blue', group: 'device', device: false, requires: null,
     summary: 'Update firmware, install HOJA on a blank board, or recover a controller.',
-    keywords: ['update', 'firmware', 'bootloader', 'bootsel', 'uf2', 'flash', 'nuke', 'install', 'recover'],
+    keywords: ['update', 'firmware', 'bootloader', 'bootsel', 'uf2', 'flash', 'nuke', 'install', 'recover', 'backup', 'restore', 'export settings', 'import settings'],
     params: {
       build: 'Build id to preselect for install (e.g. gcu_2, progcc_3.2)',
     },

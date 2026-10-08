@@ -126,6 +126,7 @@ function ensureUi() {
   const steps = h('div.steps', [1, 2, 3, 4].map(() => h('span.step')));
   const guide = h('p.muted');
   const notes = h('div'); // "Action" changelog entries for this update (showUpdateNotes)
+  const backup = h('div'); // "Back up first" (src/sections/backup), while the controller is connected
   const progress = progressBar({ message: t('Ready') });
 
   const installConfirm = h('input', { type: 'checkbox' });
@@ -172,10 +173,10 @@ function ensureUi() {
 
   const dlg = openDialog({
     title: t('Firmware'), icon: 'firmware', tone: 'blue', dismissible: false,
-    body: [style, steps, stepCaption, guide, notes, picker, freshChoice, tips, progress],
+    body: [style, steps, stepCaption, guide, notes, backup, picker, freshChoice, tips, progress],
   });
 
-  ui = { dlg, steps, stepCaption, guide, notes, progress, picker, buildSelect, installConfirm, tips, select: null,
+  ui = { dlg, steps, stepCaption, guide, notes, backup, progress, picker, buildSelect, installConfirm, tips, select: null,
     freshChoice, keepRadio, freshRadio, eraseConfirm, eraseWarn };
   installConfirm.addEventListener('change', refreshInstallState);
   const onFreshChange = () => {
@@ -349,6 +350,17 @@ function showUpdateAvailable(url, checksum, { legacy = false, debugForced = fals
   u.progress.busy(false);
   updateAvailableActions();
   showUpdateNotes();
+  showBackupPrompt();
+}
+
+/** Settings backup offer before updating (optional feature in src/sections/backup; loaded lazily). */
+async function showBackupPrompt() {
+  const u = ui;
+  if (!u) return;
+  replace(u.backup);
+  if (!session.connected || st.pendingLegacy) return;
+  const { backupPrompt } = await import('../sections/backup/card.js').catch(() => ({}));
+  if (ui === u && st.mode === 'update-available' && backupPrompt) replace(u.backup, backupPrompt(session));
 }
 
 /**
@@ -377,6 +389,7 @@ function updateAvailableActions() {
 
 async function enterBootloader() {
   st.mode = 'awaiting-bootloader';
+  if (ui) replace(ui.backup);
   paint(t('Entering update mode'), t('Restarting into update mode. This takes a few seconds.'));
   setUpdateStatus(t('Sending reboot to bootloader…'), 10, true);
   panels();
@@ -451,6 +464,9 @@ function showUpdateComplete() {
     : t('Firmware was written successfully. Give the controller a moment to restart, then press Connect.'), { tone: 'green', icon: 'check' });
   setUpdateStatus(t('Done: connect when ready'), 100, true);
   u.progress.busy(false);
+  import('../sections/backup/card.js').then(({ backedUpThisSession }) => {
+    if (ui === u && backedUpThisSession()) replace(u.backup, callout({ tone: 'blue', icon: 'save', text: t('Settings reset by the update? Restore your backup from the Firmware page once connected.') }));
+  }).catch(() => {});
   actions({ primary: { label: t('Connect'), icon: 'usb', run: async () => { hide(); const { connectController } = await import('../app/shell.js'); connectController(); } } });
   setStatus({ state: 'unknown' });
 }
