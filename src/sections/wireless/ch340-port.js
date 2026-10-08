@@ -1,10 +1,13 @@
 /**
  * ch340-port.js: A Web Serial-shaped port for the controller's CH340 over WebUSB (Android).
  *
- * Built on Mitch's niceSerial.js (hoja_esptool/src/plugin/niceSerial.js): the same CH340 init sequence
- * and registers (115200 baud), the same modem-control request for DTR/RTS and 32-byte OUT packets.
- * What changed is how reads are served, because esptool-js times out a read by cancelling the
- * stream's reader:
+ * Built on Mitch's niceSerial.js (hoja_esptool/src/plugin/niceSerial.js): the same CH340 init sequence,
+ * modem-control request for DTR/RTS and 32-byte OUT packets. Differences:
+ *
+ *   - The baud rate is set to what open() asks for (esptool: 115200), using niceSerial's own
+ *     #getBaudFactors formula. niceSerial's init wrote 0xD982 to register 0x1312, which that formula
+ *     decodes as 750000 / 39 = about 19200 baud, so the ESP32's 115200 output arrived as garbage.
+ *   - Reads, because esptool-js times out a read by cancelling the stream's reader:
  *
  *   - niceSerial started a USB read per stream pull. When esptool cancelled a read, that transfer was
  *     left pending and the next read queued a second one behind it on the same endpoint. On current
@@ -34,6 +37,22 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 /** A control transfer that hasn't finished after this long is logged and no longer waited for. */
 const CONTROL_WAIT_MS = 1000;
 const hex = (n) => '0x' + n.toString(16);
+
+/** CH34x baud register value (register 0x1312), niceSerial's #getBaudFactors formula; bit 7 as in its init. */
+export function baudRegister(baud) {
+  let factor, divisor;
+  if (baud === 921600) { factor = 0xf3; divisor = 7; }
+  else if (baud === 307200) { factor = 0xd9; divisor = 7; }
+  else {
+    const [b, c] = baud > 6000000 / 255 ? [3, 6000000] : baud > 750000 / 255 ? [2, 750000] : baud > 93750 / 255 ? [1, 93750] : [0, 11719];
+    let a = Math.floor(c / baud);
+    if (a === 0 || a === 0xff) throw new Error(`Unsupported baud rate ${baud}`);
+    if (c / a - baud > baud - c / (a + 1)) a++;
+    factor = 256 - a;
+    divisor = b;
+  }
+  return (factor << 8) | 0x80 | divisor;
+}
 
 export class Ch340Port {
   /**
@@ -66,7 +85,7 @@ export class Ch340Port {
     return { usbVendorId: this.usb.vendorId, usbProductId: this.usb.productId };
   }
 
-  async open() {
+  async open({ baudRate = 115200 } = {}) {
     const usb = this.usb;
     if (!usb.opened) await usb.open();
     if (!usb.configuration) await usb.selectConfiguration(1);
@@ -77,9 +96,11 @@ export class Ch340Port {
     this.epOut = eps.find((e) => e.direction === 'out' && e.type === 'bulk').endpointNumber;
     console.log(`CH340 open: in=${this.epIn} out=${this.epOut}`);
 
-    // niceSerial's init sequence (Linux ch341 driver values): init, 115200 baud, timeout, no flow control.
+    // niceSerial's init sequence (init, baud, timeout, no flow control), with the requested baud rate.
+    const baudValue = baudRegister(baudRate);
+    console.log(`CH340 baud ${baudRate} (0x1312 = ${hex(baudValue)})`);
     await this.#control(CMD_C1, 0, 0);
-    await this.#control(CMD_W, 0x1312, 0xd982);
+    await this.#control(CMD_W, 0x1312, baudValue);
     await this.#control(CMD_W, 0x0f2c, 0x0007);
     await this.#control(CMD_W, 0x2727, 0);
 
@@ -91,7 +112,7 @@ export class Ch340Port {
     // Diagnostics: what arrived, every 2 s while something did.
     this.statTimer = setInterval(() => {
       if (!this.rx.transfers) return;
-      console.log(`CH340 rx: ${this.rx.bytes} bytes in ${this.rx.transfers} transfers, first: ${this.rx.sample}`);
+      console.log(`CH340 rx: ${this.rx.bytes} bytes in ${this.rx.transfers} transfers, start: ${this.rx.sample.slice(0, 48)}`);
       this.rx = { bytes: 0, transfers: 0, sample: '' };
     }, 2000);
   }
@@ -147,7 +168,7 @@ export class Ch340Port {
         if (r.data && r.data.byteLength) {
           failures = 0;
           const chunk = new Uint8Array(r.data.buffer.slice(r.data.byteOffset, r.data.byteOffset + r.data.byteLength));
-          if (!this.rx.transfers) this.rx.sample = Array.from(chunk.subarray(0, 16), (b) => b.toString(16).padStart(2, '0')).join(' ');
+          if (this.rx.sample.length < 48) this.rx.sample += Array.from(chunk, (b) => (b >= 32 && b < 127 ? String.fromCharCode(b) : b === 10 ? '⏎' : '·')).join('');
           this.rx.transfers++;
           this.rx.bytes += chunk.byteLength;
           this.#push(chunk);
