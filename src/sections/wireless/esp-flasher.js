@@ -184,7 +184,9 @@ export class EspFlasher {
     // WebUSB, tracing stays on exactly like the standalone updater (the setup that works on Android).
     this.kind = kind;
     this.transport = new Transport(this.port, kind === 'usb' ? true : TRACE, false);
-    const loader = new ESPLoader({ transport: this.transport, baudrate: this.baud, terminal, enableTracing: false });
+    // Same options as the standalone updater. Note enableTracing overrides the Transport's tracing flag
+    // (it did in the standalone updater too). Over WebUSB, esptool's debug log goes to Details for diagnosis.
+    const loader = new ESPLoader({ transport: this.transport, baudrate: this.baud, terminal, enableTracing: false, debugLogging: kind === 'usb' });
     try {
       // esptool retries its sync for a while; if the module never answers, don't spin forever.
       let timer = 0;
