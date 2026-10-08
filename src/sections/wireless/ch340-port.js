@@ -31,6 +31,9 @@ const OUT_PACKET = 32;
 const IN_REQUEST = 64;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+/** A control transfer that hasn't finished after this long is logged and no longer waited for. */
+const CONTROL_WAIT_MS = 1000;
+const hex = (n) => '0x' + n.toString(16);
 
 export class Ch340Port {
   /**
@@ -83,10 +86,18 @@ export class Ch340Port {
     this.buf = [];
     this.error = null;
     this.running = true;
+    this.rx = { bytes: 0, transfers: 0, sample: '' };
     this.#readLoop();
+    // Diagnostics: what arrived, every 2 s while something did.
+    this.statTimer = setInterval(() => {
+      if (!this.rx.transfers) return;
+      console.log(`CH340 rx: ${this.rx.bytes} bytes in ${this.rx.transfers} transfers, first: ${this.rx.sample}`);
+      this.rx = { bytes: 0, transfers: 0, sample: '' };
+    }, 2000);
   }
 
   async close() {
+    clearInterval(this.statTimer);
     this.running = false;
     this.#wake(null);
     this._readable = null;
@@ -102,17 +113,27 @@ export class Ch340Port {
   }
 
   async setSignals(signals) {
+    console.log(`CH340 signals ${JSON.stringify(signals)}`);
     if (signals.dataTerminalReady !== undefined) this.ctrl = signals.dataTerminalReady ? (this.ctrl | CTO_D) : (this.ctrl & ~CTO_D & 0xff);
     if (signals.requestToSend !== undefined) this.ctrl = signals.requestToSend ? (this.ctrl | CTO_R) : (this.ctrl & ~CTO_R & 0xff);
     await this.#control(CMD_C2, ~this.ctrl & 0xff, 0);
   }
 
-  /** Vendor control transfers, strictly in order. A failure is logged, not thrown (as in niceSerial). */
+  /**
+   * Vendor control transfers, strictly in order. A failure is logged, not thrown (as in niceSerial).
+   * One that takes longer than CONTROL_WAIT_MS is logged and the caller goes on (niceSerial never
+   * waited for DTR/RTS at all); the next transfer still queues behind it.
+   */
   #control(request, value, index) {
-    const run = () => this.usb.controlTransferOut({ requestType: 'vendor', recipient: 'device', request, value, index })
-      .catch((err) => console.error('CH340 control transfer failed:', err?.message || err));
-    this.ctrlChain = this.ctrlChain.then(run);
-    return this.ctrlChain;
+    const label = `${hex(request)} ${hex(value)}`;
+    const started = performance.now();
+    const transfer = this.ctrlChain.then(() => this.usb.controlTransferOut({ requestType: 'vendor', recipient: 'device', request, value, index }))
+      .then((r) => { const ms = Math.round(performance.now() - started); if (r?.status !== 'ok' || ms > 100) console.log(`CH340 control ${label}: ${r?.status} in ${ms} ms`); })
+      .catch((err) => console.error(`CH340 control ${label} failed:`, err?.message || err));
+    this.ctrlChain = transfer;
+    let timer = 0;
+    const slow = new Promise((resolve) => { timer = setTimeout(() => { console.warn(`CH340 control ${label}: still pending after ${CONTROL_WAIT_MS} ms`); resolve(); }, CONTROL_WAIT_MS); });
+    return Promise.race([transfer, slow]).finally(() => clearTimeout(timer));
   }
 
   /** The one read loop: keeps a single IN transfer going while open and buffers what arrives. */
@@ -126,6 +147,9 @@ export class Ch340Port {
         if (r.data && r.data.byteLength) {
           failures = 0;
           const chunk = new Uint8Array(r.data.buffer.slice(r.data.byteOffset, r.data.byteOffset + r.data.byteLength));
+          if (!this.rx.transfers) this.rx.sample = Array.from(chunk.subarray(0, 16), (b) => b.toString(16).padStart(2, '0')).join(' ');
+          this.rx.transfers++;
+          this.rx.bytes += chunk.byteLength;
           this.#push(chunk);
         }
       } catch (err) {
