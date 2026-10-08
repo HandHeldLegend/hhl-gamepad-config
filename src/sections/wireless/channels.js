@@ -41,6 +41,16 @@ export const CHANNELS = Object.freeze({
   bridge: { id: 'bridge', name: N_('HCI bridge'), manifest: `${BRIDGE_BASE}/manifest.json`, images: images(BRIDGE_BASE, 'hoja_hci_bridge.bin') },
 });
 
+/**
+ * The module's reported version, or null when it didn't report one. 0 = no answer; 0xFFFF = the
+ * ESP32 acknowledged but sent nothing (an empty I2C reply reads as all ones), which the controller
+ * firmware passes on as if it were a version.
+ */
+export const reportedVersion = (bt) => {
+  const v = bt?.external_version_number ?? 0;
+  return v > 0 && v < 0xffff ? v : null;
+};
+
 /** The firmware family an installed version belongs to. */
 export const familyOf = (version) => (version >= BRIDGE_MIN_VERSION ? 'bridge' : 'legacy');
 
@@ -72,9 +82,16 @@ export async function latestVersion(channelId) {
  *   migrate   legacy baseband → HCI bridge (recommended; re-pair afterwards)
  *   mismatch  the module runs the bridge but this controller firmware can only drive the legacy baseband
  *             (no Bluetooth until the baseband is reinstalled or the controller firmware is updated)
+ *   unknown   the module didn't report a valid version (installed is null): offer the firmware that
+ *             matches the controller firmware
  */
 export async function resolveModuleUpdate(bt) {
-  const installed = bt?.external_version_number ?? 0;
+  const installed = reportedVersion(bt);
+  if (installed == null) {
+    const channel = supportsBridge(bt) ? CHANNELS.bridge : CHANNELS.legacy;
+    const latest = await latestVersion(channel.id);
+    return { channel, installed: null, latest, migrate: false, mismatch: false, unknown: true, available: !!latest };
+  }
   if (supportsBridge(bt)) {
     const latest = await latestVersion('bridge');
     if (latest) {

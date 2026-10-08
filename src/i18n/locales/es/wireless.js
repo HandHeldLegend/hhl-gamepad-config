@@ -136,4 +136,8 @@ export default {
   "This module runs the HCI bridge firmware, which this controller firmware can’t use, so Bluetooth is off. Update the controller firmware, or install the HOJA baseband here.": "Este módulo tiene el firmware HCI bridge, que el firmware de este control no puede usar, así que el Bluetooth está desactivado. Actualiza el firmware del control o instala aquí el HOJA baseband.",
   "Install HOJA baseband": "Instalar HOJA baseband",
   "When the controller’s lights pulse orange, press Connect and choose the USB device (usually “USB2.0-Ser!” or “USB Single Serial”). To cancel, just unplug the controller.": "Cuando las luces del control parpadeen en naranja, pulsa Conectar y elige el dispositivo USB (normalmente “USB2.0-Ser!” o “USB Single Serial”). Para cancelar, simplemente desconecta el control.",
+  "Not reported": "No informada",
+  "The module answered but didn’t report a valid firmware version (raw value {raw}). Installing its firmware again usually fixes this.": "El módulo respondió pero no informó una versión de firmware válida (valor sin procesar {raw}). Volver a instalar su firmware suele solucionarlo.",
+  "The wireless module didn’t report its firmware version. Install the {name} firmware to fix it.": "El módulo inalámbrico no informó su versión de firmware. Instala el firmware {name} para solucionarlo.",
+  "Install {name}": "Instalar {name}",
 };

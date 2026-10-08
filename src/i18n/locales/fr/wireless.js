@@ -136,4 +136,8 @@ export default {
   "This module runs the HCI bridge firmware, which this controller firmware can’t use, so Bluetooth is off. Update the controller firmware, or install the HOJA baseband here.": "Ce module utilise le firmware HCI bridge, que le firmware de cette manette ne peut pas utiliser : le Bluetooth est donc désactivé. Mettez à jour le firmware de la manette, ou installez ici le HOJA baseband.",
   "Install HOJA baseband": "Installer HOJA baseband",
   "When the controller’s lights pulse orange, press Connect and choose the USB device (usually “USB2.0-Ser!” or “USB Single Serial”). To cancel, just unplug the controller.": "Quand les voyants de la manette clignotent en orange, appuyez sur Connecter et choisissez le périphérique USB (généralement « USB2.0-Ser! » ou « USB Single Serial »). Pour annuler, débranchez simplement la manette.",
+  "Not reported": "Non indiquée",
+  "The module answered but didn’t report a valid firmware version (raw value {raw}). Installing its firmware again usually fixes this.": "Le module a répondu sans indiquer de version de firmware valide (valeur brute {raw}). Réinstaller son firmware corrige généralement le problème.",
+  "The wireless module didn’t report its firmware version. Install the {name} firmware to fix it.": "Le module sans fil n’a pas indiqué sa version de firmware. Installez le firmware {name} pour corriger cela.",
+  "Install {name}": "Installer {name}",
 };

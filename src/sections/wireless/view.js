@@ -20,7 +20,7 @@
 import { h, loadStyles } from '../../ui/dom.js';
 import { card, badge, kv, field, infoTip, button, asyncButton, callout } from '../../ui/controls.js';
 import { openConnectGuide, pairingTipNodes } from '../../app/connect-guide.js';
-import { resolveModuleUpdate, familyOf, CHANNELS, clearManifestCache } from './channels.js';
+import { resolveModuleUpdate, familyOf, reportedVersion, CHANNELS, clearManifestCache } from './channels.js';
 import { getSetting } from '../../settings/schema.js';
 import {
   chipStatus, identityText, isPairedMac, formatMac, formatPin, sanitizePin, pinToValue,
@@ -40,6 +40,7 @@ export function mount(root, ctx) {
   const caps = session.caps;
   let alive = true;
   let latest = null; // newest baseband version from the manifest (null until known / offline)
+  let update = null; // resolveModuleUpdate() result: channel, latest, migrate, available
 
   // ---- Wireless chip ------------------------------------------------------------------------
   const chip = chipStatus(bt);
@@ -59,8 +60,7 @@ export function mount(root, ctx) {
   // ---- Module firmware (ESP32 baseband) -------------------------------------------------------
   let firmwareCard = null;
   if (caps.externalBaseband) {
-    const installed = bt.external_version_number;
-    let update = null; // resolveModuleUpdate() result: channel, latest, migrate, available
+    const installed = reportedVersion(bt); // null: the module didn't report a valid version
     const status = h('span', badge(t('Checking…')));
     const latestCell = h('span.muted', t('Checking…'));
     const migrateNote = h('div', { hidden: true });
@@ -73,7 +73,9 @@ export function mount(root, ctx) {
       subtitle: t('The ESP32 module runs its own firmware, updated separately from the controller.'),
       icon: 'firmware', tone: TONE, actions: status,
     },
-    kv([[t('Installed version'), `${installed} (${t(CHANNELS[familyOf(installed)].name)})`], [t('Latest version'), latestCell]]),
+    kv([[t('Installed version'), installed != null ? `${installed} (${t(CHANNELS[familyOf(installed)].name)})`
+      : h('span.wl-inline', t('Not reported'), infoTip(t('The module answered but didn’t report a valid firmware version (raw value {raw}). Installing its firmware again usually fixes this.', { raw: bt.external_version_number })))],
+      [t('Latest version'), latestCell]]),
     migrateNote,
     h('div.wl-actions', updateBtn,
       asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', size: 'sm', busyLabel: t('Checking…'), okLabel: t('Checked'),
@@ -101,6 +103,10 @@ export function mount(root, ctx) {
       latestCell.classList.remove('muted');
       status.replaceChildren(u.migrate ? badge(t('Recommended'), 'yellow')
         : u.available ? badge(t('Update available'), 'yellow') : badge(t('Up to date'), 'green'));
+      if (u.unknown) {
+        migrateNote.replaceChildren(callout({ tone: 'yellow', text: t('The wireless module didn’t report its firmware version. Install the {name} firmware to fix it.', { name: t(u.channel.name) }) }));
+        migrateNote.hidden = false;
+      }
       if (u.mismatch) {
         migrateNote.replaceChildren(callout({ tone: 'yellow', text: t('This module runs the HCI bridge firmware, which this controller firmware can’t use, so Bluetooth is off. Update the controller firmware, or install the HOJA baseband here.') }));
         migrateNote.hidden = false;
@@ -112,7 +118,8 @@ export function mount(root, ctx) {
       }
       if (u.available) {
         updateBtn.classList.replace('btn-tonal', 'btn-primary');
-        updateBtn.setLabel(u.migrate ? t('Install HCI bridge') : u.mismatch ? t('Install HOJA baseband') : t('Update now'));
+        updateBtn.setLabel(u.migrate ? t('Install HCI bridge') : u.mismatch ? t('Install HOJA baseband')
+          : u.unknown ? t('Install {name}', { name: t(u.channel.name) }) : t('Update now'));
       }
     });
 
@@ -189,7 +196,7 @@ export function mount(root, ctx) {
   return {
     destroy() { alive = false; },
     update(params) {
-      if (params?.update && caps.externalBaseband) openModuleUpdater({ installed: bt.external_version_number, latest, params });
+      if (params?.update && caps.externalBaseband) openModuleUpdater({ installed: reportedVersion(bt), latest, channel: update?.channel, migrate: !!update?.migrate, params });
       pinRow?.refresh();
     },
   };
