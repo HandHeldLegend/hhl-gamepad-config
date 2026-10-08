@@ -188,7 +188,8 @@ export class EspFlasher {
     // 2. Load esptool-js lazily (only needed here) and sync with the chip's ROM loader.
     installBufferShim();
     const { ESPLoader, Transport } = await import(ESPTOOL_URL);
-    const terminal = { clean() {}, writeLine: (s) => this.log(s), write: (s) => this.log(s) };
+    // Once released (e.g. after the connect timeout), esptool's leftover retries stay out of the log.
+    const terminal = { clean() {}, writeLine: (s) => this.transport && this.log(s), write: (s) => this.transport && this.log(s) };
     // Transport(device, tracing, enableSlipReader): SLIP reader off, as in the standalone updater.
     this.kind = kind;
     this.transport = new Transport(this.port, TRACE, false);

@@ -16,7 +16,11 @@
  *   - Here ONE read loop runs for as long as the port is open and fills a buffer. A stream pull takes
  *     from that buffer; cancelling a reader just detaches it. No transfer is abandoned and no byte is
  *     lost between esptool's reads.
- *   - Control transfers (init, DTR/RTS) are awaited and run in order.
+ *   - Control transfers (init, DTR/RTS) run in order. DTR/RTS changes made back to back are sent as
+ *     ONE transfer with the final state. esptool's reset goes DTR=1 (RTS still 1), then RTS=0; sent
+ *     separately, the auto-reset circuit briefly sees both high, releases EN with IO0 still high and
+ *     the ESP32 boots its app instead of the ROM bootloader. Each USB control transfer takes
+ *     milliseconds on Android (desktop serial drivers change the lines within microseconds).
  *
  * Implements what esptool-js's Transport uses: getInfo(), open(), close(), readable, writable,
  * setSignals({ dataTerminalReady, requestToSend }), getSignals().
@@ -79,6 +83,8 @@ export class Ch340Port {
     this._readable = null;
     this._writable = null;
     this.ctrlChain = Promise.resolve();
+    this.signalTimer = 0;
+    this.sentCtrl = -1;
   }
 
   getInfo() {
@@ -119,6 +125,8 @@ export class Ch340Port {
 
   async close() {
     clearInterval(this.statTimer);
+    clearTimeout(this.signalTimer);
+    this.signalTimer = 0;
     this.running = false;
     this.#wake(null);
     this._readable = null;
@@ -133,11 +141,22 @@ export class Ch340Port {
     return { dataCarrierDetect: false, clearToSend: false, ringIndicator: false, dataSetReady: false };
   }
 
+  /**
+   * Update DTR/RTS. Resolves at once; the lines are written on the next task, so changes made back to
+   * back (esptool awaits each call, which only takes microtasks) go out together as one transfer.
+   */
   async setSignals(signals) {
-    console.log(`CH340 signals ${JSON.stringify(signals)}`);
+    if (!this.running) throw new Error('The port is closed.');
     if (signals.dataTerminalReady !== undefined) this.ctrl = signals.dataTerminalReady ? (this.ctrl | CTO_D) : (this.ctrl & ~CTO_D & 0xff);
     if (signals.requestToSend !== undefined) this.ctrl = signals.requestToSend ? (this.ctrl | CTO_R) : (this.ctrl & ~CTO_R & 0xff);
-    await this.#control(CMD_C2, ~this.ctrl & 0xff, 0);
+    if (this.signalTimer) return;
+    this.signalTimer = setTimeout(() => {
+      this.signalTimer = 0;
+      if (this.ctrl === this.sentCtrl || !this.running) return;
+      this.sentCtrl = this.ctrl;
+      console.log(`CH340 lines: DTR ${this.ctrl & CTO_D ? 1 : 0} RTS ${this.ctrl & CTO_R ? 1 : 0}`);
+      this.#control(CMD_C2, ~this.ctrl & 0xff, 0);
+    }, 0);
   }
 
   /**
