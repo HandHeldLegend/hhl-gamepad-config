@@ -24,6 +24,8 @@
  *   'snapback'    DataView                            analog dump (0xFA)
  *   'legacy'      { deviceId, url }                   pre-HOJA2 firmware detected
  *   'bootloader'  {}                                  user picked a bare RP2040/RP2350 bootloader
+ *   'esp32-update' {}                                 user picked the CH340 of a controller in wireless-module
+ *                                                     update mode (only that chip is on USB then)
  */
 import { LAYOUT, createStruct } from './struct.js';
 import { legacyFirmwareUrl } from './legacy.js';
@@ -36,7 +38,13 @@ export const USB_FILTERS = [
   { vendorId: 0x2e8a, productId: 0x10df }, // ProGCC
   { vendorId: 0x2e8a, productId: 0x0003 }, // RP2040 bootloader
   { vendorId: 0x2e8a, productId: 0x000f }, // RP2350 bootloader
+  { vendorId: 0x1a86, productId: 0x7522 }, // CH340: controller in wireless-module (ESP32) update mode
 ];
+
+/** The CH340 USB-serial chip a controller exposes in wireless-module (ESP32) update mode. */
+export function isCh340(device) {
+  return device?.vendorId === 0x1a86 && device?.productId === 0x7522;
+}
 
 export function isPicoBootloader(device) {
   return device?.vendorId === 0x2e8a && (device?.productId === 0x0003 || device?.productId === 0x000f);
@@ -178,6 +186,11 @@ export class HojaDevice extends EventTarget {
     if (isPicoBootloader(usb)) {
       this.#emit('bootloader', { usb });
       return 'bootloader';
+    }
+    // Wireless-module update mode: don't open it here; the module updater's flasher does.
+    if (isCh340(usb)) {
+      this.#emit('esp32-update', { usb });
+      return 'esp32-update';
     }
 
     try {

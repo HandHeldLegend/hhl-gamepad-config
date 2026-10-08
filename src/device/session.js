@@ -11,7 +11,7 @@
  *   session.save()        flush pending writes and commit everything to flash
  *   session.on(evt, fn)   subscribe; returns an unsubscribe function
  *
- * Events: 'state', 'dirty', 'saved', 'attention', 'legacy', 'bootloader'
+ * Events: 'state', 'dirty', 'saved', 'attention', 'legacy', 'bootloader', 'esp32-update'
  *
  * HOJA firmware applies a written block immediately (RAM); "Save" persists it to flash.
  * That's why every change is pushed live and the Save button lights up until committed.
@@ -87,6 +87,7 @@ class Session extends EventTarget {
     device.addEventListener('disconnect', () => this.#onDisconnect());
     device.addEventListener('legacy', (e) => { this.#setState('legacy'); this.#emit('legacy', e.detail); });
     device.addEventListener('bootloader', (e) => this.#emit('bootloader', e.detail));
+    device.addEventListener('esp32-update', (e) => this.#emit('esp32-update', e.detail));
   }
 
   get config() { return device.config; }

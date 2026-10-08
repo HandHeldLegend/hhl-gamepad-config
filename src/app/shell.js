@@ -79,6 +79,9 @@ export function currentModeLabel() {
   return null;
 }
 
+// A controller plugged in directly in wireless-module update mode was picked (its CH340).
+session.on('esp32-update', async () => (await import('../sections/wireless/module-updater.js')).openModuleUpdaterInUpdateMode());
+
 /** Shared connect flow used by the app bar, Home and empty states. */
 export async function connectController() {
   if (!navigator.usb && !isDemo()) {
@@ -288,7 +291,10 @@ export function createShell(root) {
         : emptyState({ icon: 'usb', tone: section.tone, title: t('Connect your controller'), text: t('Plug in your controller with a USB data cable, then press Connect.'),
           action: h('div.row', { style: { justifyContent: 'center' } },
             button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg', onClick: connectController }),
-            button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() })) }));
+            button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() }),
+            // Wireless: a controller in module update mode only shows its CH340, so it can't connect here.
+            section.id === 'wireless' && button({ label: t('Already in update mode'), icon: 'wireless', variant: 'ghost',
+              onClick: async () => (await import('../sections/wireless/module-updater.js')).openModuleUpdaterInUpdateMode() })) }));
       mounted = { section, key, cleanup: null };
       return;
     }

@@ -15,9 +15,7 @@ import {
 } from '../../firmware/updater.js';
 import { t, N_ } from '../../i18n/index.js';
 import { whatsNewCard, WHATS_NEW_CSS } from './whats-new.js';
-import { segmented } from '../../ui/controls.js';
-import { CHANNELS } from '../wireless/channels.js';
-import { openModuleUpdater } from '../wireless/module-updater.js';
+import { openModuleUpdaterInUpdateMode } from '../wireless/module-updater.js';
 
 const STATUS_TEXT = {
   unknown: [N_('Not checked'), null],
@@ -74,17 +72,8 @@ function recoveryCard() {
  * the HCI bridge needs controller firmware that reports "ESP32 HCI"; older firmware needs the baseband.
  */
 function wirelessModuleCard(params) {
-  let channel = 'bridge';
-  const pick = segmented({
-    options: [{ value: 'bridge', label: t('HCI bridge') }, { value: 'legacy', label: t('HOJA baseband') }],
-    value: channel, tone: 'blue', ariaLabel: t('Wireless module firmware'),
-    onChange: (v) => { channel = v; },
-  });
   return card({ title: t('Wireless module (ESP32)'), icon: 'wireless', tone: 'blue', subtitle: t('For a controller that’s already in update mode (lights pulsing orange).') },
-    h('p.muted.small', t('Pick the firmware that matches the controller’s firmware: the HCI bridge for current controller firmware (the Wireless page lists the part as “ESP32 HCI”), the HOJA baseband for older firmware.')),
-    pick,
-    h('div.row', button({ label: t('Update wireless module'), icon: 'download', variant: 'tonal',
-      onClick: () => openModuleUpdater({ installed: null, latest: null, channel: CHANNELS[channel], startAt: 'connect', params }) })));
+    h('div.row', button({ label: t('Update wireless module'), icon: 'download', variant: 'tonal', onClick: () => openModuleUpdaterInUpdateMode(params) })));
 }
 
 function downloadsCard() {

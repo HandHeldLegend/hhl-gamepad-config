@@ -51,7 +51,7 @@ export const moduleUpdateOpen = () => !!run;
  *   latest     newest version from the baseband manifest (null = unknown/offline)
  *   params     deep-link params (supports `baud`, like the standalone updater's ?baud=)
  */
-export function openModuleUpdater({ installed, latest = null, channel = CHANNELS.legacy, migrate = false, startAt = 'intro', params = {} } = {}) {
+export function openModuleUpdater({ installed, latest = null, channel = CHANNELS.legacy, migrate = false, startAt = 'intro', chooseChannel = false, params = {} } = {}) {
   if (run) return;
   const demo = isDemo();
   const transports = availableTransports();
@@ -63,6 +63,7 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
     latest,
     channel,
     migrate,
+    chooseChannel,
     images: null,
     transport: transports.preferred,
     flasher: null,
@@ -76,6 +77,17 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
   const versions = h('div.wl-versions');
   const notice = h('div');
   const transportRow = h('div.wl-transport');
+  // Firmware choice, shown when the controller couldn't be asked (it's already in update mode).
+  const channelRow = h('div.wl-transport', { hidden: !chooseChannel });
+  if (chooseChannel) {
+    channelRow.append(h('div.field-label', t('Wireless module firmware')),
+      segmented({
+        options: [{ value: 'bridge', label: t('HCI bridge') }, { value: 'legacy', label: t('HOJA baseband') }],
+        value: channel.id, tone: 'blue', ariaLabel: t('Wireless module firmware'),
+        onChange: (v) => { if (run) { run.channel = CHANNELS[v]; run.images = null; } },
+      }),
+      h('p.small.muted', t('Pick the firmware that matches the controller’s firmware: the HCI bridge for current controller firmware (the Wireless page lists the part as “ESP32 HCI”), the HOJA baseband for older firmware.')));
+  }
   const progress = progressBar({ message: t('Ready') });
   // The app's own log lines are translated; esptool's output (and the simulated copy of it) stays English.
   const logPre = h('pre.wl-log', { 'aria-live': 'off', 'data-empty': t('Nothing yet.') });
@@ -97,9 +109,9 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
 
   const dlg = openDialog({
     title: t('Update wireless module'), icon: 'wireless', tone: 'blue', dismissible: false,
-    body: [steps, guide, versions, notice, transportRow, progress, logBox, help],
+    body: [steps, guide, versions, notice, channelRow, transportRow, progress, logBox, help],
   });
-  run.ui = { dlg, steps, guide, versions, notice, transportRow, progress, logPre, logBox };
+  run.ui = { dlg, steps, guide, versions, notice, channelRow, transportRow, progress, logPre, logBox };
   dlg.result.then(() => cleanup());
 
   // startAt 'connect': the controller is already in update mode (e.g. opened from the Firmware page
@@ -294,6 +306,7 @@ async function connectAndInstall() {
   setNotice(null);
   actions({});
   run.ui.progress.indeterminate(true, t('Connecting…'));
+  run.ui.channelRow.hidden = true;
   try {
     const chip = await run.flasher.connect(run.transport);
     if (!run) return;
@@ -392,4 +405,12 @@ function cleanup() {
   const f = run.flasher;
   run = null;
   f?.close().catch(() => {});
+}
+
+/**
+ * Open the updater for a controller that is already in update mode (picked as its CH340, or from a
+ * page that can't reach the controller): straight to Connect, with the firmware choice shown.
+ */
+export function openModuleUpdaterInUpdateMode(params = {}) {
+  openModuleUpdater({ installed: null, latest: null, channel: CHANNELS.bridge, startAt: 'connect', chooseChannel: true, params });
 }
