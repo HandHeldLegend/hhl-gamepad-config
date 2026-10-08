@@ -13,7 +13,7 @@ export const LEGACY_DEVICES = {
   0xa005: { name: 'ProGCC 3.2', build: 'progcc_3.2' },
   0xb001: { name: 'Super Gamepad+', build: 'super_gamepad' },
   0xc001: { name: 'GC Ultimate', build: 'gcu_proto' },
-  0xc003: { name: 'GC Ultimate 1', build: 'gcu_r4k' },
+  0xc003: { name: 'GC Ultimate 1', build: 'gcu_1' },
 };
 
 export function legacyFirmwareUrl(deviceId) {

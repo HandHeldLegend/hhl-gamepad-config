@@ -18,7 +18,7 @@ export const DISPLAY_NAMES = {
   gcu_2: 'GC Ultimate 2',
   gcu_2s: 'GC Ultimate 2S',
   gcu_proto: 'GC Ultimate (Proto)',
-  gcu_r4k: 'GC Ultimate 1', // the original GCU (folder id kept for existing links)
+  gcu_r4k: 'GC Ultimate 1', // renamed to gcu_1; folder kept so controllers on it still get updates
   hoverboard: 'Hoverboard',
   padbox_gs_c: 'Padbox GS-C',
   phob_2: 'Phob 2',
@@ -33,9 +33,10 @@ export const DISPLAY_NAMES = {
 
 /**
  * Build folders that still exist on GitHub but shouldn't be offered: GCU R5 and S1 were renamed to
- * GC Ultimate 2 / 2S (gcu_2, gcu_2s). Filtered from the live listing, the cache and the offline list.
+ * GC Ultimate 2 / 2S (gcu_2, gcu_2s), and the R4K to GC Ultimate 1 (gcu_1, same firmware). Filtered
+ * from the live listing, the cache and the offline list.
  */
-export const HIDDEN_BUILDS = new Set(['gcu_r5', 'gcu_s1']);
+export const HIDDEN_BUILDS = new Set(['gcu_r5', 'gcu_s1', 'gcu_r4k']);
 
 const visible = (ids) => ids.filter((id) => !HIDDEN_BUILDS.has(id));
 
