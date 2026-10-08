@@ -82,6 +82,33 @@ function isAndroid() {
 }
 
 /**
+ * Send DTR/RTS changes made back to back as ONE setSignals call (esptool.py's "UnixTightReset").
+ * esptool-js changes them one at a time (setRTS even re-sends DTR separately). Its reset goes DTR=1
+ * while RTS is still 1, then RTS=0: in between both are high, the auto-reset circuit releases EN with
+ * IO0 still high and the ESP32 boots its app instead of the ROM loader. Where each change is its own
+ * USB control transfer (Linux's ch341 driver, WebUSB on Android) that gap is milliseconds, enough to
+ * miss the bootloader; Windows' driver is quick enough to get away with it. esptool awaits each call,
+ * which only takes microtasks here, so its consecutive changes land in the same flush.
+ */
+function tightSignals(transport, port) {
+  const lines = { dtr: false, rts: false };
+  let timer = 0;
+  let chain = Promise.resolve();
+  const schedule = () => {
+    if (timer) return;
+    timer = setTimeout(() => {
+      timer = 0;
+      const { dtr, rts } = lines;
+      console.log(`Lines: DTR ${dtr ? 1 : 0} RTS ${rts ? 1 : 0}`);
+      chain = chain.then(() => port.setSignals({ dataTerminalReady: dtr, requestToSend: rts }))
+        .catch((err) => console.warn('setSignals failed:', err?.message || err));
+    }, 0);
+  };
+  transport.setDTR = async (v) => { lines.dtr = !!v; schedule(); };
+  transport.setRTS = async (v) => { lines.rts = !!v; schedule(); };
+}
+
+/**
  * Limit esptool's post-reset "read until quiet" loop (see BOOT_DRAIN_MAX_MS). A reset is a DTR/RTS
  * change; the loop ends at the next write (the first sync). In between, reads time out once the cap
  * has passed, exactly as if the line had gone quiet.
@@ -220,6 +247,7 @@ export class EspFlasher {
     // Transport(device, tracing, enableSlipReader): SLIP reader off, as in the standalone updater.
     this.kind = kind;
     this.transport = new Transport(this.port, TRACE, false);
+    tightSignals(this.transport, this.port);
     capBootDrain(this.transport);
     // Same options as the standalone updater. Note enableTracing overrides the Transport's tracing flag
     // (it did in the standalone updater too). Over WebUSB, esptool's debug log goes to Details for diagnosis.
