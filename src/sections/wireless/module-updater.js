@@ -307,6 +307,8 @@ async function connectAndInstall() {
   actions({});
   run.ui.progress.indeterminate(true, t('Connecting…'));
   run.ui.channelRow.hidden = true;
+  log(`Connection: ${run.transport === 'usb' ? 'WebUSB' : 'Web Serial'} · ${navigator.userAgent}`);
+  if (run.transport === 'usb') mirrorConsole();
   try {
     const chip = await run.flasher.connect(run.transport);
     if (!run) return;
@@ -398,7 +400,34 @@ function dismiss() {
   if (midUpdate) toast(t('If the lights are pulsing orange, unplug the controller to leave update mode.'), { tone: 'blue', timeout: 7000 });
 }
 
+/**
+ * While the WebUSB driver (nice-serial.js) runs, copy its console output into the Details log, so a
+ * failure can be diagnosed on a phone without remote debugging. Restored in cleanup().
+ */
+let consoleRestore = null;
+function mirrorConsole() {
+  if (consoleRestore) return;
+  const orig = { log: console.log, warn: console.warn, error: console.error };
+  const fmt = (args) => args.map((a) => {
+    if (a instanceof Error) return `${a.name}: ${a.message}`;
+    if (a && typeof a === 'object') { try { return JSON.stringify(a, (k, v) => (typeof USBEndpoint !== 'undefined' && v instanceof USBEndpoint ? `ep${v.endpointNumber} ${v.direction} ${v.type}` : v)); } catch { return String(a); } }
+    return String(a);
+  }).join(' ');
+  let lines = 0; // esptool's packet tracing is on for WebUSB: keep the copy to a readable size
+  for (const k of ['log', 'warn', 'error']) {
+    console[k] = (...args) => {
+      orig[k].apply(console, args);
+      const line = fmt(args);
+      if (/^Write chunk of/.test(line)) return; // one line per write would flood the log
+      if (k === 'log' && ++lines > 400) return;
+      log(`[usb] ${line.slice(0, 300)}`);
+    };
+  }
+  consoleRestore = () => { Object.assign(console, orig); consoleRestore = null; };
+}
+
 function cleanup() {
+  consoleRestore?.();
   if (!run) return;
   run.stopWaiting?.();
   window.removeEventListener('beforeunload', guardUnload);
