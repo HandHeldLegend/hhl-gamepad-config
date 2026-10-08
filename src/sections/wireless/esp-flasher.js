@@ -32,6 +32,8 @@ export const BASEBAND_IMAGES = CHANNELS.legacy.images;
 /** The baseband images are built for the original ESP32 (sdkconfig CONFIG_IDF_TARGET="esp32"). */
 const EXPECTED_CHIP = 'ESP32';
 const DEFAULT_BAUD = 115200;
+/** Give up on the ROM bootloader sync after this long (esptool's own retries take well under this). */
+const CONNECT_TIMEOUT_MS = 30000;
 const ESPTOOL_URL = new URL('../../../vendor/esptool-js/esptool.js', import.meta.url).href;
 /**
  * The standalone updater always enabled esptool's packet tracing (hex dump of every USB packet to
@@ -184,7 +186,10 @@ export class EspFlasher {
     this.transport = new Transport(this.port, kind === 'usb' ? true : TRACE, false);
     const loader = new ESPLoader({ transport: this.transport, baudrate: this.baud, terminal, enableTracing: false });
     try {
-      this.chip = await loader.main();
+      // esptool retries its sync for a while; if the module never answers, don't spin forever.
+      let timer = 0;
+      const timeout = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(t('The wireless module didn’t answer. Unplug the controller, put it back into update mode (lights pulsing orange) and try again.'))), CONNECT_TIMEOUT_MS); });
+      try { this.chip = await Promise.race([loader.main(), timeout]); } finally { clearTimeout(timer); }
     } catch (err) {
       await this.#release();
       throw err;

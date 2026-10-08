@@ -41,4 +41,8 @@ export default {
   "Nothing listed here yet.": "まだ何もありません。",
   "Couldn’t load the changelog. It needs an internet connection the first time.": "変更履歴を読み込めませんでした。初回はインターネット接続が必要です。",
   "Firmware changes, newest first.": "ファームウェアの変更点（新しい順）。",
+  "The wireless module didn’t answer. Unplug the controller, put it back into update mode (lights pulsing orange) and try again.": "ワイヤレスモジュールが応答しませんでした。コントローラーを抜き、もう一度アップデートモード（ライトがオレンジに点滅）にしてからやり直してください。",
+  "Wireless module (ESP32)": "ワイヤレスモジュール（ESP32）",
+  "For a controller that’s already in update mode (lights pulsing orange).": "すでにアップデートモード（ライトがオレンジに点滅）になっているコントローラー向けです。",
+  "Pick the firmware that matches the controller’s firmware: the HCI bridge for current controller firmware (the Wireless page lists the part as “ESP32 HCI”), the HOJA baseband for older firmware.": "コントローラーのファームウェアに合うものを選んでください。現行のファームウェア（ワイヤレスのページで部品が「ESP32 HCI」と表示される）ならHCI bridge、それより古いファームウェアならHOJA basebandです。",
 };

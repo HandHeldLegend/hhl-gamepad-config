@@ -41,4 +41,8 @@ export default {
   "Nothing listed here yet.": "Todavía no hay nada aquí.",
   "Couldn’t load the changelog. It needs an internet connection the first time.": "No se pudo cargar el registro de cambios. La primera vez necesita conexión a internet.",
   "Firmware changes, newest first.": "Cambios del firmware, los más recientes primero.",
+  "The wireless module didn’t answer. Unplug the controller, put it back into update mode (lights pulsing orange) and try again.": "El módulo inalámbrico no respondió. Desconecta el control, vuelve a ponerlo en modo de actualización (luces parpadeando en naranja) e inténtalo de nuevo.",
+  "Wireless module (ESP32)": "Módulo inalámbrico (ESP32)",
+  "For a controller that’s already in update mode (lights pulsing orange).": "Para un control que ya está en modo de actualización (luces parpadeando en naranja).",
+  "Pick the firmware that matches the controller’s firmware: the HCI bridge for current controller firmware (the Wireless page lists the part as “ESP32 HCI”), the HOJA baseband for older firmware.": "Elige el firmware que corresponde al firmware del control: el HCI bridge para el firmware actual (la página Inalámbrico muestra la pieza como “ESP32 HCI”) y el HOJA baseband para firmware más antiguo.",
 };

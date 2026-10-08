@@ -51,7 +51,7 @@ export const moduleUpdateOpen = () => !!run;
  *   latest     newest version from the baseband manifest (null = unknown/offline)
  *   params     deep-link params (supports `baud`, like the standalone updater's ?baud=)
  */
-export function openModuleUpdater({ installed, latest = null, channel = CHANNELS.legacy, migrate = false, params = {} } = {}) {
+export function openModuleUpdater({ installed, latest = null, channel = CHANNELS.legacy, migrate = false, startAt = 'intro', params = {} } = {}) {
   if (run) return;
   const demo = isDemo();
   const transports = availableTransports();
@@ -102,7 +102,10 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
   run.ui = { dlg, steps, guide, versions, notice, transportRow, progress, logPre, logBox };
   dlg.result.then(() => cleanup());
 
-  showIntro();
+  // startAt 'connect': the controller is already in update mode (e.g. opened from the Firmware page
+  // without a connected controller); the images are downloaded during the install step.
+  if (startAt === 'connect') showConnect();
+  else showIntro();
 }
 
 // ---------------------------------------------------------------------------------------------
