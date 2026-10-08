@@ -335,4 +335,10 @@ export default {
   "It works as a Wii Remote Plus with MotionPlus built in, so MotionPlus games such as Wii Sports Resort work. It turns itself off a few seconds after the Wii is switched off.": "MotionPlus内蔵のWiiリモコンプラスとして動作するため、Wii Sports ResortなどのMotionPlus対応ゲームも遊べます。Wii本体の電源を切ると、数秒後に自動で電源が切れます。",
   "Bluetooth works in Switch, Steam and Wii modes.": "BluetoothはSwitchモード、Steamモード、Wiiモードで使えます。",
   "The controller remembers one Switch, one Steam host and one Wii. Pairing again replaces it. The Wireless page shows all three.": "コントローラーはSwitch 1台、Steamの接続先1台、Wii 1台を記憶します。再度ペアリングすると置き換わります。ワイヤレスのページで3つとも確認できます。",
+  "Modes": "モード",
+  "New": "新機能",
+  "Fix": "修正",
+  "Changed": "変更",
+  "Action needed": "要対応",
+  "After this update:": "このアップデートの後に:",
 };

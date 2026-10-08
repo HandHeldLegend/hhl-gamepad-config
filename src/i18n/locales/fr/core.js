@@ -335,4 +335,10 @@ export default {
   "It works as a Wii Remote Plus with MotionPlus built in, so MotionPlus games such as Wii Sports Resort work. It turns itself off a few seconds after the Wii is switched off.": "Elle fonctionne comme une Wii Remote Plus avec MotionPlus intégré, donc les jeux MotionPlus comme Wii Sports Resort fonctionnent. Elle s’éteint d’elle-même quelques secondes après l’arrêt de la Wii.",
   "Bluetooth works in Switch, Steam and Wii modes.": "Le Bluetooth fonctionne en modes Switch, Steam et Wii.",
   "The controller remembers one Switch, one Steam host and one Wii. Pairing again replaces it. The Wireless page shows all three.": "La manette mémorise une Switch, un hôte Steam et une Wii. Un nouvel appairage remplace l’ancien. La page Sans fil affiche les trois.",
+  "Modes": "Modes",
+  "New": "Nouveau",
+  "Fix": "Correctif",
+  "Changed": "Changement",
+  "Action needed": "Action requise",
+  "After this update:": "Après cette mise à jour :",
 };

@@ -2,8 +2,8 @@
  * Firmware: update the connected controller, install HOJA on a blank board, and recovery tools.
  *
  * The flashing itself lives in src/firmware/ (updater.js state machine + picoboot.js protocol);
- * this page is the friendly front door to it. Deep link: #/firmware?build=<id> preselects a build
- * in the installer.
+ * this page is the friendly front door to it. Deep links: #/firmware?build=<id> preselects a build
+ * in the installer; #/firmware?changes=<section> filters the changelog (whats-new.js).
  */
 import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
@@ -14,6 +14,7 @@ import {
   firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion,
 } from '../../firmware/updater.js';
 import { t, N_ } from '../../i18n/index.js';
+import { whatsNewCard, WHATS_NEW_CSS } from './whats-new.js';
 
 const STATUS_TEXT = {
   unknown: [N_('Not checked'), null],
@@ -81,11 +82,13 @@ export function mount(root, { session, params }) {
       background: var(--surface-2); color: var(--text); text-decoration: none; font-weight: 600; font-size: var(--text-sm);
       transition: background-color var(--dur-med); }
     .build-link:hover { background: var(--green-soft); color: var(--text); }
-    .build-link .icon { color: var(--green); }`);
+    .build-link .icon { color: var(--green); }
+    ${WHATS_NEW_CSS}`);
   const slot = h('div');
   const render = () => slot.replaceChildren(controllerCard(session));
   render();
-  root.append(style, slot, installCard(params), recoveryCard(), downloadsCard());
-  const offs = [session.on('firmware', render), session.on('state', render)];
+  const whatsNew = whatsNewCard({ session, params });
+  root.append(style, slot, whatsNew, installCard(params), recoveryCard(), downloadsCard());
+  const offs = [session.on('firmware', render), session.on('state', render), session.on('state', () => whatsNew.refresh())];
   return () => offs.forEach((f) => f());
 }

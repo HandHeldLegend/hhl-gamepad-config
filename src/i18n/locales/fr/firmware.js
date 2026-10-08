@@ -32,4 +32,13 @@ export default {
   "You’re offline. Downloads need an internet connection.": "Vous êtes hors ligne : les téléchargements nécessitent une connexion internet.",
   "Manual downloads": "Téléchargements manuels",
   "UF2 files you can copy onto the RPI-RP2 drive yourself.": "Fichiers UF2 que vous pouvez copier vous-même sur le lecteur RPI-RP2.",
+  "Only on {boards}": "Uniquement sur {boards}",
+  "Not installed yet": "Pas encore installé",
+  "Filter changes by section": "Filtrer les changements par section",
+  "All": "Tout",
+  "You’re offline. Showing the last saved copy.": "Vous êtes hors ligne. Affichage de la dernière copie enregistrée.",
+  "All controllers": "Toutes les manettes",
+  "Nothing listed here yet.": "Rien pour l’instant.",
+  "Couldn’t load the changelog. It needs an internet connection the first time.": "Impossible de charger le journal des modifications. La première fois, une connexion internet est nécessaire.",
+  "Firmware changes, newest first.": "Changements du firmware, du plus récent au plus ancien.",
 };

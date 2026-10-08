@@ -37,6 +37,7 @@ import { device, isPicoBootloader } from '../device/hoja-device.js';
 import { isDemo } from '../device/mock.js';
 import { prefs } from '../app/prefs.js';
 import { listBuilds, getBuildManifest, NUKE_BUILD } from './builds.js';
+import { loadChangelog, pendingActions, buildIdFromManifestUrl, inlineRuns } from './changelog.js';
 import {
   pico_update_attempt_flash, pico_exit_bootloader_attempt, pico_complete_uf2_picker_flash,
   pico_has_cached_uf2, setUpdateStatus, onFlashProgress,
@@ -124,6 +125,7 @@ function ensureUi() {
   if (ui) return ui;
   const steps = h('div.steps', [1, 2, 3, 4].map(() => h('span.step')));
   const guide = h('p.muted');
+  const notes = h('div'); // "Action" changelog entries for this update (showUpdateNotes)
   const progress = progressBar({ message: t('Ready') });
 
   const installConfirm = h('input', { type: 'checkbox' });
@@ -170,10 +172,10 @@ function ensureUi() {
 
   const dlg = openDialog({
     title: t('Firmware'), icon: 'firmware', tone: 'blue', dismissible: false,
-    body: [style, steps, stepCaption, guide, picker, freshChoice, tips, progress],
+    body: [style, steps, stepCaption, guide, notes, picker, freshChoice, tips, progress],
   });
 
-  ui = { dlg, steps, stepCaption, guide, progress, picker, buildSelect, installConfirm, tips, select: null,
+  ui = { dlg, steps, stepCaption, guide, notes, progress, picker, buildSelect, installConfirm, tips, select: null,
     freshChoice, keepRadio, freshRadio, eraseConfirm, eraseWarn };
   installConfirm.addEventListener('change', refreshInstallState);
   const onFreshChange = () => {
@@ -346,6 +348,25 @@ function showUpdateAvailable(url, checksum, { legacy = false, debugForced = fals
   u.progress.set(0, t('Ready'));
   u.progress.busy(false);
   updateAvailableActions();
+  showUpdateNotes();
+}
+
+/**
+ * Things the owner has to do after this update ("Action" entries in the firmware changelog that are
+ * newer than the installed build). Shown from the first step and left up until the dialog closes.
+ */
+async function showUpdateNotes() {
+  const u = ui;
+  if (!u) return;
+  replace(u.notes);
+  const buildId = buildIdFromManifestUrl(session.info?.manifestUrl);
+  if (!buildId) return;
+  const res = await loadChangelog();
+  const actions = res ? pendingActions(res.log, buildId, session.info?.fwVersion) : [];
+  if (!actions.length || ui !== u) return;
+  replace(u.notes, callout({ tone: 'yellow', title: t('After this update:') },
+    h('ul', { style: { margin: '6px 0 0', paddingLeft: '1.2em' } },
+      actions.map((a) => h('li', inlineRuns(a.text).map((r) => (r.code ? h('code', r.text) : r.text)))))));
 }
 
 function updateAvailableActions() {

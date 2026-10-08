@@ -8,6 +8,7 @@
  *  4. the section registry is consistent (unique ids, view files exist)
  *  5. every JS file parses (node --check)
  *  6. the MCP server smoke test (when present)
+ *  7. the firmware changelog (hoja-device-fw/CHANGELOG.md) reads cleanly (skipped when absent)
  */
 import { spawnSync } from 'node:child_process';
 import { readdir, access } from 'node:fs/promises';
@@ -108,6 +109,14 @@ console.log('6. MCP server');
     const r = run(['tools/test-mcp.mjs']);
     if (r.status === 0) ok('MCP smoke test passed'); else fail(`MCP: ${(r.stderr || r.stdout).trim().split('\n').slice(-3).join(' | ')}`);
   } else ok('skipped (no MCP test)');
+}
+
+console.log('7. Firmware changelog');
+{
+  const r = run(['tools/check-changelog.mjs']);
+  if (r.status === 0) ok(r.stdout.trim());
+  else if (r.status === 2) ok('skipped (no local hoja-device-fw checkout)');
+  else fail((r.stderr || r.stdout).trim());
 }
 
 console.log(failures ? `\n${failures} failure(s)` : '\nAll checks passed');

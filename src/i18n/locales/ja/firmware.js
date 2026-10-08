@@ -32,4 +32,13 @@ export default {
   "You’re offline. Downloads need an internet connection.": "オフラインです。ダウンロードにはインターネット接続が必要です。",
   "Manual downloads": "手動ダウンロード",
   "UF2 files you can copy onto the RPI-RP2 drive yourself.": "RPI-RP2ドライブに自分でコピーできるUF2ファイル。",
+  "Only on {boards}": "{boards}のみ",
+  "Not installed yet": "未インストール",
+  "Filter changes by section": "セクションで変更を絞り込む",
+  "All": "すべて",
+  "You’re offline. Showing the last saved copy.": "オフラインです。最後に保存した内容を表示しています。",
+  "All controllers": "すべてのコントローラー",
+  "Nothing listed here yet.": "まだ何もありません。",
+  "Couldn’t load the changelog. It needs an internet connection the first time.": "変更履歴を読み込めませんでした。初回はインターネット接続が必要です。",
+  "Firmware changes, newest first.": "ファームウェアの変更点（新しい順）。",
 };

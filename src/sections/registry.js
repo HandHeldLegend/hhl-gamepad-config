@@ -103,8 +103,11 @@ export const SECTIONS = [
   {
     id: 'firmware', title: 'Firmware', icon: 'firmware', tone: 'blue', group: 'device', device: false, requires: null,
     summary: 'Update firmware, install HOJA on a blank board, or recover a controller.',
-    keywords: ['update', 'firmware', 'bootloader', 'bootsel', 'uf2', 'flash', 'nuke', 'install', 'recover'],
-    params: { build: 'Build id to preselect for install (e.g. gcu_2, progcc_3.2)' },
+    keywords: ['update', 'firmware', 'bootloader', 'bootsel', 'uf2', 'flash', 'nuke', 'install', 'recover', 'changelog', 'what’s new', 'release notes'],
+    params: {
+      build: 'Build id to preselect for install (e.g. gcu_2, progcc_3.2)',
+      changes: 'Changelog section to show: input | joysticks | snapback | motion | rgb | haptics | battery | wireless | modes | system',
+    },
     load: () => import('./firmware/view.js'),
   },
   {
