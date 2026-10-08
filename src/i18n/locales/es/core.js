@@ -343,4 +343,6 @@ export default {
   "After this update:": "Después de esta actualización:",
   "Firmware changes, newest first. With a controller connected, shows what its update brings.": "Cambios del firmware, del más reciente al más antiguo. Con un control conectado, muestra lo que trae su actualización.",
   "Settings reset by the update? Restore your backup from the Firmware page once connected.": "¿La actualización restableció los ajustes? Restaura tu copia de seguridad desde la página Firmware una vez conectado.",
+  "Use the RPI-RP2 drive instead": "Usar la unidad RPI-RP2",
+  "The firmware is ready to copy onto the RPI-RP2 drive. Read the steps, then press the button. A folder dialog will open on top of this window.": "El firmware está listo para copiarse a la unidad RPI-RP2. Lee los pasos y luego pulsa el botón. Se abrirá una ventana de carpetas sobre esta.",
 };

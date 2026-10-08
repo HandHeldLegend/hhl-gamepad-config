@@ -280,11 +280,13 @@ function resetFresh() {
 /**
  * Set the dialog buttons. primary: { label, icon, enabled, run } ; restart / dismiss booleans.
  */
-function actions({ primary, restart = false, dismiss = true }) {
+function actions({ primary, restart = false, dismiss = true, drive = false }) {
   const u = ensureUi();
   const list = [];
   if (dismiss) list.push({ label: st.mode === 'update-complete' ? t('Close') : t('Dismiss'), variant: 'ghost', keepOpen: true, onClick: () => { hide(); return false; } });
   if (restart) list.push({ label: t('Restart controller'), icon: 'refresh', variant: 'tonal', keepOpen: true, onClick: restartFromBootloader });
+  // Way around WebUSB (e.g. the controller isn't listed in the browser's device window): the drive copy.
+  if (drive) list.push({ label: t('Use the RPI-RP2 drive instead'), icon: 'upload', variant: 'tonal', keepOpen: true, onClick: () => { flashNext({ drive: true }); return false; } });
   if (primary) {
     list.push({
       id: 'primary', label: primary.label, icon: primary.icon, variant: primary.variant || 'primary', disabled: primary.enabled === false, keepOpen: true,
@@ -417,6 +419,7 @@ function showPressUpdate() {
   if (st.mode !== 'awaiting-bootloader') return;
   paint(t('One more step: press Update'), t('Your controller is now in update mode. Press Update, then choose “RP2 Boot” (or “RP2350 Boot”) in the window your browser opens and press Connect.'), { icon: 'download' });
   setUpdateStatus(t('Waiting for you to press Update'), 30, false);
+  actions({ primary: { label: t('Update'), icon: 'download', run: () => flashNext({ allowRequestDevice: true }) }, drive: true });
   ui?.dlg.action('primary')?.classList.add('btn-attention');
 }
 
@@ -435,7 +438,7 @@ function showUf2DriveStep() {
   panels({ tips: true });
   paint(t('Select the RPI-RP2 drive'), erasing()
     ? t('The erase tool is copied onto the RPI-RP2 drive. Read the steps, then press the button. A folder dialog will open on top of this window.')
-    : t('Direct USB flashing isn’t available on this system. Read the steps, then press the button. A folder dialog will open on top of this window.'),
+    : t('The firmware is ready to copy onto the RPI-RP2 drive. Read the steps, then press the button. A folder dialog will open on top of this window.'),
   { icon: erasing() ? 'trash' : 'download', tone: erasing() ? 'red' : 'blue' });
   setUpdateStatus(t('Ready: pick RPI-RP2 in the next dialog'), 100, false);
   actions({ primary: { label: t('Select RPI-RP2'), icon: 'upload', run: completeUf2Step }, restart: true });
@@ -559,14 +562,15 @@ function applyFlashResult(result) {
   return false;
 }
 
-async function startBootloaderFlash({ allowRequestDevice = true } = {}) {
+/** drive: skip WebUSB and go straight to the RPI-RP2 drive copy (folder picker, else a download). */
+async function startBootloaderFlash({ allowRequestDevice = true, drive = false } = {}) {
   if (!st.pendingUrl) { setUpdateStatus(t('No firmware selected.'), 0, false); return false; }
   if (st.flashing) return false; // a write is already running (auto-start or an earlier click)
   st.stagedImage = null;
   showBootloaderFlash();
   st.mode = 'bootloader-flash';
   // The nuke picked on its own in the installer has no .bin either.
-  const uf2Only = st.pendingUrl === NUKE_BUILD.uf2Url;
+  const uf2Only = drive || st.pendingUrl === NUKE_BUILD.uf2Url;
   let result = false;
   st.flashing = true;
   try {
@@ -579,9 +583,12 @@ async function startBootloaderFlash({ allowRequestDevice = true } = {}) {
   return false;
 }
 
-/** A write ended without finishing: offer Update (retry) and Restart again; picoboot.js left the reason in the status line. */
+/**
+ * A write ended without finishing (including a closed device window): offer Update (retry), the drive
+ * copy and Restart; picoboot.js left the reason in the status line.
+ */
 function showFlashRetry(run) {
-  actions({ primary: { label: t('Update'), icon: 'download', run }, restart: true });
+  actions({ primary: { label: t('Update'), icon: 'download', run }, restart: true, drive: true });
 }
 
 function showEraseFlash() {

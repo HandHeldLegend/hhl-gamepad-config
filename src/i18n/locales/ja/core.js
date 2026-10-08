@@ -343,4 +343,6 @@ export default {
   "After this update:": "このアップデートの後に:",
   "Firmware changes, newest first. With a controller connected, shows what its update brings.": "ファームウェアの変更点（新しい順）。コントローラーを接続すると、そのアップデートで何が変わるかを表示します。",
   "Settings reset by the update? Restore your backup from the Firmware page once connected.": "アップデートで設定がリセットされましたか？接続後、ファームウェアのページからバックアップを復元できます。",
+  "Use the RPI-RP2 drive instead": "代わりにRPI-RP2ドライブを使う",
+  "The firmware is ready to copy onto the RPI-RP2 drive. Read the steps, then press the button. A folder dialog will open on top of this window.": "ファームウェアをRPI-RP2ドライブにコピーする準備ができました。手順を読んでからボタンを押してください。このウィンドウの上にフォルダー選択画面が開きます。",
 };
