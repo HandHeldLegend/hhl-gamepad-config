@@ -50,6 +50,9 @@ export function supportsBridge(bt) {
 }
 
 const manifestCache = new Map();
+/** Forget the cached manifests, so the next check fetches them again ("Check again"). */
+export function clearManifestCache() { manifestCache.clear(); }
+
 /** Latest version from a channel's manifest (cached per page load), or null when unknown/offline. */
 export async function latestVersion(channelId) {
   if (manifestCache.has(channelId)) return manifestCache.get(channelId);

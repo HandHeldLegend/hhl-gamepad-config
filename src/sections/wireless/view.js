@@ -18,9 +18,9 @@
  * update mode the shell destroys this view, and the dialog carries on (see module-updater.js).
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { card, badge, kv, field, infoTip, button, callout } from '../../ui/controls.js';
+import { card, badge, kv, field, infoTip, button, asyncButton, callout } from '../../ui/controls.js';
 import { openConnectGuide, pairingTipNodes } from '../../app/connect-guide.js';
-import { resolveModuleUpdate, familyOf, CHANNELS } from './channels.js';
+import { resolveModuleUpdate, familyOf, CHANNELS, clearManifestCache } from './channels.js';
 import { getSetting } from '../../settings/schema.js';
 import {
   chipStatus, identityText, isPairedMac, formatMac, formatPin, sanitizePin, pinToValue,
@@ -76,16 +76,24 @@ export function mount(root, ctx) {
     kv([[t('Installed version'), `${installed} (${t(CHANNELS[familyOf(installed)].name)})`], [t('Latest version'), latestCell]]),
     migrateNote,
     h('div.wl-actions', updateBtn,
+      asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', size: 'sm', busyLabel: t('Checking…'), okLabel: t('Checked'),
+        run: async () => { clearManifestCache(); await check(); session.refreshAttention?.(); return !!update?.latest; } }),
       h('a.btn.btn-ghost.btn-sm', { href: UPDATE_GUIDE_URL, target: '_blank', rel: 'noopener noreferrer' }, h('span.btn-label', t('Update guide'))),
       h('a.btn.btn-ghost.btn-sm', { href: STANDALONE_UPDATER_URL, target: '_blank', rel: 'noopener noreferrer',
         'data-tip': t('The separate web updater from earlier versions of this app.') }, h('span.btn-label', t('Standalone updater')))));
 
-    const checked = resolveModuleUpdate(bt).then((u) => {
+    // Fetch the latest versions and paint the card. Also run by "Check again" (after clearing the cache).
+    const check = () => resolveModuleUpdate(bt).then((u) => {
       if (!alive) return;
       update = u;
       latest = u.latest;
+      migrateNote.hidden = true;
+      migrateNote.replaceChildren();
+      updateBtn.classList.replace('btn-primary', 'btn-tonal');
+      updateBtn.setLabel(t('Update wireless module'));
       if (!u.latest) {
         latestCell.textContent = navigator.onLine === false ? t('Offline') : t('Couldn’t check');
+        latestCell.classList.add('muted');
         status.replaceChildren(badge(t('Unknown')));
         return;
       }
@@ -108,6 +116,7 @@ export function mount(root, ctx) {
       }
     });
 
+    const checked = check();
     // Deep link: open the dialog once the version check has finished (so it can show "latest").
     if (ctx.params?.update) checked.then(() => alive && updateBtn.click());
   }
