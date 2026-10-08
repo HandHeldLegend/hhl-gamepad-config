@@ -32,7 +32,8 @@ Add `?demo` before the `#` to try any page with a simulated controller, e.g. <ht
 | `#/wireless` | Wireless | Bluetooth pairing info, wireless module firmware and WLAN dongle settings. | Controller + wireless | `update`: Set to 1 to open the wireless module update dialog<br>`baud`: esptool baud rate override (default 115200) |
 | `#/gamepad` | Gamepad | Default mode, Switch body colors, MAC address and device info. | Controller | – |
 | `#/user` | User | Your player name stored on the controller. | Controller | – |
-| `#/firmware` | Firmware | Update firmware, install HOJA on a blank board, or recover a controller. | – | `build`: Build id to preselect for install (e.g. gcu_2, progcc_3.2)<br>`changes`: Changelog section to show: input \| joysticks \| snapback \| motion \| rgb \| haptics \| battery \| wireless \| modes \| system |
+| `#/firmware` | Firmware | Update firmware, install HOJA on a blank board, or recover a controller. | – | `build`: Build id to preselect for install (e.g. gcu_2, progcc_3.2) |
+| `#/whats-new` | What’s new | Firmware changes, newest first. With a controller connected, shows what its update brings. | – | `changes`: Changelog section to show: input \| joysticks \| snapback \| motion \| rgb \| haptics \| battery \| wireless \| modes \| system |
 | `#/arena` | Arena | Gameplay testing arena: try your connected controller in a platform-fighter sandbox. | Controller | `tab`: play \| help<br>`mode`: free \| targets (help also opens that tab) |
 | `#/platformer` | 3D Platformer | Run, jump, long jump, ground pound and wall kick around a small 3D test course with your controller. | Controller | `tab`: play \| help |
 | `#/settings` | App settings | Theme (dark, light or system), motion, install and updates. | – | `theme`: dark \| light \| system |

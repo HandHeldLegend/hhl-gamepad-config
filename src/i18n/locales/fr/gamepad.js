@@ -99,4 +99,5 @@ export default {
   // ---- Wii mode ----
   "Wii Remote over Bluetooth: upright with a Nunchuk, sideways, or with a Classic Controller.": "Wii Remote en Bluetooth : verticale avec Nunchuk, à l’horizontale, ou avec une Classic Controller.",
   "Wii": "Wii",
+  "Only {modes} connect to this app. After changing the default, hold {button} while plugging in to connect here.": "Seuls les {modes} se connectent à cette app. Après avoir changé le mode par défaut, maintenez {button} en branchant la manette pour vous connecter ici.",
 };

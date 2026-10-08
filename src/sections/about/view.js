@@ -16,7 +16,6 @@ import { explainLinux } from '../../app/linux.js';
 import { openConnectGuide } from '../../app/connect-guide.js';
 import { explainIOS } from '../../app/platform.js';
 
-const WHATS_NEW = 'https://docs.handheldlegend.com/s/portal/doc/whats-new-xmtMoBg2Pu';
 
 const FAQ = [
   [N_('The controller won’t connect'), N_('Hold A or B while plugging it in, use a data-capable USB cable, and close other tabs or apps using the controller. Only Switch and Steam modes talk to this app.')],
@@ -43,6 +42,18 @@ function openGuide(name, session) {
   return null;
 }
 
+/** "CC BY 4.0 (https://…)" → badge "CC BY 4.0" linking to the URL; "MIT, Copyright …" → badge "MIT". */
+function licenseBadge(text) {
+  const name = text.replace(/\s*\(https?:[^)]*\)/, '').split(',')[0].trim();
+  const url = text.match(/\((https?:[^)]+)\)/)?.[1];
+  return url ? h('a.badge', { href: url, target: '_blank', rel: 'noopener' }, name) : h('span.badge', name);
+}
+/** The copyright part of a license string, shown in full under the entry. */
+function licenseNotice(text) {
+  const i = text.indexOf(',');
+  return i > 0 ? text.slice(i + 1).trim() : '';
+}
+
 export function mount(root, ctx = {}) {
   const version = h('span', pwa.version || '…');
   loadVersion().then((v) => { version.textContent = v || 'dev'; });
@@ -61,7 +72,7 @@ export function mount(root, ctx = {}) {
         [t('Firmware layout'), `HOJA-LIB-RP2040 @ ${LAYOUT.source?.ref ?? t('unknown')}`],
       ]),
       h('div.row',
-        button({ label: t('What’s new'), icon: 'sparkle', variant: 'tonal', onClick: () => window.open(WHATS_NEW, '_blank', 'noopener') }),
+        button({ label: t('What’s new'), icon: 'sparkle', variant: 'tonal', onClick: () => { location.hash = '#/whats-new'; } }),
         link('https://handheldlegend.com', 'handheldlegend.com'),
         link('https://github.com/HandHeldLegend/HOJA-LIB-RP2040', t('Firmware source')))),
 
@@ -71,8 +82,9 @@ export function mount(root, ctx = {}) {
 
     card({ title: t('Attributions'), icon: 'sparkle', tone: 'red', subtitle: t('Made possible by these people and projects.') },
       h('ul.attributions', ATTRIBUTIONS.map((a) => h('li',
-        h('div', h('strong', a.name), ' · ', a.author, ' · ', h('span.badge', a.license)),
-        h('div.muted.small', t(a.usedFor), ' · ', h('a', { href: a.url, target: '_blank', rel: 'noopener' }, t('source')))))),
+        h('div', h('strong', a.name), ' · ', a.author, ' ', licenseBadge(a.license)),
+        h('div.muted.small', t(a.usedFor), ' · ', h('a', { href: a.url, target: '_blank', rel: 'noopener' }, t('source'))),
+        licenseNotice(a.license) && h('div.faint.xs', licenseNotice(a.license))))),
       h('h3.refs-title', t('References')),
       h('p.muted.small', t('Behavior and data we learned from. Nothing is copied from these.')),
       h('ul.attributions', REFERENCES.map((r) => h('li',

@@ -69,7 +69,7 @@ export function mount(root, { session, device }) {
 
   const controls = card({
     title: t('Motion controls'), icon: 'motion', tone: TONE,
-    subtitle: t('Gyro aiming and tilt for games that support motion. Changes apply instantly. Press Save to keep them.'),
+    subtitle: t('Gyro aiming and tilt for games that support motion.'),
   }, enabledRow, modesBox, calibrateRow);
 
   // ---- 2. Live view -----------------------------------------------------------------------

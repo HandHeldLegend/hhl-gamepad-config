@@ -109,7 +109,9 @@ export function segmented(o) {
     e.preventDefault();
   });
 
-  new ResizeObserver(place).observe(el);
+  const ro = new ResizeObserver(place);
+  ro.observe(el);
+  buttons.forEach((b) => ro.observe(b)); // a scrolling row keeps its width while its buttons grow
   Object.defineProperty(el, 'value', { get: () => current, set });
   set(current);
   return el;

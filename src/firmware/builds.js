@@ -14,6 +14,7 @@ const CACHE_KEY = 'hhl-config:builds';
 
 /** Friendly names for build folder ids. Unknown ids are title-cased automatically. */
 export const DISPLAY_NAMES = {
+  gcu_1: 'GC Ultimate 1',
   gcu_2: 'GC Ultimate 2',
   gcu_2s: 'GC Ultimate 2S',
   gcu_proto: 'GC Ultimate (Proto)',

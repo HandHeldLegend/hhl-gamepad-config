@@ -208,6 +208,9 @@
   .tiles { grid-template-columns: repeat(2, 1fr); }
   .tile .tile-sub { display: none; }
   .tile { align-items: center; text-align: center; padding: var(--space-3) var(--space-2); }
+  /* Two narrow columns: a corner badge would cover the icon, so it sits under the title instead. */
+  .tile .tile-badge { position: static; margin-top: calc(-1 * var(--space-1)); }
+  .tile .tile-badge .badge { font-size: 0.7rem; white-space: nowrap; }
 }
 
 .device-card .device-head { display: flex; gap: var(--space-3) var(--space-4); align-items: center; flex-wrap: wrap; }

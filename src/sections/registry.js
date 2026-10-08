@@ -103,12 +103,20 @@ export const SECTIONS = [
   {
     id: 'firmware', title: 'Firmware', icon: 'firmware', tone: 'blue', group: 'device', device: false, requires: null,
     summary: 'Update firmware, install HOJA on a blank board, or recover a controller.',
-    keywords: ['update', 'firmware', 'bootloader', 'bootsel', 'uf2', 'flash', 'nuke', 'install', 'recover', 'changelog', 'what’s new', 'release notes'],
+    keywords: ['update', 'firmware', 'bootloader', 'bootsel', 'uf2', 'flash', 'nuke', 'install', 'recover'],
     params: {
       build: 'Build id to preselect for install (e.g. gcu_2, progcc_3.2)',
-      changes: 'Changelog section to show: input | joysticks | snapback | motion | rgb | haptics | battery | wireless | modes | system',
     },
     load: () => import('./firmware/view.js'),
+  },
+  {
+    id: 'whats-new', title: 'What’s new', icon: 'sparkle', tone: 'lavender', group: 'device', device: false, requires: null,
+    summary: 'Firmware changes, newest first. With a controller connected, shows what its update brings.',
+    keywords: ['changelog', 'what’s new', 'release notes', 'changes', 'new features', 'fixes'],
+    params: {
+      changes: 'Changelog section to show: input | joysticks | snapback | motion | rgb | haptics | battery | wireless | modes | system',
+    },
+    load: () => import('./whats-new/view.js'),
   },
   {
     id: 'arena', title: 'Arena', icon: 'arena', tone: 'red', group: 'play', device: true, requires: null, beta: true,

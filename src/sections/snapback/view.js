@@ -66,7 +66,7 @@ function stickColumn(stick) {
   syncMode(type.control.value);
 
   const filterCard = card({
-    title: t('Snapback filter'), subtitle: t('Changes apply instantly. Press Save to keep them.'),
+    title: t('Snapback filter'),
     icon: 'snapback', tone: TONE, class: 'sb-filter',
   }, type, cutoff, note);
 

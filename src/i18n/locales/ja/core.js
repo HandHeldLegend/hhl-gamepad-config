@@ -341,4 +341,5 @@ export default {
   "Changed": "変更",
   "Action needed": "要対応",
   "After this update:": "このアップデートの後に:",
+  "Firmware changes, newest first. With a controller connected, shows what its update brings.": "ファームウェアの変更点（新しい順）。コントローラーを接続すると、そのアップデートで何が変わるかを表示します。",
 };

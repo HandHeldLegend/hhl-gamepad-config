@@ -73,7 +73,7 @@ export function mount(root, { session, navigate }) {
     }),
   },
     callout({ tone: 'yellow', title: t('Warning.') },
-      ...tNodes(t('Only {modes} work with the config app. Changing the default mode may require you to hold the {button} button upon plugging in the controller to connect to this configuration app.'),
+      ...tNodes(t('Only {modes} connect to this app. After changing the default, hold {button} while plugging in to connect here.'),
         { modes: h('strong', t('Switch & Steam modes')), button: h('strong', t('A or B')) })),
     modePicker);
 
@@ -81,7 +81,7 @@ export function mount(root, { session, navigate }) {
   const current = () => Object.fromEntries(COLOR_KEYS.map(([k, slot]) => [slot, defs[k].get(session)]));
   const preview = padPreview(current());
   const colorRows = COLOR_KEYS.map(([key, slot, label]) => {
-    const row = settingField(key, { label: t(label), tip: false, onChange: (v) => preview.set({ [slot]: v }) });
+    const row = settingField(key, { label: t(label), description: '', tip: false, onChange: (v) => preview.set({ [slot]: v }) });
     // Live preview while dragging the native picker (settingField only reports committed changes).
     row.control.querySelector('input[type="color"]')?.addEventListener('input', (e) => preview.set({ [slot]: e.target.value }));
     return row;
@@ -109,7 +109,6 @@ export function mount(root, { session, navigate }) {
   const colorCard = card({
     title: [t('Switch device colors'), ' ', infoTip(t('Colors which determine how the Switch displays the controller in menus and some games. They don’t change the LEDs (see the RGB page for those).'))],
     icon: 'palette', tone: TONE,
-    subtitle: t('How the Switch draws your controller in its menus and some games.'),
   },
   h('div.gp-colors', preview, h('div.gp-color-fields', colorRows)),
   h('div.gp-presets-wrap', h('div.gp-presets-label', t('Presets')), presetRow));

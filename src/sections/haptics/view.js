@@ -56,7 +56,7 @@ export function mount(root, { session, device }) {
   const triggers = session.caps.hapticHD && settingField('haptics.triggerFeedback', { tone: 'yellow' });
 
   root.append(
-    card({ title: t('Rumble'), subtitle: t('Changes apply instantly. Press Save to keep them.'), icon: 'haptics', tone: 'yellow', actions: test },
+    card({ title: t('Rumble'), icon: 'haptics', tone: 'yellow', actions: test },
       h('div.hp-scope', scope.el,
         h('p.hp-scope-caption', session.caps.hapticHD
           ? t('Press Test, or pull a trigger past its activation point, to see the feedback at your intensity. (Shown in slow motion.)')

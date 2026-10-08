@@ -3,7 +3,7 @@
  *
  * The flashing itself lives in src/firmware/ (updater.js state machine + picoboot.js protocol);
  * this page is the friendly front door to it. Deep links: #/firmware?build=<id> preselects a build
- * in the installer; #/firmware?changes=<section> filters the changelog (whats-new.js).
+ * in the installer. The changelog has its own page (#/whats-new); #/firmware?changes= forwards there.
  */
 import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
@@ -14,7 +14,6 @@ import {
   firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion,
 } from '../../firmware/updater.js';
 import { t, N_ } from '../../i18n/index.js';
-import { whatsNewCard, WHATS_NEW_CSS } from './whats-new.js';
 import { openModuleUpdaterInUpdateMode } from '../wireless/module-updater.js';
 
 const STATUS_TEXT = {
@@ -87,6 +86,8 @@ function downloadsCard() {
 }
 
 export function mount(root, { session, params }) {
+  // Old deep link: the changelog moved to its own page.
+  if (params?.changes) { location.replace(`#/whats-new?changes=${encodeURIComponent(params.changes)}`); return; }
   const style = h('style', `
     .build-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
     .build-link { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--radius-md);
@@ -94,12 +95,11 @@ export function mount(root, { session, params }) {
       transition: background-color var(--dur-med); }
     .build-link:hover { background: var(--green-soft); color: var(--text); }
     .build-link .icon { color: var(--green); }
-    ${WHATS_NEW_CSS}`);
+`);
   const slot = h('div');
   const render = () => slot.replaceChildren(controllerCard(session));
   render();
-  const whatsNew = whatsNewCard({ session, params });
-  root.append(style, slot, whatsNew, installCard(params), recoveryCard(), wirelessModuleCard(params), downloadsCard());
-  const offs = [session.on('firmware', render), session.on('state', render), session.on('state', () => whatsNew.refresh())];
+  root.append(style, slot, installCard(params), recoveryCard(), wirelessModuleCard(params), downloadsCard());
+  const offs = [session.on('firmware', render), session.on('state', render)];
   return () => offs.forEach((f) => f());
 }

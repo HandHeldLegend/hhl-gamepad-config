@@ -179,7 +179,7 @@ export function mount(root, { session }) {
   brightRow.control.querySelector('input[type="range"]')?.addEventListener('input', (e) => { live.brightness = Number(e.target.value); preview.refresh(); });
   speedRow.control.querySelector('input[type="range"]')?.addEventListener('input', (e) => { live.speed = Number(e.target.value); });
 
-  const tuningCard = card({ title: t('Brightness & timing'), subtitle: t('Changes apply instantly. Press Save to keep them.'), icon: 'sliders', tone: TONE },
+  const tuningCard = card({ title: t('Brightness & timing'), icon: 'sliders', tone: TONE },
     brightRow, speedRow, idleGlowField());
 
   /** Idle glow toggle with a small color key (the three status-light colors) under its description. */

@@ -69,4 +69,5 @@ export default {
   "Switch motion": "Mouvement en Switch",
   "Steam motion": "Mouvement en Steam",
   "Wii motion": "Mouvement en Wii",
+  "Gyro aiming and tilt for games that support motion.": "Visée gyroscopique et inclinaison pour les jeux compatibles.",
 };

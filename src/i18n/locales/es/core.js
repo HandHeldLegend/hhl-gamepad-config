@@ -341,4 +341,5 @@ export default {
   "Changed": "Cambio",
   "Action needed": "Acción necesaria",
   "After this update:": "Después de esta actualización:",
+  "Firmware changes, newest first. With a controller connected, shows what its update brings.": "Cambios del firmware, del más reciente al más antiguo. Con un control conectado, muestra lo que trae su actualización.",
 };

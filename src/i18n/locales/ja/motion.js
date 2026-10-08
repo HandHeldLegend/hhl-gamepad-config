@@ -69,4 +69,5 @@ export default {
   "Switch motion": "Switchのモーション",
   "Steam motion": "Steamのモーション",
   "Wii motion": "Wiiのモーション",
+  "Gyro aiming and tilt for games that support motion.": "モーション対応ゲームでのジャイロエイムと傾き操作。",
 };

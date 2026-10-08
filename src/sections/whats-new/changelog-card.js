@@ -1,10 +1,10 @@
 /**
- * whats-new.js: The firmware changelog card on the Firmware page.
+ * changelog-card.js: The firmware changelog on the What's new page.
  *
  * Shows CHANGELOG.md from hoja-device-fw (parsed by src/firmware/changelog.js), newest first,
  * grouped by section, with a section filter. With a controller connected it shows that build's
  * changes and marks releases newer than its firmware; a switch widens it to every controller.
- * Deep link: #/firmware?changes=<section id> opens it filtered.
+ * Deep link: #/whats-new?changes=<section id> opens it filtered.
  */
 import { h, replace } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
@@ -34,7 +34,15 @@ export const WHATS_NEW_CSS = `
   .wn-change .badge { justify-self: start; }
   .wn-scope { display: block; color: var(--text-muted); font-size: var(--text-xs, 0.75rem); margin-top: 2px; }
   .wn-change code { font-family: var(--font-mono, monospace); font-size: 0.95em; }
+  .wn-release + .wn-release { border-top: 1px solid var(--border); padding-top: var(--space-4); }
+  @media (max-width: 560px) {
+    .wn-change { grid-template-columns: 1fr; gap: 2px; }
+    .wn-list { gap: 10px; }
+  }
 `;
+
+/** "GC Ultimate 1 and ProGCC 3": friendly names, each once (renamed builds share a name). */
+const boardList = (boards) => fmt.list([...new Set([...boards].map(humanizeBuildId))]);
 
 const sectionInfo = (id) => CHANGE_SECTIONS.find((s) => s.id === id);
 
@@ -51,13 +59,13 @@ function renderRelease(release, { section, installedVersion, showScope }) {
     badge(t(CHANGE_KINDS[e.kind].label), CHANGE_KINDS[e.kind].tone),
     h('span', entryText(e.text),
       showScope && e.boards && e.boards.size < (release.boards?.size ?? Infinity) && h('span.wn-scope',
-        t('Only on {boards}', { boards: fmt.list([...e.boards].map(humanizeBuildId)) }))));
+        t('Only on {boards}', { boards: boardList(e.boards) }))));
 
   return h('article.wn-release',
     h('div.wn-release-head',
       h('span.wn-release-date', date),
       release.title && h('span.wn-release-title', release.title),
-      showScope && release.boards && h('span.wn-scope', t('Only on {boards}', { boards: fmt.list([...release.boards].map(humanizeBuildId)) })),
+      showScope && release.boards && h('span.wn-scope', t('Only on {boards}', { boards: boardList(release.boards) })),
       isNew && badge(t('Not installed yet'), 'blue')),
     // Filtered to one section: a flat list. Otherwise grouped, each group linking to its page.
     section
@@ -124,7 +132,7 @@ export function whatsNewCard({ session, params }) {
     render();
   });
 
-  const el = card({ title: t('What’s new'), icon: 'sparkle', tone: 'lavender', subtitle: t('Firmware changes, newest first.') }, body);
+  const el = card({ tone: 'lavender' }, body);
   el.refresh = render;
   return el;
 }
