@@ -135,4 +135,5 @@ export default {
   "Recommended wireless module update": "Actualización recomendada del módulo inalámbrico",
   "This module runs the HCI bridge firmware, which this controller firmware can’t use, so Bluetooth is off. Update the controller firmware, or install the HOJA baseband here.": "Este módulo tiene el firmware HCI bridge, que el firmware de este control no puede usar, así que el Bluetooth está desactivado. Actualiza el firmware del control o instala aquí el HOJA baseband.",
   "Install HOJA baseband": "Instalar HOJA baseband",
+  "When the controller’s lights pulse orange, press Connect and choose the USB device (usually “USB2.0-Ser!” or “USB Single Serial”). To cancel, just unplug the controller.": "Cuando las luces del control parpadeen en naranja, pulsa Conectar y elige el dispositivo USB (normalmente “USB2.0-Ser!” o “USB Single Serial”). Para cancelar, simplemente desconecta el control.",
 };

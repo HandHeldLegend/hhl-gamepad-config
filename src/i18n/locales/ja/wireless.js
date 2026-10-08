@@ -138,4 +138,5 @@ export default {
   "Recommended wireless module update": "おすすめのワイヤレスモジュール更新",
   "This module runs the HCI bridge firmware, which this controller firmware can’t use, so Bluetooth is off. Update the controller firmware, or install the HOJA baseband here.": "このモジュールにはHCI bridgeファームウェアが入っていますが、このコントローラーのファームウェアでは使えないため、Bluetoothが無効になっています。コントローラーのファームウェアを更新するか、ここでHOJA basebandをインストールしてください。",
   "Install HOJA baseband": "HOJA basebandをインストール",
+  "When the controller’s lights pulse orange, press Connect and choose the USB device (usually “USB2.0-Ser!” or “USB Single Serial”). To cancel, just unplug the controller.": "コントローラーのライトがオレンジに点滅したら、［接続］を押してUSBデバイス（通常は「USB2.0-Ser!」または「USB Single Serial」）を選んでください。キャンセルするには、コントローラーを抜くだけです。",
 };

@@ -289,8 +289,9 @@ async function enterUpdateMode() {
 /** Step 3: pick the serial device. */
 function showConnect(warning) {
   run.mode = 'connect';
-  paint(t('Connect to the wireless module'),
-    t('When the controller’s lights pulse orange, press Connect and choose the USB serial device (usually “USB-SERIAL CH340” or “USB Single Serial”). To cancel, just unplug the controller.'));
+  paint(t('Connect to the wireless module'), run.transport === 'usb'
+    ? t('When the controller’s lights pulse orange, press Connect and choose the USB device (usually “USB2.0-Ser!” or “USB Single Serial”). To cancel, just unplug the controller.')
+    : t('When the controller’s lights pulse orange, press Connect and choose the USB serial device (usually “USB-SERIAL CH340” or “USB Single Serial”). To cancel, just unplug the controller.'));
   run.ui.versions.hidden = true;
   setNotice(warning ? callout({ tone: 'yellow', text: warning }) : null);
   run.ui.progress.indeterminate(false);
