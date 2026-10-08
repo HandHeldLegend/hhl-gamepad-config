@@ -12,14 +12,16 @@
  *
  * Two transports, like the standalone page's Serial/WebUSB switch:
  *   'serial'  Web Serial (desktop Chrome/Edge, uses the OS CH340 driver)
- *   'usb'     WebUSB: Mitch's CH34x driver (./nice-serial.js, vendored unchanged from the standalone
- *             updater). Always used on Android, driven exactly like the standalone updater did (Transport
- *             tracing on, no separate full-chip erase).
+ *   'usb'     WebUSB: ./ch340-port.js, a CH340 port built on Mitch's niceSerial driver (same chip setup)
+ *             with one continuous read loop, so esptool's read timeouts work on current Chrome for
+ *             Android. Always used on Android (no separate full-chip erase, like the standalone updater).
+ *             ?usbdriver=nice uses the vendored niceSerial (./nice-serial.js) instead, for comparison.
  *
  * In demo mode (`simulate: true`) nothing touches USB or the network; a timed fake run drives the
  * same callbacks so the update dialog can be demonstrated.
  */
 import { serial as niceSerial } from './nice-serial.js';
+import { Ch340Port } from './ch340-port.js';
 
 /** USB ids of the CH340 bridge used in HOJA controllers (same filter as the standalone updater). */
 export const CH34X_FILTER = Object.freeze({ usbVendorId: 0x1a86, usbProductId: 0x7522 });
@@ -174,7 +176,9 @@ export class EspFlasher {
     // 1. Pick the port (user gesture). Canceling the picker throws a NotFoundError.
     if (kind === 'usb') {
       if (!navigator.usb) throw new Error(t('WebUSB is not available in this browser.'));
-      this.port = await niceSerial.requestPort({ filters: [CH34X_FILTER] });
+      const nice = new URLSearchParams(location.search).get('usbdriver') === 'nice';
+      this.port = nice ? await niceSerial.requestPort({ filters: [CH34X_FILTER] }) : await Ch340Port.request();
+      this.log(`WebUSB driver: ${nice ? 'niceSerial' : 'ch340-port'}`);
     }
     else {
       if (!navigator.serial) throw new Error(t('Web Serial isn’t available in this browser. Try the USB option.'));
@@ -185,10 +189,9 @@ export class EspFlasher {
     installBufferShim();
     const { ESPLoader, Transport } = await import(ESPTOOL_URL);
     const terminal = { clean() {}, writeLine: (s) => this.log(s), write: (s) => this.log(s) };
-    // Transport(device, tracing, enableSlipReader): SLIP reader off, as in the standalone updater. Over
-    // WebUSB, tracing stays on exactly like the standalone updater (the setup that works on Android).
+    // Transport(device, tracing, enableSlipReader): SLIP reader off, as in the standalone updater.
     this.kind = kind;
-    this.transport = new Transport(this.port, kind === 'usb' ? true : TRACE, false);
+    this.transport = new Transport(this.port, TRACE, false);
     // Same options as the standalone updater. Note enableTracing overrides the Transport's tracing flag
     // (it did in the standalone updater too). Over WebUSB, esptool's debug log goes to Details for diagnosis.
     const loader = new ESPLoader({ transport: this.transport, baudrate: this.baud, terminal, enableTracing: false, debugLogging: kind === 'usb' });
