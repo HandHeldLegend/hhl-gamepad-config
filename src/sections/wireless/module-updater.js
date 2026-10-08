@@ -27,6 +27,7 @@ import { button, callout, kv, progressBar, segmented } from '../../ui/controls.j
 import { session } from '../../device/session.js';
 import { isDemo, startDemo } from '../../device/mock.js';
 import { EspFlasher, availableTransports, baudFromUrl, downloadBasebandImages } from './esp-flasher.js';
+import { CHANNELS, familyOf } from './channels.js';
 import { LOCAL_UPDATER_URL, STANDALONE_UPDATER_URL, UPDATE_GUIDE_URL } from './info.js';
 import { t, plural, fmt } from '../../i18n/index.js';
 
@@ -50,7 +51,7 @@ export const moduleUpdateOpen = () => !!run;
  *   latest     newest version from the baseband manifest (null = unknown/offline)
  *   params     deep-link params (supports `baud`, like the standalone updater's ?baud=)
  */
-export function openModuleUpdater({ installed, latest = null, params = {} } = {}) {
+export function openModuleUpdater({ installed, latest = null, channel = CHANNELS.legacy, migrate = false, params = {} } = {}) {
   if (run) return;
   const demo = isDemo();
   const transports = availableTransports();
@@ -60,6 +61,8 @@ export function openModuleUpdater({ installed, latest = null, params = {} } = {}
     demo,
     installed,
     latest,
+    channel,
+    migrate,
     images: null,
     transport: transports.preferred,
     flasher: null,
@@ -158,8 +161,8 @@ function actions({ primary, secondary } = {}) {
 function setVersions() {
   const { installed, latest } = run;
   run.ui.versions.replaceChildren(kv([
-    [t('Installed'), installed != null ? String(installed) : t('Unknown')],
-    [t('Latest'), latest ? String(latest) : t('Couldn’t check (offline?)')],
+    [t('Installed'), installed != null ? `${installed} (${t(CHANNELS[familyOf(installed)].name)})` : t('Unknown')],
+    [t('Latest'), latest ? `${latest} (${t(run.channel.name)})` : t('Couldn’t check (offline?)')],
   ]));
 }
 
@@ -184,8 +187,8 @@ function errorText(err) {
 /** Step 1: explain, warn about unsaved changes, offer Start / "already in update mode". */
 function showIntro(errorMsg) {
   run.mode = 'intro';
-  const upToDate = run.latest && run.installed >= run.latest;
-  paint(upToDate ? t('Reinstall wireless firmware') : t('Update wireless module'),
+  const upToDate = !run.migrate && run.latest && run.installed >= run.latest;
+  paint(run.migrate ? t('Install HCI bridge firmware') : upToDate ? t('Reinstall wireless firmware') : t('Update wireless module'),
     t('The wireless module (ESP32) has its own firmware. The controller restarts into a special update mode (its lights pulse orange), then the new firmware is written over USB. It takes about a minute, so keep it plugged in.'));
   setVersions();
   run.ui.versions.hidden = false;
@@ -201,7 +204,8 @@ function showIntro(errorMsg) {
           toast(ok ? t('Saved to controller') : t('Save failed'), { tone: ok ? 'green' : 'red' });
           if (run?.mode === 'intro') showIntro();
         } }))
-      : upToDate ? callout({ tone: 'green', text: t('This module already has the latest firmware. You can reinstall it if wireless isn’t working right.') }) : null);
+      : run.migrate ? callout({ tone: 'blue', icon: 'wireless', text: t('The HCI bridge firmware is recommended for this controller. It unlocks Wii mode and the newer Bluetooth features (current Switch and Steam modes, pairing over USB).') }, ' ', t('Afterwards, pair the Switch and any other Bluetooth hosts again once: the module’s Bluetooth address changes.'))
+        : upToDate ? callout({ tone: 'green', text: t('This module already has the latest firmware. You can reinstall it if wireless isn’t working right.') }) : null);
 
   run.ui.progress.set(0, t('Ready'));
   run.ui.progress.busy(false);
@@ -220,6 +224,7 @@ async function startUpdate() {
   run.ui.progress.busy(true);
   try {
     run.images = await downloadBasebandImages({
+      images: run.channel.images,
       simulate: run.demo,
       onProgress: (done, total, label) => {
         run?.ui.progress.set((done / total) * 100, label ? t('Downloading {file}…', { file: t(label) }) : t('Downloaded'));
@@ -311,7 +316,7 @@ async function install() {
   try {
     if (!run.images) {
       p.indeterminate(true, t('Downloading firmware…'));
-      run.images = await downloadBasebandImages({ simulate: run.demo, onProgress: (d, n, label) => label && log(t('Downloading {file}…', { file: t(label) })) });
+      run.images = await downloadBasebandImages({ images: run.channel.images, simulate: run.demo, onProgress: (d, n, label) => label && log(t('Downloading {file}…', { file: t(label) })) });
     }
     p.indeterminate(true, t('Erasing (this can take 30 seconds)…'));
     log(t('Erasing…'));
@@ -343,7 +348,7 @@ async function install() {
 function showDone() {
   run.mode = 'done';
   paint(t('Wireless module updated'), t('Unplug the controller, wait a moment, plug it back in, then press Connect.'), { tone: 'green', icon: 'check' });
-  setNotice(null);
+  setNotice(run.migrate ? callout({ tone: 'yellow', title: t('Pair again.'), text: t('The module’s Bluetooth address changed. Pair the Switch and any other Bluetooth hosts again once.') }) : null);
   const p = run.ui.progress;
   p.indeterminate(false);
   p.set(100, t('Done: unplug the controller to finish'));

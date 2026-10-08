@@ -123,4 +123,16 @@ export default {
   "Only controllers that support the Raspberry Pi WLAN dongle use this. The PIN keeps your dongle from pairing with someone else’s controller nearby. Leading zeros count: 0420 is stored as 420.": "Seules les manettes compatibles avec le dongle WLAN Raspberry Pi l’utilisent. Le code PIN empêche votre dongle de s’appairer avec la manette de quelqu’un d’autre à proximité. Les zéros initiaux comptent : 0420 est enregistré sous la forme 420.",
   // ---- Wii mode ----
   "The Wii console paired in Wii mode.": "La console Wii appairée en mode Wii.",
+  "The HCI bridge firmware is recommended for this controller. It unlocks Wii mode and the newer Bluetooth features (current Switch and Steam modes, pairing over USB).": "Le firmware HCI bridge est recommandé pour cette manette. Il débloque le mode Wii et les fonctions Bluetooth récentes (modes Switch et Steam actuels, appairage par USB).",
+  "Afterwards, pair the Switch and any other Bluetooth hosts again once: the module’s Bluetooth address changes.": "Ensuite, appairez de nouveau la Switch et les autres appareils Bluetooth une fois : l’adresse Bluetooth du module change.",
+  "HOJA baseband": "HOJA baseband",
+  "HCI bridge": "HCI bridge",
+  "Recommended": "Recommandé",
+  "Install HCI bridge": "Installer HCI bridge",
+  "Install HCI bridge firmware": "Installer le firmware HCI bridge",
+  "Pair again.": "Appairez de nouveau.",
+  "The module’s Bluetooth address changed. Pair the Switch and any other Bluetooth hosts again once.": "L’adresse Bluetooth du module a changé. Appairez de nouveau la Switch et les autres appareils Bluetooth une fois.",
+  "Recommended wireless module update": "Mise à jour recommandée du module sans fil",
+  "This module runs the HCI bridge firmware, which this controller firmware can’t use, so Bluetooth is off. Update the controller firmware, or install the HOJA baseband here.": "Ce module utilise le firmware HCI bridge, que le firmware de cette manette ne peut pas utiliser : le Bluetooth est donc désactivé. Mettez à jour le firmware de la manette, ou installez ici le HOJA baseband.",
+  "Install HOJA baseband": "Installer HOJA baseband",
 };

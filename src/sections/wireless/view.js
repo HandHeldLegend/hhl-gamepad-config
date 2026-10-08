@@ -20,7 +20,7 @@
 import { h, loadStyles } from '../../ui/dom.js';
 import { card, badge, kv, field, infoTip, button, callout } from '../../ui/controls.js';
 import { openConnectGuide, pairingTipNodes } from '../../app/connect-guide.js';
-import { latestBasebandVersion } from '../../device/session.js';
+import { resolveModuleUpdate, familyOf, CHANNELS } from './channels.js';
 import { getSetting } from '../../settings/schema.js';
 import {
   chipStatus, identityText, isPairedMac, formatMac, formatPin, sanitizePin, pinToValue,
@@ -60,38 +60,51 @@ export function mount(root, ctx) {
   let firmwareCard = null;
   if (caps.externalBaseband) {
     const installed = bt.external_version_number;
+    let update = null; // resolveModuleUpdate() result: channel, latest, migrate, available
     const status = h('span', badge(t('Checking…')));
     const latestCell = h('span.muted', t('Checking…'));
+    const migrateNote = h('div', { hidden: true });
     const updateBtn = button({
       label: t('Update wireless module'), icon: 'download', variant: 'tonal',
-      onClick: () => openModuleUpdater({ installed, latest, params: ctx.params }),
+      onClick: () => openModuleUpdater({ installed, latest: update?.latest ?? null, channel: update?.channel, migrate: !!update?.migrate, params: ctx.params }),
     });
     firmwareCard = card({
       title: t('Wireless module firmware'),
       subtitle: t('The ESP32 module runs its own firmware, updated separately from the controller.'),
       icon: 'firmware', tone: TONE, actions: status,
     },
-    kv([[t('Installed version'), String(installed)], [t('Latest version'), latestCell]]),
+    kv([[t('Installed version'), `${installed} (${t(CHANNELS[familyOf(installed)].name)})`], [t('Latest version'), latestCell]]),
+    migrateNote,
     h('div.wl-actions', updateBtn,
       h('a.btn.btn-ghost.btn-sm', { href: UPDATE_GUIDE_URL, target: '_blank', rel: 'noopener noreferrer' }, h('span.btn-label', t('Update guide'))),
       h('a.btn.btn-ghost.btn-sm', { href: STANDALONE_UPDATER_URL, target: '_blank', rel: 'noopener noreferrer',
         'data-tip': t('The separate web updater from earlier versions of this app.') }, h('span.btn-label', t('Standalone updater')))));
 
-    const checked = latestBasebandVersion().then((v) => {
+    const checked = resolveModuleUpdate(bt).then((u) => {
       if (!alive) return;
-      latest = v;
-      if (!v) {
+      update = u;
+      latest = u.latest;
+      if (!u.latest) {
         latestCell.textContent = navigator.onLine === false ? t('Offline') : t('Couldn’t check');
         status.replaceChildren(badge(t('Unknown')));
         return;
       }
-      latestCell.textContent = String(v);
+      latestCell.textContent = `${u.latest} (${t(u.channel.name)})`;
       latestCell.classList.remove('muted');
-      const available = installed < v; // same comparison as hoja2
-      status.replaceChildren(available ? badge(t('Update available'), 'yellow') : badge(t('Up to date'), 'green'));
-      if (available) {
+      status.replaceChildren(u.migrate ? badge(t('Recommended'), 'yellow')
+        : u.available ? badge(t('Update available'), 'yellow') : badge(t('Up to date'), 'green'));
+      if (u.mismatch) {
+        migrateNote.replaceChildren(callout({ tone: 'yellow', text: t('This module runs the HCI bridge firmware, which this controller firmware can’t use, so Bluetooth is off. Update the controller firmware, or install the HOJA baseband here.') }));
+        migrateNote.hidden = false;
+      }
+      if (u.migrate) {
+        // Legacy baseband → HCI bridge: say what it brings and that hosts need pairing again.
+        migrateNote.replaceChildren(callout({ tone: 'blue', icon: 'wireless', text: t('The HCI bridge firmware is recommended for this controller. It unlocks Wii mode and the newer Bluetooth features (current Switch and Steam modes, pairing over USB).') }, ' ', t('Afterwards, pair the Switch and any other Bluetooth hosts again once: the module’s Bluetooth address changes.')));
+        migrateNote.hidden = false;
+      }
+      if (u.available) {
         updateBtn.classList.replace('btn-tonal', 'btn-primary');
-        updateBtn.setLabel(t('Update now'));
+        updateBtn.setLabel(u.migrate ? t('Install HCI bridge') : u.mismatch ? t('Install HOJA baseband') : t('Update now'));
       }
     });
 

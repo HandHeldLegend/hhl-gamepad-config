@@ -123,4 +123,16 @@ export default {
   "Only controllers that support the Raspberry Pi WLAN dongle use this. The PIN keeps your dongle from pairing with someone else’s controller nearby. Leading zeros count: 0420 is stored as 420.": "Solo lo usan los controles compatibles con el dongle WLAN de Raspberry Pi. El PIN evita que tu dongle se empareje con el control de otra persona que esté cerca. Los ceros a la izquierda cuentan: 0420 se guarda como 420.",
   // ---- Wii mode ----
   "The Wii console paired in Wii mode.": "La consola Wii emparejada en modo Wii.",
+  "The HCI bridge firmware is recommended for this controller. It unlocks Wii mode and the newer Bluetooth features (current Switch and Steam modes, pairing over USB).": "Se recomienda el firmware HCI bridge para este control. Desbloquea el modo Wii y las funciones Bluetooth más recientes (modos Switch y Steam actuales, emparejamiento por USB).",
+  "Afterwards, pair the Switch and any other Bluetooth hosts again once: the module’s Bluetooth address changes.": "Después, vuelve a emparejar la Switch y cualquier otro equipo Bluetooth una vez: la dirección Bluetooth del módulo cambia.",
+  "HOJA baseband": "HOJA baseband",
+  "HCI bridge": "HCI bridge",
+  "Recommended": "Recomendado",
+  "Install HCI bridge": "Instalar HCI bridge",
+  "Install HCI bridge firmware": "Instalar el firmware HCI bridge",
+  "Pair again.": "Vuelve a emparejar.",
+  "The module’s Bluetooth address changed. Pair the Switch and any other Bluetooth hosts again once.": "La dirección Bluetooth del módulo cambió. Vuelve a emparejar la Switch y cualquier otro equipo Bluetooth una vez.",
+  "Recommended wireless module update": "Actualización recomendada del módulo inalámbrico",
+  "This module runs the HCI bridge firmware, which this controller firmware can’t use, so Bluetooth is off. Update the controller firmware, or install the HOJA baseband here.": "Este módulo tiene el firmware HCI bridge, que el firmware de este control no puede usar, así que el Bluetooth está desactivado. Actualiza el firmware del control o instala aquí el HOJA baseband.",
+  "Install HOJA baseband": "Instalar HOJA baseband",
 };

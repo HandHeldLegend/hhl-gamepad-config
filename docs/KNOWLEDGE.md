@@ -200,11 +200,22 @@ also on the Firmware page for copying onto the drive yourself.
   with BOOTSEL.
 
 ## Wireless and pairing
-<!-- topic: wireless-pairing; keywords: wireless, bluetooth, pair, pairing, esp32, baseband, wireless module, dongle, wlan, pin, mac address -->
+<!-- topic: wireless-pairing; keywords: wireless, bluetooth, pair, pairing, esp32, baseband, hci bridge, bridge, wireless module, module update, dongle, wlan, pin, mac address -->
 
 The [Wireless](#/wireless) page appears for controllers with Bluetooth hardware. It shows the wireless chip
 status and, on controllers with an updatable external wireless module (ESP32), its firmware version. Home flags
 “Wireless module update available” when a newer one exists.
+
+**ESP32 module firmware.** Two firmwares exist for the ESP32: the **HOJA baseband** (versions 0xA0xx, e.g.
+41010) and the **HCI bridge** (0xB000 and up, e.g. 45057), which runs Bluetooth on the controller's main chip and
+brings Wii mode, the current Switch / Steam Bluetooth code and pairing over USB. Which one is offered depends on
+the controller firmware: if the Wireless page lists the part as **ESP32 HCI**, the controller can drive the
+bridge, and a module still on the baseband shows a **Recommended** update to the bridge (after it, pair the
+Switch and other Bluetooth hosts again once, because the module's Bluetooth address changes). A part listed as
+**ESP32** only takes the baseband; if such a module was flashed with the bridge, Bluetooth stays off until the
+baseband is reinstalled or the controller firmware is updated. Controllers with the RPI RM2 radio have no ESP32
+to update. The update itself always restarts the controller into update mode and writes three images
+(bootloader, partition table, app).
 
 - **WLAN dongle PIN** (`wireless.dongleKey`, 0000–9999): the controller and the WLAN dongle must use the **same**
   4-digit PIN. Pick one that differs from friends’ controllers nearby.

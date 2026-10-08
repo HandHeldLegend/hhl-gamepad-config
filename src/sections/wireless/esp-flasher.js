@@ -1,12 +1,13 @@
 /**
- * esp-flasher.js: Writes HOJA ESP32 baseband firmware with esptool-js.
+ * esp-flasher.js: Writes ESP32 wireless-module firmware with esptool-js.
  *
  * Port of the flashing half of hoja_esptool/src/app.js (the standalone "HOJA Baseband Updater"
- * hoja2 opened in a new tab). Same files, offsets, USB filter, baud and flash options:
+ * hoja2 opened in a new tab). Same offsets, USB filter, baud and flash options. The images come from
+ * the update channel (./channels.js: legacy baseband or HCI bridge), always all three:
  *
- *   bootloader.bin       @ 0x1000   ┐
- *   partition-table.bin  @ 0x8000   ├ from HOJA-ESP32-Baseband/master/build on GitHub
- *   ESP32.bin            @ 0x10000  ┘
+ *   bootloader.bin       @ 0x1000
+ *   partition-table.bin  @ 0x8000
+ *   <app>.bin            @ 0x10000   (ESP32.bin for the baseband, hoja_hci_bridge.bin for the bridge)
  *   connect → eraseFlash() → writeFlash({ flashSize/mode/freq: 'keep', compress: true })
  *
  * Two transports, like the standalone page's Serial/WebUSB switch:
@@ -17,15 +18,11 @@
  * same callbacks so the update dialog can be demonstrated.
  */
 import { CH34X_FILTER, Ch34xPort } from './ch34x-webusb.js';
-import { t, N_ } from '../../i18n/index.js';
+import { t } from '../../i18n/index.js';
+import { CHANNELS } from './channels.js';
 
-const FW_BASE = 'https://raw.githubusercontent.com/HandHeldLegend/HOJA-ESP32-Baseband/master/build';
-/** name: English, for the esptool-style log; label: English source of the in-sentence name shown to users (t()). */
-export const BASEBAND_IMAGES = Object.freeze([
-  { name: 'Bootloader', label: N_('bootloader'), url: `${FW_BASE}/bootloader/bootloader.bin`, address: 0x1000 },
-  { name: 'Partition table', label: N_('partition table'), url: `${FW_BASE}/partition_table/partition-table.bin`, address: 0x8000 },
-  { name: 'Firmware', label: N_('firmware'), url: `${FW_BASE}/ESP32.bin`, address: 0x10000 },
-]);
+/** Legacy baseband images (name: English, for the esptool-style log; label: translated where shown). */
+export const BASEBAND_IMAGES = CHANNELS.legacy.images;
 
 /** The baseband images are built for the original ESP32 (sdkconfig CONFIG_IDF_TARGET="esp32"). */
 const EXPECTED_CHIP = 'ESP32';
@@ -79,16 +76,16 @@ function toBinaryString(buf) {
 }
 
 /**
- * Download the three baseband images. The dialog does this *before* switching the controller
+ * Download the three images of a channel. The dialog does this *before* switching the controller
  * into update mode, so an offline browser fails early instead of leaving the controller stuck.
- * @param {{onProgress?: (done:number, total:number, label:string)=>void, simulate?: boolean}} [o]
+ * @param {{images?: Array, onProgress?: (done:number, total:number, label:string)=>void, simulate?: boolean}} [o]
  *   label: the image's English label (translate with t()); '' when everything is downloaded.
  * @returns {Promise<Array<{name:string, address:number, data:string, size:number}>>}
  */
-export async function downloadBasebandImages({ onProgress, simulate = false } = {}) {
+export async function downloadBasebandImages({ images = BASEBAND_IMAGES, onProgress, simulate = false } = {}) {
   const out = [];
-  for (const [i, img] of BASEBAND_IMAGES.entries()) {
-    onProgress?.(i, BASEBAND_IMAGES.length, img.label);
+  for (const [i, img] of images.entries()) {
+    onProgress?.(i, images.length, img.label);
     if (simulate) {
       await sleep(250);
       out.push({ ...img, data: '', size: [24576, 3072, 1048576][i] });
@@ -100,7 +97,7 @@ export async function downloadBasebandImages({ onProgress, simulate = false } = 
     if (!buf.byteLength) throw new Error(t('The downloaded {file} is empty.', { file: t(img.label) }));
     out.push({ ...img, data: toBinaryString(buf), size: buf.byteLength });
   }
-  onProgress?.(BASEBAND_IMAGES.length, BASEBAND_IMAGES.length, '');
+  onProgress?.(images.length, images.length, '');
   return out;
 }
 

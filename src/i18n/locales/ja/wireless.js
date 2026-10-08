@@ -126,4 +126,16 @@ export default {
   "Only controllers that support the Raspberry Pi WLAN dongle use this. The PIN keeps your dongle from pairing with someone else’s controller nearby. Leading zeros count: 0420 is stored as 420.": "Raspberry PiのWLANドングルに対応したコントローラーでのみ使用します。PINにより、ドングルが近くにある他人のコントローラーとペアリングするのを防ぎます。先頭のゼロも有効です（0420は420として保存されます）。",
   // ---- Wii mode ----
   "The Wii console paired in Wii mode.": "WiiモードでペアリングしたWii本体です。",
+  "The HCI bridge firmware is recommended for this controller. It unlocks Wii mode and the newer Bluetooth features (current Switch and Steam modes, pairing over USB).": "このコントローラーにはHCI bridgeファームウェアをおすすめします。Wiiモードと新しいBluetooth機能（最新のSwitchモード・Steamモード、USB経由のペアリング）が使えるようになります。",
+  "Afterwards, pair the Switch and any other Bluetooth hosts again once: the module’s Bluetooth address changes.": "更新後、Switchやその他のBluetooth接続先ともう一度ペアリングしてください。モジュールのBluetoothアドレスが変わります。",
+  "HOJA baseband": "HOJA baseband",
+  "HCI bridge": "HCI bridge",
+  "Recommended": "おすすめ",
+  "Install HCI bridge": "HCI bridgeをインストール",
+  "Install HCI bridge firmware": "HCI bridgeファームウェアのインストール",
+  "Pair again.": "再ペアリングが必要です。",
+  "The module’s Bluetooth address changed. Pair the Switch and any other Bluetooth hosts again once.": "モジュールのBluetoothアドレスが変わりました。Switchやその他のBluetooth接続先ともう一度ペアリングしてください。",
+  "Recommended wireless module update": "おすすめのワイヤレスモジュール更新",
+  "This module runs the HCI bridge firmware, which this controller firmware can’t use, so Bluetooth is off. Update the controller firmware, or install the HOJA baseband here.": "このモジュールにはHCI bridgeファームウェアが入っていますが、このコントローラーのファームウェアでは使えないため、Bluetoothが無効になっています。コントローラーのファームウェアを更新するか、ここでHOJA basebandをインストールしてください。",
+  "Install HOJA baseband": "HOJA basebandをインストール",
 };

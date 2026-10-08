@@ -1162,7 +1162,7 @@ export default {
      "name": "wii_supported",
      "offset": 55,
      "type": "u8",
-     "doc": "1 when Wii console mode is available (RM2 Bluetooth HAL)"
+     "doc": "1 when Wii console mode is available (BTstack Bluetooth)"
     }
    ]
   },

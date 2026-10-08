@@ -21,7 +21,6 @@ import { decodeText } from './struct.js';
 import { N_ } from '../i18n/index.js'; // attention texts are translated where displayed
 
 const WRITE_DEBOUNCE_MS = 120;
-const BASEBAND_MANIFEST = 'https://raw.githubusercontent.com/HandHeldLegend/HOJA-ESP32-Baseband/master/manifest.json';
 
 /** IMU config block version that added imu_mode_disable_mask (per-mode motion on/off). */
 export const IMU_MODE_MASK_VERSION = 0x13;
@@ -239,27 +238,13 @@ class Session extends EventTarget {
     if (this.caps.analog && !device.config.analog.analog_calibration_set) next.joysticks = { level: 'warn', text: N_('Joysticks need calibration') };
 
     if (this.caps.externalBaseband) {
-      const latest = await latestBasebandVersion();
-      if (latest && device.static.bluetooth.external_version_number < latest) {
-        next.wireless = { level: 'info', text: N_('Wireless module update available') };
-      }
+      const { resolveModuleUpdate } = await import('../sections/wireless/channels.js');
+      const u = await resolveModuleUpdate(device.static.bluetooth);
+      if (u.migrate) next.wireless = { level: 'info', text: N_('Recommended wireless module update') };
+      else if (u.available) next.wireless = { level: 'info', text: N_('Wireless module update available') };
     }
     this.attention = next;
     this.#emit('attention', next);
-  }
-}
-
-let basebandCache = null;
-export async function latestBasebandVersion() {
-  if (basebandCache != null) return basebandCache;
-  try {
-    const res = await fetch(BASEBAND_MANIFEST, { cache: 'no-store' });
-    if (!res.ok) return null;
-    const data = await res.json();
-    basebandCache = data.fw_version || null;
-    return basebandCache;
-  } catch {
-    return null; // offline
   }
 }
 
