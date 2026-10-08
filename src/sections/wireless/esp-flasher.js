@@ -27,6 +27,7 @@ import { Ch340Port } from './ch340-port.js';
 export const CH34X_FILTER = Object.freeze({ usbVendorId: 0x1a86, usbProductId: 0x7522 });
 import { t } from '../../i18n/index.js';
 import { CHANNELS } from './channels.js';
+import { isLinux } from '../../app/linux.js';
 
 /** Legacy baseband images (name: English, for the esptool-style log; label: translated where shown). */
 export const BASEBAND_IMAGES = CHANNELS.legacy.images;
@@ -36,6 +37,12 @@ const EXPECTED_CHIP = 'ESP32';
 const DEFAULT_BAUD = 115200;
 /** Give up on the ROM bootloader sync after this long (esptool's own retries take well under this). */
 const CONNECT_TIMEOUT_MS = 30000;
+/**
+ * After each reset esptool reads until the line goes quiet for 1 s before it syncs. A module that
+ * keeps printing (e.g. it booted its app instead of the ROM loader) never goes quiet, which hung the
+ * connect until CONNECT_TIMEOUT_MS. Cap that wait so esptool moves on to syncing and its next reset.
+ */
+const BOOT_DRAIN_MAX_MS = 2500;
 const ESPTOOL_URL = new URL('../../../vendor/esptool-js/esptool.js', import.meta.url).href;
 /**
  * The standalone updater always enabled esptool's packet tracing (hex dump of every USB packet to
@@ -50,6 +57,9 @@ export function availableTransports() {
   // reach the module's USB serial chip. Never offer Web Serial there.
   // Test override (not linked anywhere, desktop only): ?transport=serial or ?transport=usb forces one route.
   if (isAndroid()) return { serial: false, usb: !!navigator.usb, preferred: 'usb' };
+  // Desktop Linux: the kernel's ch341 driver owns the CH340 (it's /dev/ttyUSB0), and Chrome can't claim
+  // a USB interface a kernel driver holds ("Unable to claim interface"). Web Serial only.
+  if (isLinux() && navigator.serial) return { serial: true, usb: false, preferred: 'serial' };
   const force = new URLSearchParams(location.search).get('transport');
   if (force === 'serial' && navigator.serial) return { serial: true, usb: false, preferred: 'serial' };
   if (force === 'usb' && navigator.usb) return { serial: false, usb: true, preferred: 'usb' };
@@ -69,6 +79,23 @@ function isAndroid() {
   if (ch && (/Android/i.test(ch.platform || '') || ch.mobile)) return true;
   const touchFirst = navigator.maxTouchPoints > 0 && !!globalThis.matchMedia?.('(pointer: coarse)').matches;
   return /X11; Linux/.test(ua) && !/CrOS/.test(ua) && touchFirst;
+}
+
+/**
+ * Limit esptool's post-reset "read until quiet" loop (see BOOT_DRAIN_MAX_MS). A reset is a DTR/RTS
+ * change; the loop ends at the next write (the first sync). In between, reads time out once the cap
+ * has passed, exactly as if the line had gone quiet.
+ */
+function capBootDrain(transport) {
+  let since = 0;
+  const wrap = (name, fn) => { const orig = transport[name].bind(transport); transport[name] = (...a) => fn(orig, ...a); };
+  wrap('setDTR', (orig, v) => { since = Date.now(); return orig(v); });
+  wrap('setRTS', (orig, v) => { since = Date.now(); return orig(v); });
+  wrap('write', (orig, d) => { since = 0; return orig(d); });
+  wrap('read', (orig, ...a) => {
+    if (since && Date.now() - since > BOOT_DRAIN_MAX_MS) { since = 0; return Promise.reject(new Error('Timeout')); }
+    return orig(...a);
+  });
 }
 
 /** Baud override: the same `?baud=` URL parameter the standalone updater honored. */
@@ -193,9 +220,11 @@ export class EspFlasher {
     // Transport(device, tracing, enableSlipReader): SLIP reader off, as in the standalone updater.
     this.kind = kind;
     this.transport = new Transport(this.port, TRACE, false);
+    capBootDrain(this.transport);
     // Same options as the standalone updater. Note enableTracing overrides the Transport's tracing flag
     // (it did in the standalone updater too). Over WebUSB, esptool's debug log goes to Details for diagnosis.
-    const loader = new ESPLoader({ transport: this.transport, baudrate: this.baud, terminal, enableTracing: false, debugLogging: kind === 'usb' });
+    // esptool's debug lines (resets, sync attempts) go to Details on every route, for support logs.
+    const loader = new ESPLoader({ transport: this.transport, baudrate: this.baud, terminal, enableTracing: false, debugLogging: true });
     try {
       // esptool retries its sync for a while; if the module never answers, don't spin forever.
       let timer = 0;

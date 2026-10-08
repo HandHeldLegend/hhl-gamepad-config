@@ -147,4 +147,6 @@ export default {
   "Lights already pulsing orange?": "ライトがすでにオレンジに点滅していますか？",
   "Skip to connecting": "接続へ進む",
   "Didn’t connect? Try the other method. Serial uses the computer’s CH340 driver; USB talks to the chip directly.": "接続できませんでしたか？もう一方の方法を試してください。シリアルはパソコンのCH340ドライバーを使い、USBはチップと直接通信します。",
+  "Another driver is using the USB serial chip, so USB can’t reach it. Use the serial port instead.": "別のドライバーがUSBシリアルチップを使用しているため、USBでは接続できません。シリアルポートを使ってください。",
+  "On Linux, ModemManager can hold a new serial port for a few seconds after it appears. Wait a moment and try again, or stop it while updating: {command}. If the port won’t open, add your account to the dialout group.": "Linuxでは、新しいシリアルポートが現れてから数秒間ModemManagerがそのポートを占有することがあります。少し待ってからやり直すか、アップデート中は停止してください：{command}。ポートが開けない場合は、アカウントをdialoutグループに追加してください。",
 };

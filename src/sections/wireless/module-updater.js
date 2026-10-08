@@ -30,6 +30,7 @@ import { EspFlasher, availableTransports, baudFromUrl, downloadBasebandImages } 
 import { CHANNELS, familyOf } from './channels.js';
 import { LOCAL_UPDATER_URL, STANDALONE_UPDATER_URL, UPDATE_GUIDE_URL } from './info.js';
 import { t, N_, plural, fmt } from '../../i18n/index.js';
+import { isLinux } from '../../app/linux.js';
 
 /** How long to wait for the controller to drop off USB after the restart command. */
 const RESTART_TIMEOUT_MS = 6000;
@@ -201,6 +202,9 @@ function setNotice(node) {
 function errorText(err) {
   if (err?.name === 'NotFoundError') return t('No device was selected.');
   if (err?.name === 'SecurityError') return t('The browser blocked access to the device.');
+  if (/claimInterface|claim interface/i.test(err?.message || '')) {
+    return t('Another driver is using the USB serial chip, so USB can’t reach it. Use the serial port instead.');
+  }
   if (err?.name === 'NetworkError' || /failed to open/i.test(err?.message || '')) {
     return t('Couldn’t open the port. Close other apps or tabs using it (e.g. the standalone updater) and try again.');
   }
@@ -298,13 +302,13 @@ async function enterUpdateMode() {
 }
 
 /** Step 3: pick the serial device. */
-function showConnect(warning) {
+function showConnect(warning, hint = null) {
   run.mode = 'connect';
   paint(t('Connect to the wireless module'), run.transport === 'usb'
     ? t('When the controller’s lights pulse orange, press Connect and choose the USB device (usually “USB2.0-Ser!” or “USB Single Serial”). To cancel, just unplug the controller.')
     : t('When the controller’s lights pulse orange, press Connect and choose the USB serial device (usually “USB-SERIAL CH340” or “USB Single Serial”). To cancel, just unplug the controller.'));
   run.ui.versions.hidden = true;
-  setNotice(warning ? callout({ tone: 'yellow', text: warning }, run.connectFailed && run.ui.helpLinks()) : null);
+  setNotice(warning ? callout({ tone: 'yellow', text: warning }, hint && h('p.small', hint), run.connectFailed && run.ui.helpLinks()) : null);
   run.ui.progress.indeterminate(false);
   run.ui.progress.set(0, t('Ready to connect'));
   run.ui.progress.busy(false);
@@ -331,7 +335,9 @@ async function connectAndInstall() {
     log(t('Error: {message}', { message: err?.message || err }));
     // Picker closed without a choice isn't a failed connection; anything else offers the other method.
     if (err?.name !== 'NotFoundError') run.connectFailed = true;
-    showConnect(errorText(err));
+    showConnect(errorText(err), run.connectFailed && isLinux() && run.transport === 'serial'
+      ? t('On Linux, ModemManager can hold a new serial port for a few seconds after it appears. Wait a moment and try again, or stop it while updating: {command}. If the port won’t open, add your account to the dialout group.', { command: 'sudo systemctl stop ModemManager' })
+      : null);
     return;
   }
   await install();

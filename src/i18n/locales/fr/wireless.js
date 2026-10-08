@@ -144,4 +144,6 @@ export default {
   "Lights already pulsing orange?": "Les voyants clignotent déjà en orange ?",
   "Skip to connecting": "Passer à la connexion",
   "Didn’t connect? Try the other method. Serial uses the computer’s CH340 driver; USB talks to the chip directly.": "Pas de connexion ? Essayez l’autre méthode. Série utilise le pilote CH340 de l’ordinateur ; USB communique directement avec la puce.",
+  "Another driver is using the USB serial chip, so USB can’t reach it. Use the serial port instead.": "Un autre pilote utilise la puce série USB : l’USB ne peut pas y accéder. Utilisez plutôt le port série.",
+  "On Linux, ModemManager can hold a new serial port for a few seconds after it appears. Wait a moment and try again, or stop it while updating: {command}. If the port won’t open, add your account to the dialout group.": "Sous Linux, ModemManager peut occuper un nouveau port série pendant quelques secondes après son apparition. Patientez un moment et réessayez, ou arrêtez-le pendant la mise à jour : {command}. Si le port ne s’ouvre pas, ajoutez votre compte au groupe dialout.",
 };
