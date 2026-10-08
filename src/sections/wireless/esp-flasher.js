@@ -35,11 +35,26 @@ const ESPTOOL_URL = new URL('../../../vendor/esptool-js/esptool.js', import.meta
  */
 const TRACE = new URLSearchParams(location.search).has('debug');
 
-/** Which transports this browser can use. Android has WebUSB but no (USB) Web Serial. */
+/** Which transports this browser can use. Android: WebUSB only. */
 export function availableTransports() {
-  const android = /Android/i.test(navigator.userAgent);
-  const serial = !!navigator.serial && !android;
+  // Android always uses WebUSB (the CH34x driver in ./ch34x-webusb.js): Android's Web Serial doesn't
+  // reach the module's USB serial chip. Never offer Web Serial there.
+  const serial = !!navigator.serial && !isAndroid();
   return { serial, usb: !!navigator.usb, preferred: serial ? 'serial' : 'usb' };
+}
+
+/**
+ * Android, also when the browser hides it: "Desktop site" mode (the default on many tablets) reports
+ * a Linux desktop user agent, so also trust User-Agent Client Hints, and treat a touch-first
+ * "X11; Linux" browser as Android (desktop Linux with Chrome is mouse-first; ChromeOS says CrOS).
+ */
+function isAndroid() {
+  const ua = navigator.userAgent || '';
+  if (/Android/i.test(ua)) return true;
+  const ch = navigator.userAgentData;
+  if (ch && (/Android/i.test(ch.platform || '') || ch.mobile)) return true;
+  const touchFirst = navigator.maxTouchPoints > 0 && !!globalThis.matchMedia?.('(pointer: coarse)').matches;
+  return /X11; Linux/.test(ua) && !/CrOS/.test(ua) && touchFirst;
 }
 
 /** Baud override: the same `?baud=` URL parameter the standalone updater honored. */
