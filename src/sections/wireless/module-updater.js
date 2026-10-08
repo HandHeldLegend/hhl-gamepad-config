@@ -318,9 +318,11 @@ async function install() {
       p.indeterminate(true, t('Downloading firmware…'));
       run.images = await downloadBasebandImages({ images: run.channel.images, simulate: run.demo, onProgress: (d, n, label) => label && log(t('Downloading {file}…', { file: t(label) })) });
     }
-    p.indeterminate(true, t('Erasing (this can take 30 seconds)…'));
-    log(t('Erasing…'));
-    await run.flasher.erase();
+    if (run.flasher.eraseFirst) {
+      p.indeterminate(true, t('Erasing (this can take 30 seconds)…'));
+      log(t('Erasing…'));
+      await run.flasher.erase();
+    }
     p.set(0, t('Writing…'));
     p.busy(true);
     log(t('Flashing…'));

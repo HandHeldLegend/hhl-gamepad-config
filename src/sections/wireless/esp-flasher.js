@@ -12,12 +12,17 @@
  *
  * Two transports, like the standalone page's Serial/WebUSB switch:
  *   'serial'  Web Serial (desktop Chrome/Edge, uses the OS CH340 driver)
- *   'usb'     WebUSB CH34x driver from ./ch34x-webusb.js (Android, or when no driver is installed)
+ *   'usb'     WebUSB: Mitch's CH34x driver (./nice-serial.js, vendored unchanged from the standalone
+ *             updater). Always used on Android, driven exactly like the standalone updater did (Transport
+ *             tracing on, no separate full-chip erase).
  *
  * In demo mode (`simulate: true`) nothing touches USB or the network; a timed fake run drives the
  * same callbacks so the update dialog can be demonstrated.
  */
-import { CH34X_FILTER, Ch34xPort } from './ch34x-webusb.js';
+import { serial as niceSerial } from './nice-serial.js';
+
+/** USB ids of the CH340 bridge used in HOJA controllers (same filter as the standalone updater). */
+export const CH34X_FILTER = Object.freeze({ usbVendorId: 0x1a86, usbProductId: 0x7522 });
 import { t } from '../../i18n/index.js';
 import { CHANNELS } from './channels.js';
 
@@ -37,7 +42,7 @@ const TRACE = new URLSearchParams(location.search).has('debug');
 
 /** Which transports this browser can use. Android: WebUSB only. */
 export function availableTransports() {
-  // Android always uses WebUSB (the CH34x driver in ./ch34x-webusb.js): Android's Web Serial doesn't
+  // Android always uses WebUSB (the CH34x driver in ./nice-serial.js): Android's Web Serial doesn't
   // reach the module's USB serial chip. Never offer Web Serial there.
   const serial = !!navigator.serial && !isAndroid();
   return { serial, usb: !!navigator.usb, preferred: serial ? 'serial' : 'usb' };
@@ -160,7 +165,10 @@ export class EspFlasher {
     }
 
     // 1. Pick the port (user gesture). Canceling the picker throws a NotFoundError.
-    if (kind === 'usb') this.port = await Ch34xPort.request();
+    if (kind === 'usb') {
+      if (!navigator.usb) throw new Error(t('WebUSB is not available in this browser.'));
+      this.port = await niceSerial.requestPort({ filters: [CH34X_FILTER] });
+    }
     else {
       if (!navigator.serial) throw new Error(t('Web Serial isn’t available in this browser. Try the USB option.'));
       this.port = await navigator.serial.requestPort({ filters: [CH34X_FILTER] });
@@ -170,8 +178,10 @@ export class EspFlasher {
     installBufferShim();
     const { ESPLoader, Transport } = await import(ESPTOOL_URL);
     const terminal = { clean() {}, writeLine: (s) => this.log(s), write: (s) => this.log(s) };
-    // Transport(device, tracing, enableSlipReader): SLIP reader off, as in the standalone updater.
-    this.transport = new Transport(this.port, TRACE, false);
+    // Transport(device, tracing, enableSlipReader): SLIP reader off, as in the standalone updater. Over
+    // WebUSB, tracing stays on exactly like the standalone updater (the setup that works on Android).
+    this.kind = kind;
+    this.transport = new Transport(this.port, kind === 'usb' ? true : TRACE, false);
     const loader = new ESPLoader({ transport: this.transport, baudrate: this.baud, terminal, enableTracing: false });
     try {
       this.chip = await loader.main();
@@ -198,6 +208,14 @@ export class EspFlasher {
     }
     if (!this.loader) throw new Error(t('Not connected to the wireless module.'));
     await this.loader.eraseFlash();
+  }
+
+  /**
+   * Whether the install should run a separate full-chip erase first. Not over WebUSB: the standalone
+   * updater (which works on Android) went straight to writing; writeFlash erases each region it writes.
+   */
+  get eraseFirst() {
+    return this.kind !== 'usb';
   }
 
   /**
