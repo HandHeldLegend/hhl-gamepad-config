@@ -29,13 +29,14 @@ import { isDemo, startDemo } from '../../device/mock.js';
 import { EspFlasher, availableTransports, baudFromUrl, downloadBasebandImages } from './esp-flasher.js';
 import { CHANNELS, familyOf } from './channels.js';
 import { LOCAL_UPDATER_URL, STANDALONE_UPDATER_URL, UPDATE_GUIDE_URL } from './info.js';
-import { t, plural, fmt } from '../../i18n/index.js';
+import { t, N_, plural, fmt } from '../../i18n/index.js';
 
 /** How long to wait for the controller to drop off USB after the restart command. */
 const RESTART_TIMEOUT_MS = 6000;
 const LOG_MAX_LINES = 400;
 
 const STEP_OF = { intro: 1, downloading: 1, restarting: 2, connect: 3, connecting: 3, installing: 4, done: 4 };
+const STEP_LABELS = [N_('Download'), N_('Restart'), N_('Connect'), N_('Install')];
 const BUSY = new Set(['downloading', 'restarting', 'connecting', 'installing']);
 
 /** The one running update (null when the dialog is closed). */
@@ -66,13 +67,15 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
     chooseChannel,
     images: null,
     transport: transports.preferred,
+    transports,
+    connectFailed: false, // the connection method choice only appears after a failed attempt
     flasher: null,
     stopWaiting: null,
   };
   run.flasher = new EspFlasher({ log, simulate: demo, baud: baudFromUrl(params) });
 
   // ---- Static dialog parts ----------------------------------------------------------------
-  const steps = h('div.steps', [1, 2, 3, 4].map(() => h('span.step')));
+  const steps = h('div.steps.wl-steps', STEP_LABELS.map((label) => h('div.wl-step', h('span.step'), h('span.wl-step-label', t(label)))));
   const guide = h('p.muted');
   const versions = h('div.wl-versions');
   const notice = h('div');
@@ -91,11 +94,15 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
   const progress = progressBar({ message: t('Ready') });
   // The app's own log lines are translated; esptool's output (and the simulated copy of it) stays English.
   const logPre = h('pre.wl-log', { 'aria-live': 'off', 'data-empty': t('Nothing yet.') });
-  const logBox = h('details.wl-log-box', h('summary', t('Details')), logPre);
-  const help = h('div.wl-help-links',
+  // Other ways to update: shown with errors, and always inside Details.
+  const helpLinks = () => h('div.wl-help-links',
     linkButton(t('Update guide'), UPDATE_GUIDE_URL),
     linkButton(t('Standalone updater'), STANDALONE_UPDATER_URL),
     linkButton(t('Windows updater (.zip)'), LOCAL_UPDATER_URL, t('Command-line updater for Windows driver or connection problems')));
+  const logBox = h('details.wl-log-box', h('summary', t('Details')), logPre, helpLinks());
+  // Intro: a quiet way in for a controller that's already in update mode.
+  const skip = h('p.small.muted.wl-skip', t('Lights already pulsing orange?'), ' ',
+    h('button.link-btn', { type: 'button', onclick: () => run && showConnect() }, t('Skip to connecting')));
 
   if (transports.serial && transports.usb) {
     transportRow.append(h('div.field-label', t('Connect using')),
@@ -104,14 +111,14 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
         value: run.transport, tone: 'blue', ariaLabel: t('Connection method'),
         onChange: (v) => { if (run) run.transport = v; },
       }),
-      h('p.small.muted', t('Serial works with the usual CH340 driver. Try USB if the serial device doesn’t show up.')));
+      h('p.small.muted', t('Didn’t connect? Try the other method. Serial uses the computer’s CH340 driver; USB talks to the chip directly.')));
   }
 
   const dlg = openDialog({
     title: t('Update wireless module'), icon: 'wireless', tone: 'blue', dismissible: false,
-    body: [steps, guide, versions, notice, channelRow, transportRow, progress, logBox, help],
+    body: [steps, guide, skip, versions, notice, channelRow, transportRow, progress, logBox],
   });
-  run.ui = { dlg, steps, guide, versions, notice, channelRow, transportRow, progress, logPre, logBox };
+  run.ui = { dlg, steps, guide, skip, versions, notice, channelRow, transportRow, progress, logPre, logBox, helpLinks };
   dlg.result.then(() => cleanup());
 
   // startAt 'connect': the controller is already in update mode (e.g. opened from the Firmware page
@@ -147,10 +154,15 @@ function paint(title, text, { tone = 'blue', icon = 'wireless' } = {}) {
   u.dlg.setIcon(icon, tone);
   u.guide.textContent = text;
   const n = STEP_OF[run.mode] || 0;
-  [...u.steps.children].forEach((s, i) => {
-    s.dataset.state = run.mode === 'done' || i + 1 < n ? 'done' : i + 1 === n ? 'active' : '';
+  [...u.steps.children].forEach((col, i) => {
+    const state = run.mode === 'done' || i + 1 < n ? 'done' : i + 1 === n ? 'active' : '';
+    col.dataset.state = state;
+    col.querySelector('.step').dataset.state = state;
   });
-  u.transportRow.hidden = !(run.mode === 'connect' || run.mode === 'connecting');
+  u.skip.hidden = run.mode !== 'intro';
+  // Nothing to show before work starts: the bar appears once something is running (or finished).
+  u.progress.hidden = run.mode === 'intro' || run.mode === 'connect';
+  u.transportRow.hidden = !(run.connectFailed && (run.mode === 'connect' || run.mode === 'connecting'));
   u.transportRow.querySelectorAll('button').forEach((b) => { b.disabled = run.mode === 'connecting'; });
 }
 
@@ -225,7 +237,6 @@ function showIntro(errorMsg) {
   run.ui.progress.set(0, t('Ready'));
   run.ui.progress.busy(false);
   actions({
-    secondary: { label: t('Already in update mode'), run: () => showConnect() },
     primary: { label: upToDate ? t('Reinstall') : t('Start update'), icon: 'download', run: startUpdate },
   });
 }
@@ -293,7 +304,7 @@ function showConnect(warning) {
     ? t('When the controller’s lights pulse orange, press Connect and choose the USB device (usually “USB2.0-Ser!” or “USB Single Serial”). To cancel, just unplug the controller.')
     : t('When the controller’s lights pulse orange, press Connect and choose the USB serial device (usually “USB-SERIAL CH340” or “USB Single Serial”). To cancel, just unplug the controller.'));
   run.ui.versions.hidden = true;
-  setNotice(warning ? callout({ tone: 'yellow', text: warning }) : null);
+  setNotice(warning ? callout({ tone: 'yellow', text: warning }, run.connectFailed && run.ui.helpLinks()) : null);
   run.ui.progress.indeterminate(false);
   run.ui.progress.set(0, t('Ready to connect'));
   run.ui.progress.busy(false);
@@ -318,6 +329,8 @@ async function connectAndInstall() {
     console.error('[wireless] connect failed', err);
     if (!run) return;
     log(t('Error: {message}', { message: err?.message || err }));
+    // Picker closed without a choice isn't a failed connection; anything else offers the other method.
+    if (err?.name !== 'NotFoundError') run.connectFailed = true;
     showConnect(errorText(err));
     return;
   }
@@ -356,7 +369,7 @@ async function install() {
     p.busy(false);
     run.mode = 'connect';
     paint(t('Install didn’t finish'), t('Nothing is broken yet: the module can always be rewritten while in update mode. Try again; if it keeps failing, unplug the controller, plug it back in and start over.'), { tone: 'red', icon: 'warning' });
-    setNotice(callout({ tone: 'red', text: errorText(err) }));
+    setNotice(callout({ tone: 'red', text: errorText(err) }, run.ui.helpLinks()));
     actions({ primary: { label: t('Try again'), icon: 'refresh', run: () => (run.flasher.connected ? install() : connectAndInstall()) } });
     return;
   }

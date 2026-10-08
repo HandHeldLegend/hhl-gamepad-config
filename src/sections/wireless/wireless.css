@@ -25,6 +25,18 @@
 
 /* ---- Update dialog ------------------------------------------------------------------- */
 .wl-versions .kv { font-size: var(--text-sm); }
+.wl-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); align-items: start; }
+.wl-step { display: grid; gap: 6px; }
+.wl-step .step { display: block; width: 100%; }
+.wl-step-label { font-size: var(--text-xs, 0.75rem); font-weight: 600; color: var(--text-faint, var(--text-muted)); }
+.wl-step[data-state="active"] .wl-step-label { color: var(--text); }
+.wl-step[data-state="done"] .wl-step-label { color: var(--text-muted); }
+.wl-skip { margin: calc(var(--space-2) * -1) 0 0; }
+.wl-skip .link-btn { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--accent-text, var(--blue));
+  text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.wl-skip .link-btn:hover { color: var(--text); }
+.wl-log-box .wl-help-links { margin: var(--space-2) 0 0 calc(var(--space-3) * -1); }
+.callout .wl-help-links { margin: var(--space-1) 0 0 calc(var(--space-3) * -1); }
 .wl-transport { display: flex; flex-direction: column; gap: var(--space-2); }
 .wl-transport p { margin: 0; }
 .wl-transport .seg { max-width: 100%; }

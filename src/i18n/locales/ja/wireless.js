@@ -143,4 +143,8 @@ export default {
   "The module answered but didn’t report a valid firmware version (raw value {raw}). Installing its firmware again usually fixes this.": "モジュールは応答しましたが、有効なファームウェアバージョンを報告しませんでした（生の値 {raw}）。通常はファームウェアを再インストールすると直ります。",
   "The wireless module didn’t report its firmware version. Install the {name} firmware to fix it.": "ワイヤレスモジュールがファームウェアのバージョンを報告しませんでした。{name}ファームウェアをインストールすると直ります。",
   "Install {name}": "{name}をインストール",
+  "Download": "ダウンロード",
+  "Lights already pulsing orange?": "ライトがすでにオレンジに点滅していますか？",
+  "Skip to connecting": "接続へ進む",
+  "Didn’t connect? Try the other method. Serial uses the computer’s CH340 driver; USB talks to the chip directly.": "接続できませんでしたか？もう一方の方法を試してください。シリアルはパソコンのCH340ドライバーを使い、USBはチップと直接通信します。",
 };

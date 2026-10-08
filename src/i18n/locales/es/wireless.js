@@ -140,4 +140,8 @@ export default {
   "The module answered but didn’t report a valid firmware version (raw value {raw}). Installing its firmware again usually fixes this.": "El módulo respondió pero no informó una versión de firmware válida (valor sin procesar {raw}). Volver a instalar su firmware suele solucionarlo.",
   "The wireless module didn’t report its firmware version. Install the {name} firmware to fix it.": "El módulo inalámbrico no informó su versión de firmware. Instala el firmware {name} para solucionarlo.",
   "Install {name}": "Instalar {name}",
+  "Download": "Descargar",
+  "Lights already pulsing orange?": "¿Las luces ya parpadean en naranja?",
+  "Skip to connecting": "Ir directo a conectar",
+  "Didn’t connect? Try the other method. Serial uses the computer’s CH340 driver; USB talks to the chip directly.": "¿No se conectó? Prueba el otro método. Serie usa el controlador CH340 del equipo; USB habla directamente con el chip.",
 };

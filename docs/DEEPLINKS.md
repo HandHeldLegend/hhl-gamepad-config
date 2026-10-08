@@ -13,15 +13,16 @@ Base URL: https://handheldlegend.github.io/hoja3/
 https://handheldlegend.github.io/hoja3/#/<page>?<param>=<value>&…
 ```
 
+- What’s new (changes=input): <https://handheldlegend.github.io/hoja3/#/whats-new?changes=input>
 - Input (mode=switch, tab=remap): <https://handheldlegend.github.io/hoja3/#/input?mode=switch&tab=remap>
 - Joysticks (stick=left, tab=calibrate): <https://handheldlegend.github.io/hoja3/#/joysticks?stick=left&tab=calibrate>
-- Snapback (stick=left): <https://handheldlegend.github.io/hoja3/#/snapback?stick=left>
 
 Add `?demo` before the `#` to try any page with a simulated controller, e.g. <https://handheldlegend.github.io/hoja3/?demo#/joysticks>.
 
 | Route | Page | What it’s for | Needs | Deep-link params |
 |---|---|---|---|---|
 | `#/` | Home | Connect a controller and see its status at a glance. | – | `connect`: Set to 1 to open the controller picker immediately (needs a click in most browsers). |
+| `#/whats-new` | What’s new | Firmware changes, newest first. With a controller connected, shows what its update brings. | – | `changes`: Changelog section to show: input \| joysticks \| snapback \| motion \| rgb \| haptics \| battery \| wireless \| modes \| system |
 | `#/input` | Input | Remap buttons per output mode, analog trigger thresholds and rapid trigger. | Controller | `mode`: Output profile to edit (wii-* only on controllers with Wii mode): switch \| xinput \| snes \| n64 \| gamecube \| sinput \| wii-nunchuk (alias upright) \| wii-sideways \| wii-classic<br>`input`: Input to open in the editor: INPUT_CODE name (e.g. south, lt_analog), the build’s input name, or its number<br>`tab`: remap \| calibrate |
 | `#/joysticks` | Joysticks | Calibrate sticks, set deadzones, response curve, invert axes and angle maps. | Controller + analog | `stick`: left \| right<br>`tab`: Sub-view to open: calibrate \| sensitivity \| angles \| axes (deadzone = old alias) |
 | `#/snapback` | Snapback | Tune the snapback filter that removes stick "bounce" when you let go. | Controller + analog | `stick`: left \| right |
@@ -33,7 +34,6 @@ Add `?demo` before the `#` to try any page with a simulated controller, e.g. <ht
 | `#/gamepad` | Gamepad | Default mode, Switch body colors, MAC address and device info. | Controller | – |
 | `#/user` | User | Your player name stored on the controller. | Controller | – |
 | `#/firmware` | Firmware | Update firmware, install HOJA on a blank board, or recover a controller. | – | `build`: Build id to preselect for install (e.g. gcu_2, progcc_3.2) |
-| `#/whats-new` | What’s new | Firmware changes, newest first. With a controller connected, shows what its update brings. | – | `changes`: Changelog section to show: input \| joysticks \| snapback \| motion \| rgb \| haptics \| battery \| wireless \| modes \| system |
 | `#/arena` | Arena | Gameplay testing arena: try your connected controller in a platform-fighter sandbox. | Controller | `tab`: play \| help<br>`mode`: free \| targets (help also opens that tab) |
 | `#/platformer` | 3D Platformer | Run, jump, long jump, ground pound and wall kick around a small 3D test course with your controller. | Controller | `tab`: play \| help |
 | `#/settings` | App settings | Theme (dark, light or system), motion, install and updates. | – | `theme`: dark \| light \| system |

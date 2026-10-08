@@ -37,6 +37,15 @@ export const SECTIONS = [
     load: () => import('./home/view.js'),
   },
   {
+    id: 'whats-new', title: 'What’s new', icon: 'sparkle', tone: 'lavender', group: 'start', device: false, requires: null,
+    summary: 'Firmware changes, newest first. With a controller connected, shows what its update brings.',
+    keywords: ['changelog', 'what’s new', 'release notes', 'changes', 'new features', 'fixes'],
+    params: {
+      changes: 'Changelog section to show: input | joysticks | snapback | motion | rgb | haptics | battery | wireless | modes | system',
+    },
+    load: () => import('./whats-new/view.js'),
+  },
+  {
     id: 'input', title: 'Input', icon: 'input', tone: 'lavender', group: 'controls', device: true, requires: null,
     summary: 'Remap buttons per output mode, analog trigger thresholds and rapid trigger.',
     keywords: ['remap', 'mapping', 'buttons', 'trigger', 'analog trigger', 'hall effect', 'tmr', 'rapid trigger', 'hover', 'calibrate triggers', 'wii', 'nunchuk'],
@@ -108,15 +117,6 @@ export const SECTIONS = [
       build: 'Build id to preselect for install (e.g. gcu_2, progcc_3.2)',
     },
     load: () => import('./firmware/view.js'),
-  },
-  {
-    id: 'whats-new', title: 'What’s new', icon: 'sparkle', tone: 'lavender', group: 'device', device: false, requires: null,
-    summary: 'Firmware changes, newest first. With a controller connected, shows what its update brings.',
-    keywords: ['changelog', 'what’s new', 'release notes', 'changes', 'new features', 'fixes'],
-    params: {
-      changes: 'Changelog section to show: input | joysticks | snapback | motion | rgb | haptics | battery | wireless | modes | system',
-    },
-    load: () => import('./whats-new/view.js'),
   },
   {
     id: 'arena', title: 'Arena', icon: 'arena', tone: 'red', group: 'play', device: true, requires: null, beta: true,

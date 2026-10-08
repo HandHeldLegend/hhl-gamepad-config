@@ -14,7 +14,7 @@ Key facts:
 
 ## Deep links
 
-- Open a page: `https://handheldlegend.github.io/hoja3/#/<page>[?param=value&…]`, e.g. `https://handheldlegend.github.io/hoja3/#/input?mode=switch&tab=remap`, `https://handheldlegend.github.io/hoja3/#/joysticks?stick=left&tab=calibrate`, `https://handheldlegend.github.io/hoja3/#/snapback?stick=left`
+- Open a page: `https://handheldlegend.github.io/hoja3/#/<page>[?param=value&…]`, e.g. `https://handheldlegend.github.io/hoja3/#/whats-new?changes=input`, `https://handheldlegend.github.io/hoja3/#/input?mode=switch&tab=remap`, `https://handheldlegend.github.io/hoja3/#/joysticks?stick=left&tab=calibrate`
 - Propose settings: `https://handheldlegend.github.io/hoja3/#/apply?<setting.key>=<value>&…&then=<page>`. Keys come from the catalog below; values are validated (numbers are clamped to the step, enums accept the value, label or an alias, booleans accept on/off/true/false/1/0, colors are #rrggbb). `then` picks the page shown afterwards. The user sees a confirmation dialog before anything is written.
 - Example (Set haptics.intensity to 50% and haptics.triggerFeedback on): https://handheldlegend.github.io/hoja3/#/apply?haptics.intensity=50&haptics.triggerFeedback=on&then=haptics&source=assistant
 - Example (Set rgb.mode to Static): https://handheldlegend.github.io/hoja3/#/apply?rgb.mode=static&then=rgb&source=assistant
@@ -25,6 +25,7 @@ Key facts:
 | Route | Page | What it’s for | Needs | Deep-link params |
 |---|---|---|---|---|
 | `#/` | Home | Connect a controller and see its status at a glance. | – | `connect`: Set to 1 to open the controller picker immediately (needs a click in most browsers). |
+| `#/whats-new` | What’s new | Firmware changes, newest first. With a controller connected, shows what its update brings. | – | `changes`: Changelog section to show: input \| joysticks \| snapback \| motion \| rgb \| haptics \| battery \| wireless \| modes \| system |
 | `#/input` | Input | Remap buttons per output mode, analog trigger thresholds and rapid trigger. | Controller | `mode`: Output profile to edit (wii-* only on controllers with Wii mode): switch \| xinput \| snes \| n64 \| gamecube \| sinput \| wii-nunchuk (alias upright) \| wii-sideways \| wii-classic<br>`input`: Input to open in the editor: INPUT_CODE name (e.g. south, lt_analog), the build’s input name, or its number<br>`tab`: remap \| calibrate |
 | `#/joysticks` | Joysticks | Calibrate sticks, set deadzones, response curve, invert axes and angle maps. | Controller + analog | `stick`: left \| right<br>`tab`: Sub-view to open: calibrate \| sensitivity \| angles \| axes (deadzone = old alias) |
 | `#/snapback` | Snapback | Tune the snapback filter that removes stick "bounce" when you let go. | Controller + analog | `stick`: left \| right |
@@ -36,7 +37,6 @@ Key facts:
 | `#/gamepad` | Gamepad | Default mode, Switch body colors, MAC address and device info. | Controller | – |
 | `#/user` | User | Your player name stored on the controller. | Controller | – |
 | `#/firmware` | Firmware | Update firmware, install HOJA on a blank board, or recover a controller. | – | `build`: Build id to preselect for install (e.g. gcu_2, progcc_3.2) |
-| `#/whats-new` | What’s new | Firmware changes, newest first. With a controller connected, shows what its update brings. | – | `changes`: Changelog section to show: input \| joysticks \| snapback \| motion \| rgb \| haptics \| battery \| wireless \| modes \| system |
 | `#/arena` | Arena | Gameplay testing arena: try your connected controller in a platform-fighter sandbox. | Controller | `tab`: play \| help<br>`mode`: free \| targets (help also opens that tab) |
 | `#/platformer` | 3D Platformer | Run, jump, long jump, ground pound and wall kick around a small 3D test course with your controller. | Controller | `tab`: play \| help |
 | `#/settings` | App settings | Theme (dark, light or system), motion, install and updates. | – | `theme`: dark \| light \| system |
