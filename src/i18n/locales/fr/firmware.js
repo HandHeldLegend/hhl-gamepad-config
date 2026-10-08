@@ -45,4 +45,7 @@ export default {
   "Wireless module (ESP32)": "Module sans fil (ESP32)",
   "For a controller that’s already in update mode (lights pulsing orange).": "Pour une manette déjà en mode mise à jour (voyants clignotant en orange).",
   "Pick the firmware that matches the controller’s firmware: the HCI bridge for current controller firmware (the Wireless page lists the part as “ESP32 HCI”), the HOJA baseband for older firmware.": "Choisissez le firmware adapté à celui de la manette : le HCI bridge pour le firmware actuel (la page Sans fil indique la pièce « ESP32 HCI »), le HOJA baseband pour un firmware plus ancien.",
+  "{n} change": "{n} changement",
+  "{n} changes": "{n} changements",
+  "Earlier releases": "Versions précédentes",
 };

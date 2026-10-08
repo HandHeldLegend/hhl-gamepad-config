@@ -45,4 +45,7 @@ export default {
   "Wireless module (ESP32)": "Módulo inalámbrico (ESP32)",
   "For a controller that’s already in update mode (lights pulsing orange).": "Para un control que ya está en modo de actualización (luces parpadeando en naranja).",
   "Pick the firmware that matches the controller’s firmware: the HCI bridge for current controller firmware (the Wireless page lists the part as “ESP32 HCI”), the HOJA baseband for older firmware.": "Elige el firmware que corresponde al firmware del control: el HCI bridge para el firmware actual (la página Inalámbrico muestra la pieza como “ESP32 HCI”) y el HOJA baseband para firmware más antiguo.",
+  "{n} change": "{n} cambio",
+  "{n} changes": "{n} cambios",
+  "Earlier releases": "Versiones anteriores",
 };

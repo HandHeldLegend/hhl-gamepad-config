@@ -72,7 +72,6 @@ export function mount(root, ctx = {}) {
         [t('Firmware layout'), `HOJA-LIB-RP2040 @ ${LAYOUT.source?.ref ?? t('unknown')}`],
       ]),
       h('div.row',
-        button({ label: t('What’s new'), icon: 'sparkle', variant: 'tonal', onClick: () => { location.hash = '#/whats-new'; } }),
         link('https://handheldlegend.com', 'handheldlegend.com'),
         link('https://github.com/HandHeldLegend/HOJA-LIB-RP2040', t('Firmware source')))),
 
