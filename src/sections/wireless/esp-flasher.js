@@ -46,6 +46,11 @@ const TRACE = new URLSearchParams(location.search).has('debug');
 export function availableTransports() {
   // Android always uses WebUSB (the CH34x driver in ./nice-serial.js): Android's Web Serial doesn't
   // reach the module's USB serial chip. Never offer Web Serial there.
+  // Test override (not linked anywhere): ?transport=serial or ?transport=usb forces one route, e.g. to
+  // try Web Serial on an Android browser that has it.
+  const force = new URLSearchParams(location.search).get('transport');
+  if (force === 'serial' && navigator.serial) return { serial: true, usb: false, preferred: 'serial' };
+  if (force === 'usb' && navigator.usb) return { serial: false, usb: true, preferred: 'usb' };
   const serial = !!navigator.serial && !isAndroid();
   return { serial, usb: !!navigator.usb, preferred: serial ? 'serial' : 'usb' };
 }

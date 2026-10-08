@@ -307,8 +307,8 @@ async function connectAndInstall() {
   actions({});
   run.ui.progress.indeterminate(true, t('Connecting…'));
   run.ui.channelRow.hidden = true;
-  log(`Connection: ${run.transport === 'usb' ? 'WebUSB' : 'Web Serial'} · ${navigator.userAgent}`);
-  if (run.transport === 'usb') mirrorConsole();
+  log(`Connection: ${run.transport === 'usb' ? 'WebUSB' : 'Web Serial'} · Web Serial API ${navigator.serial ? 'present' : 'absent'} · ${navigator.userAgent}`);
+  mirrorConsole(); // driver and esptool console output into Details (both routes, for diagnosis)
   try {
     const chip = await run.flasher.connect(run.transport);
     if (!run) return;
