@@ -57,10 +57,12 @@ export function availableTransports() {
   // reach the module's USB serial chip. Never offer Web Serial there.
   // Test override (not linked anywhere, desktop only): ?transport=serial or ?transport=usb forces one route.
   if (isAndroid()) return { serial: false, usb: !!navigator.usb, preferred: 'usb' };
-  // Desktop Linux: the kernel's ch341 driver owns the CH340 (it's /dev/ttyUSB0), and Chrome can't claim
-  // a USB interface a kernel driver holds ("Unable to claim interface"). Web Serial only.
-  if (isLinux() && navigator.serial) return { serial: true, usb: false, preferred: 'serial' };
   const force = new URLSearchParams(location.search).get('transport');
+  // Desktop Linux: Web Serial first. Chrome changes DTR and RTS there in separate ioctls, which can be
+  // too slow for the module's auto-reset; the USB route sets both in one transfer but needs the
+  // kernel's ch341 driver unloaded first (it owns the chip as /dev/ttyUSB0). The dialog explains that
+  // when a serial connect fails, then offers USB.
+  if (!force && isLinux() && navigator.serial) return { serial: true, usb: !!navigator.usb, preferred: 'serial' };
   if (force === 'serial' && navigator.serial) return { serial: true, usb: false, preferred: 'serial' };
   if (force === 'usb' && navigator.usb) return { serial: false, usb: true, preferred: 'usb' };
   const serial = !!navigator.serial && !isAndroid();
@@ -115,13 +117,31 @@ function tightSignals(transport, port) {
  */
 function capBootDrain(transport) {
   let since = 0;
+  // Diagnostics for Details: what the module printed after each reset, and whether syncs got replies.
+  let boot = { bytes: 0, sample: '' };
+  let replies = -1; // -1 until the first reset (nothing to report before it)
+  const report = () => {
+    if (since || boot.bytes) console.log(`Boot output after reset: ${boot.bytes} bytes${boot.bytes ? ` · ${boot.sample}` : ''}`);
+    boot = { bytes: 0, sample: '' };
+  };
+  const ascii = (d) => Array.from(d, (b) => (b >= 32 && b < 127 ? String.fromCharCode(b) : b === 10 ? '⏎' : '·')).join('');
+  const onReset = () => {
+    if (replies >= 0) console.log(`Sync replies before this reset: ${replies} bytes`);
+    replies = 0;
+    since = Date.now();
+  };
   const wrap = (name, fn) => { const orig = transport[name].bind(transport); transport[name] = (...a) => fn(orig, ...a); };
-  wrap('setDTR', (orig, v) => { since = Date.now(); return orig(v); });
-  wrap('setRTS', (orig, v) => { since = Date.now(); return orig(v); });
-  wrap('write', (orig, d) => { since = 0; return orig(d); });
+  wrap('setDTR', (orig, v) => { if (!since) onReset(); return orig(v); });
+  wrap('setRTS', (orig, v) => { if (!since) onReset(); return orig(v); });
+  wrap('write', (orig, d) => { if (since) report(); since = 0; return orig(d); });
   wrap('read', (orig, ...a) => {
-    if (since && Date.now() - since > BOOT_DRAIN_MAX_MS) { since = 0; return Promise.reject(new Error('Timeout')); }
-    return orig(...a);
+    if (since && Date.now() - since > BOOT_DRAIN_MAX_MS) { report(); since = 0; return Promise.reject(new Error('Timeout')); }
+    return orig(...a).then((d) => {
+      if (d?.length) {
+        if (since) { boot.bytes += d.length; if (boot.sample.length < 120) boot.sample += ascii(d); } else replies += d.length;
+      }
+      return d;
+    });
   });
 }
 

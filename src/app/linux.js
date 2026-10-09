@@ -37,6 +37,8 @@ export const UDEV_RULES = [
   '# Gamepad modes in games and Steam (SDL reads these through hidraw)',
   'KERNEL=="hidraw*", ATTRS{idVendor}=="2e8a", ATTRS{idProduct}=="10c6|10dd|10df", TAG+="uaccess"',
   'KERNEL=="hidraw*", ATTRS{idVendor}=="057e", ATTRS{idProduct}=="2009", TAG+="uaccess"',
+  '# Wireless module (ESP32) updates over WebUSB: the CH340 USB serial chip',
+  'SUBSYSTEM=="usb", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7522", TAG+="uaccess"',
 ];
 
 /** One paste-able command: write the file, reload udev, re-apply to plugged-in devices. */

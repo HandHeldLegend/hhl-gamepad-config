@@ -203,7 +203,9 @@ function errorText(err) {
   if (err?.name === 'NotFoundError') return t('No device was selected.');
   if (err?.name === 'SecurityError') return t('The browser blocked access to the device.');
   if (/claimInterface|claim interface/i.test(err?.message || '')) {
-    return t('Another driver is using the USB serial chip, so USB can’t reach it. Use the serial port instead.');
+    return isLinux()
+      ? t('Linux’s serial driver is still using the chip. Run {command}, then press Connect again.', { command: 'sudo modprobe -r ch341' })
+      : t('Another driver is using the USB serial chip, so USB can’t reach it. Use the serial port instead.');
   }
   if (err?.name === 'NetworkError' || /failed to open/i.test(err?.message || '')) {
     return t('Couldn’t open the port. Close other apps or tabs using it (e.g. the standalone updater) and try again.');
@@ -336,7 +338,7 @@ async function connectAndInstall() {
     // Picker closed without a choice isn't a failed connection; anything else offers the other method.
     if (err?.name !== 'NotFoundError') run.connectFailed = true;
     showConnect(errorText(err), run.connectFailed && isLinux() && run.transport === 'serial'
-      ? t('On Linux, ModemManager can hold a new serial port for a few seconds after it appears. Wait a moment and try again, or stop it while updating: {command}. If the port won’t open, add your account to the dialout group.', { command: 'sudo systemctl stop ModemManager' })
+      ? t('On Linux, the serial driver switches the module’s reset lines one at a time, which some controllers can’t follow. Connect over USB instead: unload the driver with {command}, choose USB below and press Connect. USB access needs the Linux rule from Help & about. The driver loads again next time you plug in.', { command: 'sudo modprobe -r ch341' })
       : null);
     return;
   }
