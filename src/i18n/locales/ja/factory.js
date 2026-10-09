@@ -120,4 +120,6 @@ export default {
   "Recent": "最近",
   "Use these colors": "この色を使う",
   "Custom": "カスタム",
+  "Last connection attempt: {error}": "前回の接続試行：{error}",
+  "The controller is back but doesn’t answer yet. The station keeps trying; press Connect to try now.": "コントローラーは戻りましたが、まだ応答しません。ステーションは再試行を続けます。今すぐ試すには「接続」を押してください。",
 };

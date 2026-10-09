@@ -212,10 +212,18 @@ export class HojaDevice extends EventTarget {
     this.#pollLoop();
     this.#startWatchdog();
 
-    if (await this.#probeLegacy()) return true; // 'legacy' event already emitted
-
-    await this.readAllConfig();
-    await this.readAllStatic();
+    try {
+      if (await this.#probeLegacy()) return true; // 'legacy' event already emitted
+      await this.readAllConfig();
+      await this.readAllStatic();
+    } catch (err) {
+      // Let go completely (read loops, interface, device), so the next attempt starts clean. A
+      // controller that is still starting up, or changing USB mode, doesn't answer at first.
+      clearInterval(this.#watchdog);
+      if (this.#usb === usb) { this.#connected = false; this.#usb = null; }
+      try { await usb.close(); } catch { /* already gone */ }
+      throw err;
+    }
     this.#emit('connect', { device: this });
     return true;
   }

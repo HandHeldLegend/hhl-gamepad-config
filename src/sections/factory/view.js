@@ -192,6 +192,8 @@ function hookUsb(session) {
     // A finished unit may still count as connected (left plugged in, or its unplug was missed):
     // the next unit takes over.
     if (session.connected && station.unit?.stage === 'done') { station.unit = null; await session.disconnect().catch(() => {}); }
+    // While a unit restarts after an update, watchReboot() connects once it has settled.
+    if (station.unit?.stage === 'rebooting') return;
     if (!session.connected) setTimeout(() => session.reconnect(e.device).catch(() => {}), 300);
   });
   // Any HOJA controller unplugged while its result shows: ready for the next one.
@@ -211,6 +213,8 @@ async function connectFirst(session) {
 }
 
 // ---- Flashing --------------------------------------------------------------------------------------
+/** How long a restarted controller must stay on USB before the station connects to it. */
+const SETTLE_MS = 1500;
 /** How long to wait for an allowed bootloader to appear before asking the operator to allow it. */
 const BOOTLOADER_WAIT_MS = 4000;
 
@@ -303,9 +307,17 @@ function watchReboot(u) {
     u.reboot.seen = seen;
     u.reboot.stillBootloader = boot && waited > 5000;
     u.reboot.long = waited > 8000;
-    if (hoja && station.session && !station.session.connected && !u.reconnecting) {
+    u.reboot.visible = !!hoja;
+    // A controller can change USB mode right after starting (Auto mode): connect once it has stayed put.
+    const id = hoja ? `${hoja.vendorId}:${hoja.productId}:${hoja.serialNumber || ''}` : '';
+    if (id !== u.lastSeen) { u.lastSeen = id; u.seenAt = Date.now(); }
+    const settled = hoja && Date.now() - u.seenAt >= SETTLE_MS;
+    if (settled && station.session && !station.session.connected && station.session.state !== 'connecting' && !u.reconnecting) {
       u.reconnecting = true;
-      station.session.reconnect(hoja).catch((err) => console.warn('[factory] reconnect', err)).finally(() => { u.reconnecting = false; });
+      station.session.reconnect(hoja)
+        .then(() => { u.reboot.error = ''; })
+        .catch((err) => { console.warn('[factory] reconnect', err); u.reboot.error = err?.message || String(err); u.seenAt = Date.now(); redraw(); })
+        .finally(() => { u.reconnecting = false; });
     }
     if (JSON.stringify(u.reboot) !== was) redraw();
   }, 1000);
@@ -570,6 +582,8 @@ export function mount(root, { session, params = {} }) {
         const rb = u.reboot || {};
         const text = rb.stillBootloader
           ? t('The firmware was written, but the controller is still in update mode. Press Restart controller.')
+          : rb.long && rb.visible && rb.error
+            ? t('The controller is back but doesn’t answer yet. The station keeps trying; press Connect to try now.')
           : rb.long
             ? t('The controller restarted, but this browser needs your permission to reconnect. Press Connect and pick the controller.')
             : t('Waiting for the controller to come back…');
@@ -578,7 +592,8 @@ export function mount(root, { session, params = {} }) {
             rb.stillBootloader && button({ label: t('Restart controller'), icon: 'refresh', variant: 'primary', size: 'lg', onClick: () => exitBootloader() }),
             button({ label: t('Connect'), icon: 'usb', variant: rb.long && !rb.stillBootloader ? 'primary' : 'tonal', size: 'lg', onClick: connectUnit }),
             button({ label: t('Fail'), variant: 'ghost', onClick: () => { setResult('firmware', N_('Firmware'), 'fail', t('Didn’t come back after the update')); finish(); } })),
-          h('p.small.faint.fac-seen', t('USB devices this browser can use: {list}', { list: rb.seen || t('none') })));
+          h('p.small.faint.fac-seen', t('USB devices this browser can use: {list}', { list: rb.seen || t('none') })),
+          rb.error && h('p.small.faint.fac-seen', t('Last connection attempt: {error}', { error: rb.error })));
       }
       case 'model': return big('firmware', t('Which controller is this board?'), t('A board in bootloader mode can’t tell which model it is. Pick the model to install.'),
         h('div.fac-skus', (station.models.length ? station.models : station.allBuilds || []).map((id) => h('button.fac-sku-btn', { type: 'button', onclick: async () => {

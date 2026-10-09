@@ -120,4 +120,6 @@ export default {
   "Recent": "Récents",
   "Use these colors": "Utiliser ces couleurs",
   "Custom": "Personnalisé",
+  "Last connection attempt: {error}": "Dernière tentative de connexion : {error}",
+  "The controller is back but doesn’t answer yet. The station keeps trying; press Connect to try now.": "La manette est revenue mais ne répond pas encore. Le poste continue d’essayer ; appuyez sur Connecter pour réessayer maintenant.",
 };

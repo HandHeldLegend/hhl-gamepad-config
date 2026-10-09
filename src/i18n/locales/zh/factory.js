@@ -128,4 +128,6 @@ export default {
   "Recent": "最近使用",
   "Use these colors": "使用这些颜色",
   "Custom": "自定义",
+  "Last connection attempt: {error}": "上次连接尝试：{error}",
+  "The controller is back but doesn’t answer yet. The station keeps trying; press Connect to try now.": "控制器已重新出现，但尚未响应。工位会继续尝试；点击“连接”立即重试。",
 };
