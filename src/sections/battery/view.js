@@ -41,13 +41,14 @@ const joinSentences = (parts) => parts.join(i18n.lang === 'ja' ? '' : ' ');
 export function mount(root, { session, device, navigate }) {
   const st = session.static.battery;
   const pmic = decodePmicStatus(st.pmic_status);
-  const fuel = decodeFuelGauge(st.fuelgauge_status);
+  const fuel = decodeFuelGauge(st.fuelgauge_status, decodeText(st.fuelgauge_part_number));
   const pack = describePack(pmic.pack);
   const text = (bytes) => decodeText(bytes) || t('Unknown');
 
   const hw = {
     pack: pmic.pack,
-    fuelGaugePresent: fuel.present,
+    // A gauge that has no reading (e.g. the wireless module's estimate over USB) shows no percentage.
+    fuelGaugePresent: fuel.present && (fuel.active || !/^ESP32$/i.test(decodeText(st.fuelgauge_part_number))),
     idleGlowOff: !!session.caps.rgb && session.config.rgb?.rgb_idle_glow === IDLE_GLOW_OFF,
   };
 

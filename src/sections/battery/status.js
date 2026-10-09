@@ -96,9 +96,17 @@ export function describePack(pack) {
  * hoja2 fuelGaugeBadge(): fuelgauge_status is still 3-state (the pack values don't apply to it).
  * @param {number} status
  */
-export function decodeFuelGauge(status) {
+export function decodeFuelGauge(status, part = '') {
   const present = status !== 0;
   const active = status === 2;
+  // Part "ESP32": no gauge chip. The wireless module (HCI bridge) measures the battery voltage and the
+  // firmware estimates the level from it, so there's only a reading while the module's link runs
+  // (playing over Bluetooth). Wired to this app that's normal, not a fault.
+  if (present && /^ESP32$/i.test(part)) {
+    return active
+      ? { present, active, badge: { text: t('Active'), tone: 'green' }, explain: t('Estimates the charge from the battery voltage, measured by the wireless module.') }
+      : { present, active, badge: { text: t('Bluetooth only'), tone: 'blue' }, explain: t('This controller estimates the charge from the battery voltage, which the wireless module measures while you play over Bluetooth. Over USB there’s no reading, so the level isn’t shown here. Nothing is wrong.') };
+  }
   if (!present) {
     return { present, active, badge: { text: t('Not present'), tone: null }, explain: t('No fuel gauge is fitted, so the battery level can\'t be measured, only whether it\'s charging.') };
   }

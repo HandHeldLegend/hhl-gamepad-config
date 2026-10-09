@@ -61,4 +61,7 @@ export default {
   "The charger chip isn't working, so the charging state may be wrong.": "El chip cargador no funciona, así que el estado de carga podría ser incorrecto.",
   "The controller couldn't confirm a battery is fitted.": "El control no pudo confirmar que haya una batería instalada.",
   'After 5 minutes without input, the status light glows to show charging: orange while charging, green when full, cyan otherwise. Turn it on or off on the {rgb} page.': 'Tras 5 minutos sin entradas, la luz de estado brilla para mostrar la carga: naranja mientras carga, verde cuando está llena y cian en los demás casos. Actívala o desactívala en la página {rgb}.',
+  "Estimates the charge from the battery voltage, measured by the wireless module.": "Estima la carga a partir del voltaje de la batería, medido por el módulo inalámbrico.",
+  "Bluetooth only": "Solo por Bluetooth",
+  "This controller estimates the charge from the battery voltage, which the wireless module measures while you play over Bluetooth. Over USB there’s no reading, so the level isn’t shown here. Nothing is wrong.": "Este control estima la carga a partir del voltaje de la batería, que el módulo inalámbrico mide mientras juegas por Bluetooth. Por USB no hay lectura, así que aquí no se muestra el nivel. No hay ningún problema.",
 };

@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@3938014)
+// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@48f289e)
 // Validated 6 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "local",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "3938014"
+  "ref": "48f289e"
  },
  "blocks": {
   "config": [
@@ -540,7 +540,7 @@ export default {
      "name": "gamepad_default_mode",
      "offset": 1,
      "type": "u8",
-     "doc": "core_reportformat_t value (0=SWPRO .. 7=WII)"
+     "doc": "Default when wired (or no battery): core_reportformat_t value, or Auto"
     },
     {
      "name": "gamepad_mac_address",
@@ -603,10 +603,22 @@ export default {
      "doc": "Mac address of the Wii we are paired to"
     },
     {
-     "name": "reserved",
+     "name": "gamepad_default_wireless",
      "offset": 45,
      "type": "u8",
-     "count": 19
+     "doc": "Default on battery: SWPRO, SINPUT, WII, or Auto"
+    },
+    {
+     "name": "gamepad_defaults_split",
+     "offset": 46,
+     "type": "u8",
+     "doc": "GAMEPAD_DEFAULTS_SPLIT once the default is split in two"
+    },
+    {
+     "name": "reserved",
+     "offset": 47,
+     "type": "u8",
+     "count": 17
     }
    ]
   },

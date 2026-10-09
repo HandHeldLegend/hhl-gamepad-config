@@ -60,4 +60,7 @@ export default {
   "The charger chip isn't working, so the charging state may be wrong.": "充電チップが動作していないため、充電状態が正しくない可能性があります。",
   "The controller couldn't confirm a battery is fitted.": "コントローラーはバッテリーの装着を確認できませんでした。",
   'After 5 minutes without input, the status light glows to show charging: orange while charging, green when full, cyan otherwise. Turn it on or off on the {rgb} page.': '5分間入力がないと、ステータスランプが充電状態を示して点灯します（充電中はオレンジ、満充電は緑、それ以外はシアン）。オン/オフは{rgb}ページで切り替えられます。',
+  "Estimates the charge from the battery voltage, measured by the wireless module.": "ワイヤレスモジュールが測定したバッテリー電圧から残量を推定します。",
+  "Bluetooth only": "Bluetooth時のみ",
+  "This controller estimates the charge from the battery voltage, which the wireless module measures while you play over Bluetooth. Over USB there’s no reading, so the level isn’t shown here. Nothing is wrong.": "このコントローラーは、Bluetoothでプレイ中にワイヤレスモジュールが測定するバッテリー電圧から残量を推定します。USB接続中は測定値がないため、ここには残量が表示されません。故障ではありません。",
 };

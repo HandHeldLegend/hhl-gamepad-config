@@ -61,4 +61,7 @@ export default {
   "The charger chip isn't working, so the charging state may be wrong.": "La puce de charge ne fonctionne pas, l’état de charge peut donc être erroné.",
   "The controller couldn't confirm a battery is fitted.": "La manette n’a pas pu confirmer la présence d’une batterie.",
   'After 5 minutes without input, the status light glows to show charging: orange while charging, green when full, cyan otherwise. Turn it on or off on the {rgb} page.': 'Après 5 minutes sans action, le voyant d’état s’allume pour indiquer la charge : orange pendant la charge, vert quand la batterie est pleine, cyan sinon. Activez-le ou désactivez-le sur la page {rgb}.',
+  "Estimates the charge from the battery voltage, measured by the wireless module.": "Estime la charge à partir de la tension de la batterie, mesurée par le module sans fil.",
+  "Bluetooth only": "Bluetooth uniquement",
+  "This controller estimates the charge from the battery voltage, which the wireless module measures while you play over Bluetooth. Over USB there’s no reading, so the level isn’t shown here. Nothing is wrong.": "Cette manette estime la charge à partir de la tension de la batterie, que le module sans fil mesure pendant que vous jouez en Bluetooth. En USB, il n’y a pas de mesure, donc le niveau n’est pas affiché ici. Tout est normal.",
 };
