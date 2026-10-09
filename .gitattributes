@@ -3,7 +3,7 @@
 *.ico binary
 *.stl binary
 *.uf2 binary
-# Station setup scripts: Windows line endings for .bat/.ps1, Unix for .sh (downloaded as-is from GitHub).
-docs/factory/*.bat text eol=crlf
-docs/factory/*.ps1 text eol=crlf
+# Station setup scripts are downloaded as-is from GitHub: .bat/.ps1 stored byte for byte (CRLF), .sh as LF.
+docs/factory/*.bat -text
+docs/factory/*.ps1 -text
 docs/factory/*.sh text eol=lf
