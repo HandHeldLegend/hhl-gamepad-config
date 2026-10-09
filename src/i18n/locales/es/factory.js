@@ -73,4 +73,10 @@ export default {
   "Check the sticker is applied, straight and readable, and that it shows this FCC ID:": "Comprueba que la etiqueta esté pegada, derecha y legible, y que muestre este FCC ID:",
   "This unit doesn’t report an FCC ID.": "Este control no informa un FCC ID.",
   "Tested": "Probados",
+  "Roll each stick slowly around its edge until its shape is complete.": "Gira cada joystick despacio por su borde hasta que su forma esté completa.",
+  "Both sticks have enough data. Press Finish.": "Ambos joysticks tienen suficientes datos. Pulsa Finalizar.",
+  "Let go of both sticks and leave the controller still, then press Start calibration. The resting center is recorded at that moment.": "Suelta ambos joysticks y deja el control quieto; luego pulsa Iniciar calibración. El centro en reposo se registra en ese momento.",
+  "Press every button, push each trigger all the way and move each stick to its edge in every direction.": "Pulsa cada botón, presiona cada gatillo hasta el fondo y mueve cada joystick hasta su borde en todas las direcciones.",
+  "Motion sensors": "Sensores de movimiento",
+  "Turn and tilt the controller in every direction until every axis has a check.": "Gira e inclina el control en todas las direcciones hasta que cada eje tenga una marca.",
 };

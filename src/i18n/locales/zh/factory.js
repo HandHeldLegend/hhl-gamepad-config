@@ -81,4 +81,10 @@ export default {
   "Check the sticker is applied, straight and readable, and that it shows this FCC ID:": "确认标签已贴好、端正清晰，并且标注的是以下 FCC ID：",
   "This unit doesn’t report an FCC ID.": "此手柄未报告 FCC ID。",
   "Tested": "已测试",
+  "Roll each stick slowly around its edge until its shape is complete.": "沿边缘慢慢转动每个摇杆，直到形状完整。",
+  "Both sticks have enough data. Press Finish.": "两个摇杆的数据都已足够。点击“完成”。",
+  "Let go of both sticks and leave the controller still, then press Start calibration. The resting center is recorded at that moment.": "松开两个摇杆并让手柄保持静止，然后点击“开始校准”。此时会记录静止中心位置。",
+  "Press every button, push each trigger all the way and move each stick to its edge in every direction.": "按下每个按键，将每个扳机按到底，并把每个摇杆推到各个方向的边缘。",
+  "Motion sensors": "体感传感器",
+  "Turn and tilt the controller in every direction until every axis has a check.": "向各个方向转动和倾斜手柄，直到每个轴都打上勾。",
 };

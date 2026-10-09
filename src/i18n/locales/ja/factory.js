@@ -73,4 +73,10 @@ export default {
   "Check the sticker is applied, straight and readable, and that it shows this FCC ID:": "ラベルがまっすぐ読みやすく貼られていて、この FCC ID が記載されているか確認してください：",
   "This unit doesn’t report an FCC ID.": "このユニットは FCC ID を報告していません。",
   "Tested": "テスト済み",
+  "Roll each stick slowly around its edge until its shape is complete.": "形が完成するまで、各スティックを縁に沿ってゆっくり回してください。",
+  "Both sticks have enough data. Press Finish.": "両方のスティックで十分なデータが取れました。「完了」を押してください。",
+  "Let go of both sticks and leave the controller still, then press Start calibration. The resting center is recorded at that moment.": "両方のスティックから手を離してコントローラーを静止させ、「キャリブレーション開始」を押してください。その瞬間の中心位置が記録されます。",
+  "Press every button, push each trigger all the way and move each stick to its edge in every direction.": "すべてのボタンを押し、各トリガーを最後まで押し込み、各スティックを全方向の端まで動かしてください。",
+  "Motion sensors": "モーションセンサー",
+  "Turn and tilt the controller in every direction until every axis has a check.": "すべての軸にチェックが付くまで、コントローラーをあらゆる方向に回したり傾けたりしてください。",
 };

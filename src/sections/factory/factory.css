@@ -54,12 +54,6 @@
   font-size: var(--text-xs, 0.75rem); color: var(--text-muted); transition: background-color var(--dur-med), border-color var(--dur-med); }
 .fac-in.ok { border-color: var(--green); background: var(--green-soft); color: var(--text); }
 .fac-in.ok .inp-glyph { color: var(--green); }
-.fac-axes { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: center; }
-.fac-axis { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 2px solid var(--border); border-radius: var(--radius-pill); font-weight: 600; font-size: var(--text-sm); }
-.fac-axis-ok { display: none; color: var(--green); }
-.fac-axis-ok .icon { width: 14px; height: 14px; }
-.fac-axis.ok { border-color: var(--green); background: var(--green-soft); }
-.fac-axis.ok .fac-axis-ok { display: inline-flex; }
 .fac-skus { display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); width: min(680px, 100%); }
 .fac-sku-btn { display: flex; align-items: center; gap: var(--space-2); padding: 12px 14px; border: 2px solid var(--border); border-radius: var(--radius-md);
   background: var(--surface-2); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; text-align: left; }
@@ -73,3 +67,27 @@
 .fac-failed-chip { padding: 4px 10px; border-radius: var(--radius-pill); background: var(--red-soft); color: var(--red); font-weight: 700; font-size: var(--text-sm); }
 .btn.fac-pass-btn { background: var(--green); color: #fff; }
 .btn.fac-pass-btn:hover { background: color-mix(in srgb, var(--green) 85%, #000); }
+.fac-actions { justify-content: center; align-items: center; }
+.fac-actions .fac-back { margin-left: var(--space-4); }
+
+/* Stick calibration: both sticks side by side */
+.fac-cal { display: grid; justify-items: center; align-content: center; gap: var(--space-3); text-align: center; }
+.fac-cal h2 { margin: 0; font-size: var(--text-xl, 1.6rem); }
+.fac-cal p { margin: 0; max-width: 56ch; }
+.fac-cal-sticks { display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 260px)); justify-content: center; gap: var(--space-5); width: 100%; }
+.fac-cal-sticks .cal-stick { min-width: 0; }
+.fac-cal-sticks .cal-stick .cv-surface { width: 100%; max-width: 260px; }
+.fac-cal-sticks canvas { max-width: 100%; }
+
+/* Input test: inputs and the motion sensors side by side when there is room */
+.fac-inputs-body { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 1100px) { .fac-inputs-body:has(.fac-imu) { grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); } }
+.fac-imu { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); }
+.fac-imu h3 { margin: 0; font-size: var(--text-md); }
+.fac-imu p { margin: 0; text-align: left; }
+.fac-imu .imu-row { grid-template-columns: 1.25em minmax(0, 1fr) 6.5em 1.25em; }
+.fac-imu-ok { display: inline-flex; visibility: hidden; color: var(--green); }
+.fac-imu-ok .icon { width: 16px; height: 16px; }
+.fac-imu .imu-row.fac-ok .fac-imu-ok { visibility: visible; }
+.fac-cal-sticks.idle { opacity: 0.45; }
+.fac-cal-sticks.idle .progress { visibility: hidden; }

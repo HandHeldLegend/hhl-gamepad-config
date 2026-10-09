@@ -94,34 +94,116 @@ function shapePreview(session, stick, label) {
 }
 
 /**
+ * Stick calibration engine, shared by the dialog below and the factory station (inline).
+ * Owns the firmware sequence, the analog snapshot for cancel, polling and the captured-shape previews.
+ *
+ *   const cal = createStickCalibration(session, ['left', 'right']);
+ *   cal.previews                     // [{ el }] one per stick, put them anywhere
+ *   await cal.start();               // throws a translated Error when the controller refuses
+ *   cal.onProgress((all) => ...);    // after each poll; all = every stick has enough data
+ *   const ok = await cal.finish();   // STOP, re-read, mark unsaved
+ *   await cal.cancel();              // STOP and restore the previous settings
+ *   cal.destroy();                   // stops polling (cancels first if still calibrating)
+ */
+export function createStickCalibration(session, sticks) {
+  const labels = { left: t('Left stick'), right: t('Right stick') };
+  const previews = sticks.map((s) => shapePreview(session, s, labels[s]));
+  const listeners = new Set();
+  let phase = 'idle';            // idle → calibrating → done
+  let snapshot = null;           // analog block before START (for cancel)
+  let pollTimer = 0;
+  let polling = false;
+
+  const stopPolling = () => { clearInterval(pollTimer); pollTimer = 0; };
+
+  const api = {
+    previews,
+    get phase() { return phase; },
+    onProgress(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+
+    async start() {
+      await session.flush(); // nothing pending may land on top of the calibration
+      snapshot = session.config.analog.buffer.slice();
+      const { status } = await session.command('analog', 'CALIBRATE_START');
+      if (!status) throw new Error(t('The controller didn’t accept the calibration command.'));
+      phase = 'calibrating';
+      previews.forEach((pv) => pv.update());
+      pollTimer = setInterval(async () => {
+        if (polling || phase !== 'calibrating') return;
+        polling = true;
+        try { await session.refresh('analog'); } catch { /* keep trying; a slow read is fine */ }
+        polling = false;
+        if (phase !== 'calibrating') return;
+        const all = previews.map((pv) => pv.update()).every((x) => x >= 1);
+        listeners.forEach((fn) => fn(all));
+      }, POLL_MS);
+    },
+
+    async finish() {
+      phase = 'finishing';
+      stopPolling();
+      let ok = false;
+      try {
+        const { status } = await session.command('analog', 'CALIBRATE_STOP');
+        ok = status;
+        await session.refresh('analog');                        // hoja2: populateUIElements(true)
+        if (ok) await session.commit('analog', { immediate: true }); // light up Save (same data)
+      } catch (err) {
+        console.error('[calibrate]', err);
+        ok = false;
+      }
+      phase = 'done';
+      session.refreshAttention?.();
+      return ok;
+    },
+
+    async cancel() {
+      if (phase !== 'calibrating' && phase !== 'finishing') return;
+      phase = 'canceling';
+      stopPolling();
+      try {
+        await session.command('analog', 'CALIBRATE_STOP');
+        if (snapshot) {
+          session.config.analog.buffer.set(snapshot);
+          await session.commit('analog', { immediate: true });
+        }
+        await session.refresh('analog');
+      } catch (err) {
+        console.error('[calibrate] cancel', err);
+      }
+      phase = 'done';
+    },
+
+    destroy() {
+      if (phase === 'calibrating') api.cancel();
+      stopPolling();
+      previews.forEach((pv) => pv.destroy());
+    },
+  };
+  return api;
+}
+
+/**
  * Open the calibration dialog.
  * @param {{session: object, sticks: Array<'left'|'right'>, onFinished?: (ok: boolean) => void}} o
  */
 export function openCalibration({ session, sticks, onFinished }) {
-  let phase = 'intro';           // intro → calibrating → done
-  let snapshot = null;           // analog block before START (for Cancel)
-  let pollTimer = 0;
-  let polling = false;
-  let previews = [];
+  let cal = null;
+  let ending = false;
 
   const steps = h('div.steps', h('span.step'), h('span.step'));
   const setStep = (n) => [...steps.children].forEach((s, i) => { s.dataset.state = i < n ? 'done' : i === n ? 'active' : ''; });
 
   const dlg = openDialog({
     title: sticks.length > 1 ? t('Calibrate sticks') : t('Calibrate stick'), icon: 'calibrate', tone: 'red',
-    onClose: () => { if (phase === 'calibrating') cancel(true); cleanup(); },
+    onClose: () => {
+      if (!ending && cal?.phase === 'calibrating') { cal.cancel().then(() => onFinished?.(false)); }
+      cal?.destroy();
+    },
   });
-
-  function cleanup() {
-    clearInterval(pollTimer);
-    pollTimer = 0;
-    previews.forEach((p) => p.destroy());
-    previews = [];
-  }
 
   // ---- Step 1: get ready ---------------------------------------------------------------
   function intro(error) {
-    phase = 'intro';
     setStep(0);
     dlg.setTitle(sticks.length > 1 ? t('Calibrate sticks') : t('Calibrate stick'));
     dlg.setBody(
@@ -145,71 +227,43 @@ export function openCalibration({ session, sticks, onFinished }) {
   // ---- Step 2: calibrating --------------------------------------------------------------
   async function start() {
     dlg.setActions([{ label: t('Starting…'), variant: 'primary', disabled: true }]);
+    cal?.destroy();
+    cal = createStickCalibration(session, sticks);
     try {
-      await session.flush(); // nothing pending may land on top of the calibration
-      snapshot = session.config.analog.buffer.slice();
-      const { status } = await session.command('analog', 'CALIBRATE_START');
-      if (!status) throw new Error(t('The controller didn’t accept the calibration command.'));
+      await cal.start();
     } catch (err) {
       intro(err?.message || String(err));
       return;
     }
-    phase = 'calibrating';
     setStep(1);
     dlg.setTitle(sticks.length > 1 ? t('Roll the sticks around the edge') : t('Roll the stick around the edge'));
-
-    const labels = { left: t('Left stick'), right: t('Right stick') };
-    previews = sticks.map((s) => shapePreview(session, s, labels[s]));
     const rollText = sticks.length > 1 ? t('Slowly roll each stick around its outer edge…') : t('Slowly roll the stick around its outer edge…');
     const status = h('p.cal-status.muted', { role: 'status' }, rollText);
     dlg.setBody(
       steps,
       h('p', t('Keep gentle pressure against the rim and go all the way round, slowly. The green shape grows as each direction is captured.')),
-      h('div.cal-grid', previews.map((p) => p.el)),
+      h('div.cal-grid', cal.previews.map((pv) => pv.el)),
       status,
     );
     dlg.setActions([
-      { label: t('Cancel'), variant: 'ghost', onClick: () => { cancel(false); return false; } },
+      { label: t('Cancel'), variant: 'ghost', onClick: () => { cancel(); return false; } },
       { label: t('Finish'), icon: 'check', variant: 'primary', id: 'finish', onClick: () => { finish(); return false; } },
     ]);
-
-    const tick = async () => {
-      if (polling || phase !== 'calibrating') return;
-      polling = true;
-      try { await session.refresh('analog'); } catch { /* keep trying; a slow read is fine */ }
-      polling = false;
-      if (phase !== 'calibrating') return;
-      const progress = previews.map((p) => p.update());
-      const all = progress.every((x) => x >= 1);
+    cal.onProgress((all) => {
       status.className = `cal-status ${all ? 'ok' : 'muted'}`;
       status.replaceChildren(all
         ? h('span', icon('check'), ' ', t('Looks good! A couple more slow laps improves accuracy, then press Finish.'))
         : rollText);
-    };
-    previews.forEach((p) => p.update());
-    pollTimer = setInterval(tick, POLL_MS);
+    });
   }
 
   // ---- Step 3: finish --------------------------------------------------------------------
   async function finish() {
-    phase = 'finishing';
-    clearInterval(pollTimer);
     dlg.setActions([{ label: t('Finishing…'), variant: 'primary', disabled: true }]);
-    let ok = false;
-    try {
-      const { status } = await session.command('analog', 'CALIBRATE_STOP');
-      ok = status;
-      await session.refresh('analog');                        // hoja2: populateUIElements(true)
-      if (ok) await session.commit('analog', { immediate: true }); // light up Save (same data)
-    } catch (err) {
-      console.error('[calibrate]', err);
-      ok = false;
-    }
-    phase = 'done';
-    cleanup();
-    session.refreshAttention?.();
+    const ok = await cal.finish();
     if (ok) {
       // Close first, then let the page take over (live views + "move the sticks to check" note).
+      ending = true;
       dlg.close(true);
       onFinished?.(true);
       return;
@@ -221,27 +275,14 @@ export function openCalibration({ session, sticks, onFinished }) {
     dlg.setActions([{ label: t('Close'), variant: 'primary', value: false }]);
   }
 
-  /** STOP, then restore the pre-calibration block. `closing` = dialog already closing. */
-  async function cancel(closing) {
-    phase = 'canceling';
-    clearInterval(pollTimer);
-    if (!closing) dlg.setActions([{ label: t('Canceling…'), variant: 'ghost', disabled: true }]);
-    try {
-      await session.command('analog', 'CALIBRATE_STOP');
-      if (snapshot) {
-        session.config.analog.buffer.set(snapshot);
-        await session.commit('analog', { immediate: true });
-      }
-      await session.refresh('analog');
-    } catch (err) {
-      console.error('[calibrate] cancel', err);
-    }
-    phase = 'done';
+  /** STOP, then restore the pre-calibration block. */
+  async function cancel() {
+    dlg.setActions([{ label: t('Canceling…'), variant: 'ghost', disabled: true }]);
+    await cal.cancel();
     onFinished?.(false);
-    if (!closing) {
-      toast(t('Calibration canceled. Previous settings restored.'), { tone: 'blue' });
-      dlg.close(false);
-    }
+    toast(t('Calibration canceled. Previous settings restored.'), { tone: 'blue' });
+    ending = true;
+    dlg.close(false);
   }
 
   intro();

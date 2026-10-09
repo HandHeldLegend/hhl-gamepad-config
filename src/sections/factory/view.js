@@ -35,7 +35,8 @@ import { buildIdFromManifestUrl } from '../../firmware/changelog.js';
 import { setUpdaterQuiet, formatFwVersion } from '../../firmware/updater.js';
 import { languagePicker } from '../../app/shell.js';
 import { pico_update_attempt_flash, pico_prefetch_firmware, onFlashProgress } from '../../firmware/picoboot.js';
-import { openCalibration } from '../joysticks/calibration.js';
+import { createStickCalibration } from '../joysticks/calibration.js';
+import { createImuReadout } from '../motion/imu-readout.js';
 import { createCalibration } from '../input/calibration.js';
 import { glyph, meter, outputName } from '../input/parts.js';
 import { formatMac, identityText } from '../wireless/info.js';
@@ -45,6 +46,8 @@ import { hardwareChecks, testInputs, inputReached, imuAxes } from './checks.js';
 
 loadStyles(new URL('./factory.css', import.meta.url));
 loadStyles(new URL('../input/input.css', import.meta.url)); // glyphs and meters
+loadStyles(new URL('../joysticks/joysticks.css', import.meta.url)); // stick calibration previews
+loadStyles(new URL('../motion/motion.css', import.meta.url)); // live IMU bars
 
 const LOG_KEY = 'hhl-factory-log';
 const SKU_KEY = 'hhl-factory-sku';
@@ -84,10 +87,33 @@ function newUnit() {
 function setResult(id, label, result, detail = '') {
   station.unit?.results.set(id, { id, label, result, detail });
 }
+/** Stick calibration in progress (survives redraws; dropped when the step is left or the unit ends). */
+let stickCal = null;
+function dropStickCal() { stickCal?.destroy(); stickCal = null; }
+
 function go(stage) {
   if (!station.unit) return;
+  if (stage !== 'calibrate') dropStickCal();
   station.unit.stage = stage;
   redraw();
+}
+
+/** Which results belong to which step (Back clears them so the step runs again). */
+const STEP_RESULTS = {
+  sticks: (id) => id === 'sticks',
+  triggers: (id) => id === 'triggers',
+  inputs: (id) => id.startsWith('in-') || /^(gyro|accel)-/.test(id) || id === 'inputs-operator',
+  operator: (id) => ['fcc-label', 'rumble', 'leds'].includes(id),
+};
+/** Go back one step: clear its results and the previous step's, then run the previous step again. */
+function back(fromStage) {
+  const u = station.unit;
+  if (!u) return;
+  const clear = (key) => { for (const id of [...u.results.keys()]) if (STEP_RESULTS[key](id)) u.results.delete(id); };
+  clear(fromStage);
+  if (fromStage === 'triggers') { clear('sticks'); go('calibrate'); return; }
+  if (fromStage === 'inputs') { u.results.has('triggers') ? clear('triggers') : clear('sticks'); go('calibrate'); return; }
+  if (fromStage === 'operator') { clear('inputs'); go('inputs'); }
 }
 
 // ---- Target build and its cached firmware -------------------------------------------------------
@@ -231,6 +257,7 @@ async function saveAndFinish(session) {
 function finish() {
   const u = station.unit;
   if (!u) return;
+  dropStickCal();
   const rows = [...u.results.values()];
   u.overall = rows.some((r) => r.result === 'fail') || u.aborted ? 'fail' : 'pass';
   u.finished = new Date().toISOString();
@@ -361,6 +388,7 @@ export function mount(root, { session, params = {} }) {
     }
   }
 
+  const backButton = (onClick) => button({ label: t('Back'), icon: 'back', variant: 'ghost', class: 'fac-back', onClick });
   const big = (ic, title, text, ...rest) => h('div.fac-big', h('span.fac-big-icon', icon(ic)), h('h2', title), text && h('p.muted', text), ...rest);
 
   // Calibration: sticks with the Joysticks page's dialog, then analog triggers with the Input page's.
@@ -368,18 +396,48 @@ export function mount(root, { session, params = {} }) {
     const sticks = ['left', 'right'].filter((s) => session.caps[s === 'left' ? 'leftStick' : 'rightStick']);
     const hover = testInputs(session).filter((i) => i.type === 'hover');
     const doneSticks = station.unit.results.has('sticks');
-    if (sticks.length && !doneSticks) {
-      return big('calibrate', t('Calibrate the sticks'), t('Press Calibrate sticks, then Start calibration with the sticks let go. Roll each stick around its edge a few times and press Finish.'),
-        h('div.row', { style: { justifyContent: 'center' } },
-          button({ label: t('Calibrate sticks'), icon: 'calibrate', variant: 'primary', size: 'lg', onClick: () => openCalibration({ session, sticks, onFinished: (ok) => {
-            setResult('sticks', N_('Stick calibration'), ok ? 'pass' : 'fail');
-            render();
-          } }) }),
-          button({ label: t('Fail'), variant: 'ghost', onClick: () => { setResult('sticks', N_('Stick calibration'), 'fail'); render(); } })));
-    }
+    if (sticks.length && !doneSticks) return stickCalibration(sticks);
     if (hover.length && !station.unit.results.has('triggers')) return triggerCalibration(hover);
     later(() => go(nextAfter('calibrate', session)));
     return '';
+  }
+
+  // Sticks: the Joysticks page's calibration engine, laid out inline with both sticks side by side.
+  function stickCalibration(sticks) {
+    const cal = stickCal || (stickCal = createStickCalibration(session, sticks));
+    const calibrating = cal.phase === 'calibrating';
+    const status = h('p.cal-status.muted', { role: 'status' }, calibrating ? t('Roll each stick slowly around its edge until its shape is complete.') : '');
+    const off = cal.onProgress((all) => {
+      status.className = `cal-status ${all ? 'ok' : 'muted'}`;
+      status.replaceChildren(all ? h('span', icon('check'), ' ', t('Both sticks have enough data. Press Finish.')) : t('Roll each stick slowly around its edge until its shape is complete.'));
+    });
+    stageCleanup = off; // the engine itself stays (redraws must not cancel a calibration)
+    const fail = async () => { await cal.cancel(); dropStickCal(); setResult('sticks', N_('Stick calibration'), 'fail'); render(); };
+    const actions = calibrating
+      ? [button({ label: t('Finish'), icon: 'check', variant: 'primary', size: 'lg', class: 'fac-pass-btn', onClick: async (e) => {
+          e.currentTarget.disabled = true;
+          const ok = await cal.finish();
+          dropStickCal();
+          setResult('sticks', N_('Stick calibration'), ok ? 'pass' : 'fail');
+          render();
+        } }),
+        button({ label: t('Cancel'), variant: 'ghost', onClick: async () => { await cal.cancel(); dropStickCal(); render(); } }),
+        button({ label: t('Fail'), variant: 'ghost', onClick: fail })]
+      : [button({ label: t('Start calibration'), icon: 'play', variant: 'primary', size: 'lg', onClick: async (e) => {
+          e.currentTarget.disabled = true;
+          try { await cal.start(); } catch (err) { status.className = 'cal-status'; status.textContent = err?.message || String(err); e.currentTarget.disabled = false; return; }
+          render();
+        } }),
+        button({ label: t('Fail'), variant: 'ghost', onClick: fail })];
+    return h('div.fac-cal',
+      h('h2', t('Calibrate the sticks')),
+      h('p.muted', calibrating
+        ? t('Keep gentle pressure against the rim and go all the way round, slowly. The green shape grows as each direction is captured.')
+        : t('Let go of both sticks and leave the controller still, then press Start calibration. The resting center is recorded at that moment.')),
+      // Before Start the shapes are the current calibration: dimmed until a new one is captured.
+      h('div.fac-cal-sticks', { class: calibrating ? null : 'idle', style: { '--n': String(cal.previews.length) } }, cal.previews.map((pv) => pv.el)),
+      status,
+      h('div.row.fac-actions', actions));
   }
 
   function triggerCalibration(hover) {
@@ -400,8 +458,9 @@ export function mount(root, { session, params = {} }) {
     stageCleanup = () => { off(); if (running && !station.unit?.results.has('triggers')) calib.stop().catch(() => {}); };
     return big('calibrate', t('Calibrate the analog triggers'), t('Press Start, push each one all the way in and let go a few times, then press Done.'),
       h('div.fac-meters', rows.map(({ i, m }) => h('div.fac-meter', glyph(i.name, { size: 34 }), m))),
-      h('div.row', { style: { justifyContent: 'center' } }, startBtn, doneBtn,
-        button({ label: t('Fail'), variant: 'ghost', onClick: () => { calib.stop().catch(() => {}); setResult('triggers', N_('Trigger calibration'), 'fail'); render(); } })));
+      h('div.row.fac-actions', startBtn, doneBtn,
+        button({ label: t('Fail'), variant: 'ghost', onClick: () => { calib.stop().catch(() => {}); setResult('triggers', N_('Trigger calibration'), 'fail'); render(); } }),
+        backButton(() => { if (running) calib.stop().catch(() => {}); running = false; back('triggers'); })));
   }
 
   // Input test: every physical input to full travel, and live data on every IMU axis.
@@ -411,7 +470,13 @@ export function mount(root, { session, params = {} }) {
     const reached = new Set();
     const range = Object.fromEntries(axes.map((a) => [a.id, { min: Infinity, max: -Infinity }]));
     const tiles = new Map(inputs.map((i) => [i.code, h('div.fac-in', glyph(i.name, { size: 40 }), h('span', outputName(i.name)))]));
-    const axisEls = new Map(axes.map((a) => [a.id, h('div.fac-axis', h('span', a.label), h('span.fac-axis-ok', icon('check')))]));
+    // Motion sensors: the Motion page's live bars, with a check per axis once it has moved enough.
+    const readout = axes.length ? createImuReadout() : null;
+    const axisRows = new Map();
+    if (readout) {
+      const rows = readout.el.querySelectorAll('.imu-row'); // gyro x, y, z then accel x, y, z, like imuAxes()
+      axes.forEach((a, i) => { const row = rows[i]; if (!row) return; row.append(h('span.fac-imu-ok', icon('check'))); axisRows.set(a.id, row); });
+    }
     const status = h('p.muted');
     let concluded = false;
     const nextBtn = button({ label: t('Next'), icon: 'chevron-right', variant: 'primary', size: 'lg', disabled: true, onClick: () => conclude(false) });
@@ -439,20 +504,26 @@ export function mount(root, { session, params = {} }) {
         const rg = range[a.id];
         const before = rg.max - rg.min >= a.spread;
         rg.min = Math.min(rg.min, v); rg.max = Math.max(rg.max, v);
-        if (!before && rg.max - rg.min >= a.spread) { axisEls.get(a.id).classList.add('ok'); changed = true; }
+        if (!before && rg.max - rg.min >= a.spread) { axisRows.get(a.id)?.classList.add('fac-ok'); changed = true; }
       }
+      readout?.set(r.gyro, r.accel);
       if (changed) update();
     });
-    stageCleanup = off;
+    stageCleanup = () => { off(); readout?.destroy(); };
     update();
     return h('div.fac-inputs',
       h('h2', t('Test every input')),
-      h('p.muted', t('Press every button, push each trigger all the way, move each stick to its edge in every direction{imu}.', { imu: axes.length ? t(', and turn the controller around') : '' })),
-      h('div.fac-in-grid', [...tiles.values()]),
-      axes.length > 0 && h('div.fac-axes', [...axisEls.values()]),
+      h('p.muted', t('Press every button, push each trigger all the way and move each stick to its edge in every direction.')),
+      h('div.fac-inputs-body',
+        h('div.fac-in-grid', [...tiles.values()]),
+        readout && h('div.fac-imu',
+          h('h3', t('Motion sensors')),
+          h('p.small.muted', t('Turn and tilt the controller in every direction until every axis has a check.')),
+          readout.el)),
       status,
-      h('div.row', { style: { justifyContent: 'center' } }, nextBtn,
-        button({ label: t('Fail the rest'), variant: 'ghost', onClick: () => conclude(true) })));
+      h('div.row.fac-actions', nextBtn,
+        button({ label: t('Fail the rest'), variant: 'ghost', onClick: () => conclude(true) }),
+        backButton(() => back('inputs'))));
   }
 
   // Operator checks: rumble (the Haptics page's test command) and LED colors, judged by eye and hand.
@@ -466,9 +537,10 @@ export function mount(root, { session, params = {} }) {
     const label = { 'fcc-label': N_('FCC label'), rumble: N_('Rumble'), leds: N_('LEDs') }[which];
     const fccId = identityText(session.static.bluetooth?.fcc_id ?? new Uint8Array());
     const judge = (ok) => { setResult(which, label, ok ? 'pass' : 'fail', which === 'fcc-label' ? fccId : ''); render(); };
-    const verdict = h('div.row', { style: { justifyContent: 'center' } },
+    const verdict = h('div.row.fac-actions',
       button({ label: t('Pass'), icon: 'check', variant: 'primary', size: 'lg', class: 'fac-pass-btn', onClick: () => judge(true) }),
-      button({ label: t('Fail'), icon: 'close', variant: 'danger', size: 'lg', onClick: () => judge(false) }));
+      button({ label: t('Fail'), icon: 'close', variant: 'danger', size: 'lg', onClick: () => judge(false) }),
+      backButton(() => back('operator')));
     if (which === 'fcc-label') {
       return big('info', t('Is the FCC label on the rear shell?'), t('Check the sticker is applied, straight and readable, and that it shows this FCC ID:'),
         h('div.fac-fcc', fccId ? `FCC ID: ${fccId}` : t('This unit doesn’t report an FCC ID.')), verdict);
