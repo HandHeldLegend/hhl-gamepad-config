@@ -25,7 +25,6 @@ export default {
   'Rainbow': 'Arcoíris',
   'React': 'Reactivo',
   'Fairy': 'Hadas',
-  'Face buttons light up in the classic colors of the current output mode (Switch/SNES: A red, B yellow, X blue, Y green) and follow your remaps; other LEDs glow soft white. Your colors are only used for the player LEDs.': 'Los botones frontales se iluminan con los colores clásicos del modo de salida actual (Switch/SNES: A rojo, B amarillo, X azul, Y verde) y siguen tus reasignaciones; los demás LED brillan en blanco suave. Tus colores solo se usan para los LED de jugador.',
   'Each group glows steadily in the color you pick below.': 'Cada grupo brilla de forma constante con el color que elijas abajo.',
   'All LEDs (except the player LEDs) fade together through the colors of the rainbow. Animation time sets how long each color step takes.': 'Todos los LED (excepto los de jugador) pasan juntos por los colores del arcoíris. El tiempo de animación define cuánto dura cada paso de color.',
   'Lights flash on in your colors when you press an input, then fade out over the animation time. The player LEDs stay lit in their color.': 'Las luces se encienden con tus colores al presionar una entrada y luego se desvanecen durante el tiempo de animación. Los LED de jugador se mantienen encendidos con su color.',
@@ -77,4 +76,5 @@ export default {
   'Set every LED group to the same color at once (like hoja2’s “Paste All”).': 'Pone todos los grupos de LED en el mismo color a la vez (como “Paste All” en hoja2).',
   'On battery': 'Con batería',
   'Idle glow colors': 'Colores del brillo en reposo',
+  "Face buttons light up by their printed letter in the classic colors of the current output mode (Switch / SNES: A red, B yellow, X blue, Y green; Steam / XInput: A green, B red, X blue, Y yellow); other LEDs glow soft white. Your colors are only used for the player LEDs.": "Los botones frontales se iluminan según su letra impresa con los colores clásicos del modo de salida actual (Switch / SNES: A rojo, B amarillo, X azul, Y verde; Steam / XInput: A verde, B rojo, X azul, Y amarillo); los demás LED brillan en blanco suave. Tus colores solo se usan para los LED de jugador.",
 };

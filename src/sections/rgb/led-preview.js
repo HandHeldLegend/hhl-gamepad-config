@@ -7,7 +7,8 @@
  *   pv.refresh();     // redraw now after a setting changed
  *   pv.destroy();     // stop the animation loop
  *
- * getState() → { mode, speed (ms), brightness (0–100), colors: string[] '#rrggbb' (all 32 slots) }
+ * getState() → { mode, speed (ms), brightness (0–100), colors: string[] '#rrggbb' (all 32 slots),
+ *               palette: 'nintendo' | 'xbox' (Authentic face colors) }
  *
  * With prefers-reduced-motion the loop is not started; a representative still frame is drawn
  * instead and redrawn on refresh().
@@ -17,9 +18,11 @@ import { frameGate } from '../../ui/frame-gate.js';
 import { t } from '../../i18n/index.js';
 import { FAIRY_COLORS } from './settings.js';
 
-// Firmware colors for Authentic mode (anm_authentic_palettes.c): Switch/SNES ABXY + light gray.
+// Firmware colors for Authentic mode (anm_authentic_palettes.c), by printed letter: Nintendo colors in
+// Switch / SNES, Xbox colors in Steam (SInput) / XInput. Light gray for everything else.
 // The player group (rgb_player_group) is never animated: the firmware always shows its static color.
 const AUTH = { A: '#ff0000', B: '#f5d400', X: '#0032ff', Y: '#00ff00' };
+const AUTH_XBOX = { A: '#00ff00', B: '#ff0000', X: '#0032ff', Y: '#f5d400' };
 const AUTH_FALLBACK = '#f0f0f0';
 
 const hexToRgb = (hex) => {
@@ -63,7 +66,7 @@ export function ledPreview(o) {
     switch (s.mode) {
       case 0: { // Authentic: classic face colors by group name
         const key = o.names[i].trim().toUpperCase();
-        return hexToRgb(AUTH[key] || AUTH_FALLBACK);
+        return hexToRgb((s.palette === 'xbox' ? AUTH_XBOX : AUTH)[key] || AUTH_FALLBACK);
       }
       case 2: { // Rainbow: every LED shares one hue that steps through 8 colors, one per animation time.
         // The still frame spreads the hues across the LEDs instead so it still reads as "rainbow".

@@ -25,7 +25,6 @@ export default {
   'Rainbow': 'レインボー',
   'React': 'リアクト',
   'Fairy': 'フェアリー',
-  'Face buttons light up in the classic colors of the current output mode (Switch/SNES: A red, B yellow, X blue, Y green) and follow your remaps; other LEDs glow soft white. Your colors are only used for the player LEDs.': 'フェイスボタンが現在の出力モードのクラシックカラー（Switch/SNES：Aは赤、Bは黄、Xは青、Yは緑）で光り、割り当て変更にも追従します。その他のLEDは柔らかな白色に光ります。設定した色はプレイヤーLEDにのみ使われます。',
   'Each group glows steadily in the color you pick below.': '各グループが下で選んだ色で常に点灯します。',
   'All LEDs (except the player LEDs) fade together through the colors of the rainbow. Animation time sets how long each color step takes.': 'すべてのLED（プレイヤーLEDを除く）が虹の色を順番にフェードします。アニメーション時間で各色のステップの長さを設定します。',
   'Lights flash on in your colors when you press an input, then fade out over the animation time. The player LEDs stay lit in their color.': '入力を押すと設定した色でライトが点灯し、アニメーション時間をかけてフェードアウトします。プレイヤーLEDは設定した色で点灯したままです。',
@@ -77,4 +76,5 @@ export default {
   'Set every LED group to the same color at once (like hoja2’s “Paste All”).': 'すべてのLEDグループを一度に同じ色に設定します（hoja2の「Paste All」と同様）。',
   'On battery': 'バッテリー駆動',
   'Idle glow colors': 'アイドル時の点灯色',
+  "Face buttons light up by their printed letter in the classic colors of the current output mode (Switch / SNES: A red, B yellow, X blue, Y green; Steam / XInput: A green, B red, X blue, Y yellow); other LEDs glow soft white. Your colors are only used for the player LEDs.": "フェイスボタンは印字された文字に応じて、現在の出力モードの定番カラーで光ります（Switch / SNES：Aが赤、Bが黄、Xが青、Yが緑。Steam / XInput：Aが緑、Bが赤、Xが青、Yが黄）。その他のLEDは柔らかい白で光ります。あなたの色はプレイヤーLEDにのみ使われます。",
 };

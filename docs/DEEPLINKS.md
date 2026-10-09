@@ -165,7 +165,8 @@ colors (`#rrggbb` or `#rgb`; encode `#` as `%23` in hand-written links), text (U
 
 | Key | Label | Values | Needs | Description |
 |---|---|---|---|---|
-| `gamepad.defaultMode` | Default mode | 0 = Switch (also: switch, swpro, pro, nintendo switch, switch pro); 1 = XInput (also: xinput, xbox, x-input, pc); 2 = Slippi (also: slippi, dolphin, melee); 3 = GCube (also: gamecube, gc, gcube, ngc); 4 = N64 (also: n64, nintendo 64); 5 = SNES (also: snes, sfc, super famicom, super nintendo, nes); 6 = Steam (also: steam, sinput, s-input); 7 = Wii (also: wii, wiimote, wii remote) (needs wii) | – | The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here. |
+| `gamepad.defaultMode` | Default mode | 254 = Auto (also: auto, automatic, detect) (needs splitDefaults); 0 = Switch (also: switch, swpro, pro, nintendo switch, switch pro); 1 = XInput (also: xinput, xbox, x-input, pc); 2 = Slippi (also: slippi, dolphin, melee); 3 = GCube (also: gamecube, gc, gcube, ngc); 4 = N64 (also: n64, nintendo 64); 5 = SNES (also: snes, sfc, super famicom, super nintendo, nes); 6 = Steam (also: steam, sinput, s-input); 7 = Wii (also: wii, wiimote, wii remote) (needs wii) | – | The output mode the controller starts in. On firmware with separate defaults this is the one used when plugged in, and Auto detects the console or PC. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here. |
+| `gamepad.defaultWireless` | Default on battery | 254 = Auto (also: auto, automatic, detect); 0 = Switch (also: switch, swpro, pro, nintendo switch, switch pro); 6 = Steam (also: steam, sinput, s-input); 7 = Wii (also: wii, wiimote, wii remote) (needs wii) | splitDefaults | The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. |
 | `gamepad.bodyColor` | Body color | hex color like #ff8800 | – | Main shell color the Switch shows in its menus and some games. |
 | `gamepad.buttonsColor` | Buttons color | hex color like #ff8800 | – | Color of the buttons as drawn by the Switch. |
 | `gamepad.leftGripColor` | Left grip color | hex color like #ff8800 | – | Left handle color as drawn by the Switch. |
@@ -191,6 +192,7 @@ colors (`#rrggbb` or `#rgb`; encode `#` as `%23` in hand-written links), text (U
 - `leftStick`: the controller has a left analog stick
 - `rgb`: the controller has RGB LEDs
 - `rightStick`: the controller has a right analog stick
+- `splitDefaults`: capability "splitDefaults"
 - `wii`: the controller supports Wii mode (Wii Remote over Bluetooth, RM2 wireless module)
 - `wireless`: the controller has wireless (Bluetooth) hardware
 - `wlan`: the controller supports the WLAN dongle

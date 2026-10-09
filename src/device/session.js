@@ -61,12 +61,14 @@ export function computeCaps(s, c) {
     flicks: (c?.imu?.imu_config_version ?? 0) >= IMU_MODE_MASK_VERSION,
   };
   caps.imuModeWii = caps.imuModes && caps.wii;
+  // Separate wired / battery defaults and Auto: the firmware sets this marker byte once it migrated.
+  caps.splitDefaults = c?.gamepad?.gamepad_defaults_split === 0x01;
   return caps;
 }
 
 const NO_CAPS = Object.freeze(Object.fromEntries(
   ['analog', 'leftStick', 'rightStick', 'triggers', 'invertAllowed', 'rgb', 'imu', 'haptics', 'hapticHD',
-    'battery', 'bluetooth', 'wlan', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'imuModes', 'imuModeWii', 'flicks'].map((k) => [k, false]),
+    'battery', 'bluetooth', 'wlan', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'imuModes', 'imuModeWii', 'flicks', 'splitDefaults'].map((k) => [k, false]),
 ));
 
 class Session extends EventTarget {

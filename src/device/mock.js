@@ -78,7 +78,10 @@ function seed() {
 
   const c = device.config;
   c.gamepad.gamepad_config_version = LAYOUT.defines.CFG_BLOCK_GAMEPAD_VERSION ?? 0;
-  c.gamepad.gamepad_default_mode = 0;
+  // Current firmware: split wired / battery defaults, both Auto (0xFE), migration marker set.
+  c.gamepad.gamepad_default_mode = 0xfe;
+  c.gamepad.gamepad_default_wireless = 0xfe;
+  c.gamepad.gamepad_defaults_split = 0x01;
   c.gamepad.gamepad_mac_address = [0x7c, 0xbb, 0x8a, 0x12, 0x34, 0x56];
   c.gamepad.gamepad_color_body = 0x8e7cc3;
   c.gamepad.gamepad_color_buttons = 0xe9e8ee;

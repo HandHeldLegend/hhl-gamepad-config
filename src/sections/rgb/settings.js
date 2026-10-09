@@ -30,7 +30,7 @@ export const FAIRY_COLORS = 6;
 /** rgb_anim_t values a user can pick, with plain-language explanations used by the RGB page. */
 export const RGB_MODES = [
   { value: 0, id: 'authentic', label: 'Authentic', aliases: ['chroma', 'auto', 'era', 'classic'],
-    about: N_('Face buttons light up in the classic colors of the current output mode (Switch/SNES: A red, B yellow, X blue, Y green) and follow your remaps; other LEDs glow soft white. Your colors are only used for the player LEDs.') },
+    about: N_('Face buttons light up by their printed letter in the classic colors of the current output mode (Switch / SNES: A red, B yellow, X blue, Y green; Steam / XInput: A green, B red, X blue, Y yellow); other LEDs glow soft white. Your colors are only used for the player LEDs.') },
   { value: 1, id: 'static', label: 'Static', aliases: ['user', 'solid', 'none', 'custom'],
     about: N_('Each group glows steadily in the color you pick below.') },
   { value: 2, id: 'rainbow', label: 'Rainbow', aliases: ['cycle', 'spectrum'],

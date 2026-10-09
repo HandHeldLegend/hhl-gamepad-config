@@ -18,6 +18,15 @@ const N_ = (text) => text;
 const fmt = (name) => (LAYOUT.enums.core_reportformat_t || []).find((e) => e.name === `CORE_REPORTFORMAT_${name}`)?.value;
 
 /**
+ * Auto (GAMEPAD_DEFAULT_MODE_AUTO in settings_shared_types.h; not a #define the layout exports):
+ * the controller detects the console or PC at power-on. Firmware with split defaults only
+ * (gamepad_defaults_split == GAMEPAD_DEFAULTS_SPLIT); older firmware treats it as Switch.
+ */
+export const AUTO_MODE = 0xfe;
+/** gamepad_defaults_split once the firmware has migrated to separate wired / battery defaults. */
+export const DEFAULTS_SPLIT = 0x01;
+
+/**
  * Output modes in firmware order. Labels match hoja2 (with tidier capitalization); `about` is a
  * short explanation used by the Gamepad page's mode picker. `requires` is the capability flag
  * (session.caps) a mode needs; without it the mode isn't offered (the firmware falls back to Switch).
@@ -33,6 +42,18 @@ export const DEFAULT_MODES = [
   { value: fmt('WII'), label: 'Wii', aliases: ['wii', 'wiimote', 'wii remote'], requires: 'wii', about: N_('Wii Remote over Bluetooth: upright with a Nunchuk, sideways, or with a Classic Controller.') },
 ].filter((m) => m.value != null);
 
+const AUTO = { value: AUTO_MODE, label: 'Auto', aliases: ['auto', 'automatic', 'detect'], requires: 'splitDefaults' };
+const byFmt = (name) => DEFAULT_MODES.find((m) => m.value === fmt(name));
+
+/** Wired default (byte 1) on split-defaults firmware, in the handoff's order. No Wii (wireless only). */
+export const WIRED_MODES = [
+  { ...AUTO, about: N_('Detects a PC, Switch, GameCube, N64 or SNES / NES when plugged in.') },
+  ...['SINPUT', 'SWPRO', 'XINPUT', 'GAMECUBE', 'N64', 'SNES', 'SLIPPI'].map(byFmt).filter(Boolean),
+];
+
+/** Wireless default (byte 45, on battery): Auto, Switch, Steam, Wii (Wii needs wii_supported). */
+export const WIRELESS_MODES = [AUTO, ...['SWPRO', 'SINPUT', 'WII'].map(byFmt).filter(Boolean)];
+
 /** Switch color fields, in the order hoja2 showed them. */
 const COLORS = [
   ['bodyColor', 'gamepad_color_body', 'Body', 'Main shell color the Switch shows in its menus and some games.'],
@@ -45,12 +66,23 @@ export default [
   {
     key: 'gamepad.defaultMode',
     label: 'Default mode',
-    description: 'The output mode the controller starts in when plugged in or powered on. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here.',
+    description: 'The output mode the controller starts in. On firmware with separate defaults this is the one used when plugged in, and Auto detects the console or PC. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here.',
     block: 'gamepad',
     type: 'enum',
-    options: DEFAULT_MODES.map(({ value, label, aliases, requires }) => ({ value, label, aliases, requires })),
+    options: [AUTO, ...DEFAULT_MODES].map(({ value, label, aliases, requires }) => ({ value, label, aliases, requires })),
     get: (s) => s.config.gamepad.gamepad_default_mode,
     set: (s, v) => { s.config.gamepad.gamepad_default_mode = v; },
+  },
+  {
+    key: 'gamepad.defaultWireless',
+    label: 'Default on battery',
+    description: 'The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC.',
+    block: 'gamepad',
+    type: 'enum',
+    requires: 'splitDefaults',
+    options: WIRELESS_MODES.map(({ value, label, aliases, requires }) => ({ value, label, aliases, requires: requires === 'splitDefaults' ? undefined : requires })),
+    get: (s) => s.config.gamepad.gamepad_default_wireless,
+    set: (s, v) => { s.config.gamepad.gamepad_default_wireless = v; },
   },
   ...COLORS.map(([name, fieldName, label, description]) => ({
     key: `gamepad.${name}`,

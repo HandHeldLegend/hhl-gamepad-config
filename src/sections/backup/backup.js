@@ -11,8 +11,8 @@
  *   const plan = planRestore(backup, session, { calibration });
  *   await applyRestore(plan, session);                   // writes the changed blocks and saves
  *
- * Never copied: block version fields (the controller's own stay), the controller's MAC address and
- * the paired host addresses. Calibration (stick centers and angle maps, hall trigger ranges, gyro and
+ * Never copied: block version fields (the controller's own stay), the controller's MAC address, the
+ * paired host addresses and the split-defaults migration marker (gamepad_defaults_split). Calibration (stick centers and angle maps, hall trigger ranges, gyro and
  * accelerometer offsets) belongs to one physical controller: restoring it is opt-in.
  *
  * Self-contained on purpose: ./card.js is the only UI, hooked into the Firmware page and updater.
@@ -27,7 +27,7 @@ export const BACKUP_FORMAT = 'hoja-config-backup';
 export const BACKUP_FORMAT_VERSION = 1;
 
 /** Fields that are never written from a backup (identity and pairing). */
-const NEVER = new Set(['gamepad_mac_address', 'host_mac_switch', 'host_mac_sinput', 'host_mac_wii']);
+const NEVER = new Set(['gamepad_mac_address', 'host_mac_switch', 'host_mac_sinput', 'host_mac_wii', 'gamepad_defaults_split']);
 
 /** Per-unit calibration. `true` = the whole block. */
 const CALIBRATION = {

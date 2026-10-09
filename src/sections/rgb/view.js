@@ -16,6 +16,7 @@
  * every effect, so its tile is never relabeled or dimmed, and the preview never animates it.
  */
 import { h, loadStyles } from '../../ui/dom.js';
+import LAYOUT from '../../device/generated/fw-layout.js';
 import { card, colorField, asyncButton, badge, infoTip } from '../../ui/controls.js';
 import { toast } from '../../ui/overlay.js';
 import { t, N_, i18n } from '../../i18n/index.js';
@@ -44,6 +45,11 @@ const PRESETS = [
   { name: N_('Snow'), cycle: ['#ffffff'] },
 ];
 
+
+/** Default modes whose Authentic face colors are the Xbox ones (core_reportformat_t XINPUT, SINPUT). */
+const XBOX_FORMATS = new Set(['CORE_REPORTFORMAT_XINPUT', 'CORE_REPORTFORMAT_SINPUT']
+  .map((n) => (LAYOUT.enums.core_reportformat_t || []).find((e) => e.name === n)?.value).filter((v) => v != null));
+
 export function mount(root, { session }) {
   const rgb = () => session.config.rgb;
   const st = session.static.rgb;
@@ -58,6 +64,8 @@ export function mount(root, { session }) {
     speed: live.speed ?? rgb().rgb_speed,
     brightness: live.brightness ?? getSetting('rgb.brightness').get(session),
     colors: Array.from(rgb().rgb_colors, (c, i) => live.colors?.[i] ?? u32ToHex(c)),
+    // Authentic preview: Xbox face colors when the (wired) default is Steam or XInput.
+    palette: XBOX_FORMATS.has(session.config.gamepad?.gamepad_default_mode) ? 'xbox' : 'nintendo',
   });
 
   // ---- 1. Lighting: preview + effect -----------------------------------------------------------

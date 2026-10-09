@@ -2,7 +2,10 @@
  * Gamepad view: port of hoja2/modules/gamepad-md.js (+ mac-address-selector, group-rgb-picker).
  *
  * Cards:
- *   1. Default mode       gamepad_default_mode (core_reportformat_t) + hoja2's config-app warning
+ *   1. Default mode       gamepad_default_mode (core_reportformat_t) + hoja2's config-app warning. On
+ *                         firmware with split defaults (caps.splitDefaults): that byte is the wired
+ *                         default (with Auto), plus gamepad_default_wireless for battery. The block
+ *                         is always written whole, so the version byte and gamepad_defaults_split stay.
  *   2. Switch colors     body / buttons / grips (0x00RRGGBB) with a live controller preview
  *   3. Connection         WebUSB popup; WLAN dongle PIN link/editor (only when session.caps.wlan;
  *                         the PIN setting itself is owned by the Wireless section)
@@ -13,14 +16,14 @@
  * All writes go through session.commit('gamepad'): live on the controller, persisted by Save.
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { card, callout, field, button, badge, kv, infoTip } from '../../ui/controls.js';
+import { card, callout, field, button, badge, kv, infoTip, segmented } from '../../ui/controls.js';
 import { confirmDialog, toast } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { t, N_ } from '../../i18n/index.js';
 import { settingField, refreshSettings } from '../../settings/field.js';
 import { getSetting } from '../../settings/schema.js';
 import { rebootToBootloaderOnly, formatFwVersion } from '../../firmware/updater.js';
-import { DEFAULT_MODES } from './settings.js';
+import { DEFAULT_MODES, WIRED_MODES, WIRELESS_MODES, AUTO_MODE } from './settings.js';
 import { padPreview } from './pad-preview.js';
 import { openConnectGuide } from '../../app/connect-guide.js';
 import { macEditor, formatMac } from './mac-editor.js';
@@ -46,8 +49,8 @@ const COLOR_PRESETS = [
   { name: N_('Indigo'), body: '#4b3f8c', buttons: '#e9e8ee', leftGrip: '#3a3070', rightGrip: '#3a3070' },
 ];
 
-/** Modes that the config app can talk to (from hoja2's warning). */
-const APP_MODES = new Set(['Switch', 'Steam']);
+/** Modes that the config app can talk to (from hoja2's warning). Auto picks Steam on a PC. */
+const APP_MODES = new Set(['Switch', 'Steam', 'Auto']);
 
 export function mount(root, { session, navigate }) {
   const cfg = () => session.config.gamepad;
@@ -55,15 +58,37 @@ export function mount(root, { session, navigate }) {
 
   // ---- 1. Default mode -----------------------------------------------------------------------
   const modeDef = getSetting('gamepad.defaultMode');
+  const split = !!session.caps.splitDefaults;
+  const supported = (m) => !m.requires || session.caps[m.requires];
+  // N64 doesn't power the controller, so on battery it still answers an N64 first in these cases.
+  const n64Note = h('p.small.muted.gp-mode-note', t('On battery the controller still answers an N64 first, because an N64 doesn’t power the controller.'));
+  const showN64Note = (wired) => { n64Note.hidden = !(split && session.caps.battery && (wired === AUTO_MODE || wired === N64)); };
+  const N64 = DEFAULT_MODES.find((m) => m.label === 'N64')?.value;
   const modePicker = modeTiles({
-    modes: DEFAULT_MODES.filter((m) => !m.requires || session.caps[m.requires]),
+    modes: (split ? WIRED_MODES : DEFAULT_MODES).filter(supported),
     value: modeDef.get(session),
     onChange: (v) => {
       // No toast: the warning above the tiles already explains how to get back to this app.
       modeDef.set(session, v);
       session.commit('gamepad');
+      showN64Note(v);
     },
   });
+  // Battery default: only with Bluetooth; Wii only where supported.
+  const wirelessDef = getSetting('gamepad.defaultWireless');
+  const wirelessModes = WIRELESS_MODES.filter((m) => m.value === AUTO_MODE || supported(m));
+  const wirelessValue = wirelessModes.some((m) => m.value === wirelessDef.get(session)) ? wirelessDef.get(session) : AUTO_MODE;
+  const wirelessPicker = split && session.caps.bluetooth && h('div.gp-default-group',
+    h('div.gp-default-head', h('span.field-label', t('On battery')),
+      h('span.small.muted', t('Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC.'))),
+    segmented({
+      options: wirelessModes.map((m) => ({ value: m.value, label: m.label })),
+      value: wirelessValue, tone: TONE, ariaLabel: t('Default on battery'),
+      onChange: (v) => { wirelessDef.set(session, v); session.commit('gamepad'); },
+    }));
+  showN64Note(modeDef.get(session));
+  const wiredHead = split && h('div.gp-default-head', h('span.field-label', t('Plugged in')),
+    h('span.small.muted', t('Used when plugged in. Auto detects a PC, Switch, GameCube, N64 or SNES / NES.')));
 
   const modeCard = card({
     title: t('Default mode'), subtitle: t('What the controller pretends to be when it starts up.'), icon: 'gamepad', tone: TONE,
@@ -75,7 +100,7 @@ export function mount(root, { session, navigate }) {
     callout({ tone: 'yellow', title: t('Warning.') },
       ...tNodes(t('Only {modes} connect to this app. After changing the default, hold {button} while plugging in to connect here.'),
         { modes: h('strong', t('Switch & Steam modes')), button: h('strong', t('A or B')) })),
-    modePicker);
+    wiredHead, modePicker, wirelessPicker, n64Note);
 
   // ---- 2. Switch colors -----------------------------------------------------------------------
   const current = () => Object.fromEntries(COLOR_KEYS.map(([k, slot]) => [slot, defs[k].get(session)]));
