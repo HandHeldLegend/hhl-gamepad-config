@@ -43,6 +43,7 @@ import {
   pico_has_cached_uf2, setUpdateStatus, onFlashProgress,
 } from './picoboot.js';
 import { t, N_, fmt } from '../i18n/index.js';
+import { fetchableUrl } from './urls.js';
 
 // ---- Debug switches (same URL params as hoja2): ?debug=force-update forces the update prompt.
 const params = new URLSearchParams(location.search);
@@ -108,7 +109,7 @@ function setStatus(next) {
 async function fetchManifest(url) {
   if (!url) return null;
   try {
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(fetchableUrl(url), { cache: 'no-store' });
     if (!res.ok) return null;
     const data = await res.json();
     return data.fw_version ? { version: data.fw_version, checksum: data.checksum } : null;
@@ -553,7 +554,11 @@ function applyFlashResult(result) {
   if (result === true) { onImageWritten(); return true; }
   if (result?.needsUserAction) {
     if (result.reason === 'directory-picker') { st.stagedImage = erasing() ? 'nuke' : 'firmware'; showUf2DriveStep(); return true; }
-    if (result.reason === 'manual-download') { showManualUf2Step(result.uf2Url); return true; }
+    if (result.reason === 'manual-download') {
+      showManualUf2Step(result.uf2Url);
+      if (result.error) setUpdateStatus(t('Automatic download blocked ({reason}). Download the UF2, then copy it to RPI-RP2', { reason: result.error }), 100, false);
+      return true;
+    }
     paint(t('Permission needed'), t('Press Update and allow access to the Pico bootloader in the browser popup.'));
     setUpdateStatus(t('Press Update to continue'), 0, false);
     actions({ primary: { label: t('Authorize'), icon: 'usb', run: () => flashNext({ allowRequestDevice: true }) }, restart: true });

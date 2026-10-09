@@ -17,6 +17,7 @@
  * PICOBOOT protocol reference: Raspberry Pi pico-bootrom (picoboot.h); commands below.
  */
 import { t, N_ } from '../i18n/index.js';
+import { fetchableUrl } from './urls.js';
 
 const VID = 0x2e8a;
 const BOOTLOADER_PIDS = [0x0003, 0x000f];
@@ -208,6 +209,7 @@ async function sha256Hex(buffer) {
 }
 
 async function downloadFirmware(url, label = t('Downloading firmware...')) {
+    url = fetchableUrl(url);
     updateProgress(10, false, label);
     let response;
     try {
@@ -526,7 +528,13 @@ export async function pico_update_attempt_flash(url, checksum = null, options = 
         }
 
         if (!binData && !uf2Data) {
-            updateProgress(0, false, `${t('Failed to download firmware.')} (${downloadReason(uf2Result.reason, uf2Url)})`);
+            const reason = downloadReason(uf2Result.reason, fetchableUrl(uf2Url));
+            updateProgress(0, false, `${t('Failed to download firmware.')} (${reason})`);
+            // The host doesn't let this page read the file (no CORS, a proxy or a firewall): the browser can
+            // still download it as a file for the RPI-RP2 drive.
+            if (uf2Url && navigator.onLine !== false && uf2Result.reason instanceof TypeError) {
+                return { needsUserAction: true, reason: 'manual-download', uf2Url, error: reason };
+            }
             return false;
         }
 

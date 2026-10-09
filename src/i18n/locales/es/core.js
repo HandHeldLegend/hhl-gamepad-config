@@ -364,4 +364,5 @@ export default {
   "Flash, self-check, calibrate and test units one after another, with a pass / fail log.": "Graba, autoverifica, calibra y prueba unidades una tras otra, con un registro de aprobado / falla.",
   "offline": "sin conexión",
   "{host} unreachable": "{host} inaccesible",
+  "Automatic download blocked ({reason}). Download the UF2, then copy it to RPI-RP2": "Descarga automática bloqueada ({reason}). Descarga el UF2 y cópialo en RPI-RP2",
 };

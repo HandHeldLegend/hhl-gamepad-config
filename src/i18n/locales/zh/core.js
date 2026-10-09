@@ -349,4 +349,5 @@ export default {
   "App": "应用",
   "offline": "离线",
   "{host} unreachable": "无法连接 {host}",
+  "Automatic download blocked ({reason}). Download the UF2, then copy it to RPI-RP2": "自动下载被阻止（{reason}）。请下载 UF2，然后复制到 RPI-RP2",
 };
