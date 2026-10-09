@@ -58,11 +58,13 @@ export function availableTransports() {
   // Test override (not linked anywhere, desktop only): ?transport=serial or ?transport=usb forces one route.
   if (isAndroid()) return { serial: false, usb: !!navigator.usb, preferred: 'usb' };
   const force = new URLSearchParams(location.search).get('transport');
-  // Desktop Linux: Web Serial first. Chrome changes DTR and RTS there in separate ioctls, which can be
-  // too slow for the module's auto-reset; the USB route sets both in one transfer but needs the
-  // kernel's ch341 driver unloaded first (it owns the chip as /dev/ttyUSB0). The dialog explains that
-  // when a serial connect fails, then offers USB.
-  if (!force && isLinux() && navigator.serial) return { serial: true, usb: !!navigator.usb, preferred: 'serial' };
+  // Desktop Linux: USB first. Chrome changes DTR and RTS there in separate ioctls (TIOCMBIS, then
+  // TIOCMBIC), too slow for the module's auto-reset, so Web Serial usually can't reach the bootloader.
+  // The USB route sets both in one transfer; it needs the udev rule and the kernel's ch341 driver
+  // unloaded (it owns the chip as /dev/ttyUSB0). The dialog lists both steps before Connect.
+  if (!force && isLinux() && (navigator.serial || navigator.usb)) {
+    return { serial: !!navigator.serial, usb: !!navigator.usb, preferred: navigator.usb ? 'usb' : 'serial', linux: true };
+  }
   if (force === 'serial' && navigator.serial) return { serial: true, usb: false, preferred: 'serial' };
   if (force === 'usb' && navigator.usb) return { serial: false, usb: true, preferred: 'usb' };
   const serial = !!navigator.serial && !isAndroid();

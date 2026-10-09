@@ -21,16 +21,21 @@
  * Demo (?demo): the same steps run against a simulated flasher; the demo controller "drops off"
  * after the restart command (see demo.js), so the page-unmount behavior is demonstrable too.
  */
-import { h } from '../../ui/dom.js';
+import { h, loadStyles } from '../../ui/dom.js';
+
 import { openDialog, toast } from '../../ui/overlay.js';
 import { button, callout, kv, progressBar, segmented } from '../../ui/controls.js';
 import { session } from '../../device/session.js';
 import { isDemo, startDemo } from '../../device/mock.js';
 import { EspFlasher, availableTransports, baudFromUrl, downloadBasebandImages } from './esp-flasher.js';
 import { CHANNELS, familyOf } from './channels.js';
-import { LOCAL_UPDATER_URL, STANDALONE_UPDATER_URL, UPDATE_GUIDE_URL } from './info.js';
+import { LOCAL_UPDATER_URL, LOCAL_UPDATER_SH_URL, STANDALONE_UPDATER_URL, UPDATE_GUIDE_URL } from './info.js';
 import { t, N_, plural, fmt } from '../../i18n/index.js';
-import { isLinux } from '../../app/linux.js';
+import { isLinux, explainLinux } from '../../app/linux.js';
+
+// The dialog also opens from pages other than Wireless (Firmware page, picking the CH340), so it
+// loads its own styles (loadStyles adds each stylesheet once).
+loadStyles(new URL('./wireless.css', import.meta.url));
 
 /** How long to wait for the controller to drop off USB after the restart command. */
 const RESTART_TIMEOUT_MS = 6000;
@@ -99,7 +104,8 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
   const helpLinks = () => h('div.wl-help-links',
     linkButton(t('Update guide'), UPDATE_GUIDE_URL),
     linkButton(t('Standalone updater'), STANDALONE_UPDATER_URL),
-    linkButton(t('Windows updater (.zip)'), LOCAL_UPDATER_URL, t('Command-line updater for Windows driver or connection problems')));
+    linkButton(t('Windows updater (.zip)'), LOCAL_UPDATER_URL, t('Command-line updater for Windows driver or connection problems')),
+    linkButton(t('Linux/macOS updater (.sh)'), LOCAL_UPDATER_SH_URL, t('Command-line updater using esptool. Run it with: bash hoja_wireless_update.sh')));
   const logBox = h('details.wl-log-box', h('summary', t('Details')), logPre, helpLinks());
   // Intro: a quiet way in for a controller that's already in update mode.
   const skip = h('p.small.muted.wl-skip', t('Lights already pulsing orange?'), ' ',
@@ -110,16 +116,29 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
       segmented({
         options: [{ value: 'serial', label: t('Serial port') }, { value: 'usb', label: t('USB (WebUSB)') }],
         value: run.transport, tone: 'blue', ariaLabel: t('Connection method'),
-        onChange: (v) => { if (run) run.transport = v; },
+        onChange: (v) => { if (!run) return; run.transport = v; if (run.mode === 'connect') showConnect(); },
       }),
-      h('p.small.muted', t('Didn’t connect? Try the other method. Serial uses the computer’s CH340 driver; USB talks to the chip directly.')));
+      h('p.small.muted', transports.linux
+        ? t('USB is the reliable route on Linux. Serial uses the system’s CH340 driver and can’t start the update on some controllers.')
+        : t('Didn’t connect? Try the other method. Serial uses the computer’s CH340 driver; USB talks to the chip directly.')));
   }
+  // Linux + USB: the two one-time steps, shown before Connect.
+  const copyCmd = (cmd) => h('span.wl-cmd', h('code', cmd), button({ label: t('Copy'), icon: 'copy', size: 'sm', variant: 'ghost', onClick: async () => {
+    try { await navigator.clipboard.writeText(cmd); toast(t('Copied'), { tone: 'green' }); } catch { toast(t('Couldn’t copy. Select the text and copy it yourself.'), { tone: 'red' }); }
+  } }));
+  const linuxSteps = callout({ tone: 'blue', icon: 'info', title: t('Before you connect on Linux:') },
+    h('ol.wl-linux-steps',
+      h('li', t('Install the Linux USB rule (once).'), ' ', button({ label: t('Linux setup'), icon: 'usb', size: 'sm', variant: 'tonal', onClick: () => explainLinux() })),
+      h('li', t('Unload the serial driver, which holds the chip while the controller is in update mode:'), copyCmd('sudo modprobe -r ch341')),
+      h('li', t('Press Connect and choose the CH340 (usually “USB2.0-Ser!”).'))),
+    h('p.small.muted', t('The driver loads again the next time you plug in a USB serial device.')));
+  linuxSteps.hidden = true;
 
   const dlg = openDialog({
     title: t('Update wireless module'), icon: 'wireless', tone: 'blue', dismissible: false,
-    body: [steps, guide, skip, versions, notice, channelRow, transportRow, progress, logBox],
+    body: [steps, guide, skip, versions, notice, channelRow, transportRow, linuxSteps, progress, logBox],
   });
-  run.ui = { dlg, steps, guide, skip, versions, notice, channelRow, transportRow, progress, logPre, logBox, helpLinks };
+  run.ui = { dlg, steps, guide, skip, versions, notice, channelRow, transportRow, linuxSteps, progress, logPre, logBox, helpLinks };
   dlg.result.then(() => cleanup());
 
   // startAt 'connect': the controller is already in update mode (e.g. opened from the Firmware page
@@ -163,7 +182,10 @@ function paint(title, text, { tone = 'blue', icon = 'wireless' } = {}) {
   u.skip.hidden = run.mode !== 'intro';
   // Nothing to show before work starts: the bar appears once something is running (or finished).
   u.progress.hidden = run.mode === 'intro' || run.mode === 'connect';
-  u.transportRow.hidden = !(run.connectFailed && (run.mode === 'connect' || run.mode === 'connecting'));
+  const connecting = run.mode === 'connect' || run.mode === 'connecting';
+  // Linux shows the choice up front (USB is the default there); elsewhere only after a failed connect.
+  u.transportRow.hidden = !((run.connectFailed || run.transports.linux) && connecting);
+  u.linuxSteps.hidden = !(run.transports.linux && run.transport === 'usb' && run.mode === 'connect');
   u.transportRow.querySelectorAll('button').forEach((b) => { b.disabled = run.mode === 'connecting'; });
 }
 
@@ -306,7 +328,9 @@ async function enterUpdateMode() {
 /** Step 3: pick the serial device. */
 function showConnect(warning, hint = null) {
   run.mode = 'connect';
-  paint(t('Connect to the wireless module'), run.transport === 'usb'
+  paint(t('Connect to the wireless module'), run.transport === 'usb' && run.transports.linux
+    ? t('When the controller’s lights pulse orange, follow the steps below. To cancel, just unplug the controller.')
+    : run.transport === 'usb'
     ? t('When the controller’s lights pulse orange, press Connect and choose the USB device (usually “USB2.0-Ser!” or “USB Single Serial”). To cancel, just unplug the controller.')
     : t('When the controller’s lights pulse orange, press Connect and choose the USB serial device (usually “USB-SERIAL CH340” or “USB Single Serial”). To cancel, just unplug the controller.'));
   run.ui.versions.hidden = true;
@@ -338,7 +362,7 @@ async function connectAndInstall() {
     // Picker closed without a choice isn't a failed connection; anything else offers the other method.
     if (err?.name !== 'NotFoundError') run.connectFailed = true;
     showConnect(errorText(err), run.connectFailed && isLinux() && run.transport === 'serial'
-      ? t('On Linux, the serial driver switches the module’s reset lines one at a time, which some controllers can’t follow. Connect over USB instead: unload the driver with {command}, choose USB below and press Connect. USB access needs the Linux rule from Help & about. The driver loads again next time you plug in.', { command: 'sudo modprobe -r ch341' })
+      ? t('On Linux, the serial route can’t start the update on some controllers. Choose USB above and follow its steps.')
       : null);
     return;
   }

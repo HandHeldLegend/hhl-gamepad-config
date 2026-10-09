@@ -17,6 +17,8 @@ export const UPDATE_GUIDE_URL = 'https://docs.handheldlegend.com/s/portal/doc/es
 export const STANDALONE_UPDATER_URL = 'https://handheldlegend.github.io/hoja_baseband/';
 /** Windows command-line updater offered by the standalone page for driver/connection trouble. */
 export const LOCAL_UPDATER_URL = 'https://github.com/HandHeldLegend/handheldlegend.github.io/raw/refs/heads/master/hoja_esptool/hoja-local-updater-win.zip';
+/** The same updater for Linux and macOS (a bash script around esptool). */
+export const LOCAL_UPDATER_SH_URL = 'https://github.com/HandHeldLegend/handheldlegend.github.io/raw/refs/heads/master/hoja_esptool/hoja_wireless_update.sh';
 
 /**
  * FCC Part 15 statement shown next to the FCC ID (verbatim from hoja2). This English text is the
