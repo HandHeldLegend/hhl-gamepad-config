@@ -113,9 +113,4 @@ export default {
   "A board in bootloader mode can’t tell which model it is. Pick the model to install.": "Une carte en mode bootloader ne peut pas indiquer son modèle. Choisissez le modèle à installer.",
   "Press Start. Press each trigger down to the membrane and let go, a few times. Don’t click. Then press Done.": "Appuyez sur Commencer. Enfoncez chaque gâchette jusqu’à la membrane et relâchez, plusieurs fois. Sans clic. Puis appuyez sur Terminé.",
   "Press each trigger slowly down to the membrane: the bar fills. Then press harder until it clicks.": "Enfoncez lentement chaque gâchette jusqu’à la membrane : la barre se remplit. Puis appuyez plus fort jusqu’au clic.",
-  "Press": "Appuyez",
-  "Stop here": "Arrêtez ici",
-  "Don’t click": "Pas de clic",
-  "To the membrane": "Jusqu’à la membrane",
-  "Then click": "Puis clic",
 };

@@ -104,30 +104,3 @@
 .fac-check.ok .icon { visibility: visible; }
 .fac-check-warn { font-size: var(--text-xs, 0.75rem); color: var(--red); font-weight: 600; }
 .fac-model { display: inline-flex; align-items: center; gap: 6px; margin-right: var(--space-3); }
-
-/* Trigger travel diagram */
-.fac-tdiag { position: relative; width: min(460px, 100%); padding-bottom: 24px; margin-bottom: var(--space-2); }
-.fac-tdiag-svg { display: block; width: 100%; height: auto; overflow: visible; }
-.fac-td-ok { fill: var(--green-soft); stroke: var(--green); stroke-width: 2; }
-.fac-td-click { fill: var(--blue-soft, var(--surface-3)); stroke: var(--blue); stroke-width: 2; }
-.fac-td-bad { stroke: var(--red); stroke-width: 2; }
-.fac-td-click-bg { fill: var(--red-soft); }
-.fac-td-hatch { stroke: color-mix(in srgb, var(--red) 55%, transparent); stroke-width: 4; }
-.fac-td-stop { stroke: var(--text); stroke-width: 4; stroke-linecap: round; }
-.fac-td-rest { fill: var(--text-muted); }
-.fac-td-arrow { fill: var(--text); }
-.fac-td-sym { font: 800 18px var(--font-display); fill: var(--green); text-anchor: middle; }
-.fac-td-sym.is-bad { fill: var(--red); }
-.fac-tdiag-labels span { position: absolute; bottom: 0; transform: translateX(-50%); white-space: nowrap;
-  font-size: var(--text-sm); font-weight: 700; color: var(--text-muted); }
-.fac-tdiag-labels span.is-stop { color: var(--text); }
-.fac-tdiag-labels span.is-end { transform: none; }
-.fac-tdiag-labels span.is-bad { color: var(--red); }
-/* The marker presses from released (x 30) to the membrane line (x 220); the check also goes on to the click (x 300). */
-.fac-td-mark { transform: translateX(30px); }
-@media (prefers-reduced-motion: no-preference) {
-  .fac-td-calibrate { animation: fac-td-cal 2.6s ease-in-out infinite; }
-  .fac-td-check { animation: fac-td-chk 3.4s ease-in-out infinite; }
-}
-@keyframes fac-td-cal { 0%, 10% { transform: translateX(30px); } 45%, 70% { transform: translateX(220px); } 100% { transform: translateX(30px); } }
-@keyframes fac-td-chk { 0%, 8% { transform: translateX(30px); } 35%, 50% { transform: translateX(220px); } 70%, 82% { transform: translateX(300px); } 100% { transform: translateX(30px); } }

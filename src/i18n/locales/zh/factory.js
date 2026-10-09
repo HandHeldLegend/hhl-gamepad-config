@@ -121,9 +121,4 @@ export default {
   "A board in bootloader mode can’t tell which model it is. Pick the model to install.": "引导模式下的主板无法识别型号。请选择要安装的型号。",
   "Press Start. Press each trigger down to the membrane and let go, a few times. Don’t click. Then press Done.": "点击“开始”。将每个扳机按到薄膜处再松开，重复几次。不要按出咔哒声。然后点击“完成”。",
   "Press each trigger slowly down to the membrane: the bar fills. Then press harder until it clicks.": "慢慢将每个扳机按到薄膜处，进度条会填满。然后用力按下直到发出咔哒声。",
-  "Press": "按下",
-  "Stop here": "在此停止",
-  "Don’t click": "不要按到咔哒",
-  "To the membrane": "按到薄膜",
-  "Then click": "再按到咔哒",
 };

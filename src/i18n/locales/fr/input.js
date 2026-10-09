@@ -275,4 +275,12 @@ export default {
   "Wii controller": "Manette Wii",
   "In Wii mode the gyro always aims the pointer, in any grip. Gyro sensitivity on the {motion} page scales it, and also MotionPlus and tilt, so keep it near the default for those games.": "En mode Wii, le gyroscope dirige toujours le pointeur, quelle que soit la prise en main. La sensibilité du gyroscope sur la page {motion} ajuste sa vitesse, mais aussi MotionPlus et l’inclinaison, donc gardez-la proche de la valeur par défaut pour ces jeux.",
   "Classic L and R are analog. The Wii also sees the click once they pass about {pct}.": "Classic L et R sont analogiques. La Wii voit aussi le clic une fois qu’ils dépassent environ {pct}.",
+  "Press": "Appuyez",
+  "Stop here": "Arrêtez ici",
+  "Don’t click": "Pas de clic",
+  "To the membrane": "Jusqu’à la membrane",
+  "Then click": "Puis clic",
+  "Press each trigger down to the membrane and release 3–4 times. Don’t click.": "Enfoncez chaque gâchette jusqu’à la membrane et relâchez 3 à 4 fois. Sans clic.",
+  "Fully press and release the other analog inputs 3–4 times.": "Enfoncez à fond puis relâchez les autres entrées analogiques 3 à 4 fois.",
+  "Press Calibrate, press it down to the membrane and release 3–4 times. Don’t click. Then press Finish.": "Appuyez sur Calibrer, enfoncez jusqu’à la membrane et relâchez 3 à 4 fois. Sans clic. Puis appuyez sur Terminer.",
 };

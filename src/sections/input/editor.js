@@ -22,6 +22,7 @@ import {
   modeOptions, defaultOutputMode, effectiveMode, usesThreshold, usesStaticOutput, isAnalogInput,
 } from './mapping.js';
 import { glyph, meter, outputName, modeName } from './parts.js';
+import { dualStageTriggers, triggerDiagram } from './trigger-diagram.js';
 
 /**
  * Order and headings of the output picker groups for non-Wii modes: by output type, except outputs
@@ -272,13 +273,15 @@ export function createEditor(o) {
         else await calib.start(input.code);
         paintCalib();
       } });
+    const dual = dualStageTriggers(session).some((p) => p.analog === input.code);
     const row = field({
       label: t('Calibration'),
-      description: t('Press Calibrate, push it all the way down and release 3–4 times, then press Finish.'),
+      description: dual ? t('Press Calibrate, press it down to the membrane and release 3–4 times. Don’t click. Then press Finish.')
+        : t('Press Calibrate, push it all the way down and release 3–4 times, then press Finish.'),
       control: calibBtn,
     });
     paintCalib();
-    return row;
+    return dual ? h('div.inp-ed-cal', row, triggerDiagram('calibrate')) : row;
   }
   function paintCalib() {
     if (!calibBtn) return;

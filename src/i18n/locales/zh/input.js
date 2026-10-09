@@ -225,4 +225,12 @@ export default {
   "Reset {mode}": "重置 {mode}",
   "What each input sends in {mode} mode. Pressed inputs light up.": "{mode} 模式下每个输入的输出内容。按下的输入会亮起。",
   "Remap": "重新映射",
+  "Press": "按下",
+  "Stop here": "在此停止",
+  "Don’t click": "不要按到咔哒",
+  "To the membrane": "按到薄膜",
+  "Then click": "再按到咔哒",
+  "Press each trigger down to the membrane and release 3–4 times. Don’t click.": "将每个扳机按到薄膜处再松开，重复 3–4 次。不要按出咔哒声。",
+  "Fully press and release the other analog inputs 3–4 times.": "将其他模拟输入完全按下再松开，重复 3–4 次。",
+  "Press Calibrate, press it down to the membrane and release 3–4 times. Don’t click. Then press Finish.": "点击“校准”，按到薄膜处再松开，重复 3–4 次。不要按出咔哒声。然后点击“完成”。",
 };

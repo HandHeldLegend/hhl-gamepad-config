@@ -275,4 +275,12 @@ export default {
   "Wii controller": "Wiiコントローラー",
   "In Wii mode the gyro always aims the pointer, in any grip. Gyro sensitivity on the {motion} page scales it, and also MotionPlus and tilt, so keep it near the default for those games.": "Wiiモードでは、どの持ち方でもジャイロが常にポインターを動かします。{motion}ページのジャイロ感度はポインターの速さに加えてMotionPlusと傾きにも影響するため、それらのゲームではデフォルト付近にしてください。",
   "Classic L and R are analog. The Wii also sees the click once they pass about {pct}.": "クラシックのLとRはアナログです。約{pct}を超えると、Wii側ではクリックとしても認識されます。",
+  "Press": "押す",
+  "Stop here": "ここで止める",
+  "Don’t click": "クリックしない",
+  "To the membrane": "メンブレンまで",
+  "Then click": "次にクリック",
+  "Press each trigger down to the membrane and release 3–4 times. Don’t click.": "各トリガーをメンブレンまで押して離す動作を3〜4回繰り返してください。クリックさせないでください。",
+  "Fully press and release the other analog inputs 3–4 times.": "その他のアナログ入力は奥まで押して離す動作を3〜4回繰り返してください。",
+  "Press Calibrate, press it down to the membrane and release 3–4 times. Don’t click. Then press Finish.": "「キャリブレーション」を押し、メンブレンまで押して離す動作を3〜4回繰り返してください。クリックさせないでください。その後「完了」を押します。",
 };

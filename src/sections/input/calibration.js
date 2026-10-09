@@ -14,6 +14,7 @@ import { toast } from '../../ui/overlay.js';
 import { t, fmt } from '../../i18n/index.js';
 import { HOVER_CMD } from './mapping.js';
 import { glyph, meter, rich } from './parts.js';
+import { dualStageTriggers, triggerDiagram } from './trigger-diagram.js';
 
 /**
  * Calibration state shared by the calibration tab and the per-input editor.
@@ -74,9 +75,13 @@ export function createCalibration(session) {
  */
 export function renderCalibrationTab(panel, { session, calib, hoverInputs, live }) {
   const status = h('span');
+  // Dual-stage triggers calibrate to the top of the membrane only; other analog inputs all the way.
+  const dual = new Set(dualStageTriggers(session).map((p) => p.analog));
+  const dualSteps = dual.size ? [t('Press each trigger down to the membrane and release 3–4 times. Don’t click.'),
+    ...(hoverInputs.some((i) => !dual.has(i.code)) ? [t('Fully press and release the other analog inputs 3–4 times.')] : [])] : null;
   const mainBtn = button({ variant: 'primary', size: 'lg', icon: 'calibrate', label: t('Start calibration') });
   const activeNote = callout({ tone: 'blue', icon: 'calibrate', title: t('Calibrating.'),
-    text: t('Fully press and release every analog input 3–4 times, then press Finish.') });
+    text: dualSteps ? dualSteps.join(' ') : t('Fully press and release every analog input 3–4 times, then press Finish.') });
 
   const rows = hoverInputs.map((input) => {
     const m = meter({ label: t('{input} live value', { input: input.label }) });
@@ -138,9 +143,10 @@ export function renderCalibrationTab(panel, { session, calib, hoverInputs, live 
       h('div.inp-cal-howto',
       h('ol.inp-steps',
         h('li', rich(t('Press {button}.'), { button: h('strong', t('Start calibration')) })),
-        h('li', t('Fully press and release every analog input below 3–4 times.')),
+        ...(dualSteps ? dualSteps.map((x) => h('li', x)) : [h('li', t('Fully press and release every analog input below 3–4 times.'))]),
         h('li', rich(t('Press {button}.'), { button: h('strong', t('Finish calibration')) })),
         h('li', rich(t('Check each bar now reaches both ends, then press {button}.'), { button: h('strong', t('Save')) }))),
+      dual.size ? triggerDiagram('calibrate') : null,
       h('div.row', mainBtn),
       activeNote),
       rows.length

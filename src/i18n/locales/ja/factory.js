@@ -113,9 +113,4 @@ export default {
   "A board in bootloader mode can’t tell which model it is. Pick the model to install.": "ブートローダーモードの基板は機種を判別できません。インストールする機種を選んでください。",
   "Press Start. Press each trigger down to the membrane and let go, a few times. Don’t click. Then press Done.": "「スタート」を押し、各トリガーをメンブレンまで押して離す動作を数回繰り返してください。クリックさせないでください。その後「完了」を押します。",
   "Press each trigger slowly down to the membrane: the bar fills. Then press harder until it clicks.": "各トリガーをメンブレンまでゆっくり押すとバーが満たされます。さらに強く押してクリックさせてください。",
-  "Press": "押す",
-  "Stop here": "ここで止める",
-  "Don’t click": "クリックしない",
-  "To the membrane": "メンブレンまで",
-  "Then click": "次にクリック",
 };
