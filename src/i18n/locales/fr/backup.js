@@ -27,5 +27,7 @@ export default {
   "Restore from file": "Restaurer depuis un fichier",
   "Connect a controller to back up or restore.": "Connectez une manette pour sauvegarder ou restaurer.",
   "Backup & restore": "Sauvegarde et restauration",
-  "Updates can reset settings. Save a backup first so you can restore them afterwards.": "Les mises à jour peuvent réinitialiser les réglages. Enregistrez d’abord une sauvegarde pour pouvoir les restaurer ensuite.",
+  "Settings backed up.": "Réglages sauvegardés.",
+  "Updates can reset settings.": "Les mises à jour peuvent réinitialiser les réglages.",
+  "Save a backup first": "Enregistrer d’abord une sauvegarde",
 };

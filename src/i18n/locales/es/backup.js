@@ -27,5 +27,7 @@ export default {
   "Restore from file": "Restaurar desde archivo",
   "Connect a controller to back up or restore.": "Conecta un control para hacer o restaurar una copia de seguridad.",
   "Backup & restore": "Copia de seguridad y restauración",
-  "Updates can reset settings. Save a backup first so you can restore them afterwards.": "Las actualizaciones pueden restablecer los ajustes. Guarda primero una copia de seguridad para poder restaurarlos después.",
+  "Settings backed up.": "Ajustes respaldados.",
+  "Updates can reset settings.": "Las actualizaciones pueden restablecer los ajustes.",
+  "Save a backup first": "Guarda una copia de seguridad primero",
 };

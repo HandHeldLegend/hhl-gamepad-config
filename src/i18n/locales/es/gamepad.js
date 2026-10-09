@@ -100,11 +100,10 @@ export default {
   "Wii": "Wii",
   "Only {modes} connect to this app. After changing the default, hold {button} while plugging in to connect here.": "Solo los {modes} se conectan a esta app. Después de cambiar el modo predeterminado, mantén {button} al conectarlo para entrar aquí.",
   "Detects a PC, Switch, GameCube, N64 or SNES / NES when plugged in.": "Detecta una PC, Switch, GameCube, N64 o SNES / NES al conectarlo.",
-  "On battery the controller still answers an N64 first, because an N64 doesn’t power the controller.": "Con batería, el control sigue respondiendo primero a una N64, porque la N64 no alimenta el control.",
   "Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC.": "Se usa con batería. Auto se conecta a la primera consola o PC guardada que responda: Switch, luego Wii, luego PC.",
-  "Default on battery": "Predeterminado con batería",
   "Plugged in": "Conectado",
   "Used when plugged in. Auto detects a PC, Switch, GameCube, N64 or SNES / NES.": "Se usa al conectarlo. Auto detecta una PC, Switch, GameCube, N64 o SNES / NES.",
   "The output mode the controller starts in. On firmware with separate defaults this is the one used when plugged in, and Auto detects the console or PC. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here.": "El modo de salida con el que arranca el control. En firmware con predeterminados separados, es el que se usa al conectarlo, y Auto detecta la consola o la PC. Solo los modos Switch y Steam funcionan con esta app. Después de cambiarlo, mantén A o B al conectarlo para volver aquí.",
   "The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC.": "El modo con el que arranca el control con batería (firmware con predeterminados separados). Auto se conecta a la primera consola o PC guardada que responda: Switch, luego Wii, luego PC.",
+  "Wireless default": "Predeterminado inalámbrico",
 };

@@ -5,6 +5,7 @@
  */
 import { h } from '../../ui/dom.js';
 import { card, button, callout, toggle } from '../../ui/controls.js';
+import { icon } from '../../ui/icons.js';
 import { openDialog, toast } from '../../ui/overlay.js';
 import { t, N_, plural, fmt } from '../../i18n/index.js';
 import { createBackup, backupFileName, parseBackup, planRestore, applyRestore } from './backup.js';
@@ -135,9 +136,26 @@ export function backupCard(session) {
   return el;
 }
 
-/** Updater hook: a short "back up first" line for the update dialog (null when not connected). */
+/** Updater hook: one quiet "back up first" line for the update dialog (null when not connected). */
 export function backupPrompt(session) {
   if (!session.connected) return null;
-  return callout({ tone: 'blue', icon: 'save', text: t('Updates can reset settings. Save a backup first so you can restore them afterwards.') },
-    ' ', button({ label: t('Back up settings'), icon: 'download', size: 'sm', variant: 'tonal', onClick: () => downloadBackup(session) }));
+  if (!document.getElementById('bk-prompt-style')) {
+    document.head.append(h('style#bk-prompt-style', `
+      .bk-prompt { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: var(--text-sm); color: var(--text-muted); }
+      .bk-prompt .icon { width: 16px; height: 16px; flex: none; }
+      .bk-prompt .bk-link { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--accent-text, var(--blue));
+        text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+      .bk-prompt .bk-link:hover { color: var(--text); }
+      .bk-prompt.done { color: var(--green); }`));
+  }
+  const el = h('p.bk-prompt');
+  const render = (done) => {
+    el.classList.toggle('done', done);
+    el.replaceChildren(icon(done ? 'check' : 'save'), done
+      ? t('Settings backed up.')
+      : h('span', t('Updates can reset settings.'), ' ',
+        h('button.bk-link', { type: 'button', onclick: async () => { if (await downloadBackup(session)) render(true); } }, t('Save a backup first'))));
+  };
+  render(backedUp);
+  return el;
 }

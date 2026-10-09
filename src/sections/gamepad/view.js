@@ -60,10 +60,6 @@ export function mount(root, { session, navigate }) {
   const modeDef = getSetting('gamepad.defaultMode');
   const split = !!session.caps.splitDefaults;
   const supported = (m) => !m.requires || session.caps[m.requires];
-  // N64 doesn't power the controller, so on battery it still answers an N64 first in these cases.
-  const n64Note = h('p.small.muted.gp-mode-note', t('On battery the controller still answers an N64 first, because an N64 doesn’t power the controller.'));
-  const showN64Note = (wired) => { n64Note.hidden = !(split && session.caps.battery && (wired === AUTO_MODE || wired === N64)); };
-  const N64 = DEFAULT_MODES.find((m) => m.label === 'N64')?.value;
   const modePicker = modeTiles({
     modes: (split ? WIRED_MODES : DEFAULT_MODES).filter(supported),
     value: modeDef.get(session),
@@ -71,7 +67,6 @@ export function mount(root, { session, navigate }) {
       // No toast: the warning above the tiles already explains how to get back to this app.
       modeDef.set(session, v);
       session.commit('gamepad');
-      showN64Note(v);
     },
   });
   // Battery default: only with Bluetooth; Wii only where supported.
@@ -79,15 +74,14 @@ export function mount(root, { session, navigate }) {
   const wirelessModes = WIRELESS_MODES.filter((m) => m.value === AUTO_MODE || supported(m));
   const wirelessValue = wirelessModes.some((m) => m.value === wirelessDef.get(session)) ? wirelessDef.get(session) : AUTO_MODE;
   const wirelessPicker = split && session.caps.bluetooth && h('div.gp-default-group',
-    h('div.gp-default-head', h('span.field-label', t('On battery')),
+    h('div.gp-default-head', h('span.field-label', t('Wireless')),
       h('span.small.muted', t('Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC.'))),
     segmented({
       options: wirelessModes.map((m) => ({ value: m.value, label: m.label })),
-      value: wirelessValue, tone: TONE, ariaLabel: t('Default on battery'),
+      value: wirelessValue, tone: TONE, ariaLabel: t('Wireless default'),
       onChange: (v) => { wirelessDef.set(session, v); session.commit('gamepad'); },
     }));
-  showN64Note(modeDef.get(session));
-  const wiredHead = split && h('div.gp-default-head', h('span.field-label', t('Plugged in')),
+  const wiredHead = split && h('div.gp-default-head', h('span.field-label', t('Wired')),
     h('span.small.muted', t('Used when plugged in. Auto detects a PC, Switch, GameCube, N64 or SNES / NES.')));
 
   const modeCard = card({
@@ -100,7 +94,7 @@ export function mount(root, { session, navigate }) {
     callout({ tone: 'yellow', title: t('Warning.') },
       ...tNodes(t('Only {modes} connect to this app. After changing the default, hold {button} while plugging in to connect here.'),
         { modes: h('strong', t('Switch & Steam modes')), button: h('strong', t('A or B')) })),
-    wiredHead, modePicker, wirelessPicker, n64Note);
+    wiredHead, modePicker, wirelessPicker);
 
   // ---- 2. Switch colors -----------------------------------------------------------------------
   const current = () => Object.fromEntries(COLOR_KEYS.map(([k, slot]) => [slot, defs[k].get(session)]));

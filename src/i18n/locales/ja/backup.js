@@ -27,5 +27,7 @@ export default {
   "Restore from file": "ファイルから復元",
   "Connect a controller to back up or restore.": "バックアップや復元にはコントローラーを接続してください。",
   "Backup & restore": "バックアップと復元",
-  "Updates can reset settings. Save a backup first so you can restore them afterwards.": "アップデートで設定がリセットされることがあります。復元できるよう、先にバックアップを保存してください。",
+  "Settings backed up.": "設定をバックアップしました。",
+  "Updates can reset settings.": "アップデートで設定がリセットされることがあります。",
+  "Save a backup first": "先にバックアップを保存",
 };

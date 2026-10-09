@@ -100,11 +100,10 @@ export default {
   "Wii": "Wii",
   "Only {modes} connect to this app. After changing the default, hold {button} while plugging in to connect here.": "Seuls les {modes} se connectent à cette app. Après avoir changé le mode par défaut, maintenez {button} en branchant la manette pour vous connecter ici.",
   "Detects a PC, Switch, GameCube, N64 or SNES / NES when plugged in.": "Détecte un PC, une Switch, une GameCube, une N64 ou une SNES / NES une fois branchée.",
-  "On battery the controller still answers an N64 first, because an N64 doesn’t power the controller.": "Sur batterie, la manette répond quand même d’abord à une N64, car une N64 n’alimente pas la manette.",
   "Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC.": "Utilisé sur batterie. Auto se connecte à la première console ou au premier PC enregistré qui répond : Switch, puis Wii, puis PC.",
-  "Default on battery": "Par défaut sur batterie",
   "Plugged in": "Branchée",
   "Used when plugged in. Auto detects a PC, Switch, GameCube, N64 or SNES / NES.": "Utilisé une fois branchée. Auto détecte un PC, une Switch, une GameCube, une N64 ou une SNES / NES.",
   "The output mode the controller starts in. On firmware with separate defaults this is the one used when plugged in, and Auto detects the console or PC. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here.": "Le mode de sortie au démarrage de la manette. Sur un firmware avec des modes par défaut séparés, c’est celui utilisé une fois branchée, et Auto détecte la console ou le PC. Seuls les modes Switch et Steam fonctionnent avec cette app. Après l’avoir changé, maintenez A ou B en branchant la manette pour revenir ici.",
   "The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC.": "Le mode au démarrage de la manette sur batterie (firmware avec des modes par défaut séparés). Auto se connecte à la première console ou au premier PC enregistré qui répond : Switch, puis Wii, puis PC.",
+  "Wireless default": "Par défaut sans fil",
 };

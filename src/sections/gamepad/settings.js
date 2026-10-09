@@ -35,7 +35,7 @@ export const DEFAULT_MODES = [
   { value: fmt('SWPRO'), label: 'Switch', aliases: ['switch', 'swpro', 'pro', 'nintendo switch', 'switch pro'], about: N_('Nintendo Switch Pro Controller. Works with this app.') },
   { value: fmt('XINPUT'), label: 'XInput', aliases: ['xinput', 'xbox', 'x-input', 'pc'], about: N_('Xbox-style controller for Windows PCs.') },
   { value: fmt('SLIPPI'), label: 'Slippi', aliases: ['slippi', 'dolphin', 'melee'], about: N_('GameCube adapter mode for Slippi / Dolphin.') },
-  { value: fmt('GAMECUBE'), label: 'GCube', aliases: ['gamecube', 'gc', 'gcube', 'ngc'], about: N_('Native GameCube (Joybus) output.') },
+  { value: fmt('GAMECUBE'), label: 'GameCube', aliases: ['gamecube', 'gc', 'gcube', 'ngc'], about: N_('Native GameCube (Joybus) output.') },
   { value: fmt('N64'), label: 'N64', aliases: ['n64', 'nintendo 64'], about: N_('Native Nintendo 64 (Joybus) output.') },
   { value: fmt('SNES'), label: 'SNES', aliases: ['snes', 'sfc', 'super famicom', 'super nintendo', 'nes'], about: N_('Native SNES / Super Famicom output.') },
   { value: fmt('SINPUT'), label: 'Steam', aliases: ['steam', 'sinput', 's-input'], about: N_('Steam mode, for Steam and SDL games on PC. Works with this app.') },
@@ -75,7 +75,7 @@ export default [
   },
   {
     key: 'gamepad.defaultWireless',
-    label: 'Default on battery',
+    label: 'Wireless default',
     description: 'The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC.',
     block: 'gamepad',
     type: 'enum',

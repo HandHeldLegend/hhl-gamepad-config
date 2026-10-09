@@ -1,6 +1,7 @@
 /**
- * connect-guide.js ("How to connect" dialog): Switch (wired and Bluetooth), Bluetooth pairing in
- * Steam mode, and Wii mode on controllers that support it. Opened from the Wireless page (pairing
+ * connect-guide.js ("How to connect" dialog): a modes-at-a-glance table (button per mode, wired /
+ * battery behavior, pairing), then Switch (wired and Bluetooth), Bluetooth pairing in Steam mode,
+ * and Wii mode on controllers that support it. Opened from the Wireless page (pairing
  * tip) and the Gamepad page (Default mode card).
  *
  * The guide shows only what applies to the connected controller:
@@ -25,6 +26,8 @@
  *     the WLAN dongle where supported. Plugged in, every mode is wired.
  *   - One host per mode is remembered (Paired hosts card); pairing again replaces it.
  *   - The controller doesn't wake on a button press: turn it on to reconnect.
+ *   - Console modes by d-pad at boot (k_dpad_formats): Left = SNES, Down = N64, Right = GameCube.
+ *   - Auto (split-defaults firmware): no button; detects the host plugged in, or calls saved hosts.
  *   - Wii mode (core_wii.c, boot.c): d-pad up at boot, always Bluetooth, status LED pink. Pair by pressing
  *     SYNC on the Wii. A short power-button tap cycles Upright (Remote + Nunchuk) → Sideways (Remote
  *     alone) → Classic (Remote + Classic Controller); the LED flashes white / yellow / blue. The
@@ -33,12 +36,15 @@
  *     after the Wii is switched off.
  * The Switch only reads a wired Pro Controller with "Pro Controller Wired Communication" turned on.
  */
-import { h, fillNodes } from '../ui/dom.js';
+import { h, fillNodes, loadStyles } from '../ui/dom.js';
 import { openDialog } from '../ui/overlay.js';
 import { decodeText } from '../device/struct.js';
 import { INPUT_CODES } from '../sections/input/mapping.js';
-import { outputName } from '../sections/input/parts.js';
+import { outputName, glyph } from '../sections/input/parts.js';
 import { t } from '../i18n/index.js';
+
+// Button glyphs (styles live with the Input section).
+loadStyles(new URL('../sections/input/input.css', import.meta.url));
 
 /** The controller's own (raw) name for an input code key ('EAST', 'START'…), or ''. */
 function rawName(session, key) {
@@ -47,10 +53,12 @@ function rawName(session, key) {
   return info && info.input_type ? decodeText(info.input_name ?? new Uint8Array()).trim() : '';
 }
 
-/** Display name for an input code key, or null. */
-function inputName(session, key) {
-  const name = rawName(session, key);
-  return name ? outputName(name) : null;
+/**
+ * A button for the guide: { name: display text, glyph: glyph label }. With a controller connected
+ * both come from its own button names, so the glyphs match the hardware; otherwise the fallbacks.
+ */
+function button(raw, fallbackName, fallbackGlyph) {
+  return raw ? { name: outputName(raw), glyph: raw } : { name: fallbackName, glyph: fallbackGlyph };
 }
 
 const FACE_KEYS = ['SOUTH', 'EAST', 'WEST', 'NORTH'];
@@ -60,8 +68,8 @@ const FACE_KEYS = ['SOUTH', 'EAST', 'WEST', 'NORTH'];
  * button at `fallbackKey`'s position (controllers without ABXY labels).
  */
 function modeButton(session, label, fallbackKey) {
-  const key = FACE_KEYS.find((k) => rawName(session, k).toUpperCase() === label);
-  return inputName(session, key || fallbackKey);
+  const key = FACE_KEYS.find((k) => rawName(session, k).toUpperCase() === label) || fallbackKey;
+  return key ? rawName(session, key) : '';
 }
 
 /**
@@ -72,11 +80,19 @@ function modeButton(session, label, fallbackKey) {
 export function connectProfile(session) {
   const known = !!session?.connected;
   // east/south keep their names for the call sites; they are the Switch and Steam boot buttons.
-  const east = (known && modeButton(session, 'A', 'EAST')) || t('A');
-  const south = (known && modeButton(session, 'B', 'SOUTH')) || t('B');
-  const start = (known && inputName(session, 'START')) || t('Start (+)');
-  const up = (known && inputName(session, 'UP')) || t('D-pad up');
-  const capture = (known && inputName(session, 'CAPTURE')) || t('Capture');
+  const raw = (key) => (known ? rawName(session, key) : '');
+  const east = button(known && modeButton(session, 'A', 'EAST'), t('A'), 'A');
+  const south = button(known && modeButton(session, 'B', 'SOUTH'), t('B'), 'B');
+  const start = button(raw('START'), t('Start (+)'), 'Start');
+  const up = button(raw('UP'), t('D-pad up'), 'D Up');
+  const capture = button(raw('CAPTURE'), t('Capture'), 'Capture');
+  // XInput and Slippi boot buttons: the ones labeled X and Y (no position fallback in the firmware).
+  const x = button(known && modeButton(session, 'X', null), 'X', 'X');
+  const y = button(known && modeButton(session, 'Y', null), 'Y', 'Y');
+  // Console modes are picked with the d-pad at startup (boot.c k_dpad_formats).
+  const left = button(raw('LEFT'), t('D-pad left'), 'D Left');
+  const down = button(raw('DOWN'), t('D-pad down'), 'D Down');
+  const right = button(raw('RIGHT'), t('D-pad right'), 'D Right');
   let radio = 'unknown';
   if (known) {
     const bt = session.static?.bluetooth || {};
@@ -87,11 +103,48 @@ export function connectProfile(session) {
     else radio = 'other';
   }
   // The WLAN dongle pairs with the RM2 radio only (not ESP32 or wired-only builds).
-  return { known, east, south, start, up, capture, radio, wlan: radio === 'rm2' && !!session.caps?.wlan, wii: known && !!session.caps?.wii };
+  const caps = session?.caps || {};
+  return {
+    known, east, south, start, up, capture, x, y, left, down, right, radio, wlan: radio === 'rm2' && !!caps.wlan, wii: known && !!caps.wii,
+    // Unknown controller: list every mode. Known: only what this build has.
+    joybus: !known || !!caps.joybus, snes: !known || !!caps.snes, auto: !!caps.splitDefaults,
+  };
 }
 
-/** "A + Plus" style combo, bold. */
-const combo = (...names) => h('strong', names.join(' + '));
+/**
+ * "Modes at a glance": every output mode with the button that picks it at startup, what it does
+ * plugged in and on battery, and how it pairs. Rows and columns follow the controller's abilities.
+ */
+function modesTable(p) {
+  const bt = p.radio !== 'none';
+  const dash = () => h('span.faint', '–'); // a new node per cell
+  const wlanOr = () => (p.wlan ? t('WLAN dongle') : dash());
+  const rows = [
+    p.auto && [t('Auto'), h('span', t('No button')), t('Detects a PC, Switch or console'), bt ? t('Connects to the first saved host that answers') : dash()],
+    [t('Switch'), combo(p.east), h('span', t('Wired'), ' · ', h('span.guide-app', t('config app'))), bt ? fillNodes(t('Bluetooth. Pair: {buttons}'), { buttons: combo(p.east, p.start) }) : dash()],
+    [t('Steam'), combo(p.south), h('span', t('Wired'), ' · ', h('span.guide-app', t('config app'))), bt ? fillNodes(t('Bluetooth. Pair: {buttons}'), { buttons: combo(p.south, p.start) }) : dash()],
+    [t('XInput'), combo(p.x), t('Wired'), wlanOr()],
+    [t('Slippi'), combo(p.y), t('Wired'), wlanOr()],
+    p.wii && [t('Wii'), combo(p.up), dash(), t('Bluetooth. Pair: press SYNC on the Wii')],
+    p.joybus && [t('GameCube'), combo(p.right), t('Wired'), wlanOr()],
+    p.joybus && [t('N64'), combo(p.down), t('Wired'), wlanOr()],
+    p.snes && [t('SNES / NES'), combo(p.left), t('Wired'), dash()],
+  ].filter(Boolean);
+  return h('section.guide-section',
+    h('h3', t('Modes at a glance')),
+    h('p.small.muted', t('Hold a mode’s button while you plug in the controller or turn it on. With Start held too, Switch and Steam modes enter Bluetooth pairing. Without a button it starts in its default mode (Gamepad page).')),
+    h('div.guide-modes', { role: 'table' },
+      h('div.guide-modes-row.head', { role: 'row' }, [t('Mode'), t('Hold'), t('Wired'), t('Wireless')].map((c) => h('span', { role: 'columnheader' }, c))),
+      rows.map((r) => h('div.guide-modes-row', { role: 'row' }, r.map((c, i) => h(i ? 'span' : 'strong', { role: 'cell' }, c))))),
+    h('p.small.muted', t('Only Switch and Steam modes connect to this config app.')));
+}
+
+/** A button combo as the controller's glyphs ("A + Start"), with the names as its accessible text. */
+function combo(...buttons) {
+  const label = buttons.map((b) => b.name).join(' + ');
+  return h('span.guide-combo', { title: label, role: 'img', 'aria-label': label },
+    buttons.flatMap((b, i) => [i ? h('span.guide-plus', { 'aria-hidden': 'true' }, '+') : null, glyph(b.glyph, { size: 28 })]));
+}
 
 const section = (title, ...steps) => h('section.guide-section',
   h('h3', title),
@@ -153,7 +206,7 @@ export function openConnectGuide(o = {}) {
     title: t('How to connect'), icon: 'link', tone: 'blue', wide: true,
     body: [
       !p.known && h('p.muted.small', t('Connect your controller to see the exact buttons and options for it.')),
-      wired, btSwitch, btSteam, wii, notes,
+      modesTable(p), wired, btSwitch, btSteam, wii, notes,
     ].filter(Boolean),
     actions: [{ label: t('Done'), variant: 'primary' }],
   });

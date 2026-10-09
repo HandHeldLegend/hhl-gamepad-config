@@ -99,11 +99,10 @@ export default {
   "Wii": "Wii",
   "Only {modes} connect to this app. After changing the default, hold {button} while plugging in to connect here.": "このアプリに接続できるのは{modes}だけです。デフォルトを変更した後は、{button}を押しながら接続するとここにつながります。",
   "Detects a PC, Switch, GameCube, N64 or SNES / NES when plugged in.": "接続すると、PC・Switch・ゲームキューブ・N64・SNES / NESを検出します。",
-  "On battery the controller still answers an N64 first, because an N64 doesn’t power the controller.": "バッテリー駆動時もN64には最初に応答します。N64はコントローラーに給電しないためです。",
   "Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC.": "バッテリー駆動時に使います。オートは保存済みのゲーム機やPCのうち、最初に応答したものに接続します（Switch、Wii、PCの順）。",
-  "Default on battery": "バッテリー時のデフォルト",
   "Plugged in": "接続時",
   "Used when plugged in. Auto detects a PC, Switch, GameCube, N64 or SNES / NES.": "接続時に使います。オートはPC・Switch・ゲームキューブ・N64・SNES / NESを検出します。",
   "The output mode the controller starts in. On firmware with separate defaults this is the one used when plugged in, and Auto detects the console or PC. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here.": "コントローラーが起動するときの出力モードです。デフォルトが分かれたファームウェアでは接続時に使われ、オートはゲーム機やPCを検出します。このアプリで使えるのはSwitchモードとSteamモードだけです。変更した後は、AまたはBを押しながら接続するとここに戻れます。",
   "The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC.": "バッテリー駆動時にコントローラーが起動するモードです（デフォルトが分かれたファームウェア）。オートは保存済みのゲーム機やPCのうち、最初に応答したものに接続します（Switch、Wii、PCの順）。",
+  "Wireless default": "ワイヤレス時のデフォルト",
 };
