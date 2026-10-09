@@ -104,3 +104,18 @@
 .fac-check.ok .icon { visibility: visible; }
 .fac-check-warn { font-size: var(--text-xs, 0.75rem); color: var(--red); font-weight: 600; }
 .fac-model { display: inline-flex; align-items: center; gap: 6px; margin-right: var(--space-3); }
+
+/* Custom shell colors */
+.fac-colors { display: flex; flex-direction: column; gap: var(--space-3); width: min(860px, 100%); margin-inline: auto; }
+.fac-colors h2 { margin: 0; text-align: center; }
+.fac-recents-wrap { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+/* One row: as many recent sets as fit, the rest hidden. */
+.fac-recents { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(auto-fill, 76px); grid-template-rows: auto; grid-auto-rows: 0; overflow: hidden; gap: 0 var(--space-2); }
+.fac-recent { display: flex; align-items: center; justify-content: center; height: 40px; border: 2px solid var(--border); border-radius: var(--radius-md); background: var(--surface); cursor: pointer; }
+.fac-recent:hover { border-color: var(--green); }
+.fac-colors-body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--space-4); align-items: center; }
+@media (max-width: 700px) { .fac-colors-body { grid-template-columns: 1fr; } }
+.fac-color-fields { display: flex; flex-direction: column; gap: var(--space-2); }
+.fac-color-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); font-weight: 700; }
+.fac-color-row .swatch { width: 48px; height: 48px; }
+.fac-colors .fac-actions { justify-content: center; }

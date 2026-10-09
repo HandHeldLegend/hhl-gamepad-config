@@ -113,4 +113,11 @@ export default {
   "A board in bootloader mode can’t tell which model it is. Pick the model to install.": "ブートローダーモードの基板は機種を判別できません。インストールする機種を選んでください。",
   "Press Start. Press each trigger down to the membrane and let go, a few times. Don’t click. Then press Done.": "「スタート」を押し、各トリガーをメンブレンまで押して離す動作を数回繰り返してください。クリックさせないでください。その後「完了」を押します。",
   "Press each trigger slowly down to the membrane: the bar fills. Then press harder until it clicks.": "各トリガーをメンブレンまでゆっくり押すとバーが満たされます。さらに強く押してクリックさせてください。",
+  "Shell": "シェル",
+  "Old firmware this station doesn’t recognize. Install it in bootloader mode (BOOTSEL).": "このステーションが認識できない旧ファームウェアです。ブートローダーモード（BOOTSEL）でインストールしてください。",
+  "Old firmware: update it first.": "旧ファームウェア：先に更新してください。",
+  "Shell colors": "シェルの色",
+  "Recent": "最近",
+  "Use these colors": "この色を使う",
+  "Custom": "カスタム",
 };

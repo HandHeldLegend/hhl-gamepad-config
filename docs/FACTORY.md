@@ -12,7 +12,7 @@ https://handheldlegend.github.io/hoja3/?lang=zh#/factory?build=gcu_2,gcu_2s     
 
 | Parameter | Meaning |
 |---|---|
-| `build` | The line's models: build ids, comma separated (e.g. `gcu_2,gcu_2s`). Each unit is identified on its own, so a mixed line works: a controller running HOJA by the build it reports (it must be one of these, and is updated to the newest firmware of its own build); a blank board in bootloader mode by the operator, who picks the model when the line has more than one. Firmware for every model is downloaded once and cached. Without it, any HOJA controller is accepted, but blank boards can't be flashed. |
+| `build` | The line's models: build ids, comma separated (e.g. `gcu_2,gcu_2s`). Leave it out to accept every model (a blank board then asks which model it is). Each unit is identified on its own, so a mixed line works: a controller running HOJA by the build it reports (it must be one of these, and is updated to the newest firmware of its own build); a blank board in bootloader mode by the operator, who picks the model when the line has more than one. Firmware for every model is downloaded once and cached. Without it, any HOJA controller is accepted, but blank boards can't be flashed. |
 | `skip` | Steps to leave out, comma separated: `flash`, `calibrate`, `inputs`, `operator`. |
 | `lang` | `zh`, `en`, `es`, `ja` or `fr`. |
 
@@ -26,9 +26,10 @@ The page is not in the app's menu. Bookmark the address on each station.
    with the reason; it is never flashed with another model's firmware.
 2. **Self-check** (automatic): settings memory, charger chip (PMIC), battery pack, fuel gauge, wireless module
    and its firmware. Parts a build doesn't have are shown as "Not fitted" and not counted.
-3. **Color SKU:** every unit confirms its shell color (one tap for the same SKU as the last unit). It writes
-   the Switch Pro Controller colors (body, buttons, grips), so the Switch shows the right shell color out of
-   the box. Checked again after saving and logged per unit.
+3. **Switch colors:** sets the colors the Switch shows for the controller (shell, buttons, left and right
+   grip). GC Ultimate 2 and 2S units confirm their color SKU (one tap for the same SKU as the last unit).
+   Other models have custom shells: pick the four colors (starting from the unit's own), or tap one of the
+   recent color sets. Checked again after saving and logged per unit.
 4. **Calibrate** the sticks (the same dialog as the Joysticks page) and analog triggers (as on the Input page).
 5. **Input test:** press every button, push every trigger fully, move each stick to its edge in every
    direction, and turn the controller so every gyro and accelerometer axis shows data.
@@ -88,6 +89,20 @@ Policy `WebUsbAllowDevicesForUrls` (values in decimal):
 - **Linux:** save `{"WebUsbAllowDevicesForUrls": [ ...the list above... ]}` as `hhl-factory.json` in
   `/etc/opt/chrome/policies/managed/` (Chromium: `/etc/chromium/...`, Edge: `/etc/opt/edge/...`). Linux also needs the udev rule from the app's
   Help & about → Linux setup.
+
+## Builders
+
+The station also works as a quick bench test for any HOJA controller (ProGCC, Super Gamepad+ and the rest):
+
+```
+https://handheldlegend.github.io/hoja3/#/factory
+https://handheldlegend.github.io/hoja3/#/factory?build=progcc_3s
+```
+
+Without `build`, every model is accepted and each unit is updated to its own build's newest firmware; a
+blank board asks which model to install. Controllers on old (pre-HOJA2) firmware are restarted into update
+mode and get their model's current firmware. Without the browser policy, press Connect or Allow once per
+board.
 
 ## Color SKUs
 

@@ -113,4 +113,11 @@ export default {
   "A board in bootloader mode can’t tell which model it is. Pick the model to install.": "Una placa en modo bootloader no puede indicar qué modelo es. Elige el modelo que se instalará.",
   "Press Start. Press each trigger down to the membrane and let go, a few times. Don’t click. Then press Done.": "Pulsa Comenzar. Presiona cada gatillo hasta la membrana y suéltalo, varias veces. No hagas clic. Luego pulsa Listo.",
   "Press each trigger slowly down to the membrane: the bar fills. Then press harder until it clicks.": "Presiona cada gatillo despacio hasta la membrana: la barra se llena. Luego presiona más fuerte hasta que haga clic.",
+  "Shell": "Carcasa",
+  "Old firmware this station doesn’t recognize. Install it in bootloader mode (BOOTSEL).": "Firmware antiguo que esta estación no reconoce. Instálalo en modo bootloader (BOOTSEL).",
+  "Old firmware: update it first.": "Firmware antiguo: actualízalo primero.",
+  "Shell colors": "Colores de la carcasa",
+  "Recent": "Recientes",
+  "Use these colors": "Usar estos colores",
+  "Custom": "Personalizado",
 };

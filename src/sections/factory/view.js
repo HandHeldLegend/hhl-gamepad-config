@@ -9,10 +9,11 @@
  *            has more than one model. Without it any HOJA unit is accepted (blank boards can't be
  *            flashed). Each model's firmware is fetched once and cached.
  *     skip   comma list of steps to leave out: flash, calibrate, inputs, operator
- *     sku    color SKU id (skus.js); also picked in the header and kept between units
+ *     sku    color SKU id (skus.js); kept between units
  *
  * Per unit: plug in → (bootloader: flash) → (HOJA on another build or older firmware: update) →
- * hardware self-check → color SKU applied to the Switch colors → stick and trigger calibration →
+ * hardware self-check → Switch colors (a color SKU on SKU builds, custom colors with recent sets on
+ * the others) → stick and trigger calibration →
  * input test (every input, IMU axes live) → operator checks (FCC label on GCU 2, rumble, LEDs) →
  * save → result. Unplug for the next unit.
  *
@@ -26,7 +27,7 @@
  * and the RP2040/RP2350 bootloaders (2e8a:0003/000f) for this site; then units connect on plug-in.
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { button, badge, progressBar } from '../../ui/controls.js';
+import { button, badge, progressBar, colorField } from '../../ui/controls.js';
 import { confirmDialog } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { t, N_ } from '../../i18n/index.js';
@@ -45,16 +46,28 @@ import { glyph, meter, outputName } from '../input/parts.js';
 import { triggerDiagram } from '../input/trigger-diagram.js';
 import { formatMac, identityText } from '../wireless/info.js';
 import { getSetting } from '../../settings/schema.js';
-import { COLOR_SKUS, getSku, FCC_LABEL_BUILDS } from './skus.js';
+import { COLOR_SKUS, getSku, FCC_LABEL_BUILDS, SKU_BUILDS } from './skus.js';
+import { padPreview } from '../gamepad/pad-preview.js';
+import { LEGACY_DEVICES } from '../../device/legacy.js';
 import { hardwareChecks, testInputs, inputReached, imuAxes, dualStageTriggers, DUAL_FULL } from './checks.js';
 
 loadStyles(new URL('./factory.css', import.meta.url));
 loadStyles(new URL('../input/input.css', import.meta.url)); // glyphs and meters
 loadStyles(new URL('../joysticks/joysticks.css', import.meta.url)); // stick calibration previews
 loadStyles(new URL('../motion/motion.css', import.meta.url)); // live IMU bars
+loadStyles(new URL('../gamepad/gamepad.css', import.meta.url)); // controller color preview
 
 const LOG_KEY = 'hhl-factory-log';
 const SKU_KEY = 'hhl-factory-sku';
+const RECENT_KEY = 'hhl-factory-colors';
+const RECENT_MAX = 24;
+/** The four Switch colors: setting key and the color set's field. */
+const COLOR_PARTS = [
+  ['gamepad.bodyColor', 'body', N_('Shell')],
+  ['gamepad.buttonsColor', 'buttons', N_('Buttons')],
+  ['gamepad.leftGripColor', 'leftGrip', N_('Left grip')],
+  ['gamepad.rightGripColor', 'rightGrip', N_('Right grip')],
+];
 /** Station setup guide (browser policy scripts for Chrome and Edge). */
 const SETUP_URL = 'https://github.com/HandHeldLegend/hhl-gamepad-config/blob/main/docs/FACTORY.md';
 const RESULT_TEXT = { pass: N_('Pass'), fail: N_('Fail'), na: N_('Not fitted') };
@@ -81,6 +94,13 @@ export { station as factoryStation, flashed as factoryFlashed };
 
 function loadSku() { try { return localStorage.getItem(SKU_KEY) || ''; } catch { return ''; } }
 function setSku(id) { station.sku = id; try { localStorage.setItem(SKU_KEY, id); } catch { /* storage blocked */ } }
+/** Recent custom color sets, newest first: [{ body, buttons, leftGrip, rightGrip }]. */
+function loadRecents() { try { const v = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } }
+const colorsKey = (c) => COLOR_PARTS.map(([, k]) => c[k]).join(' ');
+function addRecent(c) {
+  const list = [c, ...loadRecents().filter((x) => colorsKey(x) !== colorsKey(c))].slice(0, RECENT_MAX);
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)); } catch { /* storage blocked */ }
+}
 function loadLog() { try { return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch { return []; } }
 function saveLog() { try { localStorage.setItem(LOG_KEY, JSON.stringify(station.log)); } catch { /* storage blocked */ } }
 const skips = () => new Set(String(station.params.skip || '').split(',').map((s) => s.trim()).filter(Boolean));
@@ -202,9 +222,9 @@ async function onBootloader(allowRequestDevice = false) {
   // Which firmware: the unit's own (an update), the line's only model, or ask (a blank board can't tell).
   if (!u.target && station.models.length === 1) u.target = await getTarget(station.models[0]);
   if (!u.target) {
-    if (station.models.length > 1) { u.allowRequestDevice = allowRequestDevice; go('model'); return; }
-    u.note = t('A board in bootloader mode needs the line’s models: add ?build= to the address.');
-    go('connecting');
+    if (!station.models.length && !station.allBuilds) station.allBuilds = (await listBuilds()).builds.map((x) => x.id);
+    u.allowRequestDevice = allowRequestDevice;
+    go('model');
     return;
   }
   const target = u.target;
@@ -332,14 +352,8 @@ async function onUnitConnected(session) {
       u.flash = { percent: 0, status: t('Restarting into update mode…') };
       go('flashing');
       try { await device.rebootToBootloader(); } catch { /* drops off USB mid-command: expected */ }
-      // Continues in onBootloader() when an allowed bootloader appears. If none does (the browser
-      // hasn't allowed this unit's bootloader), ask the operator to allow it.
-      clearTimeout(u.waitTimer);
-      u.waitTimer = setTimeout(() => {
-        if (station.unit !== u || u.stage !== 'flashing' || u.flashing) return;
-        u.flash = { percent: 0, status: t('Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).'), needsPermission: true };
-        redraw();
-      }, BOOTLOADER_WAIT_MS);
+      // Continues in onBootloader() when an allowed bootloader appears.
+      waitForBootloader(u);
       return;
     }
   }
@@ -352,25 +366,57 @@ async function onUnitConnected(session) {
     setResult('model-match', N_('Firmware matches the hardware'), 'fail', t('{model} firmware, but no working radio: this may be another model running the wrong firmware.', { model: humanizeBuildId(u.build) }));
   }
   device.setInputMode(false).catch(() => {});
-  go('sku'); // every unit confirms its color SKU (one tap when it's the same as the last one)
+  // SKU builds confirm their color SKU (one tap when it's the same as the last one); others have custom shells.
+  go(SKU_BUILDS.has(u.build) ? 'sku' : 'colors');
 }
 
-/** Write the batch's SKU colors to the Switch color fields (saved with everything at the end). */
-function applySku(session) {
-  const sku = getSku(station.sku);
-  if (!sku) return;
-  const set = (key, hex) => getSetting(key).set(session, hex);
-  set('gamepad.bodyColor', sku.body);
-  set('gamepad.buttonsColor', sku.buttons);
-  set('gamepad.leftGripColor', sku.leftGrip);
-  set('gamepad.rightGripColor', sku.rightGrip);
+/** Old (pre-HOJA2) firmware: restart it into update mode and install its model's current firmware. */
+async function onLegacy({ deviceId }) {
+  if (location.hash.split('?')[0] !== '#/factory') return;
+  if (!station.unit || station.unit.stage === 'done') station.unit = newUnit();
+  const u = station.unit;
+  const d = LEGACY_DEVICES[deviceId];
+  u.name = d?.name || '';
+  u.build = d?.build || '';
+  const fail = (text) => { setResult('firmware', N_('Firmware'), 'fail', text); finish(); };
+  if (!d) { fail(t('Old firmware this station doesn’t recognize. Install it in bootloader mode (BOOTSEL).')); return; }
+  if (station.models.length && !station.models.includes(d.build)) {
+    fail(t('Not a model on this line: the unit runs {unit}. This line is set for {models}.', { unit: humanizeBuildId(d.build), models: station.models.map(humanizeBuildId).join(', ') }));
+    return;
+  }
+  if (skips().has('flash')) { fail(t('Old firmware: update it first.')); return; }
+  u.boardModel = d.build; // it must come back as this model
+  u.target = await getTarget(d.build);
+  u.flash = { percent: 0, status: t('Restarting into update mode…') };
+  go('flashing');
+  device.rebootToBootloaderLegacy().catch(() => {});
+  waitForBootloader(u);
+}
+
+/** If no allowed bootloader appears after a restart into update mode, ask the operator to allow it. */
+function waitForBootloader(u) {
+  clearTimeout(u.waitTimer);
+  u.waitTimer = setTimeout(() => {
+    if (station.unit !== u || u.stage !== 'flashing' || u.flashing) return;
+    u.flash = { percent: 0, status: t('Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).'), needsPermission: true };
+    redraw();
+  }, BOOTLOADER_WAIT_MS);
+}
+
+/** Write four colors to the Switch color fields (saved with everything at the end). */
+function applyColors(session, colors, label) {
+  for (const [key, k] of COLOR_PARTS) getSetting(key).set(session, colors[k]);
   session.commit('gamepad', { immediate: true }).catch(() => {});
-  station.unit.sku = sku.label;
-  setResult('colors', N_('Switch colors'), 'pass', sku.label);
+  station.unit.colors = { ...colors };
+  station.unit.sku = label;
+  setResult('colors', N_('Switch colors'), 'pass', label);
 }
 
-function continueAfterSku(session) {
-  applySku(session);
+/** The unit's current Switch colors. */
+const unitColors = (session) => Object.fromEntries(COLOR_PARTS.map(([key, k]) => [k, String(getSetting(key).get(session)).toLowerCase()]));
+
+function continueAfterColors(session, colors, label) {
+  applyColors(session, colors, label);
   go(skips().has('calibrate') ? nextAfter('calibrate', session) : 'calibrate');
 }
 
@@ -392,13 +438,11 @@ async function saveAndFinish(session) {
   go('saving');
   const ok = await session.save().catch(() => false);
   setResult('save', N_('Saved to controller'), ok ? 'pass' : 'fail');
-  // Colors: confirm the controller holds the SKU's values after saving.
-  const sku = getSku(station.sku);
-  if (sku && station.unit?.results.has('colors')) {
-    const get = (key) => String(getSetting(key).get(session)).toLowerCase();
-    const match = get('gamepad.bodyColor') === sku.body && get('gamepad.buttonsColor') === sku.buttons
-      && get('gamepad.leftGripColor') === sku.leftGrip && get('gamepad.rightGripColor') === sku.rightGrip;
-    setResult('colors', N_('Switch colors'), ok && match ? 'pass' : 'fail', sku.label);
+  // Colors: confirm the controller holds the chosen values after saving.
+  const u = station.unit;
+  if (u?.colors && u.results.has('colors')) {
+    const match = colorsKey(unitColors(session)) === colorsKey(u.colors);
+    setResult('colors', N_('Switch colors'), ok && match ? 'pass' : 'fail', u.sku);
   }
   finish();
 }
@@ -413,7 +457,7 @@ function finish() {
   u.finished = new Date().toISOString();
   station.log.push({
     unit: u.n, time: u.finished, name: u.name || '', build: u.build || '', firmware: u.fw ? formatFwVersion(u.fw) : '', mac: u.mac || '',
-    updated: u.updated ? 'yes' : 'no', sku: u.sku || '', overall: u.overall.toUpperCase(), note: u.aborted ? 'unplugged before finishing' : '',
+    updated: u.updated ? 'yes' : 'no', sku: u.sku || '', colors: u.colors ? colorsKey(u.colors) : '', overall: u.overall.toUpperCase(), note: u.aborted ? 'unplugged before finishing' : '',
     results: Object.fromEntries(rows.map((r) => [r.id, r.result])),
   });
   saveLog();
@@ -423,9 +467,9 @@ function finish() {
 // ---- CSV ---------------------------------------------------------------------------------------
 function downloadCsv() {
   const ids = [...new Set(station.log.flatMap((e) => Object.keys(e.results)))];
-  const head = ['unit', 'time', 'name', 'build', 'firmware', 'mac', 'updated', 'sku', ...ids, 'overall', 'note'];
+  const head = ['unit', 'time', 'name', 'build', 'firmware', 'mac', 'updated', 'sku', 'colors', ...ids, 'overall', 'note'];
   const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const lines = [head.join(','), ...station.log.map((e) => [e.unit, e.time, e.name, e.build, e.firmware, e.mac, e.updated, e.sku || '', ...ids.map((id) => e.results[id] || ''), e.overall, e.note].map(q).join(','))];
+  const lines = [head.join(','), ...station.log.map((e) => [e.unit, e.time, e.name, e.build, e.firmware, e.mac, e.updated, e.sku || '', e.colors || '', ...ids.map((id) => e.results[id] || ''), e.overall, e.note].map(q).join(','))];
   const a = h('a', { href: URL.createObjectURL(new Blob([`${lines.join('\r\n')}\r\n`], { type: 'text/csv' })), download: `hoja-factory-${new Date().toISOString().slice(0, 10)}.csv` });
   document.body.append(a);
   a.click();
@@ -537,7 +581,7 @@ export function mount(root, { session, params = {} }) {
           h('p.small.faint.fac-seen', t('USB devices this browser can use: {list}', { list: rb.seen || t('none') })));
       }
       case 'model': return big('firmware', t('Which controller is this board?'), t('A board in bootloader mode can’t tell which model it is. Pick the model to install.'),
-        h('div.fac-skus', station.models.map((id) => h('button.fac-sku-btn', { type: 'button', onclick: async () => {
+        h('div.fac-skus', (station.models.length ? station.models : station.allBuilds || []).map((id) => h('button.fac-sku-btn', { type: 'button', onclick: async () => {
           u.boardModel = id;
           u.target = await getTarget(id);
           onBootloader(!!u.allowRequestDevice);
@@ -546,11 +590,12 @@ export function mount(root, { session, params = {} }) {
       case 'sku': {
         const dots = (x) => h('span.fac-sku-dots', [x.body, x.buttons, x.leftGrip, x.rightGrip].map((c) => h('span', { style: { background: c } })));
         const last = getSku(station.sku);
-        const pick = (x) => { setSku(x.id); continueAfterSku(session); };
+        const pick = (x) => { setSku(x.id); continueAfterColors(session, x, x.label); };
         return big('palette', t('Which color is this unit?'), t('Check the shell color. It sets the colors the Switch shows for the controller.'),
           last && button({ label: t('Continue with {sku}', { sku: last.label }), icon: 'check', variant: 'primary', size: 'lg', class: 'fac-pass-btn', onClick: () => pick(last) }),
           h('div.fac-skus', COLOR_SKUS.map((x) => h('button.fac-sku-btn', { type: 'button', class: x.id === station.sku ? 'is-last' : null, onclick: () => pick(x) }, dots(x), x.label))));
       }
+      case 'colors': return colorsView();
       case 'calibrate': return calibrateView();
       case 'inputs': return inputsView();
       case 'operator': return operatorView();
@@ -581,6 +626,31 @@ export function mount(root, { session, params = {} }) {
   };
   const backButton = (onClick) => button({ label: t('Back'), icon: 'back', variant: 'ghost', class: 'fac-back', onClick });
   const big = (ic, title, text, ...rest) => h('div.fac-big', h('span.fac-big-icon', icon(ic)), h('h2', title), text && h('p.muted', text), ...rest);
+
+  // Custom shells: the four Switch colors, starting from the unit's own, with recent sets one tap away.
+  function colorsView() {
+    const cur = { ...(station.unit.colors || unitColors(session)) };
+    const preview = padPreview(cur);
+    const fields = COLOR_PARTS.map(([, k, label]) => {
+      const f = colorField({ value: cur[k], ariaLabel: t(label),
+        onInput: (v) => { cur[k] = v; preview.set({ [k]: v }); },
+        onChange: (v) => { cur[k] = v; preview.set({ [k]: v }); } });
+      return { k, f, row: h('div.fac-color-row', h('span', t(label)), f) };
+    });
+    const use = (c) => { Object.assign(cur, c); preview.set(c); fields.forEach(({ k, f }) => { f.value = c[k]; }); };
+    const dots = (c) => h('span.fac-sku-dots', COLOR_PARTS.map(([, k]) => h('span', { style: { background: c[k] } })));
+    const recents = loadRecents();
+    return h('div.fac-colors',
+      h('h2', t('Shell colors')),
+      recents.length ? h('div.fac-recents-wrap', h('span.fac-label', t('Recent')),
+        h('div.fac-recents', recents.map((c) => h('button.fac-recent', { type: 'button', title: COLOR_PARTS.map(([, k]) => c[k].toUpperCase()).join(' · '), onclick: () => use(c) }, dots(c))))) : null,
+      h('div.fac-colors-body', preview, h('div.fac-color-fields', fields.map((x) => x.row))),
+      h('div.row.fac-actions',
+        button({ label: t('Use these colors'), icon: 'check', variant: 'primary', size: 'lg', class: 'fac-pass-btn', onClick: () => {
+          addRecent({ ...cur });
+          continueAfterColors(session, cur, t('Custom'));
+        } })));
+  }
 
   // Calibration: sticks with the Joysticks page's dialog, then analog triggers with the Input page's.
   function calibrateView() {
@@ -804,6 +874,7 @@ export function mount(root, { session, params = {} }) {
 
   // ---- Connection events ----
   const offs = [
+    session.on('legacy', (e) => onLegacy(e)),
     session.on('state', ({ state }) => {
       if (state === 'connected') { onUnitConnected(session); return; }
       if (state !== 'disconnected') return;

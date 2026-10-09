@@ -17,5 +17,8 @@ export const COLOR_SKUS = [
 
 export const getSku = (id) => COLOR_SKUS.find((s) => s.id === id) || null;
 
+/** Builds sold in these SKUs. Other builds have custom shells: the operator picks their four colors. */
+export const SKU_BUILDS = new Set(['gcu_2', 'gcu_2s']);
+
 /** Builds whose units carry an FCC ID label on the rear shell (checked by the operator, then logged). */
 export const FCC_LABEL_BUILDS = new Set(['gcu_2']);
