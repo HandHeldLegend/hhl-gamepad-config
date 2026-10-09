@@ -23,7 +23,7 @@
  * and the RP2040/RP2350 bootloaders (2e8a:0003/000f) for this site; then units connect on plug-in.
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { button, badge, progressBar, select } from '../../ui/controls.js';
+import { button, badge, progressBar, select, callout } from '../../ui/controls.js';
 import { confirmDialog } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { t, N_ } from '../../i18n/index.js';
@@ -42,7 +42,7 @@ import { glyph, meter, outputName } from '../input/parts.js';
 import { formatMac, identityText } from '../wireless/info.js';
 import { getSetting } from '../../settings/schema.js';
 import { COLOR_SKUS, getSku, FCC_LABEL_BUILDS } from './skus.js';
-import { hardwareChecks, testInputs, inputReached, imuAxes } from './checks.js';
+import { hardwareChecks, testInputs, inputReached, imuAxes, dualStageTriggers, DUAL_FULL } from './checks.js';
 
 loadStyles(new URL('./factory.css', import.meta.url));
 loadStyles(new URL('../input/input.css', import.meta.url)); // glyphs and meters
@@ -105,6 +105,7 @@ function go(stage) {
 const STEP_RESULTS = {
   sticks: (id) => id === 'sticks',
   triggers: (id) => id === 'triggers',
+  triggercheck: (id) => id.startsWith('dual-'),
   inputs: (id) => id.startsWith('in-') || /^(gyro|accel)-/.test(id) || id === 'inputs-operator',
   operator: (id) => ['fcc-label', 'rumble', 'leds'].includes(id),
 };
@@ -115,7 +116,13 @@ function back(fromStage) {
   const clear = (key) => { for (const id of [...u.results.keys()]) if (STEP_RESULTS[key](id)) u.results.delete(id); };
   clear(fromStage);
   if (fromStage === 'triggers') { clear('sticks'); go('calibrate'); return; }
-  if (fromStage === 'inputs') { u.results.has('triggers') ? clear('triggers') : clear('sticks'); go('calibrate'); return; }
+  if (fromStage === 'triggercheck') { clear('triggers'); go('calibrate'); return; }
+  if (fromStage === 'inputs') {
+    const hasDual = [...u.results.keys()].some(STEP_RESULTS.triggercheck);
+    if (hasDual) clear('triggercheck'); else if (u.results.has('triggers')) clear('triggers'); else clear('sticks');
+    go('calibrate');
+    return;
+  }
   if (fromStage === 'operator') { clear('inputs'); go('inputs'); }
 }
 
@@ -275,10 +282,16 @@ async function onUnitConnected(session) {
   u.mac = formatMac(session.config.gamepad.gamepad_mac_address);
 
   if (!skips().has('flash') && !isDemo()) {
-    // No ?build=: update each unit to the newest firmware of its own build.
-    if (!station.target && !station.params.build && u.build) await loadTarget(u.build);
+    // No ?build=: each unit is updated to the newest firmware of ITS OWN build (the target follows the unit).
+    if (!station.params.build && u.build && station.target?.id !== u.build) await loadTarget(u.build);
     const target = station.target;
-    if (target && (u.build !== target.id || u.fw < (target.version >>> 0)) && !u.updated) {
+    // Never cross-flash: a unit running another build stays as it is and fails with the reason.
+    if (target && u.build && u.build !== target.id) {
+      setResult('firmware', N_('Firmware'), 'fail', t('Wrong build: this unit runs {unit}, the station is set to {target}.', { unit: humanizeBuildId(u.build), target: target.label }));
+      finish();
+      return;
+    }
+    if (target && u.fw < (target.version >>> 0) && !u.updated) {
       u.flash = { percent: 0, status: t('Restarting into update mode…') };
       go('flashing');
       try { await device.rebootToBootloader(); } catch { /* drops off USB mid-command: expected */ }
@@ -298,8 +311,7 @@ async function onUnitConnected(session) {
     `${humanizeBuildId(u.build || '?')} · ${formatFwVersion(u.fw)}`);
   for (const c of hardwareChecks(session)) setResult(c.id, c.label, c.result, c.detail);
   device.setInputMode(false).catch(() => {});
-  if (!getSku(station.sku)) { go('sku'); return; } // first unit of a batch: pick the color SKU
-  continueAfterSku(session);
+  go('sku'); // every unit confirms its color SKU (one tap when it's the same as the last one)
 }
 
 /** Write the batch's SKU colors to the Switch color fields (saved with everything at the end). */
@@ -477,9 +489,14 @@ export function mount(root, { session, params = {} }) {
             button({ label: t('Fail'), variant: 'ghost', onClick: () => { setResult('firmware', N_('Firmware'), 'fail', t('Didn’t come back after the update')); finish(); } })),
           h('p.small.faint.fac-seen', t('USB devices this browser can use: {list}', { list: rb.seen || t('none') })));
       }
-      case 'sku': return big('palette', t('Pick this batch’s color SKU'), t('It sets the colors the Switch shows for the controller. It stays selected for the next units; change it in the header.'),
-        h('div.fac-skus', COLOR_SKUS.map((x) => h('button.fac-sku-btn', { type: 'button', onclick: () => { setSku(x.id); continueAfterSku(session); } },
-          h('span.fac-sku-dots', [x.body, x.buttons, x.leftGrip, x.rightGrip].map((c) => h('span', { style: { background: c } }))), x.label))));
+      case 'sku': {
+        const dots = (x) => h('span.fac-sku-dots', [x.body, x.buttons, x.leftGrip, x.rightGrip].map((c) => h('span', { style: { background: c } })));
+        const last = getSku(station.sku);
+        const pick = (x) => { setSku(x.id); continueAfterSku(session); };
+        return big('palette', t('Which color is this unit?'), t('Check the shell color. It sets the colors the Switch shows for the controller.'),
+          last && button({ label: t('Continue with {sku}', { sku: last.label }), icon: 'check', variant: 'primary', size: 'lg', class: 'fac-pass-btn', onClick: () => pick(last) }),
+          h('div.fac-skus', COLOR_SKUS.map((x) => h('button.fac-sku-btn', { type: 'button', class: x.id === station.sku ? 'is-last' : null, onclick: () => pick(x) }, dots(x), x.label))));
+      }
       case 'calibrate': return calibrateView();
       case 'inputs': return inputsView();
       case 'operator': return operatorView();
@@ -511,6 +528,8 @@ export function mount(root, { session, params = {} }) {
     const doneSticks = station.unit.results.has('sticks');
     if (sticks.length && !doneSticks) return stickCalibration(sticks);
     if (hover.length && !station.unit.results.has('triggers')) return triggerCalibration(hover);
+    const dual = dualStageTriggers(session);
+    if (dual.length && !dual.every((d) => station.unit.results.has(d.id))) return triggerCheck(dual);
     later(() => go(nextAfter('calibrate', session)));
     return '';
   }
@@ -569,11 +588,53 @@ export function mount(root, { session, params = {} }) {
     doneBtn.hidden = true;
     const off = onInputReport(device, (r) => { if (r.kind === 'raw') rows.forEach(({ i, m }) => m.set((r.inputs[i.code]?.value || 0) / 127, r.inputs[i.code]?.pressed)); });
     stageCleanup = () => { off(); if (running && !station.unit?.results.has('triggers')) calib.stop().catch(() => {}); };
-    return big('calibrate', t('Calibrate the analog triggers'), t('Press Start, push each one all the way in and let go a few times, then press Done.'),
+    // Dual-stage (GameCube) triggers: calibrate only to the top of the membrane, never through the click.
+    const dual = dualStageTriggers(session).length > 0;
+    return big('calibrate', t('Calibrate the analog triggers'),
+      dual ? t('Press Start. Press each trigger down to the top of the membrane and let go, a few times, then press Done.')
+        : t('Press Start, push each one all the way in and let go a few times, then press Done.'),
+      dual && callout({ tone: 'yellow', title: t('Stop at the membrane.'), text: t('Press only until you feel the resistance of the membrane. Don’t press through to the click: the firmware needs that extra travel for the full press.') }),
       h('div.fac-meters', rows.map(({ i, m }) => h('div.fac-meter', glyph(i.name, { size: 34 }), m))),
       h('div.row.fac-actions', startBtn, doneBtn,
         button({ label: t('Fail'), variant: 'ghost', onClick: () => { calib.stop().catch(() => {}); setResult('triggers', N_('Trigger calibration'), 'fail'); render(); } }),
         backButton(() => { if (running) calib.stop().catch(() => {}); running = false; back('triggers'); })));
+  }
+
+  // Dual-stage trigger check: full analog at the top of the membrane, then the click only after that.
+  function triggerCheck(pairs) {
+    const state = Object.fromEntries(pairs.map((p) => [p.id, { full: false, click: false, early: false }]));
+    const ui = pairs.map((p) => {
+      const m = meter({ label: p.analog.name });
+      const fullEl = h('span.fac-check', icon('check'), t('Full at the membrane'));
+      const clickEl = h('span.fac-check', icon('check'), t('Click (full press)'));
+      const warn = h('span.fac-check-warn', { hidden: true }, t('Clicked before the analog was full: recalibrate.'));
+      return { p, m, fullEl, clickEl, warn, el: h('div.fac-dual', glyph(p.analog.name, { size: 38 }), m, h('div.fac-dual-checks', fullEl, clickEl, warn), glyph(p.click.name, { size: 38 })) };
+    });
+    const label = (p) => (p.side === 'left' ? N_('Left trigger (dual-stage)') : N_('Right trigger (dual-stage)'));
+    let done = false;
+    const off = onInputReport(device, (r) => {
+      if (r.kind !== 'raw' || done) return;
+      for (const u of ui) {
+        const a = r.inputs[u.p.analog.code] || { value: 0 };
+        const c = r.inputs[u.p.click.code] || { pressed: false };
+        const st = state[u.p.id];
+        u.m.set(a.value / 127, c.pressed);
+        if (a.value >= DUAL_FULL && !st.full) { st.full = true; u.fullEl.classList.add('ok'); }
+        if (c.pressed && !st.click) {
+          if (a.value >= DUAL_FULL) { st.click = true; u.clickEl.classList.add('ok'); } else if (!st.early) { st.early = true; u.warn.hidden = false; }
+        }
+      }
+      if (pairs.every((p) => state[p.id].full && state[p.id].click)) {
+        done = true;
+        later(() => { pairs.forEach((p) => setResult(p.id, label(p), state[p.id].early ? 'fail' : 'pass')); render(); });
+      }
+    });
+    stageCleanup = off;
+    return big('trigger', t('Check the triggers'), t('Press each trigger slowly down to the top of the membrane: the bar fills. Then press harder until it clicks.'),
+      h('div.fac-duals', ui.map((u) => u.el)),
+      h('div.row.fac-actions',
+        button({ label: t('Fail'), variant: 'ghost', onClick: () => { pairs.forEach((p) => setResult(p.id, label(p), state[p.id].full && state[p.id].click && !state[p.id].early ? 'pass' : 'fail')); render(); } }),
+        backButton(() => back('triggercheck'))));
   }
 
   // Input test: every physical input to full travel, and live data on every IMU axis.

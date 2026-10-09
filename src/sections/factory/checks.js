@@ -5,6 +5,7 @@
  *   hardwareChecks(session)  automatic pass / fail from what the firmware reported at connect
  *   testInputs(session)      every physical input the build has, with how it is judged
  *   imuAxes(session)         the IMU axes to watch for live data
+ *   dualStageTriggers(s)     analog triggers that also click at full press (GameCube style)
  *
  * Results: 'pass' | 'fail' | 'na' (not fitted on this build, not counted).
  */
@@ -89,4 +90,21 @@ export function imuAxes(session) {
     ...['x', 'y', 'z'].map((a) => ({ id: `gyro-${a}`, source: 'gyro', axis: a, label: `${t('Gyro')} ${a.toUpperCase()}`, spread: GYRO_SPREAD })),
     ...['x', 'y', 'z'].map((a) => ({ id: `accel-${a}`, source: 'accel', axis: a, label: `${t('Accel')} ${a.toUpperCase()}`, spread: ACCEL_SPREAD })),
   ];
+}
+
+/** Analog value (0..127 raw stream) a dual-stage trigger must reach at the top of its membrane. */
+export const DUAL_FULL = 118;
+
+/**
+ * Dual-stage (GameCube style) triggers: an analog input (LT_ANALOG / RT_ANALOG) whose digital
+ * partner (LT / RT) clicks at full press. Calibration must stop at the top of the membrane so the
+ * firmware keeps the click as a second stage.
+ * @returns {Array<{id: string, side: 'left'|'right', analog: object, click: object}>}
+ */
+export function dualStageTriggers(session) {
+  const inputs = testInputs(session);
+  const by = (key) => inputs.find((i) => i.key === key);
+  return [['LT', 'left'], ['RT', 'right']]
+    .map(([key, side]) => ({ id: `dual-${key.toLowerCase()}`, side, analog: by(`${key}_ANALOG`), click: by(key) }))
+    .filter((p) => p.analog?.type === 'hover' && p.click?.type === 'digital');
 }

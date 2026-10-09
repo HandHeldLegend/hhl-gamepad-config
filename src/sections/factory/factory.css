@@ -91,3 +91,15 @@
 .fac-imu .imu-row.fac-ok .fac-imu-ok { visibility: visible; }
 .fac-cal-sticks.idle { opacity: 0.45; }
 .fac-cal-sticks.idle .progress { visibility: hidden; }
+.fac-sku-btn.is-last { border-color: var(--green); }
+
+/* Dual-stage trigger check */
+.fac-duals { display: grid; gap: var(--space-3); width: min(640px, 100%); }
+.fac-dual { display: grid; grid-template-columns: auto minmax(0, 1fr) 15em auto; align-items: center; gap: var(--space-3); padding: var(--space-3);
+  border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); }
+.fac-dual-checks { display: grid; gap: 4px; text-align: left; min-width: 11em; }
+.fac-check { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); }
+.fac-check .icon { width: 16px; height: 16px; visibility: hidden; }
+.fac-check.ok { color: var(--green); }
+.fac-check.ok .icon { visibility: visible; }
+.fac-check-warn { font-size: var(--text-xs, 0.75rem); color: var(--red); font-weight: 600; }
