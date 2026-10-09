@@ -10,7 +10,7 @@
  *     falls back to "A", "B", "Start (+)".
  *   - Bluetooth parts appear only on controllers with a radio; USB-cable pairing only on the RPi RM2
  *     module (Switch mode); the WLAN dongle note only when the build supports a dongle; Wii mode only
- *     when the controller reports it (session.caps.wii, RM2 builds).
+ *     when the controller reports it (session.caps.wii: RM2 builds, and ESP32 builds with the HCI bridge).
  *
  * Firmware facts (HOJA-LIB-RP2040 utilities/boot.c, hal/rp2040/bluetooth_hal.c, device main.c files):
  *   - Holding Start (sync_on_boot_code = INPUT_CODE_START) while powering on enters Bluetooth pairing;

@@ -71,8 +71,8 @@ Only **Switch** and **Steam** modes talk to HHL Gamepad Config (Steam mode is al
 - Button mapping is stored **per output mode**: on the [Input](#/input) page choose the profile
   (`#/input?mode=switch|xinput|snes|n64|gamecube|sinput|wii-nunchuk|wii-sideways|wii-classic`) before remapping.
 - Native GameCube/N64 and SNES output only exist on controllers with that hardware support.
-- **Wii** mode (controllers with the RM2 wireless module; the app shows it only when the controller supports
-  it) makes the controller a Wii Remote over Bluetooth. Hold **d-pad up** while turning it on (the status LED
+- **Wii** mode (controllers with the RM2 wireless module, or an ESP32 module running the HCI bridge; the app
+  shows it only when the controller supports it) makes the controller a Wii Remote over Bluetooth. Hold **d-pad up** while turning it on (the status LED
   turns pink), then press **SYNC** on the Wii to pair. A short tap of the power button cycles **Upright** (Wii
   Remote with a Nunchuk) → **Sideways** (Wii Remote alone) → **Classic** (Wii Remote with a Classic Controller,
   analog L and R); the LED flashes white / yellow / blue. Each has its own layout under **Wii** on the
@@ -206,16 +206,15 @@ The [Wireless](#/wireless) page appears for controllers with Bluetooth hardware.
 status and, on controllers with an updatable external wireless module (ESP32), its firmware version. Home flags
 “Wireless module update available” when a newer one exists.
 
-**ESP32 module firmware.** Two firmwares exist for the ESP32: the **HOJA baseband** (versions 0xA0xx, e.g.
-41010) and the **HCI bridge** (0xB000 and up, e.g. 45057), which runs Bluetooth on the controller's main chip and
-brings Wii mode, the current Switch / Steam Bluetooth code and pairing over USB. Which one is offered depends on
-the controller firmware: if the Wireless page lists the part as **ESP32 HCI**, the controller can drive the
-bridge, and a module still on the baseband shows a **Recommended** update to the bridge (after it, pair the
-Switch and other Bluetooth hosts again once, because the module's Bluetooth address changes). A part listed as
-**ESP32** only takes the baseband; if such a module was flashed with the bridge, Bluetooth stays off until the
-baseband is reinstalled or the controller firmware is updated. Controllers with the RPI RM2 radio have no ESP32
-to update. The update itself always restarts the controller into update mode and writes three images
-(bootloader, partition table, app).
+**ESP32 module firmware.** The ESP32 runs the **HCI bridge** firmware (versions 0xB000 and up, e.g. 45057), which
+runs Bluetooth on the controller's main chip and brings Wii mode, the current Switch / Steam Bluetooth code and
+pairing over USB. It is the only module firmware offered. A module still on the older **HOJA baseband** (versions
+0xA0xx, e.g. 41010) is recognized and shows a **Recommended** update to the bridge (after it, pair the Switch and
+other Bluetooth hosts again once, because the module's Bluetooth address changes). The controller firmware must
+support the bridge: if the Wireless page lists the part as **ESP32** rather than **ESP32 HCI**, it shows **Update
+the controller first**; update the controller firmware, then the module. Controllers with the RPI RM2 radio have
+no ESP32 to update. The update itself always restarts the controller into update mode and writes three images
+(bootloader, partition table, app). Offline updaters (Windows .zip, Linux/macOS .sh) install the bridge too.
 
 - **WLAN dongle PIN** (`wireless.dongleKey`, 0000–9999): the controller and the WLAN dongle must use the **same**
   4-digit PIN. Pick one that differs from friends’ controllers nearby.
