@@ -33,6 +33,7 @@ import { isDemo } from '../../device/mock.js';
 import { listBuilds, getBuildManifest, humanizeBuildId } from '../../firmware/builds.js';
 import { buildIdFromManifestUrl } from '../../firmware/changelog.js';
 import { setUpdaterQuiet, formatFwVersion } from '../../firmware/updater.js';
+import { languagePicker } from '../../app/shell.js';
 import { pico_update_attempt_flash, pico_prefetch_firmware, onFlashProgress } from '../../firmware/picoboot.js';
 import { openCalibration } from '../joysticks/calibration.js';
 import { createCalibration } from '../input/calibration.js';
@@ -281,25 +282,32 @@ export function mount(root, { session, params = {} }) {
   function header() {
     const tg = station.target;
     const passed = station.log.filter((e) => e.overall === 'PASS').length;
+    const stat = (label, n, cls) => h('div.fac-stat', { class: cls }, h('span.fac-stat-n', String(n)), h('span.fac-stat-label', label));
     return h('div.fac-head',
-      h('div.fac-target',
-        h('span.fac-label', t('Target firmware')),
-        tg ? h('strong', `${tg.label} · ${formatFwVersion(tg.version)}`) : h('strong', station.params.build ? (station.targetError || t('Loading…')) : t('Each unit’s own build, newest version')),
-        tg && h('span', badge(tg.cached ? t('Cached') : t('Downloading…'), tg.cached ? 'green' : 'yellow'))),
-      h('label.fac-sku', h('span.fac-label', t('Color SKU')),
-        select({ options: COLOR_SKUS.map((x) => ({ value: x.id, label: x.label })), value: station.sku || null, placeholder: t('Pick…'), ariaLabel: t('Color SKU'),
-          onChange: (v) => { setSku(v); renderHead(); } })),
-      h('div.fac-counts',
-        h('span', t('Tested: {n}', { n: station.log.length })), h('span.fac-pass', t('Pass: {n}', { n: passed })), h('span.fac-fail', t('Fail: {n}', { n: station.log.length - passed }))),
-      h('div.fac-head-actions',
-        h('a.btn.btn-ghost.btn-sm', { href: SETUP_URL, target: '_blank', rel: 'noopener' }, h('span.btn-label', t('Station setup'))),
-        button({ label: t('Download CSV'), icon: 'download', size: 'sm', variant: 'tonal', disabled: !station.log.length, onClick: downloadCsv }),
-        button({ label: t('Clear log'), icon: 'trash', size: 'sm', variant: 'ghost', disabled: !station.log.length, onClick: async () => {
-          const ok = await confirmDialog({ title: t('Clear the log?'), danger: true, confirmLabel: t('Clear log'),
-            message: t('Clear the log of {n} units? Download the CSV first if you need it.', { n: station.log.length }) });
-          if (!ok) return;
-          station.log = []; saveLog(); renderHead();
-        } })));
+      // Row 1: what this station installs and paints, plus language and setup.
+      h('div.fac-head-row',
+        h('div.fac-head-group',
+          h('div.fac-field', h('span.fac-label', t('Target firmware')),
+            h('div.fac-target',
+              h('strong', tg ? `${tg.label} · ${formatFwVersion(tg.version)}` : station.params.build ? (station.targetError || t('Loading…')) : t('Each unit’s own build, newest version')),
+              tg && badge(tg.cached ? t('Cached') : t('Downloading…'), tg.cached ? 'green' : 'yellow'))),
+          h('label.fac-field', h('span.fac-label', t('Color SKU')),
+            select({ options: COLOR_SKUS.map((x) => ({ value: x.id, label: x.label })), value: station.sku || null, placeholder: t('Pick…'), ariaLabel: t('Color SKU'),
+              onChange: (v) => { setSku(v); renderHead(); } }))),
+        h('div.fac-head-group',
+          languagePicker(),
+          h('a.btn.btn-ghost.btn-sm', { href: SETUP_URL, target: '_blank', rel: 'noopener' }, h('span.btn-label', t('Station setup'))))),
+      // Row 2: this shift's counts and the log.
+      h('div.fac-head-row',
+        h('div.fac-stats', stat(t('Tested'), station.log.length, ''), stat(t('Pass'), passed, 'is-pass'), stat(t('Fail'), station.log.length - passed, 'is-fail')),
+        h('div.fac-head-group',
+          button({ label: t('Download CSV'), icon: 'download', size: 'sm', variant: 'tonal', disabled: !station.log.length, onClick: downloadCsv }),
+          button({ label: t('Clear log'), icon: 'trash', size: 'sm', variant: 'ghost', disabled: !station.log.length, onClick: async () => {
+            const ok = await confirmDialog({ title: t('Clear the log?'), danger: true, confirmLabel: t('Clear log'),
+              message: t('Clear the log of {n} units? Download the CSV first if you need it.', { n: station.log.length }) });
+            if (!ok) return;
+            station.log = []; saveLog(); renderHead();
+          } }))));
   }
 
   // ---- Checklist (right side) ----
@@ -346,6 +354,7 @@ export function mount(root, { session, params = {} }) {
         return h('div.fac-result', { class: pass ? 'is-pass' : 'is-fail' },
           h('div.fac-result-word', pass ? t('PASS') : t('FAIL')),
           h('p', u.aborted ? t('The unit was unplugged before the test finished.') : pass ? t('Every check passed.') : t('{n} check(s) failed. See the list.', { n: [...u.results.values()].filter((r) => r.result === 'fail').length })),
+          !pass && h('div.fac-failed', [...u.results.values()].filter((r) => r.result === 'fail').map((r) => h('span.fac-failed-chip', t(r.label)))),
           h('p.fac-next', t('Unplug the controller and plug in the next one.')));
       }
       default: return '';
@@ -458,7 +467,7 @@ export function mount(root, { session, params = {} }) {
     const fccId = identityText(session.static.bluetooth?.fcc_id ?? new Uint8Array());
     const judge = (ok) => { setResult(which, label, ok ? 'pass' : 'fail', which === 'fcc-label' ? fccId : ''); render(); };
     const verdict = h('div.row', { style: { justifyContent: 'center' } },
-      button({ label: t('Pass'), icon: 'check', variant: 'primary', size: 'lg', onClick: () => judge(true) }),
+      button({ label: t('Pass'), icon: 'check', variant: 'primary', size: 'lg', class: 'fac-pass-btn', onClick: () => judge(true) }),
       button({ label: t('Fail'), icon: 'close', variant: 'danger', size: 'lg', onClick: () => judge(false) }));
     if (which === 'fcc-label') {
       return big('info', t('Is the FCC label on the rear shell?'), t('Check the sticker is applied, straight and readable, and that it shows this FCC ID:'),
@@ -500,7 +509,8 @@ export function mount(root, { session, params = {} }) {
   ];
 
   render();
-  if (session.connected) onUnitConnected(session); else connectFirst(session);
+  // A remount (e.g. a language change) keeps the unit in progress; only a fresh visit starts one.
+  if (session.connected) { if (!station.unit) onUnitConnected(session); } else connectFirst(session);
 
   return () => {
     offs.forEach((f) => f());

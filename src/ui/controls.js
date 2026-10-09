@@ -26,6 +26,7 @@ export function button(o = {}) {
   if (o.variant) cls.push(`btn-${o.variant}`);
   if (o.size) cls.push(`btn-${o.size}`);
   if (o.block) cls.push('btn-block');
+  if (o.class) cls.push(o.class);
   if (o.iconOnly || (o.icon && !o.label)) cls.push('btn-icon');
   const el = h('button', {
     type: 'button', class: cls, title: o.title, 'aria-label': o.title || o.label,

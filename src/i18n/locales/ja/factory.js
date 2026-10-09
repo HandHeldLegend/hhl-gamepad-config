@@ -72,4 +72,5 @@ export default {
   "Is the FCC label on the rear shell?": "背面シェルに FCC ラベルが貼られていますか？",
   "Check the sticker is applied, straight and readable, and that it shows this FCC ID:": "ラベルがまっすぐ読みやすく貼られていて、この FCC ID が記載されているか確認してください：",
   "This unit doesn’t report an FCC ID.": "このユニットは FCC ID を報告していません。",
+  "Tested": "テスト済み",
 };

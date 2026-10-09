@@ -37,9 +37,10 @@ const WIDE = matchMedia('(min-width: 960px)');
  * (keyboard, screen reader and phone pickers for free). Its label is in every supported language, so
  * anyone can find it whatever language the app is showing.
  */
-function languagePicker() {
-  const SHORT = { en: 'EN', es: 'ES', ja: '日本語', fr: 'FR' };
-  const label = 'Language · Idioma · 言語 · Langue';
+/** Language menu (app bar; the factory station shows it in its own header). */
+export function languagePicker() {
+  const SHORT = { en: 'EN', es: 'ES', ja: '日本語', fr: 'FR', zh: '中文' };
+  const label = 'Language · Idioma · 言語 · Langue · 语言';
   const auto = LANGUAGES.find((l) => l.code === detectLanguage());
   const sel = h('select.lang-pick-select', { 'aria-label': label, title: label, onchange: (e) => setLanguage(e.target.value) },
     h('option', { value: 'auto' }, t('Automatic ({language})', { language: auto.native })),

@@ -72,4 +72,5 @@ export default {
   "Is the FCC label on the rear shell?": "¿Está la etiqueta FCC en la carcasa trasera?",
   "Check the sticker is applied, straight and readable, and that it shows this FCC ID:": "Comprueba que la etiqueta esté pegada, derecha y legible, y que muestre este FCC ID:",
   "This unit doesn’t report an FCC ID.": "Este control no informa un FCC ID.",
+  "Tested": "Probados",
 };

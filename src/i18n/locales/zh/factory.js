@@ -80,4 +80,5 @@ export default {
   "Is the FCC label on the rear shell?": "后壳上贴了 FCC 标签吗？",
   "Check the sticker is applied, straight and readable, and that it shows this FCC ID:": "确认标签已贴好、端正清晰，并且标注的是以下 FCC ID：",
   "This unit doesn’t report an FCC ID.": "此手柄未报告 FCC ID。",
+  "Tested": "已测试",
 };
