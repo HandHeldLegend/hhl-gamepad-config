@@ -5,13 +5,17 @@
  *                           or undefined for the default success. May dispatch events on device.
  *
  * mock.js already seeds an ESP32-C3 with external updates and WLAN supported. Here we:
- *   - report an older baseband version so "Update available" (and the nav badge) show when online;
+ *   - report the part as "ESP32 HCI" (current controller firmware, which can drive the HCI bridge) with
+ *     the older HOJA baseband installed, so the recommended bridge install shows when online;
  *   - give the controller a paired Switch and Wii (SInput left unpaired) and a WLAN PIN;
  *   - make ENABLE_BLUETOOTH_UPLOAD behave like hardware: the controller drops off USB shortly after,
  *     so the update dialog's survive-the-unmount path can be seen. The flash itself is simulated
  *     by module-updater.js / esp-flasher.js when isDemo() was true at the start of the update.
  */
+import { encodeText } from '../../device/struct.js';
+
 export function seed(device) {
+  device.static.bluetooth.part_number = encodeText('ESP32 HCI', 24);
   device.static.bluetooth.external_version_number = 41000;
   const c = device.config.gamepad;
   c.host_mac_switch = [0x98, 0xb6, 0xe9, 0x4a, 0x2c, 0x11];
