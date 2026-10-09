@@ -182,7 +182,11 @@ export function openConnectGuide(o = {}) {
       t('you can also pair with the cable: plug it into the Switch with USB in Switch mode once. It pairs on its own; unplug it and it connects over Bluetooth from then on.')),
     t('Next time, turn the controller on and it reconnects to the same Switch.'));
 
-  const btSteam = bt && section(t('PC, Steam Deck, phone (Bluetooth, Steam mode)'),
+  const btPhone = bt && section(t('Phone or tablet (Bluetooth, Switch mode)'),
+    h('span', fillNodes(t('Unplug the controller, then hold {buttons} while you turn it on.'), { buttons: combo(p.east, p.start) })),
+    t('Pair it from the device’s Bluetooth settings.'));
+
+  const btSteam = bt && section(t('PC and Steam Deck (Bluetooth, Steam mode)'),
     h('span', fillNodes(t('Unplug the controller, then hold {buttons} while you turn it on.'), { buttons: combo(p.south, p.start) })),
     t('Pair it from the device’s Bluetooth settings.'));
 
@@ -207,7 +211,7 @@ export function openConnectGuide(o = {}) {
     title: t('How to connect'), icon: 'link', tone: 'blue', wide: true,
     body: [
       !p.known && h('p.muted.small', t('Connect your controller to see the exact buttons and options for it.')),
-      modesTable(p), wired, btSwitch, btSteam, wii, notes,
+      modesTable(p), wired, btSwitch, btPhone, btSteam, wii, notes,
     ].filter(Boolean),
     actions: [{ label: t('Done'), variant: 'primary' }],
   });

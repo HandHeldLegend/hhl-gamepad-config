@@ -308,7 +308,8 @@ dongle). Unplug the controller, then hold the mode button **plus Start (+)** whi
 
 - **Switch:** hold **A + Start (+)**. On the Switch, open Controllers → Change Grip/Order
   first. Next time it reconnects on its own.
-- **Steam (PC, Steam Deck, phone):** hold **B + Start (+)**, then pair
+- **Phone or tablet:** use Switch mode. Hold **A + Start (+)**, then pair from the device’s Bluetooth settings.
+- **Steam (PC, Steam Deck):** hold **B + Start (+)**, then pair
   from the device’s Bluetooth settings.
 - **Wii** (controllers with Wii mode): hold **d-pad up** while turning it on, then press **SYNC** on the Wii.
   A power-button tap cycles Upright → Sideways → Classic (LED white / yellow / blue).
