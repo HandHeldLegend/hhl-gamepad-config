@@ -105,4 +105,6 @@ export default {
   "Right trigger (dual-stage)": "右トリガー（2段階）",
   "Check the triggers": "トリガーを確認",
   "Press each trigger slowly down to the top of the membrane: the bar fills. Then press harder until it clicks.": "各トリガーをメンブレンの手前までゆっくり押すとバーが満たされます。さらに強く押してクリックさせてください。",
+  "Unplug it and plug in the next one. It starts by itself where the browser allows it; otherwise press Next unit.": "取り外して次のユニットを接続してください。ブラウザーが許可していれば自動で始まります。そうでなければ「次のユニット」を押してください。",
+  "Next unit": "次のユニット",
 };

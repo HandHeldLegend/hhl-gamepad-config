@@ -151,10 +151,21 @@ const isHoja = (usb) => USB_FILTERS.some((f) => f.vendorId === usb.vendorId && f
 function hookUsb(session) {
   if (station.usbHooked || !navigator.usb) return;
   station.usbHooked = true;
-  navigator.usb.addEventListener('connect', (e) => {
-    if (location.hash.split('?')[0] !== '#/factory') return;
-    if (isPicoBootloader(e.device)) onBootloader();
-    else if (isHoja(e.device) && !session.connected) setTimeout(() => session.reconnect(e.device).catch(() => {}), 300);
+  const onStation = () => location.hash.split('?')[0] === '#/factory';
+  navigator.usb.addEventListener('connect', async (e) => {
+    if (!onStation()) return;
+    if (isPicoBootloader(e.device)) { onBootloader(); return; }
+    if (!isHoja(e.device)) return;
+    // A finished unit may still count as connected (left plugged in, or its unplug was missed):
+    // the next unit takes over.
+    if (session.connected && station.unit?.stage === 'done') { station.unit = null; await session.disconnect().catch(() => {}); }
+    if (!session.connected) setTimeout(() => session.reconnect(e.device).catch(() => {}), 300);
+  });
+  // Any HOJA controller unplugged while its result shows: ready for the next one.
+  navigator.usb.addEventListener('disconnect', (e) => {
+    if (!onStation() || !isHoja(e.device) || station.unit?.stage !== 'done') return;
+    station.unit = null;
+    redraw();
   });
 }
 
@@ -507,7 +518,8 @@ export function mount(root, { session, params = {} }) {
           h('div.fac-result-word', pass ? t('PASS') : t('FAIL')),
           h('p', u.aborted ? t('The unit was unplugged before the test finished.') : pass ? t('Every check passed.') : t('{n} check(s) failed. See the list.', { n: [...u.results.values()].filter((r) => r.result === 'fail').length })),
           !pass && h('div.fac-failed', [...u.results.values()].filter((r) => r.result === 'fail').map((r) => h('span.fac-failed-chip', t(r.label)))),
-          h('p.fac-next', t('Unplug the controller and plug in the next one.')));
+          h('p.fac-next', t('Unplug it and plug in the next one. It starts by itself where the browser allows it; otherwise press Next unit.')),
+          button({ label: t('Next unit'), icon: 'chevron-right', variant: 'primary', size: 'lg', onClick: connectUnit }));
       }
       default: return '';
     }
@@ -515,6 +527,12 @@ export function mount(root, { session, params = {} }) {
 
   /** The app's connect flow (it explains failures); a picked bootloader goes to flashing. */
   const connectUnit = async () => {
+    // Starting a new unit: let go of the finished one first (it may still be open).
+    if (!station.unit || station.unit.stage === 'done') {
+      station.unit = null;
+      if (session.connected) await session.disconnect().catch(() => {});
+      render();
+    }
     const r = await connectController();
     if (r === 'bootloader') onBootloader(true);
   };

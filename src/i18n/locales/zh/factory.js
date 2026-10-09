@@ -113,4 +113,6 @@ export default {
   "Right trigger (dual-stage)": "右扳机（双段）",
   "Check the triggers": "检查扳机",
   "Press each trigger slowly down to the top of the membrane: the bar fills. Then press harder until it clicks.": "慢慢将每个扳机按到薄膜顶部，进度条会填满。然后用力按下直到发出咔哒声。",
+  "Unplug it and plug in the next one. It starts by itself where the browser allows it; otherwise press Next unit.": "拔下这台，插入下一台。浏览器已授权时会自动开始；否则点击“下一台”。",
+  "Next unit": "下一台",
 };

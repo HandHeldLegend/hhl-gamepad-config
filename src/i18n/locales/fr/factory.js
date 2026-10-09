@@ -105,4 +105,6 @@ export default {
   "Right trigger (dual-stage)": "Gâchette droite (double course)",
   "Check the triggers": "Vérifiez les gâchettes",
   "Press each trigger slowly down to the top of the membrane: the bar fills. Then press harder until it clicks.": "Enfoncez lentement chaque gâchette jusqu’au haut de la membrane : la barre se remplit. Puis appuyez plus fort jusqu’au clic.",
+  "Unplug it and plug in the next one. It starts by itself where the browser allows it; otherwise press Next unit.": "Débranchez-la et branchez la suivante. Elle démarre seule si le navigateur l’autorise ; sinon, appuyez sur Unité suivante.",
+  "Next unit": "Unité suivante",
 };

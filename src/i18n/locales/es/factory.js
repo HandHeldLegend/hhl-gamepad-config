@@ -105,4 +105,6 @@ export default {
   "Right trigger (dual-stage)": "Gatillo derecho (doble etapa)",
   "Check the triggers": "Revisa los gatillos",
   "Press each trigger slowly down to the top of the membrane: the bar fills. Then press harder until it clicks.": "Presiona cada gatillo despacio hasta el inicio de la membrana: la barra se llena. Luego presiona más fuerte hasta que haga clic.",
+  "Unplug it and plug in the next one. It starts by itself where the browser allows it; otherwise press Next unit.": "Desconéctalo y conecta el siguiente. Empieza solo si el navegador lo permite; si no, pulsa Siguiente control.",
+  "Next unit": "Siguiente control",
 };
