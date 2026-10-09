@@ -87,4 +87,7 @@ export default {
   "Press every button, push each trigger all the way and move each stick to its edge in every direction.": "按下每个按键，将每个扳机按到底，并把每个摇杆推到各个方向的边缘。",
   "Motion sensors": "体感传感器",
   "Turn and tilt the controller in every direction until every axis has a check.": "向各个方向转动和倾斜手柄，直到每个轴都打上勾。",
+  "Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).": "点击“授权引导程序”，然后选择“RP2 Boot”（或“RP2350 Boot”）。",
+  "Direct USB flashing isn’t available here. Press Select the RPI-RP2 drive and pick the drive in the folder window.": "此处无法直接通过 USB 刷写。点击“选择 RPI-RP2 驱动器”，然后在文件夹窗口中选择该驱动器。",
+  "Not updated": "未更新",
 };

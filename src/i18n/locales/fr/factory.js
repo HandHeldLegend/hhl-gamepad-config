@@ -79,4 +79,7 @@ export default {
   "Press every button, push each trigger all the way and move each stick to its edge in every direction.": "Appuyez sur chaque bouton, enfoncez chaque gâchette à fond et poussez chaque joystick jusqu’au bord dans toutes les directions.",
   "Motion sensors": "Capteurs de mouvement",
   "Turn and tilt the controller in every direction until every axis has a check.": "Tournez et inclinez la manette dans tous les sens jusqu’à ce que chaque axe soit coché.",
+  "Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).": "Appuyez sur Autoriser le bootloader et choisissez « RP2 Boot » (ou « RP2350 Boot »).",
+  "Direct USB flashing isn’t available here. Press Select the RPI-RP2 drive and pick the drive in the folder window.": "Le flashage direct par USB n’est pas disponible ici. Appuyez sur Sélectionner le lecteur RPI-RP2 et choisissez le lecteur dans la fenêtre de dossier.",
+  "Not updated": "Non mis à jour",
 };

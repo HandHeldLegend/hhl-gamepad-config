@@ -79,4 +79,7 @@ export default {
   "Press every button, push each trigger all the way and move each stick to its edge in every direction.": "すべてのボタンを押し、各トリガーを最後まで押し込み、各スティックを全方向の端まで動かしてください。",
   "Motion sensors": "モーションセンサー",
   "Turn and tilt the controller in every direction until every axis has a check.": "すべての軸にチェックが付くまで、コントローラーをあらゆる方向に回したり傾けたりしてください。",
+  "Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).": "「ブートローダーを許可」を押して「RP2 Boot」（または「RP2350 Boot」）を選んでください。",
+  "Direct USB flashing isn’t available here. Press Select the RPI-RP2 drive and pick the drive in the folder window.": "ここではUSBでの直接書き込みが使えません。「RPI-RP2 ドライブを選択」を押し、フォルダー画面でドライブを選んでください。",
+  "Not updated": "未更新",
 };

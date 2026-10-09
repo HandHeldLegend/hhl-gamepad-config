@@ -34,7 +34,7 @@ import { listBuilds, getBuildManifest, humanizeBuildId } from '../../firmware/bu
 import { buildIdFromManifestUrl } from '../../firmware/changelog.js';
 import { setUpdaterQuiet, formatFwVersion } from '../../firmware/updater.js';
 import { languagePicker } from '../../app/shell.js';
-import { pico_update_attempt_flash, pico_prefetch_firmware, onFlashProgress } from '../../firmware/picoboot.js';
+import { pico_update_attempt_flash, pico_prefetch_firmware, pico_complete_uf2_picker_flash, onFlashProgress } from '../../firmware/picoboot.js';
 import { createStickCalibration } from '../joysticks/calibration.js';
 import { createImuReadout } from '../motion/imu-readout.js';
 import { createCalibration } from '../input/calibration.js';
@@ -157,25 +157,57 @@ async function connectFirst(session) {
 }
 
 // ---- Flashing --------------------------------------------------------------------------------------
+/** How long to wait for an allowed bootloader to appear before asking the operator to allow it. */
+const BOOTLOADER_WAIT_MS = 4000;
+
 async function onBootloader(allowRequestDevice = false) {
   if (skips().has('flash')) return;
   if (!station.unit || station.unit.stage === 'done') station.unit = newUnit();
+  const u = station.unit;
   const target = station.target;
-  if (!target) { station.unit.note = t('A board in bootloader mode needs a target build: add ?build= to the address.'); go('connecting'); return; }
-  if (station.unit.stage === 'flashing') return;
-  station.unit.flash = { percent: 0, status: t('Preparing firmware...') };
+  if (!target) { u.note = t('A board in bootloader mode needs a target build: add ?build= to the address.'); go('connecting'); return; }
+  if (u.flashing) return; // a write is already running
+  clearTimeout(u.waitTimer);
+  u.flashing = true;
+  u.flash = { percent: 0, status: t('Preparing firmware...') };
   go('flashing');
-  const result = await pico_update_attempt_flash(target.uf2Url, target.checksum, { allowRequestDevice, cacheKey: target.cacheKey });
-  if (result === true) {
-    station.unit.updated = true;
-    station.unit.flash.status = t('Written. Waiting for the controller to restart…');
-    go('rebooting');
-  } else if (result?.needsUserAction && result.reason === 'permission') {
-    station.unit.flash.needsPermission = true;
+  let result = false;
+  try {
+    result = await pico_update_attempt_flash(target.uf2Url, target.checksum, { allowRequestDevice, cacheKey: target.cacheKey });
+  } finally {
+    u.flashing = false;
+  }
+  if (result === true) { flashed(); return; }
+  if (result?.needsUserAction && result.reason === 'permission') {
+    // The browser hasn't allowed this unit's bootloader yet: the operator picks it once.
+    u.flash = { percent: 0, status: t('Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).'), needsPermission: true };
+    go('flashing');
+  } else if (result?.needsUserAction && result.reason === 'directory-picker') {
+    // Direct USB flashing isn't available: copy the (already downloaded) firmware onto the RPI-RP2 drive.
+    u.flash = { percent: 100, status: t('Direct USB flashing isn’t available here. Press Select the RPI-RP2 drive and pick the drive in the folder window.'), needsDrive: true };
     go('flashing');
   } else {
     setResult('firmware', N_('Firmware'), 'fail', t('Direct USB flashing didn’t work on this unit.'));
     finish();
+  }
+}
+
+function flashed() {
+  const u = station.unit;
+  u.updated = true;
+  u.flash = { percent: 100, status: t('Written. Waiting for the controller to restart…') };
+  go('rebooting');
+}
+
+/** The RPI-RP2 drive copy (needs the operator's click for the folder window). */
+async function copyToDrive() {
+  const u = station.unit;
+  try {
+    await pico_complete_uf2_picker_flash();
+    flashed();
+  } catch (err) {
+    u.flash = { ...u.flash, status: err?.message ? t(err.message) : t('Folder selection failed.') };
+    go('flashing');
   }
 }
 
@@ -196,7 +228,15 @@ async function onUnitConnected(session) {
       u.flash = { percent: 0, status: t('Restarting into update mode…') };
       go('flashing');
       try { await device.rebootToBootloader(); } catch { /* drops off USB mid-command: expected */ }
-      return; // continues in onBootloader() when the bootloader appears
+      // Continues in onBootloader() when an allowed bootloader appears. If none does (the browser
+      // hasn't allowed this unit's bootloader), ask the operator to allow it.
+      clearTimeout(u.waitTimer);
+      u.waitTimer = setTimeout(() => {
+        if (station.unit !== u || u.stage !== 'flashing' || u.flashing) return;
+        u.flash = { percent: 0, status: t('Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).'), needsPermission: true };
+        redraw();
+      }, BOOTLOADER_WAIT_MS);
+      return;
     }
   }
   const target = station.target;
@@ -364,7 +404,10 @@ export function mount(root, { session, params = {} }) {
         onFlashProgress((p) => { if (u.flash) { u.flash.percent = p.percent ?? u.flash.percent; u.flash.status = p.message || u.flash.status; } bar.set(u.flash?.percent || 0, u.flash?.status || ''); });
         stageCleanup = () => onFlashProgress(null);
         return big('download', t('Updating firmware'), t('Don’t unplug the controller.'), bar,
-          u.flash?.needsPermission && button({ label: t('Allow the bootloader'), icon: 'usb', variant: 'primary', size: 'lg', onClick: () => onBootloader(true) }));
+          (u.flash?.needsPermission || u.flash?.needsDrive) && h('div.row.fac-actions',
+            u.flash.needsPermission && button({ label: t('Allow the bootloader'), icon: 'usb', variant: 'primary', size: 'lg', onClick: () => onBootloader(true) }),
+            u.flash.needsDrive && button({ label: t('Select the RPI-RP2 drive'), icon: 'upload', variant: 'primary', size: 'lg', onClick: () => copyToDrive() }),
+            button({ label: t('Fail'), variant: 'ghost', onClick: () => { setResult('firmware', N_('Firmware'), 'fail', t('Not updated')); finish(); } })));
       }
       case 'rebooting':
         return big('refresh', t('Restarting'), t('Waiting for the controller to come back. If it doesn’t connect by itself, press Connect.'),
