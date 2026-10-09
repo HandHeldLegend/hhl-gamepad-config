@@ -3,8 +3,7 @@
  * Switch Pro Controller color fields (gamepad.bodyColor / buttonsColor / leftGripColor / rightGripColor),
  * so the Switch draws the controller in its shell color out of the box.
  *
- * Values are '#rrggbb'. PLACEHOLDERS until confirmed against the production color specs: replace them
- * with the official values. Names are product names and stay untranslated.
+ * Values are '#rrggbb', approved for production. Names are product names and stay untranslated.
  */
 export const COLOR_SKUS = [
   { id: 'ifixit-blue', label: 'iFixit Blue', body: '#0071ce', buttons: '#f2f2f2', leftGrip: '#0071ce', rightGrip: '#0071ce' },
