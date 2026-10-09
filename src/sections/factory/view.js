@@ -26,7 +26,7 @@
  * and the RP2040/RP2350 bootloaders (2e8a:0003/000f) for this site; then units connect on plug-in.
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { button, badge, progressBar, callout } from '../../ui/controls.js';
+import { button, badge, progressBar } from '../../ui/controls.js';
 import { confirmDialog } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { t, N_ } from '../../i18n/index.js';
@@ -431,6 +431,36 @@ function downloadCsv() {
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
 
+// ---- Trigger travel diagram (few words, so it reads the same in every language) -----------------
+/**
+ * mode 'calibrate': press down to the membrane (green), stop at the line, never into the click (red).
+ * mode 'check':     1 down to the membrane, 2 on through to the click; both are wanted.
+ * An animated marker shows the motion (still with prefers-reduced-motion).
+ */
+function triggerDiagram(mode) {
+  const W = 360; const STOP = 220; const END = 330; const X0 = 30; const Y = 46;
+  const cal = mode === 'calibrate';
+  const svg = `
+<svg viewBox="0 0 ${W} 74" class="fac-tdiag-svg" aria-hidden="true">
+  <defs><pattern id="fac-hatch-${mode}" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <rect width="8" height="8" class="fac-td-click-bg"/><line x1="0" y1="0" x2="0" y2="8" class="fac-td-hatch"/></pattern></defs>
+  <rect x="${X0}" y="${Y - 12}" width="${STOP - X0}" height="24" rx="6" class="fac-td-ok"/>
+  <rect x="${STOP}" y="${Y - 12}" width="${END - STOP}" height="24" rx="6" ${cal ? `fill="url(#fac-hatch-${mode})" class="fac-td-bad"` : 'class="fac-td-click"'}/>
+  <line x1="${STOP}" y1="${Y - 22}" x2="${STOP}" y2="${Y + 22}" class="fac-td-stop"/>
+  <circle cx="${X0}" cy="${Y}" r="5" class="fac-td-rest"/>
+  <g class="fac-td-mark fac-td-${mode}"><path d="M0 ${Y - 30} l-9 -14 h18 z" class="fac-td-arrow"/></g>
+  <text x="${(X0 + STOP) / 2}" y="${Y + 5}" class="fac-td-sym">${cal ? '✓' : '1'}</text>
+  <text x="${(STOP + END) / 2}" y="${Y + 5}" class="fac-td-sym ${cal ? 'is-bad' : ''}">${cal ? '✕' : '2'}</text>
+</svg>`;
+  const el = h('div.fac-tdiag');
+  el.innerHTML = svg;
+  el.append(h('div.fac-tdiag-labels',
+    h('span', { style: { left: `${((X0 + STOP) / 2 / W) * 100}%` } }, cal ? t('Press') : t('To the membrane')),
+    h('span.is-stop', { style: { left: `${(STOP / W) * 100}%` } }, cal ? t('Stop here') : ''),
+    h('span.is-end', { class: cal ? 'is-bad' : null, style: { right: `${((W - END) / W) * 100}%` } }, cal ? t('Don’t click') : t('Then click'))));
+  return el;
+}
+
 // ---- Page --------------------------------------------------------------------------------------
 export function mount(root, { session, params = {} }) {
   station.params = params;
@@ -651,9 +681,9 @@ export function mount(root, { session, params = {} }) {
     // Dual-stage (GameCube) triggers: calibrate only to the top of the membrane, never through the click.
     const dual = dualStageTriggers(session).length > 0;
     return big('calibrate', t('Calibrate the analog triggers'),
-      dual ? t('Press Start. Press each trigger down to the top of the membrane and let go, a few times, then press Done.')
+      dual ? t('Press Start. Press each trigger down to the membrane and let go, a few times. Don’t click. Then press Done.')
         : t('Press Start, push each one all the way in and let go a few times, then press Done.'),
-      dual && callout({ tone: 'yellow', title: t('Stop at the membrane.'), text: t('Press only until you feel the resistance of the membrane. Don’t press through to the click: the firmware needs that extra travel for the full press.') }),
+      dual && triggerDiagram('calibrate'),
       h('div.fac-meters', rows.map(({ i, m }) => h('div.fac-meter', glyph(i.name, { size: 34 }), m))),
       h('div.row.fac-actions', startBtn, doneBtn,
         button({ label: t('Fail'), variant: 'ghost', onClick: () => { calib.stop().catch(() => {}); setResult('triggers', N_('Trigger calibration'), 'fail'); render(); } }),
@@ -690,7 +720,8 @@ export function mount(root, { session, params = {} }) {
       }
     });
     stageCleanup = off;
-    return big('trigger', t('Check the triggers'), t('Press each trigger slowly down to the top of the membrane: the bar fills. Then press harder until it clicks.'),
+    return big('trigger', t('Check the triggers'), t('Press each trigger slowly down to the membrane: the bar fills. Then press harder until it clicks.'),
+      triggerDiagram('check'),
       h('div.fac-duals', ui.map((u) => u.el)),
       h('div.row.fac-actions',
         button({ label: t('Fail'), variant: 'ghost', onClick: () => { pairs.forEach((p) => setResult(p.id, label(p), state[p.id].full && state[p.id].click && !state[p.id].early ? 'pass' : 'fail')); render(); } }),
