@@ -776,3 +776,13 @@ export async function checkForFirmwareUpdate() {
   else setStatus({ state: latest.version > (session.info.fwVersion >>> 0) ? 'available' : 'current', latest: latest.version });
   return st.status;
 }
+
+// ---- Docs screenshots (?debug only): open the dialog at one step, without a controller.
+const DOCS_URL = 'https://raw.githubusercontent.com/HandHeldLegend/hoja-device-fw/main/builds/gcu_2/gcu_2.uf2';
+export const debugDialogSteps = DEBUG ? {
+  available: () => showUpdateAvailable(DOCS_URL, null),
+  writing: () => { st.pendingUrl = DOCS_URL; showBootloaderFlash(); setUpdateStatus(t('Writing firmware…'), 62, true); },
+  drive: () => { st.pendingUrl = DOCS_URL; showUf2DriveStep(); },
+  complete: () => { st.pendingUrl = DOCS_URL; showUpdateComplete(); },
+  install: () => showBootloaderInstall(),
+} : null;
