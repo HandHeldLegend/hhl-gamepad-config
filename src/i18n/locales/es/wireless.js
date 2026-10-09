@@ -156,4 +156,7 @@ export default {
   "The driver loads again the next time you plug in a USB serial device.": "El controlador se vuelve a cargar la próxima vez que conectes un dispositivo serie USB.",
   "On Linux, the serial route can’t start the update on some controllers. Choose USB above and follow its steps.": "En Linux, la vía serie no logra iniciar la actualización en algunos controles. Elige USB arriba y sigue sus pasos.",
   "When the controller’s lights pulse orange, follow the steps below. To cancel, just unplug the controller.": "Cuando las luces del control parpadeen en naranja, sigue los pasos de abajo. Para cancelar, simplemente desconecta el control.",
+  "This wireless module is an {chip}, but the wireless firmware is built for the {expected}. Nothing was written.": "Este módulo inalámbrico es un {chip}, pero el firmware inalámbrico está hecho para el {expected}. No se escribió nada.",
+  "Update the controller first": "Actualiza primero el control",
+  "This controller’s firmware is too old for the HCI bridge. Update the controller firmware first, then update the wireless module here.": "El firmware de este control es demasiado antiguo para el HCI bridge. Actualiza primero el firmware del control y luego actualiza aquí el módulo inalámbrico.",
 };

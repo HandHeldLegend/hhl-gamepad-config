@@ -76,32 +76,21 @@ export async function latestVersion(channelId) {
 }
 
 /**
- * The update this controller should be offered.
- * @returns {Promise<{channel: object, installed: number, latest: number|null, migrate: boolean,
- *           mismatch: boolean, available: boolean}>}
- *   migrate   legacy baseband → HCI bridge (recommended; re-pair afterwards)
- *   mismatch  the module runs the bridge but this controller firmware can only drive the legacy baseband
- *             (no Bluetooth until the baseband is reinstalled or the controller firmware is updated)
- *   unknown   the module didn't report a valid version (installed is null): offer the firmware that
- *             matches the controller firmware
+ * The update this controller should be offered. Only the HCI bridge is installed now; the HOJA baseband
+ * (legacy channel) is still recognized when it is installed, but never offered.
+ * @returns {Promise<{channel: object, installed: number|null, latest: number|null, migrate: boolean,
+ *           unknown: boolean, needsControllerUpdate: boolean, available: boolean}>}
+ *   migrate                the module runs the HOJA baseband: install the HCI bridge (re-pair afterwards)
+ *   unknown                the module didn't report a valid version (installed is null)
+ *   needsControllerUpdate  this controller's firmware can't drive the HCI bridge yet ("ESP32", not
+ *                          "ESP32 HCI"): update the controller firmware first
  */
 export async function resolveModuleUpdate(bt) {
   const installed = reportedVersion(bt);
-  if (installed == null) {
-    const channel = supportsBridge(bt) ? CHANNELS.bridge : CHANNELS.legacy;
-    const latest = await latestVersion(channel.id);
-    return { channel, installed: null, latest, migrate: false, mismatch: false, unknown: true, available: !!latest };
-  }
-  if (supportsBridge(bt)) {
-    const latest = await latestVersion('bridge');
-    if (latest) {
-      const migrate = familyOf(installed) !== 'bridge';
-      return { channel: CHANNELS.bridge, installed, latest, migrate, mismatch: false, available: migrate || installed < latest };
-    }
-    // Bridge not reachable: an old baseband still gets legacy updates (the fallback driver runs it).
-    if (familyOf(installed) === 'bridge') return { channel: CHANNELS.bridge, installed, latest: null, migrate: false, mismatch: false, available: false };
-  }
-  const latest = await latestVersion('legacy');
-  const mismatch = !supportsBridge(bt) && familyOf(installed) === 'bridge';
-  return { channel: CHANNELS.legacy, installed, latest, migrate: false, mismatch, available: !!latest && (installed < latest || mismatch) };
+  const latest = await latestVersion('bridge');
+  const base = { channel: CHANNELS.bridge, installed, latest, migrate: false, unknown: installed == null, needsControllerUpdate: false };
+  if (!supportsBridge(bt)) return { ...base, needsControllerUpdate: true, available: false };
+  if (installed == null) return { ...base, available: !!latest };
+  const migrate = familyOf(installed) !== 'bridge';
+  return { ...base, migrate, available: !!latest && (migrate || installed < latest) };
 }

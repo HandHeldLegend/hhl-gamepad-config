@@ -287,7 +287,7 @@ export class EspFlasher {
     const name = loader.chip?.CHIP_NAME;
     if (name && name !== EXPECTED_CHIP) {
       await this.#release();
-      throw new Error(t('This wireless module is an {chip}, but the HOJA baseband firmware is built for the {expected}. Nothing was written.', { chip: name, expected: EXPECTED_CHIP }));
+      throw new Error(t('This wireless module is an {chip}, but the wireless firmware is built for the {expected}. Nothing was written.', { chip: name, expected: EXPECTED_CHIP }));
     }
     this.loader = loader;
     return this.chip;

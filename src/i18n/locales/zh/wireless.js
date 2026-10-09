@@ -136,4 +136,7 @@ export default {
   "Pairing over Bluetooth:": "通过蓝牙配对：",
   "Four-digit pairing PIN (0000–9999). Set the same PIN on your WLAN dongle so they pair.": "四位配对 PIN 码（0000–9999）。在 WLAN 接收器上设置相同的 PIN 码即可配对。",
   "Only controllers that support the Raspberry Pi WLAN dongle use this. The PIN keeps your dongle from pairing with someone else’s controller nearby. Leading zeros count: 0420 is stored as 420.": "仅支持 Raspberry Pi WLAN 接收器的手柄使用此项。PIN 码可防止你的接收器与附近其他人的手柄配对。前导零也有效：0420 会存储为 420。",
+  "This wireless module is an {chip}, but the wireless firmware is built for the {expected}. Nothing was written.": "此无线模块为 {chip}，但无线固件是为 {expected} 构建的。未写入任何内容。",
+  "Update the controller first": "请先更新手柄",
+  "This controller’s firmware is too old for the HCI bridge. Update the controller firmware first, then update the wireless module here.": "此手柄的固件版本过旧，无法使用 HCI 桥接。请先更新手柄固件，然后在此更新无线模块。",
 };

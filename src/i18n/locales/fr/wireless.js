@@ -156,4 +156,7 @@ export default {
   "The driver loads again the next time you plug in a USB serial device.": "Le pilote se recharge la prochaine fois que vous branchez un périphérique série USB.",
   "On Linux, the serial route can’t start the update on some controllers. Choose USB above and follow its steps.": "Sous Linux, la voie série ne parvient pas à lancer la mise à jour sur certaines manettes. Choisissez USB ci-dessus et suivez ses étapes.",
   "When the controller’s lights pulse orange, follow the steps below. To cancel, just unplug the controller.": "Quand les voyants de la manette clignotent en orange, suivez les étapes ci-dessous. Pour annuler, débranchez simplement la manette.",
+  "This wireless module is an {chip}, but the wireless firmware is built for the {expected}. Nothing was written.": "Ce module sans fil est un {chip}, mais le firmware sans fil est conçu pour le {expected}. Rien n’a été écrit.",
+  "Update the controller first": "Mettez d’abord la manette à jour",
+  "This controller’s firmware is too old for the HCI bridge. Update the controller firmware first, then update the wireless module here.": "Le firmware de cette manette est trop ancien pour le HCI bridge. Mettez d’abord à jour le firmware de la manette, puis le module sans fil ici.",
 };

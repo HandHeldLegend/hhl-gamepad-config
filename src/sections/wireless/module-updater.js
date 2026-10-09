@@ -29,7 +29,7 @@ import { session } from '../../device/session.js';
 import { isDemo, startDemo } from '../../device/mock.js';
 import { EspFlasher, availableTransports, baudFromUrl, downloadBasebandImages } from './esp-flasher.js';
 import { CHANNELS, familyOf } from './channels.js';
-import { LOCAL_UPDATER_URL, LOCAL_UPDATER_SH_URL, STANDALONE_UPDATER_URL, UPDATE_GUIDE_URL } from './info.js';
+import { LOCAL_UPDATER_URL, LOCAL_UPDATER_SH_URL, UPDATE_GUIDE_URL } from './info.js';
 import { t, N_, plural, fmt } from '../../i18n/index.js';
 import { isLinux, explainLinux } from '../../app/linux.js';
 
@@ -58,7 +58,7 @@ export const moduleUpdateOpen = () => !!run;
  *   latest     newest version from the baseband manifest (null = unknown/offline)
  *   params     deep-link params (supports `baud`, like the standalone updater's ?baud=)
  */
-export function openModuleUpdater({ installed, latest = null, channel = CHANNELS.legacy, migrate = false, startAt = 'intro', chooseChannel = false, params = {} } = {}) {
+export function openModuleUpdater({ installed, latest = null, channel = CHANNELS.bridge, migrate = false, startAt = 'intro', params = {} } = {}) {
   if (run) return;
   const demo = isDemo();
   const transports = availableTransports();
@@ -70,7 +70,6 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
     latest,
     channel,
     migrate,
-    chooseChannel,
     images: null,
     transport: transports.preferred,
     transports,
@@ -86,24 +85,12 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
   const versions = h('div.wl-versions');
   const notice = h('div');
   const transportRow = h('div.wl-transport');
-  // Firmware choice, shown when the controller couldn't be asked (it's already in update mode).
-  const channelRow = h('div.wl-transport', { hidden: !chooseChannel });
-  if (chooseChannel) {
-    channelRow.append(h('div.field-label', t('Wireless module firmware')),
-      segmented({
-        options: [{ value: 'bridge', label: t('HCI bridge') }, { value: 'legacy', label: t('HOJA baseband') }],
-        value: channel.id, tone: 'blue', ariaLabel: t('Wireless module firmware'),
-        onChange: (v) => { if (run) { run.channel = CHANNELS[v]; run.images = null; } },
-      }),
-      h('p.small.muted', t('Pick the firmware that matches the controller’s firmware: the HCI bridge for current controller firmware (the Wireless page lists the part as “ESP32 HCI”), the HOJA baseband for older firmware.')));
-  }
   const progress = progressBar({ message: t('Ready') });
   // The app's own log lines are translated; esptool's output (and the simulated copy of it) stays English.
   const logPre = h('pre.wl-log', { 'aria-live': 'off', 'data-empty': t('Nothing yet.') });
   // Other ways to update: shown with errors, and always inside Details.
   const helpLinks = () => h('div.wl-help-links',
     linkButton(t('Update guide'), UPDATE_GUIDE_URL),
-    linkButton(t('Standalone updater'), STANDALONE_UPDATER_URL),
     linkButton(t('Windows updater (.zip)'), LOCAL_UPDATER_URL, t('Command-line updater for Windows driver or connection problems')),
     linkButton(t('Linux/macOS updater (.sh)'), LOCAL_UPDATER_SH_URL, t('Command-line updater using esptool. Run it with: bash hoja_wireless_update.sh')));
   const logBox = h('details.wl-log-box', h('summary', t('Details')), logPre, helpLinks());
@@ -136,9 +123,9 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
 
   const dlg = openDialog({
     title: t('Update wireless module'), icon: 'wireless', tone: 'blue', dismissible: false,
-    body: [steps, guide, skip, versions, notice, channelRow, transportRow, linuxSteps, progress, logBox],
+    body: [steps, guide, skip, versions, notice, transportRow, linuxSteps, progress, logBox],
   });
-  run.ui = { dlg, steps, guide, skip, versions, notice, channelRow, transportRow, linuxSteps, progress, logPre, logBox, helpLinks };
+  run.ui = { dlg, steps, guide, skip, versions, notice, transportRow, linuxSteps, progress, logPre, logBox, helpLinks };
   dlg.result.then(() => cleanup());
 
   // startAt 'connect': the controller is already in update mode (e.g. opened from the Firmware page
@@ -348,7 +335,6 @@ async function connectAndInstall() {
   setNotice(null);
   actions({});
   run.ui.progress.indeterminate(true, t('Connecting…'));
-  run.ui.channelRow.hidden = true;
   log(`Connection: ${run.transport === 'usb' ? 'WebUSB' : 'Web Serial'} · Web Serial API ${navigator.serial ? 'present' : 'absent'} · ${navigator.userAgent}`);
   mirrorConsole(); // driver and esptool console output into Details (both routes, for diagnosis)
   try {
@@ -484,8 +470,8 @@ function cleanup() {
 
 /**
  * Open the updater for a controller that is already in update mode (picked as its CH340, or from a
- * page that can't reach the controller): straight to Connect, with the firmware choice shown.
+ * page that can't reach the controller): straight to Connect. It installs the HCI bridge.
  */
 export function openModuleUpdaterInUpdateMode(params = {}) {
-  openModuleUpdater({ installed: null, latest: null, channel: CHANNELS.bridge, startAt: 'connect', chooseChannel: true, params });
+  openModuleUpdater({ installed: null, latest: null, channel: CHANNELS.bridge, startAt: 'connect', params });
 }

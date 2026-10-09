@@ -24,7 +24,7 @@ import { resolveModuleUpdate, familyOf, reportedVersion, CHANNELS, clearManifest
 import { getSetting } from '../../settings/schema.js';
 import {
   chipStatus, identityText, isPairedMac, formatMac, formatPin, sanitizePin, pinToValue,
-  FCC_STATEMENT, UPDATE_GUIDE_URL, STANDALONE_UPDATER_URL,
+  FCC_STATEMENT, UPDATE_GUIDE_URL,
 } from './info.js';
 import { openModuleUpdater } from './module-updater.js';
 import { t, i18n } from '../../i18n/index.js';
@@ -80,9 +80,7 @@ export function mount(root, ctx) {
     h('div.wl-actions', updateBtn,
       asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', size: 'sm', busyLabel: t('Checking…'), okLabel: t('Checked'),
         run: async () => { clearManifestCache(); await check(); session.refreshAttention?.(); return !!update?.latest; } }),
-      h('a.btn.btn-ghost.btn-sm', { href: UPDATE_GUIDE_URL, target: '_blank', rel: 'noopener noreferrer' }, h('span.btn-label', t('Update guide'))),
-      h('a.btn.btn-ghost.btn-sm', { href: STANDALONE_UPDATER_URL, target: '_blank', rel: 'noopener noreferrer',
-        'data-tip': t('The separate web updater from earlier versions of this app.') }, h('span.btn-label', t('Standalone updater')))));
+      h('a.btn.btn-ghost.btn-sm', { href: UPDATE_GUIDE_URL, target: '_blank', rel: 'noopener noreferrer' }, h('span.btn-label', t('Update guide')))));
 
     // Fetch the latest versions and paint the card. Also run by "Check again" (after clearing the cache).
     const check = () => resolveModuleUpdate(bt).then((u) => {
@@ -93,6 +91,17 @@ export function mount(root, ctx) {
       migrateNote.replaceChildren();
       updateBtn.classList.replace('btn-primary', 'btn-tonal');
       updateBtn.setLabel(t('Update wireless module'));
+      updateBtn.hidden = false;
+      if (u.needsControllerUpdate) {
+        // The HCI bridge needs current controller firmware: that comes first.
+        latestCell.textContent = u.latest ? `${u.latest} (${t(u.channel.name)})` : t('Couldn’t check');
+        status.replaceChildren(badge(t('Update the controller first'), 'yellow'));
+        migrateNote.replaceChildren(callout({ tone: 'yellow', text: t('This controller’s firmware is too old for the HCI bridge. Update the controller firmware first, then update the wireless module here.') },
+          ' ', button({ label: t('Firmware'), icon: 'firmware', size: 'sm', variant: 'tonal', onClick: () => ctx.navigate?.('firmware') })));
+        migrateNote.hidden = false;
+        updateBtn.hidden = true;
+        return;
+      }
       if (!u.latest) {
         latestCell.textContent = navigator.onLine === false ? t('Offline') : t('Couldn’t check');
         latestCell.classList.add('muted');
@@ -107,10 +116,6 @@ export function mount(root, ctx) {
         migrateNote.replaceChildren(callout({ tone: 'yellow', text: t('The wireless module didn’t report its firmware version. Install the {name} firmware to fix it.', { name: t(u.channel.name) }) }));
         migrateNote.hidden = false;
       }
-      if (u.mismatch) {
-        migrateNote.replaceChildren(callout({ tone: 'yellow', text: t('This module runs the HCI bridge firmware, which this controller firmware can’t use, so Bluetooth is off. Update the controller firmware, or install the HOJA baseband here.') }));
-        migrateNote.hidden = false;
-      }
       if (u.migrate) {
         // Legacy baseband → HCI bridge: say what it brings and that hosts need pairing again.
         migrateNote.replaceChildren(callout({ tone: 'blue', icon: 'wireless', text: t('The HCI bridge firmware is recommended for this controller. It unlocks Wii mode and the newer Bluetooth features (current Switch and Steam modes, pairing over USB).') }, ' ', t('Afterwards, pair the Switch and any other Bluetooth hosts again once: the module’s Bluetooth address changes.')));
@@ -118,8 +123,7 @@ export function mount(root, ctx) {
       }
       if (u.available) {
         updateBtn.classList.replace('btn-tonal', 'btn-primary');
-        updateBtn.setLabel(u.migrate ? t('Install HCI bridge') : u.mismatch ? t('Install HOJA baseband')
-          : u.unknown ? t('Install {name}', { name: t(u.channel.name) }) : t('Update now'));
+        updateBtn.setLabel(u.migrate || u.unknown ? t('Install HCI bridge') : t('Update now'));
       }
     });
 

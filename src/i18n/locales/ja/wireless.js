@@ -159,4 +159,7 @@ export default {
   "The driver loads again the next time you plug in a USB serial device.": "次にUSBシリアルデバイスを接続したときに、ドライバーは再び読み込まれます。",
   "On Linux, the serial route can’t start the update on some controllers. Choose USB above and follow its steps.": "Linuxでは、コントローラーによってシリアルではアップデートを開始できません。上でUSBを選び、その手順に従ってください。",
   "When the controller’s lights pulse orange, follow the steps below. To cancel, just unplug the controller.": "コントローラーのライトがオレンジに点滅したら、下の手順に従ってください。キャンセルするには、コントローラーを抜くだけです。",
+  "This wireless module is an {chip}, but the wireless firmware is built for the {expected}. Nothing was written.": "このワイヤレスモジュールは {chip} ですが、ワイヤレスファームウェアは {expected} 用です。何も書き込まれていません。",
+  "Update the controller first": "先にコントローラーを更新",
+  "This controller’s firmware is too old for the HCI bridge. Update the controller firmware first, then update the wireless module here.": "このコントローラーのファームウェアは HCI bridge には古すぎます。先にコントローラーのファームウェアを更新してから、ここでワイヤレスモジュールを更新してください。",
 };
