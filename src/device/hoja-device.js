@@ -53,6 +53,14 @@ export function isPicoBootloader(device) {
 const EP = 2;
 const ITF = 1;
 const CHUNK_MAX = 32;
+/** Time limit for one USB step (open, claim, a single OUT transfer). */
+const STEP_TIMEOUT_MS = 5000;
+/** Reject when `promise` hasn't settled within `ms` (the USB call itself is cancelled by closing the device). */
+function withTimeout(promise, ms, what) {
+  let timer;
+  return Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`${what} timed out`)), ms); })])
+    .finally(() => clearTimeout(timer));
+}
 const IN_FLIGHT = 2; // concurrent IN transfers (see #pollLoop)
 /**
  * Stream watchdog. If the firmware can't deliver a stream report in time it drops out of WebUSB
@@ -194,9 +202,11 @@ export class HojaDevice extends EventTarget {
     }
 
     try {
-      await usb.open();
-      await usb.selectConfiguration(1);
-      await usb.claimInterface(ITF);
+      // Right after a firmware update the OS may still be setting the device up; these can then wait
+      // forever instead of failing, so each gets a time limit (the caller retries).
+      await withTimeout(usb.open(), STEP_TIMEOUT_MS, 'Opening the controller');
+      await withTimeout(usb.selectConfiguration(1), STEP_TIMEOUT_MS, 'Selecting the USB configuration');
+      await withTimeout(usb.claimInterface(ITF), STEP_TIMEOUT_MS, 'Claiming the controller');
     } catch (err) {
       console.error('[device] open failed', err);
       try { await usb.close(); } catch { /* ignore */ }
@@ -268,7 +278,7 @@ export class HojaDevice extends EventTarget {
 
   async #out(bytes) {
     if (!this.#connected || !this.#usb) throw new Error('Device not connected');
-    return this.#usb.transferOut(EP, bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes));
+    return withTimeout(this.#usb.transferOut(EP, bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)), STEP_TIMEOUT_MS, 'Sending to the controller');
   }
 
   /** Send a report: [reportId, ...data]. */

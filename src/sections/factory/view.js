@@ -215,6 +215,8 @@ async function connectFirst(session) {
 // ---- Flashing --------------------------------------------------------------------------------------
 /** How long a restarted controller must stay on USB before the station connects to it. */
 const SETTLE_MS = 1500;
+/** A reconnect still running after this long is treated as stuck, and the station tries again. */
+const RECONNECT_STALE_MS = 30000;
 /** How long to wait for an allowed bootloader to appear before asking the operator to allow it. */
 const BOOTLOADER_WAIT_MS = 4000;
 
@@ -312,8 +314,17 @@ function watchReboot(u) {
     const id = hoja ? `${hoja.vendorId}:${hoja.productId}:${hoja.serialNumber || ''}` : '';
     if (id !== u.lastSeen) { u.lastSeen = id; u.seenAt = Date.now(); }
     const settled = hoja && Date.now() - u.seenAt >= SETTLE_MS;
-    if (settled && station.session && !station.session.connected && station.session.state !== 'connecting' && !u.reconnecting) {
+    // The restart's unplug event can be missed: then the app still holds the old, dead connection and
+    // would never connect again. Drop it when its device is gone or closed.
+    const held = device.usbDevice;
+    if (station.session?.connected && held && (!devs.includes(held) || !held.opened)) {
+      await station.session.disconnect().catch(() => {});
+    }
+    // An attempt that never finished doesn't block the next one for long.
+    if (u.reconnecting && Date.now() - u.reconnectAt > RECONNECT_STALE_MS) u.reconnecting = false;
+    if (settled && station.session && !station.session.connected && !u.reconnecting) {
       u.reconnecting = true;
+      u.reconnectAt = Date.now();
       station.session.reconnect(hoja)
         .then(() => { u.reboot.error = ''; })
         .catch((err) => { console.warn('[factory] reconnect', err); u.reboot.error = err?.message || String(err); u.seenAt = Date.now(); redraw(); })
