@@ -10,7 +10,7 @@ export const COLOR_SKUS = [
   { id: 'ifixit-blue', label: 'iFixit Blue', body: '#0071ce', buttons: '#f2f2f2', leftGrip: '#0071ce', rightGrip: '#0071ce' },
   { id: 'atomic-purple', label: 'Atomic Purple', body: '#6a4c9c', buttons: '#3b2a63', leftGrip: '#6a4c9c', rightGrip: '#6a4c9c' },
   { id: 'funtastic-orange', label: 'Funtastic Orange', body: '#f26b1d', buttons: '#2b2b2b', leftGrip: '#f26b1d', rightGrip: '#f26b1d' },
-  { id: 'transparent-blue-white', label: 'Transparent Blue / White', body: '#9fc7e8', buttons: '#ffffff', leftGrip: '#ffffff', rightGrip: '#ffffff' },
+  { id: 'transparent-blue-white', label: 'Transparent Blue / White', body: '#4a86d4', buttons: '#ffffff', leftGrip: '#ffffff', rightGrip: '#ffffff' },
   { id: 'ghost-black', label: 'Ghost Black', body: '#2b2b2e', buttons: '#1a1a1a', leftGrip: '#2b2b2e', rightGrip: '#2b2b2e' },
   { id: 'indigo-clear', label: 'Indigo / Clear', body: '#4b3f8c', buttons: '#e9e8ee', leftGrip: '#e6e6ec', rightGrip: '#e6e6ec' },
 ];
