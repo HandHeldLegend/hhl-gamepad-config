@@ -14,6 +14,7 @@ https://handheldlegend.github.io/hoja3/?lang=zh#/factory?build=gcu_2      (Chine
 |---|---|
 | `build` | Target build id (a folder in hoja-device-fw/builds, e.g. `gcu_2`, `progcc_3.2`). Its firmware is downloaded once when the page opens and reused for every unit. Without it, each unit is updated to the newest firmware of its own build. |
 | `skip` | Steps to leave out, comma separated: `flash`, `calibrate`, `inputs`, `operator`. |
+| `sku` | Color SKU id (see below). Usually picked on the first unit instead and kept for the next ones. |
 | `lang` | `zh`, `en`, `es`, `ja` or `fr`. |
 
 The page is not in the app's menu. Bookmark the address on each station.
@@ -24,14 +25,18 @@ The page is not in the app's menu. Bookmark the address on each station.
    running HOJA is updated when it is on another build or older firmware, then tested.
 2. **Self-check** (automatic): settings memory, charger chip (PMIC), battery pack, fuel gauge, wireless module
    and its firmware. Parts a build doesn't have are shown as "Not fitted" and not counted.
-3. **Calibrate** the sticks (the same dialog as the Joysticks page) and analog triggers (as on the Input page).
-4. **Input test:** press every button, push every trigger fully, move each stick to its edge in every
+3. **Color SKU:** the batch's SKU writes the Switch Pro Controller colors (body, buttons, grips), so the
+   Switch shows the right shell color out of the box. The first unit asks for the SKU; it stays selected
+   (header dropdown) until changed. Checked again after saving and logged per unit.
+4. **Calibrate** the sticks (the same dialog as the Joysticks page) and analog triggers (as on the Input page).
+5. **Input test:** press every button, push every trigger fully, move each stick to its edge in every
    direction, and turn the controller so every gyro and accelerometer axis shows data.
-5. **Operator checks:** rumble and LEDs, judged with Pass / Fail.
-6. **Save,** then the result: a large PASS or FAIL. Unplug for the next unit.
+6. **Operator checks:** the FCC ID label on the rear shell (GCU 2: the page shows the FCC ID the unit
+   reports to compare), rumble and LEDs, judged with Pass / Fail.
+7. **Save,** then the result: a large PASS or FAIL. Unplug for the next unit.
 
 The header counts the shift's units and passes. **Download CSV** saves the log (time, unit, build,
-firmware, MAC address, every check, overall). The log stays in that browser until **Clear log**.
+firmware, MAC address, color SKU, every check including the FCC label, overall). The log stays in that browser until **Clear log**.
 
 ## Connect without clicks (recommended)
 
@@ -82,6 +87,12 @@ Policy `WebUsbAllowDevicesForUrls` (values in decimal):
 - **Linux:** save `{"WebUsbAllowDevicesForUrls": [ ...the list above... ]}` as `hhl-factory.json` in
   `/etc/opt/chrome/policies/managed/` (Chromium: `/etc/chromium/...`, Edge: `/etc/opt/edge/...`). Linux also needs the udev rule from the app's
   Help & about → Linux setup.
+
+## Color SKUs
+
+iFixit Blue, Atomic Purple, Funtastic Orange, Transparent Blue / White, Ghost Black, Indigo / Clear. Their
+color values live in `src/sections/factory/skus.js` (one table); the builds that need the FCC label check
+are listed there too.
 
 ## Notes
 

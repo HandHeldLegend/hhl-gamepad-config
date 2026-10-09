@@ -63,4 +63,13 @@ export default {
   "Do all the LEDs light?": "¿Se encienden todos los LED?",
   "Every LED cycles red, green, blue and white.": "Cada LED alterna entre rojo, verde, azul y blanco.",
   "Station setup": "Configuración del puesto",
+  "Switch colors": "Colores de Switch",
+  "Color SKU": "SKU de color",
+  "Pick…": "Elegir…",
+  "Pick this batch’s color SKU": "Elige el SKU de color de este lote",
+  "It sets the colors the Switch shows for the controller. It stays selected for the next units; change it in the header.": "Define los colores con los que la Switch muestra el control. Queda seleccionado para los siguientes controles; cámbialo en el encabezado.",
+  "FCC label": "Etiqueta FCC",
+  "Is the FCC label on the rear shell?": "¿Está la etiqueta FCC en la carcasa trasera?",
+  "Check the sticker is applied, straight and readable, and that it shows this FCC ID:": "Comprueba que la etiqueta esté pegada, derecha y legible, y que muestre este FCC ID:",
+  "This unit doesn’t report an FCC ID.": "Este control no informa un FCC ID.",
 };

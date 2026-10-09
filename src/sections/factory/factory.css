@@ -54,3 +54,14 @@
 .fac-axis-ok .icon { width: 14px; height: 14px; }
 .fac-axis.ok { border-color: var(--green); background: var(--green-soft); }
 .fac-axis.ok .fac-axis-ok { display: inline-flex; }
+.fac-sku { display: flex; align-items: center; gap: var(--space-2); }
+.fac-sku .select { min-width: 200px; }
+.fac-skus { display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); width: min(680px, 100%); }
+.fac-sku-btn { display: flex; align-items: center; gap: var(--space-2); padding: 12px 14px; border: 2px solid var(--border); border-radius: var(--radius-md);
+  background: var(--surface-2); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; text-align: left; }
+.fac-sku-btn:hover { border-color: var(--green); }
+.fac-sku-dots { display: inline-flex; flex: none; }
+.fac-sku-dots span { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--surface); margin-left: -5px; }
+.fac-sku-dots span:first-child { margin-left: 0; }
+.fac-fcc { font-family: var(--font-mono, monospace); font-size: clamp(22px, 3vw, 34px); font-weight: 800; padding: 10px 18px;
+  border: 2px dashed var(--border-strong, var(--border)); border-radius: var(--radius-md); user-select: all; }

@@ -6,10 +6,12 @@
  *     build  target build id (folder in hoja-device-fw/builds). Without it each unit is updated to the
  *            newest firmware of its own build. The build's files are fetched once and cached.
  *     skip   comma list of steps to leave out: flash, calibrate, inputs, operator
+ *     sku    color SKU id (skus.js); also picked in the header and kept between units
  *
  * Per unit: plug in → (bootloader: flash) → (HOJA on another build or older firmware: update) →
- * hardware self-check → stick and trigger calibration → input test (every input, IMU axes live) →
- * operator checks (rumble, LEDs) → save → result. Unplug for the next unit.
+ * hardware self-check → color SKU applied to the Switch colors → stick and trigger calibration →
+ * input test (every input, IMU axes live) → operator checks (FCC label on GCU 2, rumble, LEDs) →
+ * save → result. Unplug for the next unit.
  *
  * Reuses the regular app's pieces so fixes there flow in here: stick calibration dialog (Joysticks),
  * trigger calibration (Input), verdict decoders (Battery, Wireless; see checks.js), button glyphs and
@@ -21,7 +23,7 @@
  * and the RP2040/RP2350 bootloaders (2e8a:0003/000f) for this site; then units connect on plug-in.
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { button, badge, progressBar } from '../../ui/controls.js';
+import { button, badge, progressBar, select } from '../../ui/controls.js';
 import { confirmDialog } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { t, N_ } from '../../i18n/index.js';
@@ -35,13 +37,16 @@ import { pico_update_attempt_flash, pico_prefetch_firmware, onFlashProgress } fr
 import { openCalibration } from '../joysticks/calibration.js';
 import { createCalibration } from '../input/calibration.js';
 import { glyph, meter, outputName } from '../input/parts.js';
-import { formatMac } from '../wireless/info.js';
+import { formatMac, identityText } from '../wireless/info.js';
+import { getSetting } from '../../settings/schema.js';
+import { COLOR_SKUS, getSku, FCC_LABEL_BUILDS } from './skus.js';
 import { hardwareChecks, testInputs, inputReached, imuAxes } from './checks.js';
 
 loadStyles(new URL('./factory.css', import.meta.url));
 loadStyles(new URL('../input/input.css', import.meta.url)); // glyphs and meters
 
 const LOG_KEY = 'hhl-factory-log';
+const SKU_KEY = 'hhl-factory-sku';
 /** Station setup guide (browser policy scripts for Chrome and Edge). */
 const SETUP_URL = 'https://github.com/HandHeldLegend/hhl-gamepad-config/blob/main/docs/FACTORY.md';
 const RESULT_TEXT = { pass: N_('Pass'), fail: N_('Fail'), na: N_('Not fitted') };
@@ -56,11 +61,14 @@ const station = {
   targetError: '',
   unit: null,            // the unit being tested (see newUnit)
   log: loadLog(),
+  sku: loadSku(),        // color SKU id for this batch (skus.js)
   render: null,          // current view's render() (stage + checklist)
   renderHead: null,      // header only (target, counts): never rebuilds the step in progress
   usbHooked: false,
 };
 
+function loadSku() { try { return localStorage.getItem(SKU_KEY) || ''; } catch { return ''; } }
+function setSku(id) { station.sku = id; try { localStorage.setItem(SKU_KEY, id); } catch { /* storage blocked */ } }
 function loadLog() { try { return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch { return []; } }
 function saveLog() { try { localStorage.setItem(LOG_KEY, JSON.stringify(station.log)); } catch { /* storage blocked */ } }
 const skips = () => new Set(String(station.params.skip || '').split(',').map((s) => s.trim()).filter(Boolean));
@@ -169,14 +177,36 @@ async function onUnitConnected(session) {
     `${humanizeBuildId(u.build || '?')} · ${formatFwVersion(u.fw)}`);
   for (const c of hardwareChecks(session)) setResult(c.id, c.label, c.result, c.detail);
   device.setInputMode(false).catch(() => {});
+  if (!getSku(station.sku)) { go('sku'); return; } // first unit of a batch: pick the color SKU
+  continueAfterSku(session);
+}
+
+/** Write the batch's SKU colors to the Switch color fields (saved with everything at the end). */
+function applySku(session) {
+  const sku = getSku(station.sku);
+  if (!sku) return;
+  const set = (key, hex) => getSetting(key).set(session, hex);
+  set('gamepad.bodyColor', sku.body);
+  set('gamepad.buttonsColor', sku.buttons);
+  set('gamepad.leftGripColor', sku.leftGrip);
+  set('gamepad.rightGripColor', sku.rightGrip);
+  session.commit('gamepad', { immediate: true }).catch(() => {});
+  station.unit.sku = sku.label;
+  setResult('colors', N_('Switch colors'), 'pass', sku.label);
+}
+
+function continueAfterSku(session) {
+  applySku(session);
   go(skips().has('calibrate') ? nextAfter('calibrate', session) : 'calibrate');
 }
+
+const needsFccLabel = () => FCC_LABEL_BUILDS.has(station.unit?.build);
 
 function nextAfter(stage, session) {
   const order = ['calibrate', 'inputs', 'operator'];
   for (const s of order.slice(order.indexOf(stage) + 1)) {
     if (skips().has(s)) continue;
-    if (s === 'operator' && !session.caps.haptics && !session.caps.rgb) continue;
+    if (s === 'operator' && !session.caps.haptics && !session.caps.rgb && !needsFccLabel()) continue;
     return s;
   }
   return 'saving';
@@ -186,6 +216,14 @@ async function saveAndFinish(session) {
   go('saving');
   const ok = await session.save().catch(() => false);
   setResult('save', N_('Saved to controller'), ok ? 'pass' : 'fail');
+  // Colors: confirm the controller holds the SKU's values after saving.
+  const sku = getSku(station.sku);
+  if (sku && station.unit?.results.has('colors')) {
+    const get = (key) => String(getSetting(key).get(session)).toLowerCase();
+    const match = get('gamepad.bodyColor') === sku.body && get('gamepad.buttonsColor') === sku.buttons
+      && get('gamepad.leftGripColor') === sku.leftGrip && get('gamepad.rightGripColor') === sku.rightGrip;
+    setResult('colors', N_('Switch colors'), ok && match ? 'pass' : 'fail', sku.label);
+  }
   finish();
 }
 
@@ -197,7 +235,7 @@ function finish() {
   u.finished = new Date().toISOString();
   station.log.push({
     unit: u.n, time: u.finished, name: u.name || '', build: u.build || '', firmware: u.fw ? formatFwVersion(u.fw) : '', mac: u.mac || '',
-    updated: u.updated ? 'yes' : 'no', overall: u.overall.toUpperCase(), note: u.aborted ? 'unplugged before finishing' : '',
+    updated: u.updated ? 'yes' : 'no', sku: u.sku || '', overall: u.overall.toUpperCase(), note: u.aborted ? 'unplugged before finishing' : '',
     results: Object.fromEntries(rows.map((r) => [r.id, r.result])),
   });
   saveLog();
@@ -207,9 +245,9 @@ function finish() {
 // ---- CSV ---------------------------------------------------------------------------------------
 function downloadCsv() {
   const ids = [...new Set(station.log.flatMap((e) => Object.keys(e.results)))];
-  const head = ['unit', 'time', 'name', 'build', 'firmware', 'mac', 'updated', ...ids, 'overall', 'note'];
+  const head = ['unit', 'time', 'name', 'build', 'firmware', 'mac', 'updated', 'sku', ...ids, 'overall', 'note'];
   const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const lines = [head.join(','), ...station.log.map((e) => [e.unit, e.time, e.name, e.build, e.firmware, e.mac, e.updated, ...ids.map((id) => e.results[id] || ''), e.overall, e.note].map(q).join(','))];
+  const lines = [head.join(','), ...station.log.map((e) => [e.unit, e.time, e.name, e.build, e.firmware, e.mac, e.updated, e.sku || '', ...ids.map((id) => e.results[id] || ''), e.overall, e.note].map(q).join(','))];
   const a = h('a', { href: URL.createObjectURL(new Blob([`${lines.join('\r\n')}\r\n`], { type: 'text/csv' })), download: `hoja-factory-${new Date().toISOString().slice(0, 10)}.csv` });
   document.body.append(a);
   a.click();
@@ -248,6 +286,9 @@ export function mount(root, { session, params = {} }) {
         h('span.fac-label', t('Target firmware')),
         tg ? h('strong', `${tg.label} · ${formatFwVersion(tg.version)}`) : h('strong', station.params.build ? (station.targetError || t('Loading…')) : t('Each unit’s own build, newest version')),
         tg && h('span', badge(tg.cached ? t('Cached') : t('Downloading…'), tg.cached ? 'green' : 'yellow'))),
+      h('label.fac-sku', h('span.fac-label', t('Color SKU')),
+        select({ options: COLOR_SKUS.map((x) => ({ value: x.id, label: x.label })), value: station.sku || null, placeholder: t('Pick…'), ariaLabel: t('Color SKU'),
+          onChange: (v) => { setSku(v); renderHead(); } })),
       h('div.fac-counts',
         h('span', t('Tested: {n}', { n: station.log.length })), h('span.fac-pass', t('Pass: {n}', { n: passed })), h('span.fac-fail', t('Fail: {n}', { n: station.log.length - passed }))),
       h('div.fac-head-actions',
@@ -293,6 +334,9 @@ export function mount(root, { session, params = {} }) {
       case 'rebooting':
         return big('refresh', t('Restarting'), t('Waiting for the controller to come back. If it doesn’t connect by itself, press Connect.'),
           button({ label: t('Connect'), icon: 'usb', variant: 'primary', size: 'lg', onClick: () => session.connect().catch(() => false) }));
+      case 'sku': return big('palette', t('Pick this batch’s color SKU'), t('It sets the colors the Switch shows for the controller. It stays selected for the next units; change it in the header.'),
+        h('div.fac-skus', COLOR_SKUS.map((x) => h('button.fac-sku-btn', { type: 'button', onclick: () => { setSku(x.id); continueAfterSku(session); } },
+          h('span.fac-sku-dots', [x.body, x.buttons, x.leftGrip, x.rightGrip].map((c) => h('span', { style: { background: c } }))), x.label))));
       case 'calibrate': return calibrateView();
       case 'inputs': return inputsView();
       case 'operator': return operatorView();
@@ -405,14 +449,21 @@ export function mount(root, { session, params = {} }) {
   // Operator checks: rumble (the Haptics page's test command) and LED colors, judged by eye and hand.
   function operatorView() {
     const items = [];
+    if (needsFccLabel() && !station.unit.results.has('fcc-label')) items.push('fcc-label');
     if (session.caps.haptics && !station.unit.results.has('rumble')) items.push('rumble');
     if (session.caps.rgb && !station.unit.results.has('leds')) items.push('leds');
     if (!items.length) { later(() => saveAndFinish(session)); return ''; }
     const which = items[0];
-    const judge = (ok) => { setResult(which, which === 'rumble' ? N_('Rumble') : N_('LEDs'), ok ? 'pass' : 'fail'); render(); };
+    const label = { 'fcc-label': N_('FCC label'), rumble: N_('Rumble'), leds: N_('LEDs') }[which];
+    const fccId = identityText(session.static.bluetooth?.fcc_id ?? new Uint8Array());
+    const judge = (ok) => { setResult(which, label, ok ? 'pass' : 'fail', which === 'fcc-label' ? fccId : ''); render(); };
     const verdict = h('div.row', { style: { justifyContent: 'center' } },
       button({ label: t('Pass'), icon: 'check', variant: 'primary', size: 'lg', onClick: () => judge(true) }),
       button({ label: t('Fail'), icon: 'close', variant: 'danger', size: 'lg', onClick: () => judge(false) }));
+    if (which === 'fcc-label') {
+      return big('info', t('Is the FCC label on the rear shell?'), t('Check the sticker is applied, straight and readable, and that it shows this FCC ID:'),
+        h('div.fac-fcc', fccId ? `FCC ID: ${fccId}` : t('This unit doesn’t report an FCC ID.')), verdict);
+    }
     if (which === 'rumble') {
       const play = () => session.command('haptic', 'TEST_STRENGTH', { timeout: 10000 }).catch(() => {});
       play();

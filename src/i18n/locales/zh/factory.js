@@ -71,4 +71,13 @@ export default {
   "Do all the LEDs light?": "所有指示灯都亮了吗？",
   "Every LED cycles red, green, blue and white.": "每个指示灯会依次显示红、绿、蓝、白色。",
   "Station setup": "测试站设置",
+  "Switch colors": "Switch 颜色",
+  "Color SKU": "颜色 SKU",
+  "Pick…": "选择…",
+  "Pick this batch’s color SKU": "选择本批次的颜色 SKU",
+  "It sets the colors the Switch shows for the controller. It stays selected for the next units; change it in the header.": "用于设置 Switch 显示的手柄颜色。后续手柄会沿用此选择，可在顶部更改。",
+  "FCC label": "FCC 标签",
+  "Is the FCC label on the rear shell?": "后壳上贴了 FCC 标签吗？",
+  "Check the sticker is applied, straight and readable, and that it shows this FCC ID:": "确认标签已贴好、端正清晰，并且标注的是以下 FCC ID：",
+  "This unit doesn’t report an FCC ID.": "此手柄未报告 FCC ID。",
 };

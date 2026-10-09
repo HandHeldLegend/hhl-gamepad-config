@@ -63,4 +63,13 @@ export default {
   "Do all the LEDs light?": "すべてのLEDが点灯しますか？",
   "Every LED cycles red, green, blue and white.": "各LEDが赤、緑、青、白の順に点灯します。",
   "Station setup": "ステーションの設定",
+  "Switch colors": "Switch の色",
+  "Color SKU": "カラー SKU",
+  "Pick…": "選択…",
+  "Pick this batch’s color SKU": "このロットのカラー SKU を選んでください",
+  "It sets the colors the Switch shows for the controller. It stays selected for the next units; change it in the header.": "Switch に表示されるコントローラーの色を設定します。次のユニットでも選択されたままで、ヘッダーで変更できます。",
+  "FCC label": "FCC ラベル",
+  "Is the FCC label on the rear shell?": "背面シェルに FCC ラベルが貼られていますか？",
+  "Check the sticker is applied, straight and readable, and that it shows this FCC ID:": "ラベルがまっすぐ読みやすく貼られていて、この FCC ID が記載されているか確認してください：",
+  "This unit doesn’t report an FCC ID.": "このユニットは FCC ID を報告していません。",
 };
