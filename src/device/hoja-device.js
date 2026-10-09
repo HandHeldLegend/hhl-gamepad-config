@@ -97,6 +97,7 @@ async function waitFor(predicate, timeout) {
 export class HojaDevice extends EventTarget {
   /** @type {USBDevice|null} */
   #usb = null;
+  #opening = null;
   #connected = false;
   #queue = Promise.resolve();
   #lastReportAt = 0;   // performance.now() of the last IN report of any kind
@@ -189,8 +190,17 @@ export class HojaDevice extends EventTarget {
     return this.open(usb);
   }
 
-  /** Open an already-authorized USBDevice (e.g. from navigator.usb.getDevices()). */
-  async open(usb) {
+  /**
+   * Open an already-authorized USBDevice (e.g. from navigator.usb.getDevices()). Callers that ask
+   * while an open is still running share it: parallel opens of one device fail each other.
+   */
+  open(usb) {
+    if (this.#opening) return this.#opening;
+    this.#opening = this.#open(usb).finally(() => { this.#opening = null; });
+    return this.#opening;
+  }
+
+  async #open(usb) {
     if (isPicoBootloader(usb)) {
       this.#emit('bootloader', { usb });
       return 'bootloader';

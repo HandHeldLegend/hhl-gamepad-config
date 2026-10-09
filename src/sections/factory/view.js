@@ -194,7 +194,7 @@ function hookUsb(session) {
     if (session.connected && station.unit?.stage === 'done') { station.unit = null; await session.disconnect().catch(() => {}); }
     // While a unit restarts after an update, watchReboot() connects once it has settled.
     if (station.unit?.stage === 'rebooting') return;
-    if (!session.connected) setTimeout(() => session.reconnect(e.device).catch(() => {}), 300);
+    if (!session.connected) setTimeout(() => { if (!session.connected && session.state !== 'connecting') session.reconnect(e.device).catch(() => {}); }, 300);
   });
   // Any HOJA controller unplugged while its result shows: ready for the next one.
   navigator.usb.addEventListener('disconnect', (e) => {
@@ -205,7 +205,7 @@ function hookUsb(session) {
 }
 
 async function connectFirst(session) {
-  if (!navigator.usb || session.connected) return;
+  if (!navigator.usb || session.connected || session.state === 'connecting') return;
   const devs = await navigator.usb.getDevices().catch(() => []);
   if (devs.some(isPicoBootloader)) { onBootloader(); return; }
   const unit = devs.find(isHoja);

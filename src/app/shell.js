@@ -274,8 +274,12 @@ export function createShell(root) {
     // `stable` pages (the factory station) stay mounted through connects and disconnects.
     const key = `${section.id}|${reason || 'ok'}|${section.stable ? '' : session.state}|${i18n.lang}`;
 
+    const params = JSON.stringify(route.params || {});
     // Same page, only params changed → let the view handle it without remounting.
     if (mounted && mounted.key === key && mounted.update) { mounted.update(route.params); return; }
+    // A `stable` page with the same params is already showing: a connection state change must not
+    // remount it (that dropped its own connect/disconnect handling and restarted its connects).
+    if (mounted && mounted.key === key && section.stable && mounted.params === params) return;
 
     teardown();
     for (const [id, a] of navLinks) a.toggleAttribute('aria-current', id === section.id);
@@ -326,7 +330,7 @@ export function createShell(root) {
       content.append(emptyState({ icon: 'warning', tone: 'red', title: t('Something went wrong'), text: String(err?.message || err) }));
     }
     mounted = {
-      section, key,
+      section, key, params,
       cleanup: typeof result === 'function' ? result : result?.destroy?.bind(result),
       update: typeof result === 'object' && result?.update ? result.update.bind(result) : null,
     };
