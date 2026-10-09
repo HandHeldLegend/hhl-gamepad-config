@@ -121,7 +121,7 @@ export default {
   'Input distance, slot {n}': 'Distancia de entrada, posición {n}',
   'How far the stick physically travels at this angle (raw units). Calibration fills this in.': 'Cuánto recorre físicamente el joystick en este ángulo (unidades sin procesar). La calibración completa este valor.',
   'Output distance, slot {n}': 'Distancia de salida, posición {n}',
-  'Output length at this angle (2048 = full).': 'Longitud de salida en este ángulo (2048 = máxima).',
+  "Output length at this angle. 2048 is full on an axis; diagonals reach the corner at about 2896. Higher values max out before the edge.": "Longitud de salida en este ángulo. 2048 es el máximo en un eje; las diagonales llegan a la esquina con unos 2896. Los valores mayores llegan al máximo antes del borde.",
   'Snap zone in degrees, slot {n}': 'Zona de anclaje en grados, posición {n}',
   'Angular deadzone: stick angles within this many degrees of the output angle snap exactly onto it.': 'Zona muerta angular: los ángulos del joystick a esta cantidad de grados o menos del ángulo de salida se ajustan exactamente a él.',
   '{stick}: angle map diagram': '{stick}: diagrama del mapa de ángulos',

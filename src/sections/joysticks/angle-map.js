@@ -43,7 +43,7 @@ const COLUMNS = [
   { key: 'in_angle', area: 'ia', head: N_('In angle'), name: N_('Input angle, slot {n}'), unit: '°', step: 0.01, min: 0, max: 360 },
   { key: 'out_angle', area: 'oa', head: N_('Out angle'), name: N_('Output angle, slot {n}'), unit: '°', step: 0.01, min: 0, max: 360 },
   { key: 'in_distance', area: 'id', head: N_('In dist.'), name: N_('Input distance, slot {n}'), unit: '', step: 0.01, min: 0, max: 4096 },
-  { key: 'out_distance', area: 'od', head: N_('Out dist.'), name: N_('Output distance, slot {n}'), unit: '', step: 0.01, min: 0, max: 2048 },
+  { key: 'out_distance', area: 'od', head: N_('Out dist.'), name: N_('Output distance, slot {n}'), unit: '', step: 1, min: 0, max: 3072 },
   { key: 'deadzone', area: 'dz', head: N_('Snap'), name: N_('Snap zone in degrees, slot {n}'), unit: '°', step: 0.1, min: 0, max: 45 },
 ];
 
@@ -94,7 +94,7 @@ export function angleMapExplainer() {
           term('in', t('In angle'), t('Where the notch physically is, in degrees (0° = right, counter-clockwise). Capture fills this in.')),
           term('out', t('Out angle'), t('The exact angle the console receives at this notch, e.g. 45° for a perfect diagonal.')),
           term('dist', t('In dist.'), t('How far the stick physically travels at this angle (raw units). Calibration fills this in.')),
-          term('odist', t('Out dist.'), t('Output length at this angle (2048 = full).')),
+          term('odist', t('Out dist.'), t('Output length at this angle. 2048 is full on an axis; diagonals reach the corner at about 2896. Higher values max out before the edge.')),
           term('snap', t('Snap'), t('Angular deadzone: stick angles within this many degrees of the output angle snap exactly onto it.')),
           term('cap', t('Capture buttons'), t('Hold the stick at a notch, then press a row’s capture button (or Snap nearest for the closest row) to set its input from the stick.'))))));
 }
@@ -307,6 +307,7 @@ export function angleMapEditor(o) {
     let v = parseFloat(raw);
     if (!Number.isFinite(v)) v = 0;
     v = Math.max(col.min, Math.min(col.max, v));
+    if (col.step === 1) v = Math.round(v);
     if (key.endsWith('angle')) v = ((v % 360) + 360) % 360;
     return run(async () => {
       const slots = readSlots(session, stick);

@@ -19,7 +19,7 @@ export default {
   "Where the notch physically is, in degrees (0° = right, counter-clockwise). Capture fills this in.": "卡槽的实际位置，单位为度（0° 为右，逆时针方向）。捕获会自动填写。",
   "The exact angle the console receives at this notch, e.g. 45° for a perfect diagonal.": "主机在此卡槽处收到的精确角度，例如 45° 表示标准斜向。",
   "How far the stick physically travels at this angle (raw units). Calibration fills this in.": "摇杆在此角度上的实际行程（原始单位）。校准会自动填写。",
-  "Output length at this angle (2048 = full).": "此角度上的输出长度（2048 = 满量程）。",
+  "Output length at this angle. 2048 is full on an axis; diagonals reach the corner at about 2896. Higher values max out before the edge.": "此角度上的输出长度。2048 为单轴满量程；斜向约 2896 到达角落。更大的值会在推到边缘前就达到最大。",
   "Angular deadzone: stick angles within this many degrees of the output angle snap exactly onto it.": "角度死区：与输出角度相差在此度数以内的摇杆角度会精确吸附到该角度。",
   "Capture buttons": "捕获按钮",
   "Hold the stick at a notch, then press a row’s capture button (or Snap nearest for the closest row) to set its input from the stick.": "将摇杆保持在某个卡槽处，然后按下该行的捕获按钮（或按“吸附最近”选择最近的一行），即可用摇杆位置设置其输入值。",

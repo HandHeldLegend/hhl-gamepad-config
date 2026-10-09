@@ -121,7 +121,7 @@ export default {
   'Input distance, slot {n}': '入力距離、スロット {n}',
   'How far the stick physically travels at this angle (raw units). Calibration fills this in.': 'この角度でスティックが物理的に動く距離（生の単位）。キャリブレーションで自動入力されます。',
   'Output distance, slot {n}': '出力距離、スロット {n}',
-  'Output length at this angle (2048 = full).': 'この角度での出力の長さ（2048 = 最大）。',
+  "Output length at this angle. 2048 is full on an axis; diagonals reach the corner at about 2896. Higher values max out before the edge.": "この角度での出力の長さ。軸方向の最大は 2048、斜め方向は約 2896 で角に届きます。それより大きい値では端に届く前に最大になります。",
   'Snap zone in degrees, slot {n}': 'スナップ範囲（度）、スロット {n}',
   'Angular deadzone: stick angles within this many degrees of the output angle snap exactly onto it.': '角度デッドゾーン：出力角度からこの角度以内のスティック入力は、出力角度ちょうどに吸着します。',
   '{stick}: angle map diagram': '{stick}：角度マップの図',
