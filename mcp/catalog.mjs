@@ -197,7 +197,7 @@ export async function loadCatalog({ appUrl = process.env.HHL_APP_URL } = {}) {
   }
   const defByKey = new Map(defs.map((d) => [d.key, d]));
 
-  const pages = registry.SECTIONS.map((s) => ({
+  const pages = registry.SECTIONS.filter((s) => !s.hidden).map((s) => ({
     id: s.id,
     title: s.title,
     summary: s.summary,

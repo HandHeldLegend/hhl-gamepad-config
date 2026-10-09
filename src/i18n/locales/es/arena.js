@@ -66,7 +66,7 @@ export default {
   "Shield on a platform, then down-diagonal": "Escudo sobre una plataforma y luego diagonal abajo",
   "Ledge grabs · targets · KOs": "Agarres al borde · blancos · KOs",
   "Snapbacks seen": "Snapbacks detectados",
-  "Stick bounced past center after release (see Input lab)": "La palanca rebotó más allá del centro al soltarla (ver Laboratorio de entrada)",
+  "Stick bounced past center after release (see the Snapback page)": "El stick rebotó más allá del centro al soltarlo (consulta la página Snapback)",
   "None so far": "Ninguno por ahora",
 
   // ---- Play: live input (canvas + accessible readout) ----

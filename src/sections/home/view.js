@@ -13,7 +13,7 @@ import { isIOS, explainIOS } from '../../app/platform.js';
 import { isLinux, explainLinux } from '../../app/linux.js';
 
 function tiles(session) {
-  return h('div.tiles', SECTIONS.filter((s) => s.id !== 'home').map((s) => {
+  return h('div.tiles', SECTIONS.filter((s) => s.id !== 'home' && !s.hidden).map((s) => {
     const reason = unavailableReason(s);
     const att = session.attention[s.id];
     return h('a.tile', {

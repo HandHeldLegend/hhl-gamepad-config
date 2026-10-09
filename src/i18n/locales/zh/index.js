@@ -1,4 +1,4 @@
-/** French dictionary: merges every area file. Add new areas here. */
+/** Simplified Chinese dictionary: merges every area file. Add new areas here. */
 import home from './home.js';
 import firmware from './firmware.js';
 import settings from './settings.js';

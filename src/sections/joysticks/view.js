@@ -263,7 +263,7 @@ export function mount(root, ctx) {
     const row = settingField(def, { ...o, description: t(SENS_HELP[name]) });
     const tip = row.querySelector('.field-label .tip');
     if (tip) {
-      const text = [t(def.description), t(def.tip)].join(i18n.lang === 'ja' ? '' : ' ');
+      const text = [t(def.description), t(def.tip)].join(['ja', 'zh'].includes(i18n.lang) ? '' : ' ');
       tip.dataset.tip = text;
       tip.setAttribute('aria-label', text);
     }

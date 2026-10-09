@@ -36,7 +36,7 @@ const LED_TEXT = {
 };
 
 /** Join whole translated sentences into one paragraph (Japanese doesn't put spaces between sentences). */
-const joinSentences = (parts) => parts.join(i18n.lang === 'ja' ? '' : ' ');
+const joinSentences = (parts) => parts.join(['ja', 'zh'].includes(i18n.lang) ? '' : ' ');
 
 export function mount(root, { session, device, navigate }) {
   const st = session.static.battery;

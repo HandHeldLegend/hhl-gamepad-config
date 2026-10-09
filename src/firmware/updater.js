@@ -661,7 +661,15 @@ async function completeUf2Step() {
 
 const ACTIVE = ['awaiting-bootloader', 'bootloader-flash', 'bootloader-install', 'uf2-drive-select', 'erase-flash', 'awaiting-erase', 'update-complete'];
 
+/**
+ * Quiet mode (the factory station runs its own flow): no automatic update or install dialogs on
+ * connect, bootloader or legacy firmware. Manual entry points still work.
+ */
+let quiet = false;
+export function setUpdaterQuiet(on) { quiet = !!on; }
+
 async function onBootloaderConnect() {
+  if (quiet) return;
   if (st.mode === 'uf2-drive-select' || st.mode === 'bootloader-flash' || st.mode === 'erase-flash') return;
   if (st.mode === 'update-complete' && !st.pendingUrl) { await showBootloaderInstall(); return; }
   if (st.pendingUrl) {
@@ -682,6 +690,7 @@ function onBootloaderDisconnect() {
 }
 
 async function onControllerConnect() {
+  if (quiet) return;
   if (isDemo()) { setStatus({ state: 'current', latest: null }); if (st.mode !== 'hidden') hide(); return; }
   const info = session.info;
   let shown = false;
@@ -711,6 +720,7 @@ export function initFirmware() {
     if (state === 'disconnected') onControllerDisconnect();
   });
   session.on('legacy', ({ url }) => {
+    if (quiet) return;
     if (url) showUpdateAvailable(url, null, { legacy: true });
     else toast(t('This controller runs legacy firmware we don’t recognize. Use Firmware → Install with BOOTSEL.'), { tone: 'yellow', timeout: 8000 });
   });
@@ -720,7 +730,7 @@ export function initFirmware() {
     navigator.usb.addEventListener('connect', (e) => { if (isPicoBootloader(e.device)) onBootloaderConnect(); });
     navigator.usb.addEventListener('disconnect', (e) => { if (isPicoBootloader(e.device)) onBootloaderDisconnect(); });
     navigator.usb.getDevices().then(async (devs) => {
-      if (devs.some(isPicoBootloader) && !st.pendingUrl) await showBootloaderInstall();
+      if (!quiet && devs.some(isPicoBootloader) && !st.pendingUrl) await showBootloaderInstall();
     }).catch((err) => console.warn('[fw] getDevices failed', err));
   }
 }

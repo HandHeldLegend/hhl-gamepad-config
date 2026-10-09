@@ -218,6 +218,16 @@
 
 /* Japanese: prefer native CJK UI fonts (all ship with the OS; nothing is downloaded). Kanji need
    more pixels than Latin letters to stay legible, so the body and small sizes step up a notch. */
+/* Simplified Chinese: the same idea with native Chinese UI fonts. */
+:root:lang(zh) {
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --font-ui: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
+  --font-display: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
+}
+
 :root:lang(ja) {
   --text-xs: 0.8125rem;
   --text-sm: 0.875rem;

@@ -88,7 +88,7 @@ export function mount(root, { session }) {
     const sub = h('span.rgb-group-sub', subText);
     // Player group: badge + one tip on the title line (Japanese joins sentences without a space).
     const playerTip = isPlayer && [t('Always shows this color, in every mode.'),
-      t('These LEDs also show your player number when connected and chase while pairing, using this color.')].join(i18n.lang === 'ja' ? '' : ' ');
+      t('These LEDs also show your player number when connected and chase while pairing, using this color.')].join(['ja', 'zh'].includes(i18n.lang) ? '' : ' ');
     const picker = colorField({
       value: u32ToHex(rgb().rgb_colors[i]),
       ariaLabel: t('{name} color', { name }),

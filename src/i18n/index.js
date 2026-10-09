@@ -27,6 +27,7 @@ export const LANGUAGES = [
   { code: 'es', name: 'Spanish', native: 'Español' },
   { code: 'ja', name: 'Japanese', native: '日本語' },
   { code: 'fr', name: 'French', native: 'Français' },
+  { code: 'zh', name: 'Chinese (Simplified)', native: '简体中文' },
 ];
 const SUPPORTED = LANGUAGES.map((l) => l.code);
 
@@ -48,6 +49,7 @@ export function detectLanguage(languages = navigator.languages || [navigator.lan
   let tz = timeZone;
   try { tz ??= Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { /* ignore */ }
   if (tz === 'Asia/Tokyo') return 'ja';
+  if (tz && /^Asia\/(Shanghai|Chongqing|Harbin|Urumqi|Kashgar)$/.test(tz)) return 'zh';
   if (tz && SPANISH_TZ.test(tz)) return 'es';
   if (tz && FRENCH_TZ.test(tz)) return 'fr';
   return 'en';

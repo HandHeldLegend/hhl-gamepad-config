@@ -68,7 +68,7 @@ export default {
   "Shield on a platform, then down-diagonal": "Bouclier sur une plateforme, puis diagonale bas",
   "Ledge grabs · targets · KOs": "Saisies de rebord · cibles · KO",
   "Snapbacks seen": "Snapbacks détectés",
-  "Stick bounced past center after release (see Input lab)": "Le joystick a rebondi au-delà du centre après le relâchement (voir Labo des entrées)",
+  "Stick bounced past center after release (see the Snapback page)": "Le joystick a dépassé le centre en revenant (voir la page Snapback)",
   "None so far": "Aucun pour l’instant",
 
   // ---- Play: live input (canvas + accessible readout) ----

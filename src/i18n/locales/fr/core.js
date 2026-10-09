@@ -359,4 +359,6 @@ export default {
   "Bluetooth. Pair: {buttons}, then SYNC on the Wii": "Bluetooth. Appairage : {buttons}, puis SYNC sur la Wii",
   "To pair, hold {buttons} while you turn the controller on (the very first time, {button} alone also works). The status LED turns pink.": "Pour l’appairer, maintenez {buttons} en allumant la manette (la toute première fois, {button} seul suffit aussi). Le voyant d’état devient rose.",
   "After that, hold {button} while you turn it on to reconnect to the same Wii.": "Ensuite, maintenez {button} en l’allumant pour vous reconnecter à la même Wii.",
+  "Factory station": "Poste d’usine",
+  "Flash, self-check, calibrate and test units one after another, with a pass / fail log.": "Flashez, autotestez, calibrez et testez les unités l’une après l’autre, avec un journal réussi / échec.",
 };

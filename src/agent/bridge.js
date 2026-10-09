@@ -91,7 +91,7 @@ function status() {
 }
 
 function listPages() {
-  return SECTIONS.map(pageInfo);
+  return SECTIONS.filter((s) => !s.hidden).map(pageInfo);
 }
 
 function listSettings(section) {

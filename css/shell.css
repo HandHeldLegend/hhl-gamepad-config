@@ -26,6 +26,10 @@
   grid-template-areas: "bar bar" "nav main";
 }
 
+/* Factory station: full screen, no app bar or sidebar (it has its own controls). */
+.app[data-page="factory"] { grid-template-columns: 1fr; grid-template-rows: 1fr; grid-template-areas: "main"; }
+.app[data-page="factory"] > .appbar, .app[data-page="factory"] .sidebar { display: none; }
+
 /* ---- App bar ------------------------------------------------------------------------- */
 .appbar {
   grid-area: bar;

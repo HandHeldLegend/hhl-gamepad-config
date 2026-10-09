@@ -162,7 +162,7 @@ export function renderPlay(panel, app) {
       ['ff', t('Fast falls'), `${s.fastfall.n}`, s.fastfall.n ? t('{pct} frame-perfect', { pct: pct(s.fastfall.perfect, s.fastfall.n) }) : t('Flick down at the top of a jump')],
       ['sd', t('Shield drops'), `${s.shieldDrop.ok}/${s.shieldDrop.n}`, s.shieldDrop.n ? pct(s.shieldDrop.ok, s.shieldDrop.n) : t('Shield on a platform, then down-diagonal')],
       ['misc', t('Ledge grabs · targets · KOs'), `${s.ledge} · ${s.targets} · ${s.ko}`, ''],
-      ['snap', t('Snapbacks seen'), `${s.snapback}`, s.snapback ? t('Stick bounced past center after release (see Input lab)') : t('None so far')],
+      ['snap', t('Snapbacks seen'), `${s.snapback}`, s.snapback ? t('Stick bounced past center after release (see the Snapback page)') : t('None so far')],
     ];
     for (const [id, label, val, sub] of data) {
       if (!rows[id]) {

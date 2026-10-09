@@ -68,7 +68,7 @@ export default {
   "Shield on a platform, then down-diagonal": "足場の上でシールドしてから斜め下",
   "Ledge grabs · targets · KOs": "崖つかまり · ターゲット · 撃墜",
   "Snapbacks seen": "検出したスナップバック",
-  "Stick bounced past center after release (see Input lab)": "離したスティックが中心を越えて跳ね返りました（入力ラボを参照）",
+  "Stick bounced past center after release (see the Snapback page)": "離したときにスティックが中央を越えて跳ね返りました（スナップバックのページを参照）",
   "None so far": "まだありません",
 
   // ---- Play: live input (canvas + accessible readout) ----

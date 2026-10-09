@@ -16,6 +16,8 @@
  *   keywords    extra search terms for assistants
  *   params      documented deep-link query params: { name: description }
  *   beta        optional: true shows a BETA badge next to the title (nav, page header, Home tile)
+ *   hidden      optional: true keeps the page out of the menu, Home tiles and assistant tools (open by URL)
+ *   stable      optional: true keeps the page mounted when a controller connects or disconnects
  *   load        lazy import of the view module (exports mount(root, ctx))
  */
 
@@ -131,6 +133,13 @@ export const SECTIONS = [
     keywords: ['3d', 'platformer', 'test', 'play', 'game', 'camera', 'analog', 'long jump', 'wall kick', 'triple jump', 'ground pound'],
     params: { tab: 'play | help' },
     load: () => import('./platformer/view.js'),
+  },
+  {
+    id: 'factory', title: 'Factory station', icon: 'calibrate', tone: 'green', group: 'app', device: false, requires: null,
+    hidden: true, stable: true,
+    summary: 'Flash, self-check, calibrate and test units one after another, with a pass / fail log.',
+    params: { build: 'Target build id (e.g. gcu_2); without it each unit gets the newest firmware of its own build', skip: 'Steps to leave out: flash, calibrate, inputs, operator' },
+    load: () => import('./factory/view.js'),
   },
   {
     id: 'settings', title: 'App settings', icon: 'settings', tone: 'lavender', group: 'app', device: false, requires: null,

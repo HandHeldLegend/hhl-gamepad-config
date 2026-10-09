@@ -219,6 +219,28 @@ async function downloadFirmware(url, label = t('Downloading firmware...')) {
     return data;
 }
 
+/**
+ * Optional download cache (factory stations flash many units with the same build). Keyed by the
+ * caller's cacheKey (e.g. build id + manifest checksum) and the URL, so a new build is fetched again.
+ * Each caller gets its own copy of the bytes.
+ */
+const firmwareCache = new Map();
+async function cachedDownload(url, label, cacheKey) {
+    if (!cacheKey) return downloadFirmware(url, label);
+    const key = `${cacheKey}|${url}`;
+    if (!firmwareCache.has(key)) {
+        firmwareCache.set(key, downloadFirmware(url, label).catch((err) => { firmwareCache.delete(key); throw err; }));
+    }
+    return (await firmwareCache.get(key)).slice(0);
+}
+
+/** Download a build's .bin and .uf2 into the cache ahead of time. Resolves true when both are there. */
+export async function pico_prefetch_firmware(url, cacheKey) {
+    const uf2Url = ensureUf2Url(url);
+    const results = await Promise.allSettled([cachedDownload(convertUf2ToBinUrl(uf2Url), '', cacheKey), cachedDownload(uf2Url, '', cacheKey)]);
+    return results.every((r) => r.status === 'fulfilled');
+}
+
 async function closePicoDevice() {
     if (!picoDevice) return;
     try {
@@ -239,8 +261,9 @@ async function closePicoDevice() {
 /**
  * Request the Pico bootloader and claim the Picoboot vendor interface.
  * Prefers an already-authorized device from getDevices() so no picker is needed.
- * @param {{ allowRequestDevice?: boolean, uf2Only?: boolean }} [options] uf2Only: don't look for a .bin
- *        (no PICOBOOT write; goes straight to the RPI-RP2 drive picker / manual download).
+ * @param {{ allowRequestDevice?: boolean, uf2Only?: boolean, cacheKey?: string }} [options] uf2Only: don't look
+ *        for a .bin (no PICOBOOT write; goes straight to the RPI-RP2 drive picker / manual download).
+ *        cacheKey: reuse downloads made with the same key (see pico_prefetch_firmware).
  * @returns {{ ok: true } | { ok: false, canceled: boolean, needsPermission: boolean, claimFailed?: boolean, error?: Error }}
  */
 export async function pico_try_claim_bootloader(options = {}) {
@@ -459,8 +482,8 @@ export async function pico_update_attempt_flash(url, checksum = null, options = 
     try {
         const [binResult, uf2Result] = await Promise.allSettled([
             // uf2Only: images with no .bin twin (the flash nuke runs from RAM) skip PICOBOOT entirely.
-            uf2Only ? Promise.reject(new Error('UF2-only image')) : downloadFirmware(binUrl, t('Downloading firmware...')),
-            downloadFirmware(uf2Url, t('Downloading firmware...')),
+            uf2Only ? Promise.reject(new Error('UF2-only image')) : cachedDownload(binUrl, t('Downloading firmware...'), options.cacheKey),
+            cachedDownload(uf2Url, t('Downloading firmware...'), options.cacheKey),
         ]);
 
         if (binResult.status === 'fulfilled') {

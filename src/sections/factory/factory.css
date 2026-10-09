@@ -1,0 +1,56 @@
+/* factory.css: Factory station (#/factory). Big, glanceable, full screen. Theme tokens only. */
+.fac { display: grid; gap: var(--space-4); }
+.fac-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.fac-target { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.fac-label { color: var(--text-muted); font-size: var(--text-sm); }
+.fac-counts { display: flex; gap: var(--space-4); font-weight: 700; }
+.fac-pass { color: var(--green); }
+.fac-fail { color: var(--red); }
+.fac-head-actions { display: flex; gap: var(--space-2); margin-left: auto; }
+
+.fac-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: var(--space-4); align-items: start; }
+@media (max-width: 860px) { .fac-main { grid-template-columns: 1fr; } }
+.fac-stage { min-height: 420px; display: grid; padding: var(--space-5); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+
+.fac-big { display: grid; justify-items: center; align-content: center; gap: var(--space-3); text-align: center; }
+.fac-big h2 { margin: 0; font-size: var(--text-xl, 1.6rem); }
+.fac-big p { margin: 0; max-width: 46ch; }
+.fac-big .progress { width: min(520px, 100%); }
+.fac-big-icon { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: var(--green-soft); color: var(--green); }
+.fac-big-icon .icon { width: 36px; height: 36px; }
+
+.fac-result { display: grid; justify-items: center; align-content: center; gap: var(--space-2); text-align: center; border-radius: var(--radius-lg); }
+.fac-result-word { font-family: var(--font-display); font-size: clamp(64px, 12vw, 140px); font-weight: 800; line-height: 1; letter-spacing: 0.02em; }
+.fac-result.is-pass .fac-result-word { color: var(--green); }
+.fac-result.is-fail .fac-result-word { color: var(--red); }
+.fac-result p { margin: 0; font-size: var(--text-lg); }
+.fac-next { color: var(--text-muted); }
+
+.fac-list { display: grid; gap: 2px; padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.fac-list-head { display: flex; justify-content: space-between; gap: var(--space-2); font-weight: 700; padding: 0 var(--space-1) var(--space-2); }
+.fac-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2px var(--space-2); padding: 6px var(--space-1); font-size: var(--text-sm); border-radius: var(--radius-sm, 6px); }
+.fac-row .badge { grid-column: 3; grid-row: 1; }
+.fac-row-icon .icon { width: 16px; height: 16px; }
+.fac-row.is-pass .fac-row-icon { color: var(--green); }
+.fac-row.is-fail { background: var(--red-soft); }
+.fac-row.is-fail .fac-row-icon { color: var(--red); }
+.fac-row.is-na { color: var(--text-muted); }
+.fac-row-detail { grid-column: 2 / 4; color: var(--text-muted); font-size: var(--text-xs, 0.75rem); }
+
+.fac-meters { display: grid; gap: var(--space-2); width: min(520px, 100%); }
+.fac-meter { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: var(--space-3); }
+
+.fac-inputs { display: grid; gap: var(--space-3); align-content: start; }
+.fac-inputs h2, .fac-inputs p { margin: 0; text-align: center; }
+.fac-in-grid { display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+.fac-in { display: grid; justify-items: center; gap: 4px; padding: var(--space-2); border: 2px solid var(--border); border-radius: var(--radius-md);
+  font-size: var(--text-xs, 0.75rem); color: var(--text-muted); transition: background-color var(--dur-med), border-color var(--dur-med); }
+.fac-in.ok { border-color: var(--green); background: var(--green-soft); color: var(--text); }
+.fac-in.ok .inp-glyph { color: var(--green); }
+.fac-axes { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: center; }
+.fac-axis { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 2px solid var(--border); border-radius: var(--radius-pill); font-weight: 600; font-size: var(--text-sm); }
+.fac-axis-ok { display: none; color: var(--green); }
+.fac-axis-ok .icon { width: 14px; height: 14px; }
+.fac-axis.ok { border-color: var(--green); background: var(--green-soft); }
+.fac-axis.ok .fac-axis-ok { display: inline-flex; }

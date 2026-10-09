@@ -148,7 +148,7 @@ export function createShell(root) {
     const nav = h('nav.sidebar', { 'aria-label': t('Sections') });
     navLinks.clear();
     for (const g of GROUPS) {
-      const items = SECTIONS.filter((s) => s.group === g.id);
+      const items = SECTIONS.filter((s) => s.group === g.id && !s.hidden);
       if (!items.length) continue;
       nav.append(h('div.nav-group', g.id !== 'start' && h('div.nav-group-title', t(g.title)),
         items.map((s) => {
@@ -191,6 +191,7 @@ export function createShell(root) {
 
     for (const s of SECTIONS) {
       const a = navLinks.get(s.id);
+      if (!a) continue; // hidden pages have no menu link
       const reason = unavailableReason(s);
       a.classList.toggle('disabled', !!reason && session.connected);
       a.classList.toggle('waiting', !!reason && !session.connected);
@@ -269,7 +270,8 @@ export function createShell(root) {
     const section = getSection(route.section) || getSection('home');
     const token = ++renderToken;
     const reason = unavailableReason(section);
-    const key = `${section.id}|${reason || 'ok'}|${session.state}|${i18n.lang}`;
+    // `stable` pages (the factory station) stay mounted through connects and disconnects.
+    const key = `${section.id}|${reason || 'ok'}|${section.stable ? '' : session.state}|${i18n.lang}`;
 
     // Same page, only params changed → let the view handle it without remounting.
     if (mounted && mounted.key === key && mounted.update) { mounted.update(route.params); return; }
