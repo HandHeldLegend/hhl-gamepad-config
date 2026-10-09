@@ -347,4 +347,6 @@ export default {
   "Lights & feedback": "灯光与反馈",
   "Power & wireless": "电源与无线",
   "App": "应用",
+  "offline": "离线",
+  "{host} unreachable": "无法连接 {host}",
 };

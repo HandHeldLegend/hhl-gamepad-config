@@ -209,14 +209,30 @@ async function sha256Hex(buffer) {
 
 async function downloadFirmware(url, label = t('Downloading firmware...')) {
     updateProgress(10, false, label);
-    const response = await fetch(url);
+    let response;
+    try {
+        response = await fetch(url);
+    } catch (_) {
+        // One retry past any cached response (flaky network, a CDN hiccup right after a release).
+        response = await fetch(url, { cache: 'no-store' });
+    }
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP ${response.status}`);
     }
     updateProgress(40, false, label);
     const data = await response.arrayBuffer();
+    if (!data.byteLength) throw new Error('empty file');
     updateProgress(70, false, t('Download complete'));
     return data;
+}
+
+/** Short technical reason for a failed download, shown after the failure message. */
+function downloadReason(err, url) {
+    if (navigator.onLine === false) return t('offline');
+    const msg = String(err?.message || err || '');
+    if (/^HTTP \d+/.test(msg) || msg === 'empty file') return `${new URL(url).hostname}: ${msg}`;
+    // fetch() rejects with a TypeError for DNS, TLS, proxy, firewall or CORS failures.
+    return t('{host} unreachable', { host: new URL(url).hostname });
 }
 
 /**
@@ -510,7 +526,7 @@ export async function pico_update_attempt_flash(url, checksum = null, options = 
         }
 
         if (!binData && !uf2Data) {
-            updateProgress(0, false, t('Failed to download firmware.'));
+            updateProgress(0, false, `${t('Failed to download firmware.')} (${downloadReason(uf2Result.reason, uf2Url)})`);
             return false;
         }
 

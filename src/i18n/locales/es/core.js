@@ -362,4 +362,6 @@ export default {
   "After that, hold {button} while you turn it on to reconnect to the same Wii.": "Después, mantén {button} al encenderlo para reconectarlo a la misma Wii.",
   "Factory station": "Estación de fábrica",
   "Flash, self-check, calibrate and test units one after another, with a pass / fail log.": "Graba, autoverifica, calibra y prueba unidades una tras otra, con un registro de aprobado / falla.",
+  "offline": "sin conexión",
+  "{host} unreachable": "{host} inaccesible",
 };
