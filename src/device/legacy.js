@@ -4,7 +4,8 @@
  * Legacy firmware answers the 0xAF version probe with a 16-bit device id. We can't configure
  * those devices, but we can offer the matching modern firmware.
  */
-const FW = 'https://github.com/HandHeldLegend/hoja-device-fw/raw/refs/heads/main/builds';
+// raw.githubusercontent.com, not github.com/…/raw: only the former sends CORS headers, so fetch() can read it.
+const FW = 'https://raw.githubusercontent.com/HandHeldLegend/hoja-device-fw/main/builds';
 
 export const LEGACY_DEVICES = {
   0xa001: { name: 'ProGCC 3', build: 'progcc_3' },
