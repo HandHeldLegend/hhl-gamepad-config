@@ -187,9 +187,31 @@ async function onBootloader(allowRequestDevice = false) {
     u.flash = { percent: 100, status: t('Direct USB flashing isn’t available here. Press Select the RPI-RP2 drive and pick the drive in the folder window.'), needsDrive: true };
     go('flashing');
   } else {
-    setResult('firmware', N_('Firmware'), 'fail', t('Direct USB flashing didn’t work on this unit.'));
-    finish();
+    // Device window closed, the bootloader not listed, or the write failed: let the operator choose.
+    u.flash = { percent: 0, status: t('The firmware wasn’t written. Try again, or copy it onto the RPI-RP2 drive instead.'), needsPermission: true };
+    go('flashing');
   }
+}
+
+/** Skip direct USB flashing: stage the cached UF2 for the RPI-RP2 drive copy (folder window next). */
+async function useDrive() {
+  const u = station.unit;
+  const target = station.target;
+  if (!u || !target || u.flashing) return;
+  clearTimeout(u.waitTimer);
+  u.flashing = true;
+  let result = false;
+  try {
+    result = await pico_update_attempt_flash(target.uf2Url, null, { uf2Only: true, cacheKey: target.cacheKey });
+  } finally {
+    u.flashing = false;
+  }
+  if (result?.needsUserAction && result.reason === 'directory-picker') {
+    u.flash = { percent: 100, status: t('Press Select the RPI-RP2 drive and pick the drive in the folder window.'), needsDrive: true };
+  } else {
+    u.flash = { percent: 0, status: t('This browser can’t write to the drive. Use Chrome or Edge.'), needsPermission: true };
+  }
+  go('flashing');
 }
 
 function flashed() {
@@ -406,6 +428,7 @@ export function mount(root, { session, params = {} }) {
         return big('download', t('Updating firmware'), t('Don’t unplug the controller.'), bar,
           (u.flash?.needsPermission || u.flash?.needsDrive) && h('div.row.fac-actions',
             u.flash.needsPermission && button({ label: t('Allow the bootloader'), icon: 'usb', variant: 'primary', size: 'lg', onClick: () => onBootloader(true) }),
+            u.flash.needsPermission && button({ label: t('Use the RPI-RP2 drive instead'), icon: 'upload', variant: 'tonal', onClick: () => useDrive() }),
             u.flash.needsDrive && button({ label: t('Select the RPI-RP2 drive'), icon: 'upload', variant: 'primary', size: 'lg', onClick: () => copyToDrive() }),
             button({ label: t('Fail'), variant: 'ghost', onClick: () => { setResult('firmware', N_('Firmware'), 'fail', t('Not updated')); finish(); } })));
       }

@@ -82,4 +82,7 @@ export default {
   "Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).": "「ブートローダーを許可」を押して「RP2 Boot」（または「RP2350 Boot」）を選んでください。",
   "Direct USB flashing isn’t available here. Press Select the RPI-RP2 drive and pick the drive in the folder window.": "ここではUSBでの直接書き込みが使えません。「RPI-RP2 ドライブを選択」を押し、フォルダー画面でドライブを選んでください。",
   "Not updated": "未更新",
+  "The firmware wasn’t written. Try again, or copy it onto the RPI-RP2 drive instead.": "ファームウェアが書き込まれませんでした。もう一度試すか、RPI-RP2 ドライブにコピーしてください。",
+  "Press Select the RPI-RP2 drive and pick the drive in the folder window.": "「RPI-RP2 ドライブを選択」を押し、フォルダー画面でドライブを選んでください。",
+  "This browser can’t write to the drive. Use Chrome or Edge.": "このブラウザーはドライブに書き込めません。Chrome または Edge を使ってください。",
 };

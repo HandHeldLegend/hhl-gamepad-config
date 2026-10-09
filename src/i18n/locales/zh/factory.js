@@ -90,4 +90,7 @@ export default {
   "Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).": "点击“授权引导程序”，然后选择“RP2 Boot”（或“RP2350 Boot”）。",
   "Direct USB flashing isn’t available here. Press Select the RPI-RP2 drive and pick the drive in the folder window.": "此处无法直接通过 USB 刷写。点击“选择 RPI-RP2 驱动器”，然后在文件夹窗口中选择该驱动器。",
   "Not updated": "未更新",
+  "The firmware wasn’t written. Try again, or copy it onto the RPI-RP2 drive instead.": "固件未写入。请重试，或改为复制到 RPI-RP2 驱动器。",
+  "Press Select the RPI-RP2 drive and pick the drive in the folder window.": "点击“选择 RPI-RP2 驱动器”，然后在文件夹窗口中选择该驱动器。",
+  "This browser can’t write to the drive. Use Chrome or Edge.": "此浏览器无法写入驱动器。请使用 Chrome 或 Edge。",
 };

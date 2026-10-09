@@ -82,4 +82,7 @@ export default {
   "Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).": "Appuyez sur Autoriser le bootloader et choisissez « RP2 Boot » (ou « RP2350 Boot »).",
   "Direct USB flashing isn’t available here. Press Select the RPI-RP2 drive and pick the drive in the folder window.": "Le flashage direct par USB n’est pas disponible ici. Appuyez sur Sélectionner le lecteur RPI-RP2 et choisissez le lecteur dans la fenêtre de dossier.",
   "Not updated": "Non mis à jour",
+  "The firmware wasn’t written. Try again, or copy it onto the RPI-RP2 drive instead.": "Le firmware n’a pas été écrit. Réessayez, ou copiez-le plutôt sur le lecteur RPI-RP2.",
+  "Press Select the RPI-RP2 drive and pick the drive in the folder window.": "Appuyez sur Sélectionner le lecteur RPI-RP2 et choisissez le lecteur dans la fenêtre de dossier.",
+  "This browser can’t write to the drive. Use Chrome or Edge.": "Ce navigateur ne peut pas écrire sur le lecteur. Utilisez Chrome ou Edge.",
 };
