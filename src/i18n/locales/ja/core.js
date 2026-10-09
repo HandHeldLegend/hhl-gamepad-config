@@ -328,7 +328,6 @@ export default {
   "That isn’t the controller’s drive. Choose the drive named RPI-RP2 (or RP2350) itself, not a folder on your computer.": "それはコントローラーのドライブではありません。パソコン上のフォルダーではなく、RPI-RP2（またはRP2350）という名前のドライブそのものを選んでください。",
   // ---- Wii mode ----
   "Nintendo Wii (Bluetooth, Wii mode)": "Nintendo Wii（Bluetooth、Wiiモード）",
-  "Hold {button} while you turn the controller on. The status LED turns pink.": "{button}を押したままコントローラーの電源を入れます。ステータスLEDがピンクに点灯します。",
   "Press the SYNC button on the Wii. The controller pairs and connects as a Wii Remote.": "Wii本体のSYNCボタンを押します。コントローラーがWiiリモコンとしてペアリングされ、接続されます。",
   "Tap the power button to switch between Upright (Wii Remote with Nunchuk), Sideways (Wii Remote alone) and Classic (with a Classic Controller). The LED flashes white, yellow or blue to show which.": "電源ボタンを短く押すと、縦持ち（Wiiリモコン＋ヌンチャク）、横持ち（Wiiリモコンのみ）、クラシック（クラシックコントローラ付き）が順に切り替わります。LEDが白、黄色、青に点滅して現在の設定を示します。",
   "By default, {button} plugs in or unplugs the Nunchuk or Classic Controller, for games that ask you to remove it. The LED flashes green when it is attached and red when it is not.": "デフォルトでは、{button}でヌンチャクまたはクラシックコントローラを接続・取り外しできます。取り外しを求めるゲームで使います。接続時はLEDが緑、取り外し時は赤に点滅します。",
@@ -351,11 +350,13 @@ export default {
   "Wired": "有線",
   "config app": "設定アプリ",
   "Bluetooth. Pair: {buttons}": "Bluetooth。ペアリング：{buttons}",
-  "Bluetooth. Pair: press SYNC on the Wii": "Bluetooth。ペアリング：WiiのSYNCボタンを押す",
   "GameCube": "ゲームキューブ",
   "SNES / NES": "SNES / NES",
   "Modes at a glance": "モード一覧",
   "Hold a mode’s button while you plug in the controller or turn it on. With Start held too, Switch and Steam modes enter Bluetooth pairing. Without a button it starts in its default mode (Gamepad page).": "コントローラーを接続するとき、または電源を入れるときにモードのボタンを押し続けます。Startも一緒に押すと、SwitchモードとSteamモードはBluetoothのペアリングに入ります。ボタンを押さなければデフォルトのモード（Gamepadページ）で起動します。",
   "Hold": "押すボタン",
   "Only Switch and Steam modes connect to this config app.": "この設定アプリに接続できるのはSwitchモードとSteamモードだけです。",
+  "Bluetooth. Pair: {buttons}, then SYNC on the Wii": "Bluetooth。ペアリング：{buttons}の後、WiiのSYNC",
+  "To pair, hold {buttons} while you turn the controller on (the very first time, {button} alone also works). The status LED turns pink.": "ペアリングするには、{buttons}を押しながらコントローラーの電源を入れます（初回のみ{button}だけでも可）。ステータスLEDがピンクになります。",
+  "After that, hold {button} while you turn it on to reconnect to the same Wii.": "以後は{button}を押しながら電源を入れると、同じWiiに再接続します。",
 };

@@ -328,7 +328,6 @@ export default {
   "That isn’t the controller’s drive. Choose the drive named RPI-RP2 (or RP2350) itself, not a folder on your computer.": "Ce n’est pas le lecteur de la manette. Choisissez le lecteur nommé RPI-RP2 (ou RP2350) lui-même, pas un dossier de votre ordinateur.",
   // ---- Wii mode ----
   "Nintendo Wii (Bluetooth, Wii mode)": "Nintendo Wii (Bluetooth, mode Wii)",
-  "Hold {button} while you turn the controller on. The status LED turns pink.": "Maintenez {button} en allumant la manette. Le voyant d’état devient rose.",
   "Press the SYNC button on the Wii. The controller pairs and connects as a Wii Remote.": "Appuyez sur le bouton SYNC de la Wii. La manette s’appaire et se connecte comme une Wii Remote.",
   "Tap the power button to switch between Upright (Wii Remote with Nunchuk), Sideways (Wii Remote alone) and Classic (with a Classic Controller). The LED flashes white, yellow or blue to show which.": "Appuyez brièvement sur le bouton d’alimentation pour passer de Verticale (Wii Remote avec Nunchuk) à Horizontale (Wii Remote seule) puis à Classic (avec une Classic Controller). Le voyant clignote en blanc, jaune ou bleu pour l’indiquer.",
   "By default, {button} plugs in or unplugs the Nunchuk or Classic Controller, for games that ask you to remove it. The LED flashes green when it is attached and red when it is not.": "Par défaut, {button} branche ou débranche le Nunchuk ou la Classic Controller, pour les jeux qui demandent de l’enlever. Le voyant clignote en vert quand l’extension est branchée et en rouge sinon.",
@@ -351,11 +350,13 @@ export default {
   "Wired": "Filaire",
   "config app": "app de configuration",
   "Bluetooth. Pair: {buttons}": "Bluetooth. Appairage : {buttons}",
-  "Bluetooth. Pair: press SYNC on the Wii": "Bluetooth. Appairage : appuyez sur SYNC sur la Wii",
   "GameCube": "GameCube",
   "SNES / NES": "SNES / NES",
   "Modes at a glance": "Les modes en bref",
   "Hold a mode’s button while you plug in the controller or turn it on. With Start held too, Switch and Steam modes enter Bluetooth pairing. Without a button it starts in its default mode (Gamepad page).": "Maintenez le bouton d’un mode en branchant la manette ou en l’allumant. Avec Start maintenu aussi, les modes Switch et Steam passent en appairage Bluetooth. Sans bouton, elle démarre dans son mode par défaut (page Gamepad).",
   "Hold": "Bouton",
   "Only Switch and Steam modes connect to this config app.": "Seuls les modes Switch et Steam se connectent à cette app de configuration.",
+  "Bluetooth. Pair: {buttons}, then SYNC on the Wii": "Bluetooth. Appairage : {buttons}, puis SYNC sur la Wii",
+  "To pair, hold {buttons} while you turn the controller on (the very first time, {button} alone also works). The status LED turns pink.": "Pour l’appairer, maintenez {buttons} en allumant la manette (la toute première fois, {button} seul suffit aussi). Le voyant d’état devient rose.",
+  "After that, hold {button} while you turn it on to reconnect to the same Wii.": "Ensuite, maintenez {button} en l’allumant pour vous reconnecter à la même Wii.",
 };

@@ -28,7 +28,7 @@
  *   - The controller doesn't wake on a button press: turn it on to reconnect.
  *   - Console modes by d-pad at boot (k_dpad_formats): Left = SNES, Down = N64, Right = GameCube.
  *   - Auto (split-defaults firmware): no button; detects the host plugged in, or calls saved hosts.
- *   - Wii mode (core_wii.c, boot.c): d-pad up at boot, always Bluetooth, status LED pink. Pair by pressing
+ *   - Wii mode (core_wii.c, boot.c): d-pad up at boot (with Start to pair again; up alone pairs only the first time), always Bluetooth, status LED pink. Pair by pressing
  *     SYNC on the Wii. A short power-button tap cycles Upright (Remote + Nunchuk) → Sideways (Remote
  *     alone) → Classic (Remote + Classic Controller); the LED flashes white / yellow / blue. The
  *     Extension Attach/Detach output (Capture by default) plugs the extension in or out (LED green /
@@ -125,7 +125,7 @@ function modesTable(p) {
     [t('Steam'), combo(p.south), h('span', t('Wired'), ' · ', h('span.guide-app', t('config app'))), bt ? fillNodes(t('Bluetooth. Pair: {buttons}'), { buttons: combo(p.south, p.start) }) : dash()],
     [t('XInput'), combo(p.x), t('Wired'), wlanOr()],
     [t('Slippi'), combo(p.y), t('Wired'), wlanOr()],
-    p.wii && [t('Wii'), combo(p.up), dash(), t('Bluetooth. Pair: press SYNC on the Wii')],
+    p.wii && [t('Wii'), combo(p.up), dash(), fillNodes(t('Bluetooth. Pair: {buttons}, then SYNC on the Wii'), { buttons: combo(p.up, p.start) })],
     p.joybus && [t('GameCube'), combo(p.right), t('Wired'), wlanOr()],
     p.joybus && [t('N64'), combo(p.down), t('Wired'), wlanOr()],
     p.snes && [t('SNES / NES'), combo(p.left), t('Wired'), dash()],
@@ -187,8 +187,9 @@ export function openConnectGuide(o = {}) {
     t('Pair it from the device’s Bluetooth settings.'));
 
   const wii = p.wii && section(t('Nintendo Wii (Bluetooth, Wii mode)'),
-    h('span', fillNodes(t('Hold {button} while you turn the controller on. The status LED turns pink.'), { button: combo(p.up) })),
+    h('span', fillNodes(t('To pair, hold {buttons} while you turn the controller on (the very first time, {button} alone also works). The status LED turns pink.'), { buttons: combo(p.up, p.start), button: combo(p.up) })),
     t('Press the SYNC button on the Wii. The controller pairs and connects as a Wii Remote.'),
+    h('span', fillNodes(t('After that, hold {button} while you turn it on to reconnect to the same Wii.'), { button: combo(p.up) })),
     t('Tap the power button to switch between Upright (Wii Remote with Nunchuk), Sideways (Wii Remote alone) and Classic (with a Classic Controller). The LED flashes white, yellow or blue to show which.'),
     h('span', fillNodes(t('By default, {button} plugs in or unplugs the Nunchuk or Classic Controller, for games that ask you to remove it. The LED flashes green when it is attached and red when it is not.'), { button: combo(p.capture) })),
     t('It works as a Wii Remote Plus with MotionPlus built in, so MotionPlus games such as Wii Sports Resort work. It turns itself off a few seconds after the Wii is switched off.'));

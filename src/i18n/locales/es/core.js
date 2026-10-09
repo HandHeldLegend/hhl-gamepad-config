@@ -328,7 +328,6 @@ export default {
   "That isn’t the controller’s drive. Choose the drive named RPI-RP2 (or RP2350) itself, not a folder on your computer.": "Esa no es la unidad del control. Elige la propia unidad llamada RPI-RP2 (o RP2350), no una carpeta de tu computadora.",
   // ---- Wii mode ----
   "Nintendo Wii (Bluetooth, Wii mode)": "Nintendo Wii (Bluetooth, modo Wii)",
-  "Hold {button} while you turn the controller on. The status LED turns pink.": "Mantén {button} mientras enciendes el control. El LED de estado se pone rosa.",
   "Press the SYNC button on the Wii. The controller pairs and connects as a Wii Remote.": "Presiona el botón SYNC de la Wii. El control se empareja y se conecta como un Wii Remote.",
   "Tap the power button to switch between Upright (Wii Remote with Nunchuk), Sideways (Wii Remote alone) and Classic (with a Classic Controller). The LED flashes white, yellow or blue to show which.": "Toca el botón de encendido para cambiar entre Vertical (Wii Remote con Nunchuk), Horizontal (Wii Remote solo) y Classic (con un Classic Controller). El LED parpadea en blanco, amarillo o azul para indicar cuál.",
   "By default, {button} plugs in or unplugs the Nunchuk or Classic Controller, for games that ask you to remove it. The LED flashes green when it is attached and red when it is not.": "De forma predeterminada, {button} conecta o desconecta el Nunchuk o el Classic Controller, para los juegos que piden quitarlo. El LED parpadea en verde cuando está conectado y en rojo cuando no.",
@@ -351,11 +350,13 @@ export default {
   "Wired": "Por cable",
   "config app": "app de configuración",
   "Bluetooth. Pair: {buttons}": "Bluetooth. Emparejar: {buttons}",
-  "Bluetooth. Pair: press SYNC on the Wii": "Bluetooth. Emparejar: pulsa SYNC en la Wii",
   "GameCube": "GameCube",
   "SNES / NES": "SNES / NES",
   "Modes at a glance": "Modos de un vistazo",
   "Hold a mode’s button while you plug in the controller or turn it on. With Start held too, Switch and Steam modes enter Bluetooth pairing. Without a button it starts in its default mode (Gamepad page).": "Mantén el botón de un modo mientras conectas el control o lo enciendes. Si además mantienes Start, los modos Switch y Steam entran en emparejamiento Bluetooth. Sin botón, arranca en su modo predeterminado (página Gamepad).",
   "Hold": "Mantener",
   "Only Switch and Steam modes connect to this config app.": "Solo los modos Switch y Steam se conectan a esta app de configuración.",
+  "Bluetooth. Pair: {buttons}, then SYNC on the Wii": "Bluetooth. Emparejar: {buttons} y luego SYNC en la Wii",
+  "To pair, hold {buttons} while you turn the controller on (the very first time, {button} alone also works). The status LED turns pink.": "Para emparejar, mantén {buttons} mientras enciendes el control (la primera vez también basta con {button}). El LED de estado se pone rosa.",
+  "After that, hold {button} while you turn it on to reconnect to the same Wii.": "Después, mantén {button} al encenderlo para reconectarlo a la misma Wii.",
 };
