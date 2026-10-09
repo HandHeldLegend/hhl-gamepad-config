@@ -93,4 +93,10 @@ export default {
   "The firmware wasn’t written. Try again, or copy it onto the RPI-RP2 drive instead.": "固件未写入。请重试，或改为复制到 RPI-RP2 驱动器。",
   "Press Select the RPI-RP2 drive and pick the drive in the folder window.": "点击“选择 RPI-RP2 驱动器”，然后在文件夹窗口中选择该驱动器。",
   "This browser can’t write to the drive. Use Chrome or Edge.": "此浏览器无法写入驱动器。请使用 Chrome 或 Edge。",
+  "The firmware was written, but the controller is still in update mode. Press Restart controller.": "固件已写入，但手柄仍处于更新模式。点击“重启手柄”。",
+  "The controller restarted, but this browser needs your permission to reconnect. Press Connect and pick the controller.": "手柄已重启，但需要你在此浏览器中授权才能重新连接。点击“连接”并选择手柄。",
+  "Waiting for the controller to come back…": "正在等待手柄重新连接…",
+  "Didn’t come back after the update": "更新后未重新连接",
+  "USB devices this browser can use: {list}": "此浏览器可用的 USB 设备：{list}",
+  "none": "无",
 };

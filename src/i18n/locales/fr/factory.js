@@ -85,4 +85,10 @@ export default {
   "The firmware wasn’t written. Try again, or copy it onto the RPI-RP2 drive instead.": "Le firmware n’a pas été écrit. Réessayez, ou copiez-le plutôt sur le lecteur RPI-RP2.",
   "Press Select the RPI-RP2 drive and pick the drive in the folder window.": "Appuyez sur Sélectionner le lecteur RPI-RP2 et choisissez le lecteur dans la fenêtre de dossier.",
   "This browser can’t write to the drive. Use Chrome or Edge.": "Ce navigateur ne peut pas écrire sur le lecteur. Utilisez Chrome ou Edge.",
+  "The firmware was written, but the controller is still in update mode. Press Restart controller.": "Le firmware a été écrit, mais la manette est encore en mode mise à jour. Appuyez sur Redémarrer la manette.",
+  "The controller restarted, but this browser needs your permission to reconnect. Press Connect and pick the controller.": "La manette a redémarré, mais ce navigateur a besoin de votre autorisation pour la reconnecter. Appuyez sur Connecter et choisissez la manette.",
+  "Waiting for the controller to come back…": "En attente du retour de la manette…",
+  "Didn’t come back after the update": "Pas revenue après la mise à jour",
+  "USB devices this browser can use: {list}": "Périphériques USB utilisables par ce navigateur : {list}",
+  "none": "aucun",
 };

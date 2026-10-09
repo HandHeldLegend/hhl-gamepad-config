@@ -85,4 +85,10 @@ export default {
   "The firmware wasn’t written. Try again, or copy it onto the RPI-RP2 drive instead.": "El firmware no se grabó. Inténtalo de nuevo o cópialo en la unidad RPI-RP2.",
   "Press Select the RPI-RP2 drive and pick the drive in the folder window.": "Pulsa Seleccionar la unidad RPI-RP2 y elige la unidad en la ventana de carpetas.",
   "This browser can’t write to the drive. Use Chrome or Edge.": "Este navegador no puede escribir en la unidad. Usa Chrome o Edge.",
+  "The firmware was written, but the controller is still in update mode. Press Restart controller.": "El firmware se grabó, pero el control sigue en modo de actualización. Pulsa Reiniciar control.",
+  "The controller restarted, but this browser needs your permission to reconnect. Press Connect and pick the controller.": "El control se reinició, pero este navegador necesita tu permiso para reconectarlo. Pulsa Conectar y elige el control.",
+  "Waiting for the controller to come back…": "Esperando a que vuelva el control…",
+  "Didn’t come back after the update": "No volvió después de la actualización",
+  "USB devices this browser can use: {list}": "Dispositivos USB que este navegador puede usar: {list}",
+  "none": "ninguno",
 };

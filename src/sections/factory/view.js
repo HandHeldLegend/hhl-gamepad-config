@@ -32,8 +32,8 @@ import { onInputReport } from '../../device/reports.js';
 import { isDemo } from '../../device/mock.js';
 import { listBuilds, getBuildManifest, humanizeBuildId } from '../../firmware/builds.js';
 import { buildIdFromManifestUrl } from '../../firmware/changelog.js';
-import { setUpdaterQuiet, formatFwVersion } from '../../firmware/updater.js';
-import { languagePicker } from '../../app/shell.js';
+import { setUpdaterQuiet, formatFwVersion, exitBootloader } from '../../firmware/updater.js';
+import { languagePicker, connectController } from '../../app/shell.js';
 import { pico_update_attempt_flash, pico_prefetch_firmware, pico_complete_uf2_picker_flash, onFlashProgress } from '../../firmware/picoboot.js';
 import { createStickCalibration } from '../joysticks/calibration.js';
 import { createImuReadout } from '../motion/imu-readout.js';
@@ -70,6 +70,9 @@ const station = {
   renderHead: null,      // header only (target, counts): never rebuilds the step in progress
   usbHooked: false,
 };
+
+/** Station state, exported for debugging from the console (e.g. stepping a demo unit through states). */
+export { station as factoryStation, flashed as factoryFlashed };
 
 function loadSku() { try { return localStorage.getItem(SKU_KEY) || ''; } catch { return ''; } }
 function setSku(id) { station.sku = id; try { localStorage.setItem(SKU_KEY, id); } catch { /* storage blocked */ } }
@@ -218,7 +221,36 @@ function flashed() {
   const u = station.unit;
   u.updated = true;
   u.flash = { percent: 100, status: t('Written. Waiting for the controller to restart…') };
+  u.reboot = { since: Date.now(), seen: '', stillBootloader: false, long: false };
   go('rebooting');
+  watchReboot(u);
+}
+
+/**
+ * While the unit restarts: every second, reconnect an allowed HOJA controller (in case the plug-in
+ * event was missed), notice a board that stayed in the bootloader, and list what the browser sees
+ * (shown on screen for diagnosis). After a while, ask for Connect plainly.
+ */
+function watchReboot(u) {
+  clearInterval(u.rebootTimer);
+  u.rebootTimer = setInterval(async () => {
+    if (station.unit !== u || u.stage !== 'rebooting') { clearInterval(u.rebootTimer); return; }
+    const devs = navigator.usb ? await navigator.usb.getDevices().catch(() => []) : [];
+    const hex = (n) => n.toString(16).padStart(4, '0');
+    const seen = devs.map((d) => `${hex(d.vendorId)}:${hex(d.productId)}${isPicoBootloader(d) ? ' (bootloader)' : ''}`).join(', ');
+    const waited = Date.now() - u.reboot.since;
+    const boot = devs.some(isPicoBootloader);
+    const hoja = devs.find(isHoja);
+    const was = JSON.stringify(u.reboot);
+    u.reboot.seen = seen;
+    u.reboot.stillBootloader = boot && waited > 5000;
+    u.reboot.long = waited > 8000;
+    if (hoja && station.session && !station.session.connected && !u.reconnecting) {
+      u.reconnecting = true;
+      station.session.reconnect(hoja).catch((err) => console.warn('[factory] reconnect', err)).finally(() => { u.reconnecting = false; });
+    }
+    if (JSON.stringify(u.reboot) !== was) redraw();
+  }, 1000);
 }
 
 /** The RPI-RP2 drive copy (needs the operator's click for the folder window). */
@@ -320,6 +352,7 @@ function finish() {
   const u = station.unit;
   if (!u) return;
   dropStickCal();
+  clearInterval(u.rebootTimer);
   const rows = [...u.results.values()];
   u.overall = rows.some((r) => r.result === 'fail') || u.aborted ? 'fail' : 'pass';
   u.finished = new Date().toISOString();
@@ -347,6 +380,7 @@ function downloadCsv() {
 // ---- Page --------------------------------------------------------------------------------------
 export function mount(root, { session, params = {} }) {
   station.params = params;
+  station.session = session;
   setUpdaterQuiet(true);
   hookUsb(session);
   if (params.build && station.target?.id !== params.build) loadTarget(params.build);
@@ -416,10 +450,7 @@ export function mount(root, { session, params = {} }) {
       case 'idle':
       case 'connecting':
         return big('usb', t('Plug in the next controller'), u?.note || t('Units connect by themselves when this computer already allows them. Otherwise press Connect and pick the controller.'),
-          button({ label: t('Connect'), icon: 'usb', variant: 'primary', size: 'lg', onClick: async () => {
-            const r = await session.connect().catch(() => false);
-            if (r === 'bootloader') onBootloader(true);
-          } }));
+          button({ label: t('Connect'), icon: 'usb', variant: 'primary', size: 'lg', onClick: connectUnit }));
       case 'flashing': {
         const bar = progressBar({ message: u.flash?.status || '' });
         bar.set(u.flash?.percent || 0, u.flash?.status || '');
@@ -432,9 +463,20 @@ export function mount(root, { session, params = {} }) {
             u.flash.needsDrive && button({ label: t('Select the RPI-RP2 drive'), icon: 'upload', variant: 'primary', size: 'lg', onClick: () => copyToDrive() }),
             button({ label: t('Fail'), variant: 'ghost', onClick: () => { setResult('firmware', N_('Firmware'), 'fail', t('Not updated')); finish(); } })));
       }
-      case 'rebooting':
-        return big('refresh', t('Restarting'), t('Waiting for the controller to come back. If it doesn’t connect by itself, press Connect.'),
-          button({ label: t('Connect'), icon: 'usb', variant: 'primary', size: 'lg', onClick: () => session.connect().catch(() => false) }));
+      case 'rebooting': {
+        const rb = u.reboot || {};
+        const text = rb.stillBootloader
+          ? t('The firmware was written, but the controller is still in update mode. Press Restart controller.')
+          : rb.long
+            ? t('The controller restarted, but this browser needs your permission to reconnect. Press Connect and pick the controller.')
+            : t('Waiting for the controller to come back…');
+        return big('refresh', t('Restarting'), text,
+          h('div.row.fac-actions',
+            rb.stillBootloader && button({ label: t('Restart controller'), icon: 'refresh', variant: 'primary', size: 'lg', onClick: () => exitBootloader() }),
+            button({ label: t('Connect'), icon: 'usb', variant: rb.long && !rb.stillBootloader ? 'primary' : 'tonal', size: 'lg', onClick: connectUnit }),
+            button({ label: t('Fail'), variant: 'ghost', onClick: () => { setResult('firmware', N_('Firmware'), 'fail', t('Didn’t come back after the update')); finish(); } })),
+          h('p.small.faint.fac-seen', t('USB devices this browser can use: {list}', { list: rb.seen || t('none') })));
+      }
       case 'sku': return big('palette', t('Pick this batch’s color SKU'), t('It sets the colors the Switch shows for the controller. It stays selected for the next units; change it in the header.'),
         h('div.fac-skus', COLOR_SKUS.map((x) => h('button.fac-sku-btn', { type: 'button', onclick: () => { setSku(x.id); continueAfterSku(session); } },
           h('span.fac-sku-dots', [x.body, x.buttons, x.leftGrip, x.rightGrip].map((c) => h('span', { style: { background: c } }))), x.label))));
@@ -454,6 +496,11 @@ export function mount(root, { session, params = {} }) {
     }
   }
 
+  /** The app's connect flow (it explains failures); a picked bootloader goes to flashing. */
+  const connectUnit = async () => {
+    const r = await connectController();
+    if (r === 'bootloader') onBootloader(true);
+  };
   const backButton = (onClick) => button({ label: t('Back'), icon: 'back', variant: 'ghost', class: 'fac-back', onClick });
   const big = (ic, title, text, ...rest) => h('div.fac-big', h('span.fac-big-icon', icon(ic)), h('h2', title), text && h('p.muted', text), ...rest);
 

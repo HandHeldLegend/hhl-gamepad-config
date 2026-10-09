@@ -85,4 +85,10 @@ export default {
   "The firmware wasn’t written. Try again, or copy it onto the RPI-RP2 drive instead.": "ファームウェアが書き込まれませんでした。もう一度試すか、RPI-RP2 ドライブにコピーしてください。",
   "Press Select the RPI-RP2 drive and pick the drive in the folder window.": "「RPI-RP2 ドライブを選択」を押し、フォルダー画面でドライブを選んでください。",
   "This browser can’t write to the drive. Use Chrome or Edge.": "このブラウザーはドライブに書き込めません。Chrome または Edge を使ってください。",
+  "The firmware was written, but the controller is still in update mode. Press Restart controller.": "ファームウェアは書き込まれましたが、コントローラーはまだアップデートモードです。「コントローラーを再起動」を押してください。",
+  "The controller restarted, but this browser needs your permission to reconnect. Press Connect and pick the controller.": "コントローラーは再起動しましたが、再接続にはこのブラウザーでの許可が必要です。「接続」を押してコントローラーを選んでください。",
+  "Waiting for the controller to come back…": "コントローラーが戻るのを待っています…",
+  "Didn’t come back after the update": "アップデート後に戻りませんでした",
+  "USB devices this browser can use: {list}": "このブラウザーが使用できる USB デバイス：{list}",
+  "none": "なし",
 };
