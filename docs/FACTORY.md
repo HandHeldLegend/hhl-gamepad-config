@@ -6,28 +6,29 @@ controller, checks its hardware, calibrates it, tests every input and records PA
 ## Open it
 
 ```
-https://handheldlegend.github.io/hoja3/#/factory?build=gcu_2
-https://handheldlegend.github.io/hoja3/?lang=zh#/factory?build=gcu_2      (Chinese)
+https://handheldlegend.github.io/hoja3/#/factory?build=gcu_2,gcu_2s
+https://handheldlegend.github.io/hoja3/?lang=zh#/factory?build=gcu_2,gcu_2s      (Chinese)
 ```
 
 | Parameter | Meaning |
 |---|---|
-| `build` | Target build id (a folder in hoja-device-fw/builds, e.g. `gcu_2`, `progcc_3.2`). Its firmware is downloaded once when the page opens and reused for every unit. Without it, each unit is updated to the newest firmware of its own build. |
+| `build` | The line's models: build ids, comma separated (e.g. `gcu_2,gcu_2s`). Each unit is identified on its own, so a mixed line works: a controller running HOJA by the build it reports (it must be one of these, and is updated to the newest firmware of its own build); a blank board in bootloader mode by the operator, who picks the model when the line has more than one. Firmware for every model is downloaded once and cached. Without it, any HOJA controller is accepted, but blank boards can't be flashed. |
 | `skip` | Steps to leave out, comma separated: `flash`, `calibrate`, `inputs`, `operator`. |
-| `sku` | Color SKU id (see below). Usually picked on the first unit instead and kept for the next ones. |
 | `lang` | `zh`, `en`, `es`, `ja` or `fr`. |
 
 The page is not in the app's menu. Bookmark the address on each station.
 
 ## Per unit
 
-1. **Plug in.** A board in bootloader mode (BOOTSEL) is flashed with the target build. A controller already
-   running HOJA is updated when it is on another build or older firmware, then tested.
+1. **Plug in.** A controller already running HOJA is identified by its build and updated to that build's
+   newest firmware when it's older. A blank board in bootloader mode (BOOTSEL) is flashed with the model the
+   operator picks (or the line's only model). A unit on a build that isn't one of the line's models fails
+   with the reason; it is never flashed with another model's firmware.
 2. **Self-check** (automatic): settings memory, charger chip (PMIC), battery pack, fuel gauge, wireless module
    and its firmware. Parts a build doesn't have are shown as "Not fitted" and not counted.
-3. **Color SKU:** the batch's SKU writes the Switch Pro Controller colors (body, buttons, grips), so the
-   Switch shows the right shell color out of the box. The first unit asks for the SKU; it stays selected
-   (header dropdown) until changed. Checked again after saving and logged per unit.
+3. **Color SKU:** every unit confirms its shell color (one tap for the same SKU as the last unit). It writes
+   the Switch Pro Controller colors (body, buttons, grips), so the Switch shows the right shell color out of
+   the box. Checked again after saving and logged per unit.
 4. **Calibrate** the sticks (the same dialog as the Joysticks page) and analog triggers (as on the Input page).
 5. **Input test:** press every button, push every trigger fully, move each stick to its edge in every
    direction, and turn the controller so every gyro and accelerometer axis shows data.

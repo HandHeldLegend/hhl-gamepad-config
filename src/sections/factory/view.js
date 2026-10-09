@@ -2,9 +2,12 @@
  * Factory station (#/factory?build=<id>): flash or update, self-check, calibrate and test one unit
  * after another, with a PASS / FAIL per unit and a CSV log for the shift.
  *
- *   #/factory?build=gcu_2&lang=zh
- *     build  target build id (folder in hoja-device-fw/builds). Without it each unit is updated to the
- *            newest firmware of its own build. The build's files are fetched once and cached.
+ *   #/factory?build=gcu_2,gcu_2s&lang=zh
+ *     build  the line's models (build ids, comma separated). Every unit is identified on its own: a
+ *            HOJA unit by the build it reports (checked against this list, updated to the newest
+ *            firmware of ITS build); a blank board in bootloader mode by the operator when the line
+ *            has more than one model. Without it any HOJA unit is accepted (blank boards can't be
+ *            flashed). Each model's firmware is fetched once and cached.
  *     skip   comma list of steps to leave out: flash, calibrate, inputs, operator
  *     sku    color SKU id (skus.js); also picked in the header and kept between units
  *
@@ -23,7 +26,7 @@
  * and the RP2040/RP2350 bootloaders (2e8a:0003/000f) for this site; then units connect on plug-in.
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { button, badge, progressBar, select, callout } from '../../ui/controls.js';
+import { button, badge, progressBar, callout } from '../../ui/controls.js';
 import { confirmDialog } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { t, N_ } from '../../i18n/index.js';
@@ -61,8 +64,9 @@ const LED_COLORS = [0xff0000, 0x00ff00, 0x0000ff, 0xffffff];
 // ---- Station state (module level: survives connects, disconnects and remounts) -------------------
 const station = {
   params: {},
-  target: null,          // { id, label, uf2Url, manifestUrl, version, checksum, cacheKey, cached }
-  targetError: '',
+  models: [],            // the line's build ids (?build=); [] = any HOJA unit
+  targets: new Map(),    // build id → { id, label, uf2Url, version, checksum, cacheKey, cached } | null
+  targetErrors: new Map(),
   unit: null,            // the unit being tested (see newUnit)
   log: loadLog(),
   sku: loadSku(),        // color SKU id for this batch (skus.js)
@@ -126,23 +130,31 @@ function back(fromStage) {
   if (fromStage === 'operator') { clear('inputs'); go('inputs'); }
 }
 
-// ---- Target build and its cached firmware -------------------------------------------------------
-async function loadTarget(id) {
-  station.target = null;
-  station.targetError = '';
-  if (!id) { redrawHead(); return; }
-  const { builds } = await listBuilds();
-  const b = builds.find((x) => x.id === id);
-  if (!b) { station.targetError = t('Unknown build “{id}”.', { id }); redrawHead(); return; }
-  const manifest = await getBuildManifest(b.manifestUrl);
-  if (!manifest?.fw_version) { station.targetError = t('Couldn’t read the firmware manifest (offline?).'); redrawHead(); return; }
-  const cacheKey = `${b.id}@${manifest.checksum || manifest.fw_version}`;
-  station.target = { ...b, version: manifest.fw_version, checksum: manifest.checksum || null, cacheKey, cached: false };
+// ---- Firmware per build (cached; nothing here belongs to a unit) ------------------------------
+const pendingTargets = new Map();
+
+/** Newest firmware of a build: manifest read once, files prefetched into the flasher's cache. */
+async function getTarget(id) {
+  if (!id) return null;
+  if (station.targets.has(id)) return station.targets.get(id);
+  if (pendingTargets.has(id)) return pendingTargets.get(id);
+  const job = (async () => {
+    const { builds } = await listBuilds();
+    const b = builds.find((x) => x.id === id);
+    if (!b) { station.targetErrors.set(id, t('Unknown build “{id}”.', { id })); return null; }
+    const manifest = await getBuildManifest(b.manifestUrl);
+    if (!manifest?.fw_version) { station.targetErrors.set(id, t('Couldn’t read the firmware manifest (offline?).')); return null; }
+    const cacheKey = `${b.id}@${manifest.checksum || manifest.fw_version}`;
+    const target = { ...b, version: manifest.fw_version, checksum: manifest.checksum || null, cacheKey, cached: false };
+    if (!isDemo()) pico_prefetch_firmware(b.uf2Url, cacheKey).then((ok) => { target.cached = ok; redrawHead(); });
+    return target;
+  })();
+  pendingTargets.set(id, job);
+  const target = await job.catch(() => null);
+  pendingTargets.delete(id);
+  station.targets.set(id, target);
   redrawHead();
-  if (!isDemo()) {
-    station.target.cached = await pico_prefetch_firmware(b.uf2Url, cacheKey);
-    redrawHead();
-  }
+  return target;
 }
 
 // ---- USB: connect units as they are plugged in ----------------------------------------------------
@@ -185,9 +197,16 @@ async function onBootloader(allowRequestDevice = false) {
   if (skips().has('flash')) return;
   if (!station.unit || station.unit.stage === 'done') station.unit = newUnit();
   const u = station.unit;
-  const target = station.target;
-  if (!target) { u.note = t('A board in bootloader mode needs a target build: add ?build= to the address.'); go('connecting'); return; }
   if (u.flashing) return; // a write is already running
+  // Which firmware: the unit's own (an update), the line's only model, or ask (a blank board can't tell).
+  if (!u.target && station.models.length === 1) u.target = await getTarget(station.models[0]);
+  if (!u.target) {
+    if (station.models.length > 1) { u.allowRequestDevice = allowRequestDevice; go('model'); return; }
+    u.note = t('A board in bootloader mode needs the line’s models: add ?build= to the address.');
+    go('connecting');
+    return;
+  }
+  const target = u.target;
   clearTimeout(u.waitTimer);
   u.flashing = true;
   u.flash = { percent: 0, status: t('Preparing firmware...') };
@@ -217,7 +236,7 @@ async function onBootloader(allowRequestDevice = false) {
 /** Skip direct USB flashing: stage the cached UF2 for the RPI-RP2 drive copy (folder window next). */
 async function useDrive() {
   const u = station.unit;
-  const target = station.target;
+  const target = u?.target;
   if (!u || !target || u.flashing) return;
   clearTimeout(u.waitTimer);
   u.flashing = true;
@@ -292,16 +311,22 @@ async function onUnitConnected(session) {
   u.fw = session.info.fwVersion >>> 0;
   u.mac = formatMac(session.config.gamepad.gamepad_mac_address);
 
+  // Every unit is identified by the build it reports; nothing carries over from the previous unit.
+  if (station.models.length && u.build && !station.models.includes(u.build)) {
+    setResult('firmware', N_('Firmware'), 'fail', t('Not a model on this line: the unit runs {unit}. This line is set for {models}.',
+      { unit: humanizeBuildId(u.build), models: station.models.map(humanizeBuildId).join(', ') }));
+    finish();
+    return;
+  }
+  // A blank board was flashed as the model the operator picked: it must come back as that model.
+  if (u.boardModel && u.build && u.build !== u.boardModel) {
+    setResult('firmware', N_('Firmware'), 'fail', t('Came back as {unit}, but was flashed as {model}.', { unit: humanizeBuildId(u.build), model: humanizeBuildId(u.boardModel) }));
+    finish();
+    return;
+  }
+  u.target = u.build ? await getTarget(u.build) : null; // the newest firmware of THIS unit's build
   if (!skips().has('flash') && !isDemo()) {
-    // No ?build=: each unit is updated to the newest firmware of ITS OWN build (the target follows the unit).
-    if (!station.params.build && u.build && station.target?.id !== u.build) await loadTarget(u.build);
-    const target = station.target;
-    // Never cross-flash: a unit running another build stays as it is and fails with the reason.
-    if (target && u.build && u.build !== target.id) {
-      setResult('firmware', N_('Firmware'), 'fail', t('Wrong build: this unit runs {unit}, the station is set to {target}.', { unit: humanizeBuildId(u.build), target: target.label }));
-      finish();
-      return;
-    }
+    const target = u.target;
     if (target && u.fw < (target.version >>> 0) && !u.updated) {
       u.flash = { percent: 0, status: t('Restarting into update mode…') };
       go('flashing');
@@ -317,10 +342,14 @@ async function onUnitConnected(session) {
       return;
     }
   }
-  const target = station.target;
-  setResult('firmware', N_('Firmware'), !target || (u.build === target.id && u.fw >= (target.version >>> 0)) ? 'pass' : 'fail',
+  const target = u.target;
+  setResult('firmware', N_('Firmware'), !target || u.fw >= (target.version >>> 0) ? 'pass' : 'fail',
     `${humanizeBuildId(u.build || '?')} · ${formatFwVersion(u.fw)}`);
   for (const c of hardwareChecks(session)) setResult(c.id, c.label, c.result, c.detail);
+  // Firmware that doesn't fit the hardware: a GCU 2 has a radio, a GCU 2S doesn't.
+  if (EXPECTS_RADIO.has(u.build) && u.results.get('wireless')?.result !== 'pass') {
+    setResult('model-match', N_('Firmware matches the hardware'), 'fail', t('{model} firmware, but no working radio: this may be another model running the wrong firmware.', { model: humanizeBuildId(u.build) }));
+  }
   device.setInputMode(false).catch(() => {});
   go('sku'); // every unit confirms its color SKU (one tap when it's the same as the last one)
 }
@@ -344,6 +373,8 @@ function continueAfterSku(session) {
   go(skips().has('calibrate') ? nextAfter('calibrate', session) : 'calibrate');
 }
 
+/** Builds whose hardware has a wireless radio (a unit without one is running the wrong firmware). */
+const EXPECTS_RADIO = new Set(['gcu_2']);
 const needsFccLabel = () => FCC_LABEL_BUILDS.has(station.unit?.build);
 
 function nextAfter(stage, session) {
@@ -406,7 +437,8 @@ export function mount(root, { session, params = {} }) {
   station.session = session;
   setUpdaterQuiet(true);
   hookUsb(session);
-  if (params.build && station.target?.id !== params.build) loadTarget(params.build);
+  station.models = String(params.build || '').split(',').map((x) => x.trim()).filter(Boolean);
+  station.models.forEach((id) => getTarget(id)); // prefetch every line model's firmware
 
   const headEl = h('div');
   const mainEl = h('div.fac-main');
@@ -426,20 +458,23 @@ export function mount(root, { session, params = {} }) {
 
   // ---- Header: target, cache, counts, log ----
   function header() {
-    const tg = station.target;
     const passed = station.log.filter((e) => e.overall === 'PASS').length;
     const stat = (label, n, cls) => h('div.fac-stat', { class: cls }, h('span.fac-stat-n', String(n)), h('span.fac-stat-label', label));
     return h('div.fac-head',
       // Row 1: what this station installs and paints, plus language and setup.
       h('div.fac-head-row',
         h('div.fac-head-group',
-          h('div.fac-field', h('span.fac-label', t('Target firmware')),
+          h('div.fac-field', h('span.fac-label', t('Line models')),
             h('div.fac-target',
-              h('strong', tg ? `${tg.label} · ${formatFwVersion(tg.version)}` : station.params.build ? (station.targetError || t('Loading…')) : t('Each unit’s own build, newest version')),
-              tg && badge(tg.cached ? t('Cached') : t('Downloading…'), tg.cached ? 'green' : 'yellow'))),
-          h('label.fac-field', h('span.fac-label', t('Color SKU')),
-            select({ options: COLOR_SKUS.map((x) => ({ value: x.id, label: x.label })), value: station.sku || null, placeholder: t('Pick…'), ariaLabel: t('Color SKU'),
-              onChange: (v) => { setSku(v); renderHead(); } }))),
+              station.models.length
+                ? station.models.map((id) => {
+                  const tg = station.targets.get(id);
+                  return h('span.fac-model', h('strong', humanizeBuildId(id)),
+                    tg ? h('span.faint', formatFwVersion(tg.version)) : h('span.faint', station.targetErrors.get(id) || t('Loading…')),
+                    tg && !isDemo() && badge(tg.cached ? t('Cached') : t('Downloading…'), tg.cached ? 'green' : 'yellow'));
+                })
+                : h('strong', t('Any model (each unit’s own build, newest version)')))),
+),
         h('div.fac-head-group',
           languagePicker(),
           h('a.btn.btn-ghost.btn-sm', { href: SETUP_URL, target: '_blank', rel: 'noopener' }, h('span.btn-label', t('Station setup'))))),
@@ -500,6 +535,13 @@ export function mount(root, { session, params = {} }) {
             button({ label: t('Fail'), variant: 'ghost', onClick: () => { setResult('firmware', N_('Firmware'), 'fail', t('Didn’t come back after the update')); finish(); } })),
           h('p.small.faint.fac-seen', t('USB devices this browser can use: {list}', { list: rb.seen || t('none') })));
       }
+      case 'model': return big('firmware', t('Which controller is this board?'), t('A board in bootloader mode can’t tell which model it is. Pick the model to install.'),
+        h('div.fac-skus', station.models.map((id) => h('button.fac-sku-btn', { type: 'button', onclick: async () => {
+          u.boardModel = id;
+          u.target = await getTarget(id);
+          onBootloader(!!u.allowRequestDevice);
+        } }, humanizeBuildId(id)))),
+        button({ label: t('Fail'), variant: 'ghost', onClick: () => { setResult('firmware', N_('Firmware'), 'fail', t('Not updated')); finish(); } }));
       case 'sku': {
         const dots = (x) => h('span.fac-sku-dots', [x.body, x.buttons, x.leftGrip, x.rightGrip].map((c) => h('span', { style: { background: c } })));
         const last = getSku(station.sku);

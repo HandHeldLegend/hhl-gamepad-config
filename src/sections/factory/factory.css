@@ -103,3 +103,4 @@
 .fac-check.ok { color: var(--green); }
 .fac-check.ok .icon { visibility: visible; }
 .fac-check-warn { font-size: var(--text-xs, 0.75rem); color: var(--red); font-weight: 600; }
+.fac-model { display: inline-flex; align-items: center; gap: 6px; margin-right: var(--space-3); }
