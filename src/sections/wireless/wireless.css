@@ -63,3 +63,8 @@
 .wl-log:empty::before { content: attr(data-empty); color: var(--text-faint); }
 
 .wl-help-links { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: calc(var(--space-2) * -1) 0 0 calc(var(--space-3) * -1); }
+
+/* ---- Home WLAN ----------------------------------------------------------------------- */
+.wl-net-input { flex: 1 1 auto; min-width: 0; }
+.wl-masked { -webkit-text-security: disc; } /* The WLAN password, without a password field */
+.wl-problem { margin: 0; color: var(--red-ink); font-size: var(--text-sm); font-weight: 600; }

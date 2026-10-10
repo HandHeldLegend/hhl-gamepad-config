@@ -11,7 +11,7 @@ import { card, button, asyncButton, callout, kv, badge } from '../../ui/controls
 import { connectController } from '../../app/shell.js';
 import { listBuilds } from '../../firmware/builds.js';
 import {
-  firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion, CABLE_UPDATE_TEXT,
+  firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion, CABLE_UPDATE_TEXT, cableOnlyNote,
 } from '../../firmware/updater.js';
 import { t, N_ } from '../../i18n/index.js';
 import { openModuleUpdaterInUpdateMode } from '../wireless/module-updater.js';
@@ -42,11 +42,11 @@ function controllerCard(session) {
       s.latest && [t('Latest build'), formatFwVersion(s.latest)],
       session.info.manualUrl && [t('Manual'), h('a', { href: session.info.manualUrl, target: '_blank', rel: 'noopener' }, t('Open manual'), ' ', icon('external'))],
     ]),
-    // Through a WLAN dongle the controller can't reach its bootloader: updates need a USB cable.
-    session.caps.viaDongle && callout({ tone: 'blue', icon: 'usb',
-      text: s.state === 'available' ? t(CABLE_UPDATE_TEXT) : t('Updates need a USB cable. They can’t be installed through the WLAN dongle.') }),
+    // Without a USB cable (WLAN dongle, HHL Gamepad WLAN) the controller can't reach its bootloader.
+    session.caps.viaWireless && callout({ tone: 'blue', icon: 'usb',
+      text: s.state === 'available' ? t(CABLE_UPDATE_TEXT) : cableOnlyNote() }),
     h('div.row',
-      !session.caps.viaDongle && (s.state === 'available'
+      !session.caps.viaWireless && (s.state === 'available'
         ? button({ label: t('Update now'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() })
         : button({ label: t('Reinstall firmware'), icon: 'download', variant: 'tonal', onClick: () => openUpdateWizard({ reinstall: true }) })),
       asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', busyLabel: t('Checking…'), okLabel: t('Checked'),
@@ -61,7 +61,7 @@ function installCard(params) {
         { bootsel: h('strong', 'BOOTSEL'), drive: h('strong', 'RPI-RP2'), drive2: h('strong', 'RP2350') })),
       h('li', fillNodes(t('Press {button} and pick the “RP2 Boot” device. The installer opens automatically.'), { button: h('strong', t('Select bootloader')) }))),
     h('div.row',
-      button({ label: t('Select bootloader'), icon: 'usb', variant: 'primary', onClick: connectController }),
+      button({ label: t('Select bootloader'), icon: 'usb', variant: 'primary', onClick: () => connectController({ usbOnly: true }) }),
       button({ label: t('Open installer'), icon: 'firmware', variant: 'tonal', onClick: () => openInstallWizard(params.build) })),
     callout({ tone: 'yellow', title: t('Pick the right build.'), text: t('Installing firmware made for different hardware can stop the controller working until it’s re-flashed from BOOTSEL.') }));
 }

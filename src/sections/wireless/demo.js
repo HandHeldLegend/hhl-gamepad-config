@@ -8,11 +8,12 @@
  *   - report the part as "ESP32 HCI" (current controller firmware, which can drive the HCI bridge) with
  *     the older HOJA baseband installed, so the recommended bridge install shows when online;
  *   - give the controller a paired Switch and Wii (SInput left unpaired) and a WLAN PIN;
+ *   - store a home network with a password (Home WLAN), which WLAN_CMD_CLEAR forgets as on hardware;
  *   - make ENABLE_BLUETOOTH_UPLOAD behave like hardware: the controller drops off USB shortly after,
  *     so the update dialog's survive-the-unmount path can be seen. The flash itself is simulated
  *     by module-updater.js / esp-flasher.js when isDemo() was true at the start of the update.
  */
-import { encodeText } from '../../device/struct.js';
+import { encodeText, fwDefine } from '../../device/struct.js';
 
 export function seed(device) {
   device.static.bluetooth.part_number = encodeText('ESP32 HCI', 24);
@@ -22,6 +23,10 @@ export function seed(device) {
   c.host_mac_sinput = [0, 0, 0, 0, 0, 0];
   c.host_mac_wii = [0x00, 0x1f, 0x32, 0x8d, 0x5e, 0x07];
   c.wlan_dongle_key = 420;
+  const w = device.config.wlan;
+  w.wlan_config_version = fwDefine('CFG_BLOCK_WLAN_VERSION', 0);
+  w.ssid = encodeText('HOJA Home', 33);
+  w.flags = fwDefine('WLAN_FLAG_HOME_ENABLED', 0x01) | fwDefine('WLAN_FLAG_HAS_PASSWORD', 0x02);
 }
 
 export function command(block, cmd, device) {
@@ -29,6 +34,12 @@ export function command(block, cmd, device) {
     // Real firmware reboots into ALTFLASH without replying; simulate the USB drop.
     setTimeout(() => device.disconnect(), 600);
     return { status: false, data: null };
+  }
+  if (block === 'wlan' && cmd === 'CLEAR') {
+    const w = device.config.wlan;
+    w.ssid = new Uint8Array(33);
+    w.password = new Uint8Array(65);
+    w.flags = 0;
   }
   return undefined;
 }

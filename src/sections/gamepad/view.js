@@ -22,7 +22,7 @@ import { icon } from '../../ui/icons.js';
 import { t, N_ } from '../../i18n/index.js';
 import { settingField, refreshSettings } from '../../settings/field.js';
 import { getSetting } from '../../settings/schema.js';
-import { rebootToBootloaderOnly, formatFwVersion } from '../../firmware/updater.js';
+import { rebootToBootloaderOnly, formatFwVersion, cableOnlyNote } from '../../firmware/updater.js';
 import { DEFAULT_MODES, WIRED_MODES, WIRELESS_MODES, AUTO_MODE } from './settings.js';
 import { padPreview } from './pad-preview.js';
 import { openConnectGuide } from '../../app/connect-guide.js';
@@ -199,11 +199,11 @@ export function mount(root, { session, navigate }) {
       }
     },
   });
-  // Through a WLAN dongle the firmware refuses this: its bootloader can't be reached wirelessly.
-  rebootBtn.disabled = session.caps.viaDongle;
+  // Without a USB cable the firmware refuses this: its bootloader can't be reached wirelessly.
+  rebootBtn.disabled = session.caps.viaWireless;
   const supportCard = card({ title: t('Support options'), subtitle: t('For firmware updates and troubleshooting.'), icon: 'firmware', tone: TONE },
-    session.caps.viaDongle
-      ? callout({ tone: 'blue', icon: 'usb', text: t('Updates need a USB cable. They can’t be installed through the WLAN dongle.') })
+    session.caps.viaWireless
+      ? callout({ tone: 'blue', icon: 'usb', text: cableOnlyNote() })
       : callout({ tone: 'red', title: t('Warning.') },
         t('Pressing the button below will reboot your controller into a firmware update mode. This is only necessary if you are updating the firmware.')),
     h('div.row', rebootBtn));

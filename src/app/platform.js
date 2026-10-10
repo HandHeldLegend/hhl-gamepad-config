@@ -16,6 +16,11 @@ export function isIOS() {
   return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
 }
 
+/** Windows (HHL Gamepad WLAN, the app for connecting over the home network, is a Windows app). */
+export function isWindows() {
+  return /Windows/i.test(navigator.userAgentData?.platform || '') || /Windows/.test(navigator.userAgent || '');
+}
+
 /** "Why can't I connect on iPhone/iPad?" dialog. */
 export function explainIOS() {
   return openDialog({

@@ -19,12 +19,17 @@
  *   0xD0 DONGLE_INFO         out: [0xD0]                    in: WLAN dongle status (see decodeDongleInfo)
  *   0xD1 DONGLE_BOOTLOADER   out: [0xD1]                    the dongle reboots into BOOTSEL (no reply)
  *
- * WLAN dongle: a USB receiver a wireless controller joins over Wi-Fi. With a controller it takes the
+ * WLAN dongle: a USB receiver a wireless controller joins over WLAN. With a controller it takes the
  * controller's USB identity and passes this protocol through, so everything works unchanged; only
  * the dongle itself answers 0xD0/0xD1 (which is how we tell). Without a controller it is a generic
  * "HOJA Dongle" (2e8a:10c6) that answers nothing else, so it connects as dongle-only.
  *
+ * HHL Gamepad WLAN: a PC app that has the controller open over the home network. connectLan() opens it
+ * through a LanTransport (lan-transport.js), which stands in for the USBDevice: same packets, no cable.
+ *
  * Events (all CustomEvent; read `event.detail`):
+ *   'opening'     { name }                           a device was chosen and is being opened (USB product name)
+ *   'progress'    { done, total }                    settings blocks read so far while connecting
  *   'connect'     { device: this }                   blocks + statics loaded
  *   'disconnect'  { dongle, requested }              dongle: its status if it was a WLAN dongle; requested:
  *                                                     disconnect() was called (not an unplug or re-enumeration)
@@ -38,6 +43,7 @@
  */
 import { LAYOUT, createStruct, decodeText } from './struct.js';
 import { legacyFirmwareUrl } from './legacy.js';
+import { LanTransport } from './lan-transport.js';
 
 /** USB filters offered in the browser's device picker. */
 export const USB_FILTERS = [
@@ -58,6 +64,13 @@ export function isCh340(device) {
 export function isPicoBootloader(device) {
   return device?.vendorId === 0x2e8a && (device?.productId === 0x0003 || device?.productId === 0x000f);
 }
+
+/**
+ * Config blocks only newer firmware has. Older firmware doesn't answer them, which is expected: they
+ * get a short read timeout and no "missing settings" warning (they still go in `missing`).
+ */
+export const OPTIONAL_BLOCKS = new Set(['wlan']);
+const OPTIONAL_TIMEOUT_MS = 500;
 
 const EP = 2;
 const ITF = 1;
@@ -189,6 +202,8 @@ export class HojaDevice extends EventTarget {
 
   get isConnected() { return this.#connected; }
   get usbDevice() { return this.#usb; }
+  /** The pad ({ id, name, title, mode }) when connected over WLAN through HHL Gamepad WLAN, else null. */
+  get lan() { return this.#usb instanceof LanTransport ? this.#usb.pad : null; }
 
   /** Block index for a config block name, e.g. blockIndex('analog') === 2. */
   blockIndex(key) {
@@ -238,6 +253,11 @@ export class HojaDevice extends EventTarget {
     return this.open(usb);
   }
 
+  /** Connect to a gamepad HHL Gamepad WLAN has open on this PC (a pad from listLanPads()). Resolves like open(). */
+  connectLan(pad) {
+    return this.open(new LanTransport(pad));
+  }
+
   /**
    * Open an already-authorized USBDevice (e.g. from navigator.usb.getDevices()). Callers that ask
    * while an open is still running share it: parallel opens of one device fail each other.
@@ -259,6 +279,7 @@ export class HojaDevice extends EventTarget {
       return 'esp32-update';
     }
 
+    this.#emit('opening', { name: usb.productName || '' });
     try {
       // Right after a firmware update the OS may still be setting the device up; these can then wait
       // forever instead of failing, so each gets a time limit (the caller retries).
@@ -276,7 +297,7 @@ export class HojaDevice extends EventTarget {
     this.#streaming = false;
     this.#resetMemory();
     this.dongle = null;
-    this.#installDisconnectListener();
+    this.#installDisconnectListener(usb);
     this.#lastReportAt = performance.now();
     this.#pollLoop();
     this.#startWatchdog();
@@ -289,8 +310,12 @@ export class HojaDevice extends EventTarget {
         this.#emit('dongle', { dongle: this.dongle });
         return 'dongle';
       }
-      await this.readAllConfig();
-      await this.readAllStatic();
+      // Over WLAN this takes a few seconds: report each block so the app can show how far it got.
+      const total = this.#configTable.length + this.#staticTable.length;
+      let done = 0;
+      const step = () => this.#emit('progress', { done: ++done, total });
+      await this.#exclusive(() => this.#readAll('config', this.#configTable, step));
+      await this.#exclusive(() => this.#readAll('static', this.#staticTable, step));
     } catch (err) {
       // Let go completely (read loops, interface, device), so the next attempt starts clean. A
       // controller that is still starting up, or changing USB mode, doesn't answer at first.
@@ -327,16 +352,24 @@ export class HojaDevice extends EventTarget {
     return true;
   }
 
-  #installDisconnectListener() {
+  #installDisconnectListener(usb) {
+    // HHL Gamepad WLAN: the socket closing is the unplug.
+    if (usb instanceof LanTransport) {
+      usb.addEventListener('close', () => this.#onGone(usb), { once: true });
+      return;
+    }
     if (this.#usbListenerInstalled) return;
     this.#usbListenerInstalled = true;
-    navigator.usb.addEventListener('disconnect', (event) => {
-      if (event.device !== this.#usb) return;
-      this.#connected = false;
-      this.#usb = null;
-      this.#emit('disconnect', { dongle: this.dongle, requested: false });
-      this.dongle = null;
-    });
+    navigator.usb.addEventListener('disconnect', (event) => this.#onGone(event.device));
+  }
+
+  /** Our device went away without disconnect(): unplugged, re-enumerated, or HHL Gamepad WLAN let go of it. */
+  #onGone(usb) {
+    if (usb !== this.#usb) return;
+    this.#connected = false;
+    this.#usb = null;
+    this.#emit('disconnect', { dongle: this.dongle, requested: false });
+    this.dongle = null;
   }
 
   // ---------------------------------------------------------------------------------------
@@ -498,19 +531,24 @@ export class HojaDevice extends EventTarget {
   /**
    * Read every block of one kind. A block that doesn't answer is recorded in `missing` instead of
    * failing the whole connection (hoja2 behaved the same way). After the first miss the timeout
-   * drops, so a firmware without several blocks doesn't stall the connect for long.
+   * drops, so a firmware without several blocks doesn't stall the connect for long. OPTIONAL_BLOCKS
+   * only get a short wait: most controllers run firmware from before them. `onBlock` runs after each.
    */
-  async #readAll(kind, table) {
+  async #readAll(kind, table, onBlock) {
     let timeout = 3000;
     for (const b of table) {
+      const optional = kind === 'config' && OPTIONAL_BLOCKS.has(b.key);
       try {
-        await this.#readBlock(kind, b.index, timeout);
+        await this.#readBlock(kind, b.index, optional ? Math.min(timeout, OPTIONAL_TIMEOUT_MS) : timeout);
       } catch (err) {
         if (!this.#connected) throw err;
-        console.warn(`[device] ${kind} block ${b.index} (${b.key}) didn't answer; continuing without it`);
+        if (!optional) {
+          console.warn(`[device] ${kind} block ${b.index} (${b.key}) didn't answer; continuing without it`);
+          timeout = 1000;
+        }
         this.missing[kind].push(b.key);
-        timeout = 1000;
       }
+      onBlock?.();
     }
     if (this.missing[kind].length === table.length) {
       throw new Error('The controller didn’t answer any settings requests.');

@@ -363,4 +363,12 @@ export default {
   "An update is available. Connect the controller with a USB cable to update it.": "有可用更新。请用 USB 数据线连接手柄进行更新。",
   "Connect the controller with a USB cable to update it.": "请用 USB 数据线连接手柄进行更新。",
   "Updates need a USB cable. They can’t be installed through the WLAN dongle.": "更新需要 USB 数据线，无法通过 WLAN 接收器安装。",
+  "Couldn’t connect through HHL Gamepad WLAN. Check that the gamepad is still open there, then try again.": "无法通过 HHL Gamepad WLAN 连接。请确认手柄仍在其中打开，然后重试。",
+  "Updates need a USB cable. They can’t be installed through HHL Gamepad WLAN.": "更新需要 USB 数据线，无法通过 HHL Gamepad WLAN 安装。",
+  "Writing firmware…": "正在写入固件…",
+  "Connect a controller": "连接手柄",
+  "Choose how to connect.": "请选择连接方式。",
+  "USB device": "USB 设备",
+  "Choose a USB device…": "选择 USB 设备…",
+  "Reading settings… {percent}": "正在读取设置… {percent}",
 };

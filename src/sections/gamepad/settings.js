@@ -53,7 +53,7 @@ export const WIRED_MODES = [
   ...['SINPUT', 'SWPRO', 'XINPUT', 'GAMECUBE', 'N64', 'SNES', 'SLIPPI'].map(byFmt).filter(Boolean),
 ];
 
-const WLAN_DONGLE = { value: WLAN_MODE, label: 'WLAN', aliases: ['wlan', 'dongle', 'wifi'], requires: 'wlan', about: N_('Joins your WLAN dongle and takes the mode it detects (PC, Switch, N64 or GameCube).') };
+const WLAN_DONGLE = { value: WLAN_MODE, label: 'WLAN', aliases: ['wlan', 'dongle'], requires: 'wlan', about: N_('Joins your WLAN dongle and takes the mode it detects (PC, Switch, N64 or GameCube).') };
 
 /** Wireless default (byte 45, on battery): Auto, Switch, Steam, Wii (needs wii_supported), WLAN dongle (needs wlan_supported). */
 export const WIRELESS_MODES = [AUTO, ...['SWPRO', 'SINPUT', 'WII'].map(byFmt).filter(Boolean), WLAN_DONGLE];

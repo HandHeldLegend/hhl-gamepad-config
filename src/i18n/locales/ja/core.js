@@ -378,4 +378,12 @@ export default {
   "An update is available. Connect the controller with a USB cable to update it.": "アップデートがあります。アップデートするには、USBケーブルでコントローラーを接続してください。",
   "Connect the controller with a USB cable to update it.": "アップデートするには、USBケーブルでコントローラーを接続してください。",
   "Updates need a USB cable. They can’t be installed through the WLAN dongle.": "アップデートにはUSBケーブルが必要です。WLANドングル経由ではインストールできません。",
+  "Couldn’t connect through HHL Gamepad WLAN. Check that the gamepad is still open there, then try again.": "HHL Gamepad WLAN経由で接続できませんでした。ゲームパッドがHHL Gamepad WLANで開かれたままか確認して、もう一度お試しください。",
+  "Updates need a USB cable. They can’t be installed through HHL Gamepad WLAN.": "アップデートにはUSBケーブルが必要です。HHL Gamepad WLAN経由ではインストールできません。",
+  "Writing firmware…": "ファームウェアを書き込み中…",
+  "Connect a controller": "コントローラーを接続",
+  "Choose how to connect.": "接続方法を選んでください。",
+  "USB device": "USBデバイス",
+  "Choose a USB device…": "USBデバイスを選択…",
+  "Reading settings… {percent}": "設定を読み込み中… {percent}",
 };

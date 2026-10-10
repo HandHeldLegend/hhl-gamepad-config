@@ -23,7 +23,7 @@
  *
  * WLAN dongles: the same flow updates the dongle itself (st.dongle; it reboots with 0xD1). A
  * controller connected through a dongle is never updated: its bootloader can't be reached over
- * Wi-Fi (the firmware refuses the reboot), so the owner is asked to plug in a USB cable instead.
+ * WLAN (the firmware refuses the reboot), so the owner is asked to plug in a USB cable instead.
  *
  * Public API:
  *   initFirmware()                 wire session/USB events (called once from main.js)
@@ -768,9 +768,19 @@ function onBootloaderDisconnect() {
   hide();
 }
 
-/** Shown where an update would start for a controller connected through a WLAN dongle (it can't be updated that way). */
+/**
+ * Shown where an update would start for a controller connected without a USB cable (WLAN dongle or
+ * HHL Gamepad WLAN, session.caps.viaWireless): it can't be updated that way.
+ */
 export const CABLE_UPDATE_TEXT = N_('An update is available. Connect the controller with a USB cable to update it.');
 export const CABLE_ONLY_TEXT = N_('Connect the controller with a USB cable to update it.');
+
+/** Why updates aren't offered over the current link, translated (for callouts). */
+export function cableOnlyNote() {
+  return session.caps.viaLan
+    ? t('Updates need a USB cable. They can’t be installed through HHL Gamepad WLAN.')
+    : t('Updates need a USB cable. They can’t be installed through the WLAN dongle.');
+}
 
 async function onControllerConnect() {
   if (quiet) return;
@@ -783,8 +793,8 @@ async function onControllerConnect() {
     if (!latest) setStatus({ state: navigator.onLine === false ? 'offline' : 'unknown', latest: null });
     const available = latest && latest.version > (info.fwVersion >>> 0);
     if (latest) setStatus({ state: available ? 'available' : 'current', latest: latest.version, url: info.firmwareUrl, checksum: latest.checksum });
-    if (session.caps.viaDongle) {
-      // Through a WLAN dongle the controller can't reach its bootloader: say so instead of offering it.
+    if (session.caps.viaWireless) {
+      // Without a USB cable the controller can't reach its bootloader: say so instead of offering it.
       if (available) toast(t(CABLE_UPDATE_TEXT), { tone: 'blue', icon: 'usb', timeout: 8000 });
     } else if ((available || debugForce) && info.firmwareUrl) {
       showUpdateAvailable(info.firmwareUrl, latest?.checksum ?? null, { debugForced: !available && debugForce });
@@ -835,7 +845,7 @@ export function initFirmware() {
  */
 export async function openUpdateWizard({ reinstall = false } = {}) {
   if (!session.connected) { toast(t('Connect your controller first.'), { tone: 'yellow' }); return; }
-  if (session.caps.viaDongle) { toast(t(CABLE_ONLY_TEXT), { tone: 'blue', icon: 'usb', timeout: 6000 }); return; }
+  if (session.caps.viaWireless) { toast(t(CABLE_ONLY_TEXT), { tone: 'blue', icon: 'usb', timeout: 6000 }); return; }
   const latest = await fetchManifest(session.info.manifestUrl);
   const url = session.info.firmwareUrl;
   if (!url) { toast(t('This controller doesn’t report a firmware download location.'), { tone: 'yellow' }); return; }
@@ -849,8 +859,8 @@ export async function openInstallWizard(buildId) {
 
 /** Reboot the connected controller into BOOTSEL without starting an update (Gamepad page). */
 export async function rebootToBootloaderOnly() {
-  // Through a WLAN dongle the firmware refuses this: a bootloader can't be reached wirelessly.
-  if (session.caps.viaDongle) throw new Error(CABLE_ONLY_TEXT);
+  // Without a USB cable the firmware refuses this: a bootloader can't be reached wirelessly.
+  if (session.caps.viaWireless) throw new Error(CABLE_ONLY_TEXT);
   // When the bootloader then appears, onBootloaderConnect() offers the installer (as in hoja2).
   await device.rebootToBootloader();
   return true;

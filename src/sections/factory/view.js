@@ -647,7 +647,7 @@ export function mount(root, { session, params = {} }) {
       if (session.connected) await session.disconnect().catch(() => {});
       render();
     }
-    const r = await connectController();
+    const r = await connectController({ usbOnly: true }); // units on the bench are on USB
     if (r === 'bootloader') onBootloader(true);
   };
   const backButton = (onClick) => button({ label: t('Back'), icon: 'back', variant: 'ghost', class: 'fac-back', onClick });

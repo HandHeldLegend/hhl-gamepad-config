@@ -19,4 +19,5 @@ export default {
   "Explore": "Découvrir",
   "Connected through a WLAN dongle.": "Connectée via un dongle WLAN.",
   "Dongle details": "Détails du dongle",
+  "Connected through HHL Gamepad WLAN on this PC.": "Connectée via HHL Gamepad WLAN sur ce PC.",
 };

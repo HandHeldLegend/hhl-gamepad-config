@@ -378,4 +378,12 @@ export default {
   "An update is available. Connect the controller with a USB cable to update it.": "Une mise à jour est disponible. Branchez la manette avec un câble USB pour la mettre à jour.",
   "Connect the controller with a USB cable to update it.": "Branchez la manette avec un câble USB pour la mettre à jour.",
   "Updates need a USB cable. They can’t be installed through the WLAN dongle.": "Les mises à jour nécessitent un câble USB. Elles ne peuvent pas être installées via le dongle WLAN.",
+  "Couldn’t connect through HHL Gamepad WLAN. Check that the gamepad is still open there, then try again.": "Connexion via HHL Gamepad WLAN impossible. Vérifiez que la manette y est toujours ouverte, puis réessayez.",
+  "Updates need a USB cable. They can’t be installed through HHL Gamepad WLAN.": "Les mises à jour nécessitent un câble USB. Elles ne peuvent pas être installées via HHL Gamepad WLAN.",
+  "Writing firmware…": "Écriture du firmware…",
+  "Connect a controller": "Connecter une manette",
+  "Choose how to connect.": "Choisissez comment vous connecter.",
+  "USB device": "Appareil USB",
+  "Choose a USB device…": "Choisir un appareil USB…",
+  "Reading settings… {percent}": "Lecture des réglages… {percent}",
 };

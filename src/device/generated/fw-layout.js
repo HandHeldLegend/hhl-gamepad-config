@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@48f289e)
+// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@b330904)
 // Validated 6 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "local",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "48f289e"
+  "ref": "b330904"
  },
  "blocks": {
   "config": [
@@ -54,6 +54,11 @@ export default {
     "index": 8,
     "key": "input",
     "struct": "inputConfig_s"
+   },
+   {
+    "index": 9,
+    "key": "wlan",
+    "struct": "wlanConfig_s"
    }
   ],
   "static": [
@@ -145,6 +150,10 @@ export default {
   "haptic": {
    "REFRESH": 0,
    "TEST_STRENGTH": 1
+  },
+  "wlan": {
+   "REFRESH": 0,
+   "CLEAR": 1
   }
  },
  "structs": {
@@ -810,6 +819,35 @@ export default {
      "offset": 17,
      "type": "u8",
      "count": 47
+    }
+   ]
+  },
+  "wlanConfig_s": {
+   "size": 100,
+   "fields": [
+    {
+     "name": "wlan_config_version",
+     "offset": 0,
+     "type": "u8"
+    },
+    {
+     "name": "flags",
+     "offset": 1,
+     "type": "u8"
+    },
+    {
+     "name": "ssid",
+     "offset": 2,
+     "type": "u8",
+     "count": 33,
+     "doc": "Up to 32 bytes, NUL terminated"
+    },
+    {
+     "name": "password",
+     "offset": 35,
+     "type": "u8",
+     "count": 65,
+     "doc": "8-63 character passphrase or 64 hex digits, NUL terminated; empty = open"
     }
    ]
   },
@@ -2524,8 +2562,12 @@ export default {
     "value": 8
    },
    {
-    "name": "CFG_BLOCK_MAX",
+    "name": "CFG_BLOCK_WLAN",
     "value": 9
+   },
+   {
+    "name": "CFG_BLOCK_MAX",
+    "value": 10
    }
   ],
   "gamepad_cmd_t": [
@@ -2676,6 +2718,17 @@ export default {
     "value": 1
    }
   ],
+  "wlan_cmd_t": [
+   {
+    "name": "WLAN_CMD_REFRESH",
+    "value": 0
+   },
+   {
+    "name": "WLAN_CMD_CLEAR",
+    "value": 1,
+    "doc": "Forget the home network: name and password"
+   }
+  ],
   "static_block_t": [
    {
     "name": "STATIC_BLOCK_DEVICE",
@@ -2731,6 +2784,7 @@ export default {
   "CFG_BLOCK_INPUT_VERSION": 20,
   "CFG_INPUT_WII_PROFILE_VERSION": 3,
   "CFG_BLOCK_SWITCHPAIR_VERSION": 16,
+  "CFG_BLOCK_WLAN_VERSION": 16,
   "IMU_SENSITIVITY_MIN": 50,
   "IMU_SENSITIVITY_MAX": 200,
   "IMU_SENSITIVITY_UNITY": 100,
@@ -2744,6 +2798,9 @@ export default {
   "ANALOG_EXP_SENSITIVITY_MAX": 300,
   "ANALOG_EXP_SENSITIVITY_DEFAULT": 100,
   "RGB_BRIGHTNESS_MAX": 4096,
+  "WLAN_FLAG_HOME_ENABLED": 1,
+  "WLAN_FLAG_HAS_PASSWORD": 2,
+  "WLAN_FLAG_KEEP_PASSWORD": 4,
   "FIRMWARE_VERSION_TIMESTAMP": 0
  }
 };

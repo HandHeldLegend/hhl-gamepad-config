@@ -299,6 +299,7 @@ function commandTable(enums) {
     rgb_cmd_t: ['rgb', 'RGB_CMD_'],
     imu_cmd_t: ['imu', 'IMU_CMD_'],
     haptic_cmd_t: ['haptic', 'HAPTIC_CMD_'],
+    wlan_cmd_t: ['wlan', 'WLAN_CMD_'],
   };
   const out = {};
   for (const [enumName, [block, prefix]] of Object.entries(map)) {

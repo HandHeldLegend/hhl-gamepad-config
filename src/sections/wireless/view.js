@@ -10,6 +10,7 @@
  *                       setting `wireless.dongleKey` in settings.js)
  *   Connected dongle    caps.viaDongle only: the WLAN dongle the controller is connected through and
  *                       its firmware update (dongle.js). The module update needs a USB cable then.
+ *   Home WLAN           caps.homeWlan only: the network the controller joins for HHL Gamepad WLAN (home-wlan.js)
  *   Paired hosts        host_mac_switch / host_mac_sinput, plus host_mac_wii on Wii-capable builds (read-only)
  *   Regulatory          FCC ID + Part 15 statement when the controller reports an FCC ID
  *
@@ -30,6 +31,8 @@ import {
 } from './info.js';
 import { openModuleUpdater } from './module-updater.js';
 import { dongleCard } from './dongle.js';
+import { homeWlanCard } from './home-wlan.js';
+import { cableOnlyNote } from '../../firmware/updater.js';
 import { t, i18n } from '../../i18n/index.js';
 
 loadStyles(new URL('./wireless.css', import.meta.url));
@@ -62,8 +65,8 @@ export function mount(root, ctx) {
 
   // ---- Module firmware (ESP32 baseband) -------------------------------------------------------
   let firmwareCard = null;
-  // Through a WLAN dongle the controller can't enter module update mode (the firmware refuses it).
-  const moduleUpdates = !caps.viaDongle;
+  // Without a USB cable the controller can't enter module update mode (the firmware refuses it).
+  const moduleUpdates = !caps.viaWireless;
   if (caps.externalBaseband) {
     const installed = reportedVersion(bt); // null: the module didn't report a valid version
     const status = h('span', badge(t('Checking…')));
@@ -82,7 +85,7 @@ export function mount(root, ctx) {
       : h('span.wl-inline', t('Not reported'), infoTip(t('The module answered but didn’t report a valid firmware version (raw value {raw}). Installing its firmware again usually fixes this.', { raw: bt.external_version_number })))],
       [t('Latest version'), latestCell]]),
     migrateNote,
-    !moduleUpdates && callout({ tone: 'blue', icon: 'usb', text: t('Updates need a USB cable. They can’t be installed through the WLAN dongle.') }),
+    !moduleUpdates && callout({ tone: 'blue', icon: 'usb', text: cableOnlyNote() }),
     h('div.wl-actions', updateBtn,
       asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', size: 'sm', busyLabel: t('Checking…'), okLabel: t('Checked'),
         run: async () => { clearManifestCache(); await check(); session.refreshAttention?.(); return !!update?.latest; } }),
@@ -165,6 +168,9 @@ export function mount(root, ctx) {
     icon: 'link', tone: TONE,
   }, pinRow);
 
+  // ---- Home WLAN (HHL Gamepad WLAN) ----------------------------------------------------------
+  const homeCard = caps.homeWlan && homeWlanCard(session);
+
   // ---- Paired hosts --------------------------------------------------------------------------
   const cfg = session.config.gamepad;
   const macCell = (bytes) => (isPairedMac(bytes)
@@ -203,12 +209,12 @@ export function mount(root, ctx) {
 
   // Side by side on wide pages; the long regulatory text spans the full row.
   const connectedDongle = caps.viaDongle && session.dongle && dongleCard(session, { title: t('Connected dongle') });
-  root.append(h('div.card-grid', ...[chipCard, connectedDongle, firmwareCard, wlanCard, hostsCard, fccCard].filter(Boolean)));
+  root.append(h('div.card-grid', ...[chipCard, connectedDongle, firmwareCard, wlanCard, homeCard, hostsCard, fccCard].filter(Boolean)));
 
   return {
     destroy() { alive = false; },
     update(params) {
-      if (params?.update && caps.externalBaseband && !caps.viaDongle) openModuleUpdater({ installed: reportedVersion(bt), latest, channel: update?.channel, migrate: !!update?.migrate, params });
+      if (params?.update && caps.externalBaseband && moduleUpdates) openModuleUpdater({ installed: reportedVersion(bt), latest, channel: update?.channel, migrate: !!update?.migrate, params });
       pinRow?.refresh();
     },
   };

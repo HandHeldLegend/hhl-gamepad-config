@@ -3,18 +3,23 @@
  *
  * Views should talk to `session` rather than the raw driver for anything stateful:
  *   session.state         'disconnected' | 'connecting' | 'connected' | 'legacy' | 'dongle'
- *                         ('dongle': a WLAN dongle with no controller; nothing to configure yet)
+ *                         ('dongle': a WLAN dongle with no controller; nothing to configure yet;
+ *                         'connecting': from the moment a device was chosen until its settings are read)
+ *   session.connecting    while connecting: { name, done, total } (device name, settings blocks read), else null
  *   session.caps          capability flags derived from the static info blocks (what this build has);
- *                         caps.viaDongle: the controller is connected through a WLAN dongle
+ *                         caps.viaDongle: the controller is connected through a WLAN dongle;
+ *                         caps.viaLan: through HHL Gamepad WLAN on this PC; caps.viaWireless: either one
+ *                         (no firmware, bootloader or wireless-module updates without a USB cable)
  *   session.info          { name, maker, fwVersion, manifestUrl, firmwareUrl, manualUrl }
  *   session.dongle        the WLAN dongle's status (decodeDongleInfo in hoja-device.js), or null
+ *   session.connectLan(p) connect through HHL Gamepad WLAN instead of the USB picker (lan-transport.js)
  *   session.config.<blk>  live config structs (same objects as device.config)
  *   session.static.<blk>  static info structs
  *   session.commit(blk)   push a block to the device (debounced) and mark it unsaved
  *   session.save()        flush pending writes and commit everything to flash
  *   session.on(evt, fn)   subscribe; returns an unsubscribe function
  *
- * Events: 'state', 'dirty', 'saved', 'attention', 'legacy', 'bootloader', 'esp32-update', 'dongle'
+ * Events: 'state', 'connecting', 'dirty', 'saved', 'attention', 'legacy', 'bootloader', 'esp32-update', 'dongle'
  *
  * HOJA firmware applies a written block immediately (RAM); "Save" persists it to flash.
  * That's why every change is pushed live and the Save button lights up until committed.
@@ -79,7 +84,7 @@ export function computeCaps(s, c) {
 const NO_CAPS = Object.freeze(Object.fromEntries(
   ['analog', 'leftStick', 'rightStick', 'triggers', 'invertAllowed', 'rgb', 'imu', 'haptics', 'hapticHD',
     'battery', 'bluetooth', 'wlan', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'imuModes', 'imuModeWii', 'flicks', 'splitDefaults',
-    'viaDongle'].map((k) => [k, false]),
+    'homeWlan', 'viaDongle', 'viaLan', 'viaWireless'].map((k) => [k, false]),
 ));
 
 class Session extends EventTarget {
@@ -91,12 +96,15 @@ class Session extends EventTarget {
   dirty = new Set();
   /** sectionId -> { level: 'warn'|'info', text } */
   attention = {};
+  connecting = null;
   #timers = new Map();
   #pending = new Map();
   #follow = null; // { stop } while waiting for a WLAN dongle to come back
 
   constructor() {
     super();
+    device.addEventListener('opening', (e) => this.#onOpening(e.detail));
+    device.addEventListener('progress', (e) => this.#onProgress(e.detail));
     device.addEventListener('connect', () => this.#onConnect());
     device.addEventListener('disconnect', (e) => this.#onDisconnect(e.detail));
     device.addEventListener('legacy', (e) => { this.#setState('legacy'); this.#emit('legacy', e.detail); });
@@ -119,15 +127,18 @@ class Session extends EventTarget {
   #emit(type, detail = {}) { this.dispatchEvent(new CustomEvent(type, { detail })); }
 
   #setState(state) {
+    if (state !== 'connecting') this.connecting = null;
     if (this.state === state) return;
     this.state = state;
     this.#emit('state', { state });
   }
 
-  /** Open the browser device picker. Resolves true / false / 'bootloader'. */
+  /**
+   * Open the browser device picker. Resolves true / false / 'bootloader'. The state turns 'connecting'
+   * once a device was picked (see #onOpening), not while the picker is open.
+   */
   async connect() {
     this.#follow?.stop();
-    this.#setState('connecting');
     try {
       const result = await device.connect();
       if (result !== true && this.state === 'connecting') this.#setState('disconnected');
@@ -138,12 +149,28 @@ class Session extends EventTarget {
     }
   }
 
-  /** Re-open a controller the user already authorized (no picker). */
+  /** Connect to a gamepad HHL Gamepad WLAN has open on this PC (a pad from listLanPads()). Resolves like connect(). */
+  async connectLan(pad) {
+    this.#follow?.stop();
+    this.#setState('connecting');
+    try {
+      const result = await device.connectLan(pad);
+      if (result !== true && this.state === 'connecting') this.#setState('disconnected');
+      return result;
+    } catch (err) {
+      this.#setState('disconnected');
+      throw err;
+    }
+  }
+
+  /** Re-open a controller the user already authorized (no picker). Resolves like connect(). */
   async reconnect(usb) {
     this.#follow?.stop();
     this.#setState('connecting');
     try {
-      return await device.open(usb);
+      const result = await device.open(usb);
+      if (result !== true && this.state === 'connecting') this.#setState('disconnected');
+      return result;
     } catch (err) {
       this.#setState('disconnected');
       throw err;
@@ -164,9 +191,32 @@ class Session extends EventTarget {
     return info;
   }
 
+  /** A device was chosen and is being opened: show that until its settings are read. */
+  #onOpening({ name = '' } = {}) {
+    this.connecting = { name, done: 0, total: 0 };
+    this.#setState('connecting');
+    this.#emit('connecting', this.connecting);
+  }
+
+  #onProgress({ done, total }) {
+    if (!this.connecting) return;
+    Object.assign(this.connecting, { done, total });
+    this.#emit('connecting', this.connecting);
+  }
+
   #onConnect() {
     const s = device.static;
-    this.caps = { ...computeCaps(s, device.config), viaDongle: !!device.dongle };
+    const caps = computeCaps(s, device.config);
+    const viaDongle = !!device.dongle;
+    const viaLan = !!device.lan;
+    this.caps = {
+      ...caps,
+      // Home WLAN (for HHL Gamepad WLAN): a controller with WLAN whose firmware serves the wlan block.
+      homeWlan: caps.wlan && !device.missing.config.includes('wlan'),
+      viaDongle,
+      viaLan,
+      viaWireless: viaDongle || viaLan,
+    };
     this.info = {
       name: decodeText(s.device.name) || 'HOJA Controller',
       maker: decodeText(s.device.maker),
@@ -308,8 +358,8 @@ class Session extends EventTarget {
     if (!device.config.hover.hover_calibration_set) next.input = { level: 'warn', text: N_('Analog inputs need calibration') };
     if (this.caps.analog && !device.config.analog.analog_calibration_set) next.joysticks = { level: 'warn', text: N_('Joysticks need calibration') };
 
-    // Through a WLAN dongle the controller can't enter wireless-module update mode: no badge for it.
-    if (this.caps.externalBaseband && !this.caps.viaDongle) {
+    // Without a USB cable the controller can't enter wireless-module update mode: no badge for it.
+    if (this.caps.externalBaseband && !this.caps.viaWireless) {
       const { resolveModuleUpdate } = await import('../sections/wireless/channels.js');
       const u = await resolveModuleUpdate(device.static.bluetooth);
       if (u.migrate) next.wireless = { level: 'info', text: N_('Recommended wireless module update') };
