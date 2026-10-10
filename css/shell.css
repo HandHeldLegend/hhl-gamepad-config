@@ -127,7 +127,7 @@
 }
 .nav-link .nav-icon .icon { width: 17px; height: 17px; }
 .nav-link[aria-current] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-1); }
-.nav-link[aria-current] .nav-icon { background: var(--tone); color: #fff; transform: scale(1.04); }
+.nav-link[aria-current] .nav-icon { background: var(--tone); color: var(--tone-on, #fff); transform: scale(1.04); }
 .nav-link.disabled { opacity: 0.4; }
 .nav-link.waiting .nav-label { opacity: 0.75; }
 /* Label + optional BETA pill stay on one line; a long (translated) name ellipsizes instead of wrapping. */

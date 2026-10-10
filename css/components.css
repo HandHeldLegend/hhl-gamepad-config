@@ -394,7 +394,8 @@ dialog.dialog::backdrop { background: var(--scrim); backdrop-filter: blur(3px); 
   --size: 40px;
   width: var(--size); height: var(--size); border-radius: 50%; flex: none;
   display: grid; place-items: center;
-  background: var(--tone, var(--accent)); color: #fff;
+  /* Icon ink pairs with the tone (tokens.css --on-*): dark on yellow, and on green in the dark theme. */
+  background: var(--tone, var(--accent)); color: var(--tone-on, #fff);
   box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.18), inset 0 2px 0 rgb(255 255 255 / 0.25);
 }
 .face .icon { width: 55%; height: 55%; }
