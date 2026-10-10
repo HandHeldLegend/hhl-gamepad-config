@@ -23,12 +23,17 @@ function ensureCard() {
   const el = h('div.update-card', { role: 'status', 'aria-live': 'polite' },
     h('div.row.nowrap', { style: { '--gap': '10px' } }, h('span.update-ico', icon('download')), title), bar, actions);
   document.body.append(el);
-  card = { el, title, bar, actions };
+  // Toasts share the bottom-right corner on wide screens: keep them stacked above the card.
+  const ro = new ResizeObserver(() => document.documentElement.style.setProperty('--update-card-space', `${el.offsetHeight + 8}px`));
+  ro.observe(el);
+  card = { el, title, bar, actions, ro };
   return card;
 }
 
 function close() {
   if (!card) return;
+  card.ro.disconnect();
+  document.documentElement.style.removeProperty('--update-card-space');
   card.el.classList.add('leaving');
   const el = card.el;
   card = null;
