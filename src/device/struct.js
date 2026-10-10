@@ -187,9 +187,26 @@ export function decodeText(bytes) {
   return str === '~' ? '' : str;
 }
 
-/** Encode text into a NUL-padded byte array of exactly `length` bytes. */
+/** The longest start of `text`, in whole characters (code points), whose UTF-8 fits in `bytes`. */
+export function fitUtf8(text, bytes) {
+  const enc = new TextEncoder();
+  let used = 0;
+  let out = '';
+  for (const ch of String(text)) {
+    const n = enc.encode(ch).length;
+    if (used + n > bytes) break;
+    used += n;
+    out += ch;
+  }
+  return out;
+}
+
+/**
+ * Encode text into a NUL-padded byte array of exactly `length` bytes. Text that doesn't fit is cut
+ * at a character boundary (accented and CJK characters take 2 to 3 bytes), never inside one.
+ */
 export function encodeText(text, length) {
   const out = new Uint8Array(length);
-  out.set(new TextEncoder().encode(String(text)).slice(0, length));
+  out.set(new TextEncoder().encode(fitUtf8(text, length)));
   return out;
 }

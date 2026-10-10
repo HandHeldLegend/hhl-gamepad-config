@@ -12,6 +12,7 @@ import { session } from '../device/session.js';
 import { getSetting } from './schema.js';
 import { field, slider, toggle, segmented, select, colorField, textInput } from '../ui/controls.js';
 import { t } from '../i18n/index.js';
+import { fitUtf8 } from '../device/struct.js';
 
 /**
  * @param {string|import('./schema.js').SettingDef} keyOrDef
@@ -48,7 +49,17 @@ export function settingField(keyOrDef, o = {}) {
       control = colorField({ value, ariaLabel: t(def.label), onChange: write });
       break;
     case 'text':
-      control = textInput({ value, maxLength: def.maxLength, placeholder: def.placeholder && t(def.placeholder), ariaLabel: t(def.label), onChange: write });
+      // maxLength is the controller's byte budget (UTF-8), so 24 holds 24 Latin letters but only 8 CJK
+      // characters. The input caps characters; on commit the text is cut to what fits in the bytes,
+      // and the box shows exactly what was stored. (Not per keystroke: that would break IME input.)
+      control = textInput({
+        value, maxLength: def.maxLength, placeholder: def.placeholder && t(def.placeholder), ariaLabel: t(def.label),
+        onChange: (v) => {
+          const fit = def.maxLength ? fitUtf8(v, def.maxLength) : v;
+          if (fit !== v) control.value = fit;
+          write(fit);
+        },
+      });
       break;
     default:
       throw new Error(`Unsupported setting type ${def.type}`);
