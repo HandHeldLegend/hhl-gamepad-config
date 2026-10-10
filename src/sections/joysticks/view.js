@@ -145,12 +145,17 @@ export function mount(root, ctx) {
         button({ label: t('Calibrate now'), icon: 'calibrate', variant: 'danger', size: 'sm', onClick: calibrate }))));
   }
 
+  // The calibration dialog belongs to this page: leaving it (Back, a link, the controller unplugged)
+  // closes the dialog, which stops the polling and restores the previous calibration.
+  let calDialog = null;
   function calibrate() {
     clearCheckNote();
-    openCalibration({
+    const dlg = openCalibration({
       session, sticks,
       onFinished: (ok) => { afterReload(); if (ok) showCheckNote(); },
     });
+    calDialog = dlg;
+    dlg.result.then(() => { if (calDialog === dlg) calDialog = null; });
   }
 
   // ---- After calibrating: non-blocking "move the sticks to check" note ----------------------
@@ -385,6 +390,7 @@ export function mount(root, ctx) {
       }
     },
     destroy() {
+      calDialog?.close(false);
       stopInput();
       cancelAnimationFrame(focusFrame);
       clearTimeout(highlightTimer);

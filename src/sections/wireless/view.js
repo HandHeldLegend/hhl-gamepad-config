@@ -139,7 +139,8 @@ export function mount(root, ctx) {
 
     const checked = check();
     // Deep link: open the dialog once the version check has finished (so it can show "latest").
-    if (ctx.params?.update && moduleUpdates) checked.then(() => alive && updateBtn.click());
+    // The link opens it once: clear ?update so a remount (reconnect, dongle, language) does not reopen it.
+    if (ctx.params?.update && moduleUpdates) checked.then(() => { if (!alive) return; updateBtn.click(); ctx.setParams?.({ update: null }); });
   }
 
   // ---- WLAN dongle PIN -----------------------------------------------------------------------
@@ -214,7 +215,10 @@ export function mount(root, ctx) {
   return {
     destroy() { alive = false; },
     update(params) {
-      if (params?.update && caps.externalBaseband && moduleUpdates) openModuleUpdater({ installed: reportedVersion(bt), latest, channel: update?.channel, migrate: !!update?.migrate, params });
+      if (params?.update && caps.externalBaseband && moduleUpdates) {
+        openModuleUpdater({ installed: reportedVersion(bt), latest, channel: update?.channel, migrate: !!update?.migrate, params });
+        ctx.setParams?.({ update: null });
+      }
       pinRow?.refresh();
     },
   };
