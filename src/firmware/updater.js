@@ -46,7 +46,7 @@ import { listBuilds, getBuildManifest, dongleBuild, NUKE_BUILD } from './builds.
 import { loadChangelog, pendingActions, buildIdFromManifestUrl, inlineRuns } from './changelog.js';
 import {
   pico_update_attempt_flash, pico_exit_bootloader_attempt, pico_complete_uf2_picker_flash,
-  pico_has_cached_uf2, setUpdateStatus, onFlashProgress,
+  pico_has_cached_uf2, pico_get_cached_uf2, supportsDirectoryPicker, setUpdateStatus, onFlashProgress,
 } from './picoboot.js';
 import { t, N_, fmt } from '../i18n/index.js';
 import { fetchableUrl } from './urls.js';
@@ -150,6 +150,11 @@ function ensureUi() {
     h('ol', { style: { margin: '6px 0 0', paddingLeft: '1.2em' } }, driveSteps().map((s) => h('li', s))));
   tips.hidden = true;
 
+  // Brave ships with the folder picker turned off: say where to turn it on.
+  const folderHint = callout({ tone: 'yellow', title: t('Folder access is off in Brave') },
+    h('p.small', { style: { margin: '4px 0 0' } }, t('To copy the firmware straight to {drive}, open {flag}, set it to Enabled and restart Brave.', { drive: 'RPI-RP2', flag: 'brave://flags/#file-system-access-api' })));
+  folderHint.hidden = true;
+
   // Keep my settings / Start fresh (Reinstall + installer). Start fresh needs an explicit danger confirm.
   const keepRadio = h('input', { type: 'radio', name: 'fw-fresh', value: 'keep', checked: true });
   const freshRadio = h('input', { type: 'radio', name: 'fw-fresh', value: 'fresh' });
@@ -182,10 +187,10 @@ function ensureUi() {
 
   const dlg = openDialog({
     title: t('Firmware'), icon: 'firmware', tone: 'blue', dismissible: false,
-    body: [style, steps, stepCaption, guide, notes, backup, picker, freshChoice, tips, progress],
+    body: [style, steps, stepCaption, guide, notes, backup, picker, freshChoice, folderHint, tips, progress],
   });
 
-  ui = { dlg, steps, stepCaption, guide, notes, backup, progress, picker, buildSelect, installConfirm, tips, select: null,
+  ui = { dlg, steps, stepCaption, guide, notes, backup, progress, picker, buildSelect, installConfirm, tips, folderHint, select: null,
     freshChoice, keepRadio, freshRadio, eraseConfirm, eraseWarn };
   installConfirm.addEventListener('change', refreshInstallState);
   const onFreshChange = () => {
@@ -268,11 +273,12 @@ function paintSteps() {
 }
 
 /** Show/hide the optional dialog panels (build picker, keep/fresh choice, drive-picker tips). */
-function panels({ picker = false, fresh = false, tips = false } = {}) {
+function panels({ picker = false, fresh = false, tips = false, folderHint = false } = {}) {
   const u = ensureUi();
   u.picker.hidden = !picker;
   u.freshChoice.hidden = !fresh;
   u.tips.hidden = !tips;
+  u.folderHint.hidden = !folderHint;
 }
 
 function resetFresh() {
@@ -462,7 +468,7 @@ function showUf2DriveStep() {
 function showManualUf2Step(uf2Url) {
   st.mode = 'uf2-drive-select';
   st.manualUrl = uf2Url;
-  panels({ tips: true });
+  panels({ folderHint: !!navigator.brave && !supportsDirectoryPicker() });
   paint(t('Copy the UF2 to RPI-RP2'), t('Download the UF2 file, then copy it onto the drive named RPI-RP2 (or RP2350). The controller restarts when the copy finishes.'), { icon: 'download' });
   setUpdateStatus(t('Download the UF2, then copy it to RPI-RP2'), 100, false);
   actions({ primary: { label: t('Download UF2'), icon: 'download', run: completeUf2Step } });
@@ -587,6 +593,7 @@ function applyFlashResult(result) {
   if (result?.needsUserAction) {
     if (result.reason === 'directory-picker') { st.stagedImage = erasing() ? 'nuke' : 'firmware'; showUf2DriveStep(); return true; }
     if (result.reason === 'manual-download') {
+      st.stagedImage = pico_has_cached_uf2() ? (erasing() ? 'nuke' : 'firmware') : null;
       showManualUf2Step(result.uf2Url);
       if (result.error) setUpdateStatus(t('Automatic download blocked ({reason}). Download the UF2, then copy it to RPI-RP2', { reason: result.error }), 100, false);
       return true;
@@ -663,10 +670,35 @@ function showEraseWait() {
   actions({ primary: { label: t('Continue'), icon: 'download', run: () => startBootloaderFlash({ allowRequestDevice: true }) } });
 }
 
+/** Save the UF2 to Downloads (no new tab). Uses the staged bytes when they're for this image. */
+async function saveUf2(imageUrl, staged) {
+  let data = staged ? pico_get_cached_uf2() : null;
+  if (!data) {
+    try {
+      const res = await fetch(fetchableUrl(imageUrl), { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      data = await res.arrayBuffer();
+    } catch (err) {
+      // The host doesn't let this page read the file: let the browser fetch it.
+      console.warn('UF2 fetch for save failed:', err);
+      window.open(imageUrl, '_blank');
+      return;
+    }
+  }
+  const name = decodeURIComponent(new URL(imageUrl, location.href).pathname.split('/').pop() || '') || 'firmware.uf2';
+  const href = URL.createObjectURL(new Blob([data], { type: 'application/octet-stream' }));
+  const a = h('a', { href, download: name.endsWith('.uf2') ? name : 'firmware.uf2' });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(href), 60000);
+}
+
 async function completeUf2Step() {
   const imageUrl = st.manualUrl || currentImageUrl();
   // Only reuse the staged file if it's the image this step is for (never re-send the nuke by mistake).
-  if (pico_has_cached_uf2() && st.stagedImage === (erasing() ? 'nuke' : 'firmware')) {
+  const staged = pico_has_cached_uf2() && st.stagedImage === (erasing() ? 'nuke' : 'firmware');
+  if (staged && supportsDirectoryPicker()) {
     try {
       await pico_complete_uf2_picker_flash();
       onImageWritten();
@@ -674,9 +706,9 @@ async function completeUf2Step() {
     } catch (err) {
       console.error(err);
       const msg = String(err?.message || err).toLowerCase();
-      if (imageUrl && (msg.includes('security policy') || msg.includes('folder picker blocked'))) {
-        st.stagedImage = null; // the picker is blocked: the next press downloads instead
-        window.open(imageUrl, '_blank');
+      if (imageUrl && (msg.includes('security policy') || msg.includes('folder picker'))) {
+        await saveUf2(imageUrl, true);
+        st.stagedImage = null;
         showManualUf2Step(imageUrl);
         return;
       }
@@ -685,7 +717,7 @@ async function completeUf2Step() {
     }
   }
   if (imageUrl) {
-    window.open(imageUrl, '_blank');
+    await saveUf2(imageUrl, staged);
     onImageWritten();
     return;
   }
@@ -866,6 +898,7 @@ export const debugDialogSteps = DEBUG ? {
   available: () => showUpdateAvailable(DOCS_URL, null),
   writing: () => { st.pendingUrl = DOCS_URL; showBootloaderFlash(); setUpdateStatus(t('Writing firmware…'), 62, true); },
   drive: () => { st.pendingUrl = DOCS_URL; showUf2DriveStep(); },
+  manual: () => { st.pendingUrl = DOCS_URL; showManualUf2Step(DOCS_URL); },
   complete: () => { st.pendingUrl = DOCS_URL; showUpdateComplete(); },
   install: () => showBootloaderInstall(),
 } : null;

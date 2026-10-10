@@ -365,6 +365,8 @@ export default {
   "offline": "オフライン",
   "{host} unreachable": "{host} に接続できません",
   "Automatic download blocked ({reason}). Download the UF2, then copy it to RPI-RP2": "自動ダウンロードがブロックされました（{reason}）。UF2 をダウンロードして RPI-RP2 にコピーしてください",
+  "Folder access is off in Brave": "Brave ではフォルダーへのアクセスがオフです",
+  "To copy the firmware straight to {drive}, open {flag}, set it to Enabled and restart Brave.": "ファームウェアを {drive} に直接コピーするには、{flag} を開いて Enabled に設定し、Brave を再起動してください。",
   "Turn on your controller to set it up through the dongle.": "コントローラーの電源を入れると、ドングル経由で設定できます。",
   "WLAN dongle connected": "WLANドングルが接続されています",
   "HOJA WLAN Dongle": "HOJA WLANドングル",

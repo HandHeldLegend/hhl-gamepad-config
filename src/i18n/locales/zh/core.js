@@ -350,6 +350,8 @@ export default {
   "offline": "离线",
   "{host} unreachable": "无法连接 {host}",
   "Automatic download blocked ({reason}). Download the UF2, then copy it to RPI-RP2": "自动下载被阻止（{reason}）。请下载 UF2，然后复制到 RPI-RP2",
+  "Folder access is off in Brave": "Brave 已关闭文件夹访问",
+  "To copy the firmware straight to {drive}, open {flag}, set it to Enabled and restart Brave.": "要将固件直接复制到 {drive}，请打开 {flag}，设为 Enabled 并重启 Brave。",
   "Turn on your controller to set it up through the dongle.": "打开手柄电源，即可通过接收器进行设置。",
   "WLAN dongle connected": "WLAN 接收器已连接",
   "HOJA WLAN Dongle": "HOJA WLAN 接收器",

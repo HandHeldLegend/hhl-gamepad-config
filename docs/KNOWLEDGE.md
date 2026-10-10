@@ -285,7 +285,8 @@ repeat it; press again to flick again.
   (`#/input?mode=switch`). Steam mode has no flicks.
 - **Wii** profiles: **Remote Flick** Up / Down / Left / Right (in Pointer & Motion, all three profiles) and
   **Nunchuk Flick** Up / Down / Left / Right (Nunchuk group, Upright and Sideways). By default R (and ZR in
-  Sideways) is Remote Flick Down, and left stick click in Upright is Nunchuk Flick Down.
+  Sideways) is Remote Flick Up, and left stick click in Upright is Nunchuk Flick Up (firmware from
+  2026-10-09; saved layouts keep their old bindings until the Wii layout is reset to defaults).
 - Games that only check for a shake (most Wii games, Kirby, party games) take a flick in any direction.
   **Super Mario Odyssey** reads the direction: Flick Up and Flick Down give the upward and downward cap throws.
 - Flicks work even with motion turned off (`motion-calibration`) and on controllers without a gyro: the controller

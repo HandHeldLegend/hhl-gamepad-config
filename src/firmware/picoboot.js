@@ -454,6 +454,10 @@ export function pico_has_cached_uf2() {
     return !!cachedUf2ForPicker;
 }
 
+export function pico_get_cached_uf2() {
+    return cachedUf2ForPicker;
+}
+
 export function pico_get_cached_uf2_url() {
     return cachedUf2Url;
 }
@@ -601,6 +605,8 @@ export async function pico_update_attempt_flash(url, checksum = null, options = 
 
     // --- Manual download last resort (not treated as flash success) ---
     if (uf2Url) {
+        // Keep the bytes so the step saves this file instead of fetching it again.
+        if (uf2Data) { cachedUf2ForPicker = uf2Data; cachedUf2Url = uf2Url; }
         updateProgress(0, false, t('Download the UF2 and copy it to the RPI-RP2 drive.'));
         return { needsUserAction: true, reason: 'manual-download', uf2Url };
     }

@@ -365,6 +365,8 @@ export default {
   "offline": "sin conexión",
   "{host} unreachable": "{host} inaccesible",
   "Automatic download blocked ({reason}). Download the UF2, then copy it to RPI-RP2": "Descarga automática bloqueada ({reason}). Descarga el UF2 y cópialo en RPI-RP2",
+  "Folder access is off in Brave": "El acceso a carpetas está desactivado en Brave",
+  "To copy the firmware straight to {drive}, open {flag}, set it to Enabled and restart Brave.": "Para copiar el firmware directamente a {drive}, abre {flag}, ponlo en Enabled y reinicia Brave.",
   "Turn on your controller to set it up through the dongle.": "Enciende tu control para configurarlo a través del dongle.",
   "WLAN dongle connected": "Dongle WLAN conectado",
   "HOJA WLAN Dongle": "Dongle WLAN HOJA",
