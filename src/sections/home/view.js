@@ -1,5 +1,6 @@
 /**
- * Home: connect hero (disconnected) or device overview (connected), plus the section grid.
+ * Home: connect hero (disconnected), device overview (connected) or the WLAN dongle (only a dongle
+ * connected, no controller on it yet), plus the section grid.
  */
 import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
@@ -7,7 +8,8 @@ import { button, card, callout, badge, face, kv } from '../../ui/controls.js';
 import { SECTIONS } from '../registry.js';
 import { connectController, unavailableReason, currentModeLabel, betaBadge } from '../../app/shell.js';
 import { startDemo, isDemo } from '../../device/mock.js';
-import { firmwareStatus, openUpdateWizard, formatFwVersion } from '../../firmware/updater.js';
+import { firmwareStatus, openUpdateWizard, formatFwVersion, CABLE_UPDATE_TEXT } from '../../firmware/updater.js';
+import { dongleCard } from '../wireless/dongle.js';
 import { t } from '../../i18n/index.js';
 import { isIOS, explainIOS } from '../../app/platform.js';
 import { isLinux, explainLinux } from '../../app/linux.js';
@@ -57,7 +59,8 @@ function connectTips() {
 
 function deviceCard(session) {
   const fw = firmwareStatus();
-  const updateBtn = fw.state === 'available'
+  const viaDongle = session.caps.viaDongle; // no updates through the dongle: they need a USB cable
+  const updateBtn = fw.state === 'available' && !viaDongle
     ? button({ label: t('Update firmware'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() })
     : button({ label: t('Firmware'), icon: 'firmware', variant: 'tonal', onClick: () => { location.hash = '#/firmware'; } });
   const atts = Object.entries(session.attention);
@@ -77,15 +80,19 @@ function deviceCard(session) {
       session.info.maker && [t('Maker'), session.info.maker],
       [t('Firmware build'), formatFwVersion(session.info.fwVersion)],
     ]),
+    viaDongle && callout({ tone: 'blue', icon: 'link', text: `${t('Connected through a WLAN dongle.')} ` },
+      h('a', { href: '#/wireless' }, t('Dongle details'), icon('chevron-right'))),
+    viaDongle && fw.state === 'available' && callout({ tone: 'blue', icon: 'usb', text: t(CABLE_UPDATE_TEXT) }),
     atts.map(([id, a]) => callout({ tone: a.level === 'warn' ? 'yellow' : 'blue', text: `${t(a.text)} ` },
       h('a', { href: `#/${id}` }, t('Open'), icon('chevron-right')))));
 }
 
 export function mount(root, { session }) {
   const render = () => {
+    const dongleOnly = session.state === 'dongle';
     replace(root,
-      session.connected ? deviceCard(session) : hero(),
-      !session.connected && connectTips(),
+      session.connected ? deviceCard(session) : dongleOnly ? dongleCard(session) : hero(),
+      !session.connected && !dongleOnly && connectTips(),
       h('h2.section-heading', session.connected ? t('Configure') : t('Explore')),
       tiles(session));
   };

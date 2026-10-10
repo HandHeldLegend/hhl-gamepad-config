@@ -260,12 +260,20 @@ export function stepper(o) {
   return el;
 }
 
-/** Native select. options: strings or {value,label,disabled}. */
+/** Native select. options: strings or {value,label,disabled,group}; consecutive options with a group share an <optgroup>. */
 export function select(o) {
   const opts = normOptions(o.options);
+  const children = [];
+  opts.forEach((x, i) => {
+    const option = h('option', { value: String(i), disabled: !!x.disabled }, x.label);
+    const last = children.at(-1);
+    if (!x.group) children.push(option);
+    else if (last?.tagName === 'OPTGROUP' && last.label === x.group) last.append(option);
+    else children.push(h('optgroup', { label: x.group }, option));
+  });
   const el = h('select.select', { disabled: !!o.disabled, 'aria-label': o.ariaLabel },
     o.placeholder && h('option', { value: '', disabled: true }, o.placeholder),
-    opts.map((x, i) => h('option', { value: String(i), disabled: !!x.disabled }, x.label)));
+    children);
   const toIndex = (v) => opts.findIndex((x) => x.value === v);
   el.addEventListener('change', () => o.onChange?.(opts[Number(el.selectedOptions[0]?.value)]?.value));
   Object.defineProperty(el, 'value', {

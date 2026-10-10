@@ -48,4 +48,6 @@ export default {
   "{n} change": "{n}件の変更",
   "{n} changes": "{n}件の変更",
   "Earlier releases": "以前のリリース",
+  "Update the dongle itself, not the controller.": "コントローラーではなく、ドングル本体をアップデートします。",
+  "To update a WLAN dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W or Pico 2 W, hold BOOTSEL), then choose its firmware here.": "WLANドングルを手動でアップデートするには、ドングルの両方のボタンを押したまま接続し（Pico W / Pico 2 W では BOOTSEL を押したまま）、ここでファームウェアを選んでください。",
 };

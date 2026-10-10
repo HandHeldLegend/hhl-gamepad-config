@@ -16,18 +16,27 @@
  *   0xFE / 0xFF              in: live input reports (joystick / raw hover)
  *   0xFA                     in: analog (snapback) dump
  *   0xAF                     in/out: legacy firmware version probe
+ *   0xD0 DONGLE_INFO         out: [0xD0]                    in: WLAN dongle status (see decodeDongleInfo)
+ *   0xD1 DONGLE_BOOTLOADER   out: [0xD1]                    the dongle reboots into BOOTSEL (no reply)
+ *
+ * WLAN dongle: a USB receiver a wireless controller joins over Wi-Fi. With a controller it takes the
+ * controller's USB identity and passes this protocol through, so everything works unchanged; only
+ * the dongle itself answers 0xD0/0xD1 (which is how we tell). Without a controller it is a generic
+ * "HOJA Dongle" (2e8a:10c6) that answers nothing else, so it connects as dongle-only.
  *
  * Events (all CustomEvent; read `event.detail`):
  *   'connect'     { device: this }                   blocks + statics loaded
- *   'disconnect'  {}
+ *   'disconnect'  { dongle, requested }              dongle: its status if it was a WLAN dongle; requested:
+ *                                                     disconnect() was called (not an unplug or re-enumeration)
  *   'input'       DataView                            live input report (0xFE/0xFF)
  *   'snapback'    DataView                            analog dump (0xFA)
  *   'legacy'      { deviceId, url }                   pre-HOJA2 firmware detected
+ *   'dongle'      { dongle }                          a WLAN dongle with no controller connected to it
  *   'bootloader'  {}                                  user picked a bare RP2040/RP2350 bootloader
  *   'esp32-update' {}                                 user picked the CH340 of a controller in wireless-module
  *                                                     update mode (only that chip is on USB then)
  */
-import { LAYOUT, createStruct } from './struct.js';
+import { LAYOUT, createStruct, decodeText } from './struct.js';
 import { legacyFirmwareUrl } from './legacy.js';
 
 /** USB filters offered in the browser's device picker. */
@@ -80,7 +89,41 @@ const REPORT = {
   INPUT_RAW: 255,
   LEGACY_FW: 0xaf,
   LEGACY_FW_SET: 0x0f,
+  DONGLE_INFO: 0xd0,
+  DONGLE_BOOTLOADER: 0xd1,
 };
+
+/**
+ * Decode the WLAN dongle's 0xD0 reply (64 bytes):
+ *   [1] protocol version   [2] board: 0 unknown, 1 HOJA, 2 Pico W, 3 Pico 2 W   [3] 1 = controller connected
+ *   [4..7] dongle firmware version (u32 LE build stamp)   [8..9] PIN (u16 LE)
+ *   [10] detected host: 0 unknown, 1 PC, 2 Switch, 3 N64, 4 GameCube
+ *   [11] mode the dongle presents, [12] the controller's mode (0xFF without one):
+ *        0 Switch, 1 SInput, 2 XInput, 3 Slippi, 4 SNES, 5 N64, 6 GameCube, 15 unknown
+ *   [13] controller flags (bit0: mode chosen at power-up instead of following the dongle)
+ *   [14..17] controller firmware version (u32 LE)   [18..21] controller USB VID, PID (u16 LE)
+ *   [22..53] controller name, NUL-terminated
+ */
+export function decodeDongleInfo(v) {
+  if (v.byteLength < 22) return null;
+  const connected = v.getUint8(3) === 1;
+  return {
+    protocol: v.getUint8(1),
+    board: v.getUint8(2),
+    fwVersion: v.getUint32(4, true),
+    pin: v.getUint16(8, true),
+    host: v.getUint8(10),
+    hostMode: v.getUint8(11),
+    gamepad: connected ? {
+      mode: v.getUint8(12),
+      modeAtPowerUp: !!(v.getUint8(13) & 1),
+      fwVersion: v.getUint32(14, true),
+      vendorId: v.getUint16(18, true),
+      productId: v.getUint16(20, true),
+      name: v.byteLength > 22 ? decodeText(new Uint8Array(v.buffer, v.byteOffset + 22, Math.min(32, v.byteLength - 22))) : '',
+    } : null,
+  };
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -111,6 +154,10 @@ export class HojaDevice extends EventTarget {
   #read = { kind: null, block: -1, done: false };
   #cmd = { block: -1, command: -1, done: false, ok: false, data: null };
   #legacy = { done: false, isLegacy: false };
+  #dongleReply = null;
+
+  /** WLAN dongle status (decodeDongleInfo) when connected through one, else null. */
+  dongle = null;
 
   /** Config blocks keyed by name ('gamepad', 'analog', ...). Writable; push with sendBlock(). */
   config = {};
@@ -176,6 +223,7 @@ export class HojaDevice extends EventTarget {
    * Show the browser device picker and connect. Resolves:
    *   true            connected (or legacy device detected; see 'legacy' event)
    *   'bootloader'    user chose a bare bootloader ('bootloader' event fired)
+   *   'dongle'        a WLAN dongle with no controller ('dongle' event fired; the device stays open)
    *   false           canceled / failed
    */
   async connect() {
@@ -227,6 +275,7 @@ export class HojaDevice extends EventTarget {
     this.#connected = true;
     this.#streaming = false;
     this.#resetMemory();
+    this.dongle = null;
     this.#installDisconnectListener();
     this.#lastReportAt = performance.now();
     this.#pollLoop();
@@ -234,6 +283,12 @@ export class HojaDevice extends EventTarget {
 
     try {
       if (await this.#probeLegacy()) return true; // 'legacy' event already emitted
+      this.dongle = await this.#probeDongle();
+      // A dongle on its own has no settings to read: stay open so it can be asked again or updated.
+      if (this.dongle && !this.dongle.gamepad) {
+        this.#emit('dongle', { dongle: this.dongle });
+        return 'dongle';
+      }
       await this.readAllConfig();
       await this.readAllStatic();
     } catch (err) {
@@ -267,7 +322,8 @@ export class HojaDevice extends EventTarget {
     this.#connected = false;
     this.#usb = null;
     try { await usb.close(); } catch (err) { console.warn('[device] close failed', err); }
-    this.#emit('disconnect');
+    this.#emit('disconnect', { dongle: this.dongle, requested: true });
+    this.dongle = null;
     return true;
   }
 
@@ -278,7 +334,8 @@ export class HojaDevice extends EventTarget {
       if (event.device !== this.#usb) return;
       this.#connected = false;
       this.#usb = null;
-      this.#emit('disconnect');
+      this.#emit('disconnect', { dongle: this.dongle, requested: false });
+      this.dongle = null;
     });
   }
 
@@ -337,6 +394,7 @@ export class HojaDevice extends EventTarget {
         case REPORT.INPUT_RAW: return this.#emit('input', view);
         case REPORT.SNAPBACK_DUMP: return this.#emit('snapback', view);
         case REPORT.LEGACY_FW: return this.#onLegacy(view);
+        case REPORT.DONGLE_INFO: return this.#onDongleInfo(view);
         default: return;
       }
     } catch (err) {
@@ -391,6 +449,20 @@ export class HojaDevice extends EventTarget {
     await this.#out([REPORT.LEGACY_FW]);
     await waitFor(() => this.#legacy.done, 150);
     return this.#legacy.isLegacy;
+  }
+
+  /** Ask for the WLAN dongle's status. Resolves the decoded reply, or null when nothing answers (no dongle). */
+  async #probeDongle(timeout = 150) {
+    this.#dongleReply = { done: false, info: null };
+    await this.#out([REPORT.DONGLE_INFO]);
+    await waitFor(() => this.#dongleReply.done, timeout);
+    return this.#dongleReply.info;
+  }
+
+  #onDongleInfo(view) {
+    if (!this.#dongleReply) return;
+    this.#dongleReply.info = decodeDongleInfo(view);
+    this.#dongleReply.done = true;
   }
 
   // ---------------------------------------------------------------------------------------
@@ -496,6 +568,21 @@ export class HojaDevice extends EventTarget {
   /** Reboot into the RP2040/RP2350 bootloader. Does not wait for an ACK (the device drops off USB). */
   async rebootToBootloader() {
     await this.#out([REPORT.COMMAND, this.blockIndex('gamepad'), this.commandId('gamepad', 'RESET_TO_BOOTLOADER')]);
+    return true;
+  }
+
+  /** Re-read the WLAN dongle's status (e.g. after a Check again). Resolves the new info, or null. */
+  refreshDongle() {
+    return this.#exclusive(async () => {
+      const info = await this.#probeDongle(1000);
+      if (info) this.dongle = info;
+      return info;
+    });
+  }
+
+  /** Reboot the WLAN dongle (not the controller) into its RP2040/RP2350 bootloader. No reply: it drops off USB. */
+  async rebootDongleToBootloader() {
+    await this.#out([REPORT.DONGLE_BOOTLOADER]);
     return true;
   }
 

@@ -3,6 +3,9 @@
  *
  * Builds are listed live from GitHub's contents API. The last successful list is kept in
  * localStorage so the picker still shows names offline (flashing itself needs a download).
+ *
+ * Folders named dongle_* hold WLAN dongle firmware (the USB receiver, not a controller). They are
+ * kept apart from the controller builds: listBuilds() returns them as `dongles`.
  */
 // Marks a literal for translation (tools/test-i18n.mjs); kept local so this module stays Node-importable
 // (the MCP server lists builds, and src/i18n/index.js needs a browser).
@@ -40,6 +43,19 @@ export const HIDDEN_BUILDS = new Set(['gcu_r5', 'gcu_s1', 'gcu_r4k']);
 
 const visible = (ids) => ids.filter((id) => !HIDDEN_BUILDS.has(id));
 
+/**
+ * WLAN dongle builds, keyed by the board the dongle reports (0xD0 reply byte 2). `chip` is the
+ * bootloader that runs it: RP2040 (USB PID 0x0003) or RP2350 (0x000f). Labels: t() them where shown.
+ */
+export const DONGLE_BUILDS = {
+  1: { id: 'dongle_hoja', label: N_('HOJA WLAN Dongle'), chip: 'rp2350' },
+  2: { id: 'dongle_pico_w', label: N_('WLAN Dongle (Pico W)'), chip: 'rp2040' },
+  3: { id: 'dongle_pico2_w', label: N_('WLAN Dongle (Pico 2 W)'), chip: 'rp2350' },
+};
+
+export const isDongleBuild = (id) => id.startsWith('dongle_');
+const dongleInfo = (id) => Object.values(DONGLE_BUILDS).find((d) => d.id === id);
+
 /** Special entry: wipes the whole flash (recovery for badly corrupted boards). Label: t() it where shown. */
 export const NUKE_BUILD = {
   id: 'full-reset-nuke',
@@ -50,7 +66,7 @@ export const NUKE_BUILD = {
 };
 
 export function humanizeBuildId(id) {
-  return DISPLAY_NAMES[id] || id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return DISPLAY_NAMES[id] || dongleInfo(id)?.label || id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function toBuild(id) {
@@ -63,9 +79,25 @@ function toBuild(id) {
   };
 }
 
+/** The firmware build for a WLAN dongle board (1 HOJA, 2 Pico W, 3 Pico 2 W), or null when unknown. */
+export function dongleBuild(board) {
+  const d = DONGLE_BUILDS[board];
+  return d ? { ...toBuild(d.id), chip: d.chip } : null;
+}
+
+/** Split folder ids into sorted controller builds and dongle builds. */
+function catalog(ids, offline) {
+  const byLabel = (a, b) => a.label.localeCompare(b.label);
+  return {
+    builds: ids.filter((id) => !isDongleBuild(id)).map(toBuild).sort(byLabel),
+    dongles: ids.filter(isDongleBuild).map((id) => ({ ...toBuild(id), chip: dongleInfo(id)?.chip ?? null })).sort(byLabel),
+    offline,
+  };
+}
+
 let memo = null;
 
-/** @returns {Promise<{builds: Array, offline: boolean}>} */
+/** @returns {Promise<{builds: Array, dongles: Array, offline: boolean}>} builds: controllers only */
 export async function listBuilds() {
   if (memo) return memo;
   try {
@@ -73,14 +105,14 @@ export async function listBuilds() {
     if (!res.ok) throw new Error(`GitHub responded ${res.status}`);
     const ids = visible((await res.json()).filter((e) => e.type === 'dir').map((e) => e.name));
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(ids)); } catch { /* ignore */ }
-    memo = { builds: ids.map(toBuild).sort((a, b) => a.label.localeCompare(b.label)), offline: false };
+    memo = catalog(ids, false);
   } catch (err) {
     let ids = [];
     try { ids = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]'); } catch { /* ignore */ }
     ids = visible(Array.isArray(ids) ? ids : []);
     if (!ids.length) ids = visible(Object.keys(DISPLAY_NAMES));
     console.warn('[builds] using cached list:', err.message);
-    return { builds: ids.map(toBuild).sort((a, b) => a.label.localeCompare(b.label)), offline: true };
+    return catalog(ids, true);
   }
   return memo;
 }

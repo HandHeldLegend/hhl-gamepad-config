@@ -17,4 +17,6 @@ export default {
   "Open": "開く",
   "Configure": "設定する",
   "Explore": "見てみる",
+  "Connected through a WLAN dongle.": "WLANドングル経由で接続されています。",
+  "Dongle details": "ドングルの詳細",
 };

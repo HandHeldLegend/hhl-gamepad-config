@@ -52,6 +52,7 @@ export const CAPABILITY_NOTES = {
   imuModes: 'the controller has a gyro/accelerometer (IMU) and firmware that can turn motion on or off per output mode',
   imuModeWii: 'the controller has a gyro/accelerometer (IMU), Wii mode, and firmware that can turn motion on or off per output mode',
   flicks: 'the firmware has the motion flick outputs (Flick Up/Down/Left/Right in the Switch remap picker)',
+  viaDongle: 'the controller is connected through a WLAN dongle (settings work; firmware and wireless module updates need a USB cable)',
 };
 
 export const capabilityNote = (flag) => (flag ? CAPABILITY_NOTES[flag] || `capability "${flag}"` : null);

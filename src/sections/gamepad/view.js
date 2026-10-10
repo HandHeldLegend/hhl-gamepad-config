@@ -199,9 +199,13 @@ export function mount(root, { session, navigate }) {
       }
     },
   });
+  // Through a WLAN dongle the firmware refuses this: its bootloader can't be reached wirelessly.
+  rebootBtn.disabled = session.caps.viaDongle;
   const supportCard = card({ title: t('Support options'), subtitle: t('For firmware updates and troubleshooting.'), icon: 'firmware', tone: TONE },
-    callout({ tone: 'red', title: t('Warning.') },
-      t('Pressing the button below will reboot your controller into a firmware update mode. This is only necessary if you are updating the firmware.')),
+    session.caps.viaDongle
+      ? callout({ tone: 'blue', icon: 'usb', text: t('Updates need a USB cable. They can’t be installed through the WLAN dongle.') })
+      : callout({ tone: 'red', title: t('Warning.') },
+        t('Pressing the button below will reboot your controller into a firmware update mode. This is only necessary if you are updating the firmware.')),
     h('div.row', rebootBtn));
 
   root.append(modeCard, colorCard, h('div.card-grid', connCard, macCard, devCard, supportCard));

@@ -11,10 +11,11 @@ import { card, button, asyncButton, callout, kv, badge } from '../../ui/controls
 import { connectController } from '../../app/shell.js';
 import { listBuilds } from '../../firmware/builds.js';
 import {
-  firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion,
+  firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion, CABLE_UPDATE_TEXT,
 } from '../../firmware/updater.js';
 import { t, N_ } from '../../i18n/index.js';
 import { openModuleUpdaterInUpdateMode } from '../wireless/module-updater.js';
+import { dongleCard } from '../wireless/dongle.js';
 import { backupCard } from '../backup/card.js';
 
 const STATUS_TEXT = {
@@ -26,6 +27,8 @@ const STATUS_TEXT = {
 };
 
 function controllerCard(session) {
+  // Only a WLAN dongle is connected: its own firmware can be updated here.
+  if (session.state === 'dongle') return dongleCard(session);
   if (!session.connected) {
     return card({ title: t('Update your controller'), icon: 'download', tone: 'blue', subtitle: t('Connect to check for new firmware.') },
       h('p.muted', t('Updates are checked automatically every time you connect. Firmware downloads need an internet connection.')),
@@ -39,10 +42,13 @@ function controllerCard(session) {
       s.latest && [t('Latest build'), formatFwVersion(s.latest)],
       session.info.manualUrl && [t('Manual'), h('a', { href: session.info.manualUrl, target: '_blank', rel: 'noopener' }, t('Open manual'), ' ', icon('external'))],
     ]),
+    // Through a WLAN dongle the controller can't reach its bootloader: updates need a USB cable.
+    session.caps.viaDongle && callout({ tone: 'blue', icon: 'usb',
+      text: s.state === 'available' ? t(CABLE_UPDATE_TEXT) : t('Updates need a USB cable. They can’t be installed through the WLAN dongle.') }),
     h('div.row',
-      s.state === 'available'
+      !session.caps.viaDongle && (s.state === 'available'
         ? button({ label: t('Update now'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() })
-        : button({ label: t('Reinstall firmware'), icon: 'download', variant: 'tonal', onClick: () => openUpdateWizard({ reinstall: true }) }),
+        : button({ label: t('Reinstall firmware'), icon: 'download', variant: 'tonal', onClick: () => openUpdateWizard({ reinstall: true }) })),
       asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', busyLabel: t('Checking…'), okLabel: t('Checked'),
         run: async () => { await checkForFirmwareUpdate(); return true; } })));
 }
@@ -58,6 +64,16 @@ function installCard(params) {
       button({ label: t('Select bootloader'), icon: 'usb', variant: 'primary', onClick: connectController }),
       button({ label: t('Open installer'), icon: 'firmware', variant: 'tonal', onClick: () => openInstallWizard(params.build) })),
     callout({ tone: 'yellow', title: t('Pick the right build.'), text: t('Installing firmware made for different hardware can stop the controller working until it’s re-flashed from BOOTSEL.') }));
+}
+
+/**
+ * WLAN dongle by hand. Dongles update from the app (Home, once connected), but only once they run
+ * firmware that answers 0xD1; before that the first update goes through BOOTSEL and the installer.
+ */
+function dongleInstallCard() {
+  return card({ title: t('WLAN dongle'), icon: 'link', tone: 'blue', subtitle: t('Update the dongle itself, not the controller.') },
+    h('p.muted.small', t('To update a WLAN dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W or Pico 2 W, hold BOOTSEL), then choose its firmware here.')),
+    h('div.row', button({ label: t('Open installer'), icon: 'firmware', variant: 'tonal', onClick: () => openInstallWizard() })));
 }
 
 function recoveryCard() {
@@ -101,7 +117,7 @@ export function mount(root, { session, params }) {
   const render = () => slot.replaceChildren(controllerCard(session));
   render();
   const backup = backupCard(session);
-  root.append(style, slot, backup, installCard(params), recoveryCard(), wirelessModuleCard(params), downloadsCard());
+  root.append(style, slot, backup, installCard(params), dongleInstallCard(), recoveryCard(), wirelessModuleCard(params), downloadsCard());
   const offs = [session.on('firmware', render), session.on('state', render), session.on('state', () => backup.refresh())];
   return () => offs.forEach((f) => f());
 }

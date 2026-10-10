@@ -24,4 +24,6 @@ export default {
   "Open": "打开",
   "Configure": "配置",
   "Explore": "探索",
+  "Connected through a WLAN dongle.": "已通过 WLAN 接收器连接。",
+  "Dongle details": "接收器详情",
 };

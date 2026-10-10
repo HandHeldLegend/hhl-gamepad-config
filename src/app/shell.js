@@ -58,6 +58,7 @@ export function betaBadge() {
 /** Is a section usable right now? Returns null when available, otherwise a (translated) reason. */
 export function unavailableReason(section) {
   if (!section.device) return null;
+  if (session.state === 'dongle') return t('Turn on your controller to set it up through the dongle.');
   if (!session.connected) return t('Connect a controller to use this page.');
   if (section.requires && !session.caps[section.requires]) return t('This controller doesn’t have this hardware.');
   return null;
@@ -171,16 +172,18 @@ export function createShell(root) {
   function renderChrome() {
     const st = session.state;
     const connected = st === 'connected';
-    chipDot.className = `dot tone-${connected ? 'green' : st === 'connecting' ? 'yellow' : st === 'legacy' ? 'red' : 'lavender'}${connected ? ' live' : ''}`;
-    chipName.textContent = connected ? session.info.name : st === 'legacy' ? t('Legacy firmware') : t('No controller');
+    const dongle = st === 'dongle'; // a WLAN dongle with no controller on it yet
+    chipDot.className = `dot tone-${connected ? 'green' : st === 'connecting' ? 'yellow' : st === 'legacy' ? 'red' : dongle ? 'blue' : 'lavender'}${connected ? ' live' : ''}`;
+    chipName.textContent = connected ? session.info.name : st === 'legacy' ? t('Legacy firmware') : dongle ? t('WLAN dongle') : t('No controller');
     const mode = currentModeLabel(); // e.g. "Switch mode": what the controller is running as right now
-    chipSub.textContent = connected ? (mode || t('Connected')) : st === 'connecting' ? t('Connecting…') : t('Not connected');
+    chipSub.textContent = connected ? (mode || t('Connected')) : st === 'connecting' ? t('Connecting…') : dongle ? t('No controller') : t('Not connected');
     chip.title = mode ? t('Running in {mode}', { mode }) : '';
     chip.classList.toggle('demo', isDemo());
 
-    connectBtn.setLabel(connected || st === 'legacy' ? t('Disconnect') : st === 'connecting' ? t('Connecting…') : t('Connect'));
-    connectBtn.className = `btn connect-btn ${connected || st === 'legacy' ? 'btn-ghost' : 'btn-primary'}`;
-    connectBtn.querySelector('use').setAttribute('href', connectBtn.querySelector('use').getAttribute('href').replace(/#i-.*/, connected ? '#i-unplug' : '#i-usb'));
+    const open = connected || st === 'legacy' || dongle; // something is connected: the button disconnects it
+    connectBtn.setLabel(open ? t('Disconnect') : st === 'connecting' ? t('Connecting…') : t('Connect'));
+    connectBtn.className = `btn connect-btn ${open ? 'btn-ghost' : 'btn-primary'}`;
+    connectBtn.querySelector('use').setAttribute('href', connectBtn.querySelector('use').getAttribute('href').replace(/#i-.*/, open ? '#i-unplug' : '#i-usb'));
     connectBtn.disabled = st === 'connecting';
 
     saveBtn.disabled = !connected;
@@ -205,7 +208,7 @@ export function createShell(root) {
   }
 
   async function onConnectClick() {
-    if (session.state === 'connected' || session.state === 'legacy') {
+    if (session.state === 'connected' || session.state === 'legacy' || session.state === 'dongle') {
       if (session.dirty.size && !await confirmDialog({
         title: t('Disconnect without saving?'), confirmLabel: t('Disconnect'), danger: true,
         message: t('You have unsaved changes. Disconnect anyway? They will be lost when the controller powers off.'),
@@ -292,9 +295,11 @@ export function createShell(root) {
     main.scrollTo({ top: 0 });
 
     if (reason) {
-      content.append(session.connected
-        ? emptyState({ icon: section.icon, tone: section.tone, title: t('Not available on this controller'), text: reason,
-          action: button({ label: t('Back to home'), variant: 'tonal', onClick: () => navigate('home') }) })
+      const backHome = () => button({ label: t('Back to home'), variant: 'tonal', onClick: () => navigate('home') });
+      // A WLAN dongle with no controller on it: nothing to connect here, the controller has to join it.
+      if (session.state === 'dongle') content.append(emptyState({ icon: 'link', tone: section.tone, title: t('WLAN dongle connected'), text: reason, action: backHome() }));
+      else content.append(session.connected
+        ? emptyState({ icon: section.icon, tone: section.tone, title: t('Not available on this controller'), text: reason, action: backHome() })
         : emptyState({ icon: 'usb', tone: section.tone, title: t('Connect your controller'), text: t('Plug in your controller with a USB data cable, then press Connect.'),
           action: h('div.row', { style: { justifyContent: 'center' } },
             button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg', onClick: connectController }),

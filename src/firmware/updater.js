@@ -21,12 +21,18 @@
  * The dialog stays open across USB disconnects/reconnects (the controller vanishes and comes
  * back as a different device during an update), exactly like hoja2's header panel did.
  *
+ * WLAN dongles: the same flow updates the dongle itself (st.dongle; it reboots with 0xD1). A
+ * controller connected through a dongle is never updated: its bootloader can't be reached over
+ * Wi-Fi (the firmware refuses the reboot), so the owner is asked to plug in a USB cable instead.
+ *
  * Public API:
  *   initFirmware()                 wire session/USB events (called once from main.js)
  *   firmwareStatus()               { state: 'unknown'|'checking'|'current'|'available'|'offline', latest, url }
  *   openUpdateWizard({reinstall})  show the update flow for the connected controller (reinstall
  *                                  offers "Keep my settings" / "Start fresh")
  *   openInstallWizard(buildId?)    show the install flow (bare bootloader)
+ *   checkDongleUpdate()            newest firmware for the connected WLAN dongle (null without one)
+ *   openDongleUpdateWizard()       update the connected WLAN dongle
  *   formatFwVersion(n)             human-readable build stamp
  */
 import { h, replace, fillNodes } from '../ui/dom.js';
@@ -36,7 +42,7 @@ import { session } from '../device/session.js';
 import { device, isPicoBootloader } from '../device/hoja-device.js';
 import { isDemo } from '../device/mock.js';
 import { prefs } from '../app/prefs.js';
-import { listBuilds, getBuildManifest, NUKE_BUILD } from './builds.js';
+import { listBuilds, getBuildManifest, dongleBuild, NUKE_BUILD } from './builds.js';
 import { loadChangelog, pendingActions, buildIdFromManifestUrl, inlineRuns } from './changelog.js';
 import {
   pico_update_attempt_flash, pico_exit_bootloader_attempt, pico_complete_uf2_picker_flash,
@@ -71,6 +77,8 @@ const st = {
   pendingUrl: undefined,
   pendingChecksum: undefined,
   pendingLegacy: false,
+  dongle: false,         // updating a WLAN dongle (reboots with 0xD1; dongle texts)
+  bootloaderChip: null,  // 'rp2040' | 'rp2350': the last bootloader seen (filters the installer's dongle builds)
   fresh: false,          // "Start fresh": erase with NUKE_BUILD before writing pendingUrl
   erased: false,         // the nuke has been written in this run
   stagedImage: null,     // 'nuke' | 'firmware': which image picoboot.js staged for the drive picker
@@ -322,6 +330,7 @@ function hide() {
   st.pendingUrl = undefined;
   st.pendingChecksum = undefined;
   st.pendingLegacy = false;
+  st.dongle = false;
   resetFresh();
   ui?.dlg.close();
   ui = null;
@@ -331,16 +340,19 @@ function hide() {
 // States (ported 1:1 from hoja2)
 // ---------------------------------------------------------------------------------------------
 
-function showUpdateAvailable(url, checksum, { legacy = false, debugForced = false, reinstall = false } = {}) {
+function showUpdateAvailable(url, checksum, { legacy = false, debugForced = false, reinstall = false, dongle = false } = {}) {
   ensureUi();
   resetFresh();
   st.pendingUrl = url;
   st.pendingChecksum = checksum;
   st.pendingLegacy = legacy;
+  st.dongle = dongle;
   st.mode = 'update-available';
   const u = ensureUi();
-  panels({ fresh: reinstall && !legacy });
-  paint(debugForced ? t('Update available (debug)') : legacy ? t('This controller needs new firmware') : reinstall ? t('Reinstall firmware') : t('Firmware update available'),
+  panels({ fresh: reinstall && !legacy && !dongle });
+  if (dongle) {
+    paint(t('WLAN dongle update'), t('A newer dongle firmware is available. First the dongle restarts into update mode, then the new firmware is written. Keep it plugged in the whole time.'), { icon: 'download' });
+  } else paint(debugForced ? t('Update available (debug)') : legacy ? t('This controller needs new firmware') : reinstall ? t('Reinstall firmware') : t('Firmware update available'),
     legacy
       ? t('This controller is running older firmware that this app can’t configure. Update it to unlock every setting.')
       : debugForced
@@ -361,7 +373,7 @@ async function showBackupPrompt() {
   const u = ui;
   if (!u) return;
   replace(u.backup);
-  if (!session.connected || st.pendingLegacy) return;
+  if (!session.connected || st.pendingLegacy || st.dongle) return;
   const { backupPrompt } = await import('../sections/backup/card.js').catch(() => ({}));
   if (ui === u && st.mode === 'update-available' && backupPrompt) replace(u.backup, backupPrompt(session));
 }
@@ -374,6 +386,7 @@ async function showUpdateNotes() {
   const u = ui;
   if (!u) return;
   replace(u.notes);
+  if (st.dongle) return;
   const buildId = buildIdFromManifestUrl(session.info?.manifestUrl);
   if (!buildId) return;
   const res = await loadChangelog();
@@ -399,6 +412,7 @@ async function enterBootloader() {
   actions({ primary: { label: t('Update'), icon: 'download', run: () => flashNext({ allowRequestDevice: true }) } });
   try {
     if (st.pendingLegacy) device.rebootToBootloaderLegacy().catch(() => {});
+    else if (st.dongle) await device.rebootDongleToBootloader();
     else await device.rebootToBootloader();
   } catch (err) {
     // The device often drops off USB mid-transfer; that's success for us.
@@ -455,7 +469,9 @@ function showManualUf2Step(uf2Url) {
 }
 
 function showUpdateComplete() {
+  const dongle = st.dongle;
   st.mode = 'update-complete';
+  st.dongle = false;
   st.pendingUrl = undefined;
   st.pendingChecksum = undefined;
   st.pendingLegacy = false;
@@ -463,13 +479,16 @@ function showUpdateComplete() {
   st.manualUrl = undefined;
   const u = ensureUi();
   panels();
-  paint(t('Update complete'), st.fresh
-    ? t('The controller was erased and the firmware was written. Give it a moment to restart, then press Connect. After that, calibrate the sticks and pair again.')
-    : t('Firmware was written successfully. Give the controller a moment to restart, then press Connect.'), { tone: 'green', icon: 'check' });
+  const text = dongle
+    ? t('The dongle firmware was written. Give the dongle a moment to restart, then press Connect.')
+    : st.fresh
+      ? t('The controller was erased and the firmware was written. Give it a moment to restart, then press Connect. After that, calibrate the sticks and pair again.')
+      : t('Firmware was written successfully. Give the controller a moment to restart, then press Connect.');
+  paint(t('Update complete'), text, { tone: 'green', icon: 'check' });
   setUpdateStatus(t('Done: connect when ready'), 100, true);
   u.progress.busy(false);
   import('../sections/backup/card.js').then(({ backedUpThisSession }) => {
-    if (ui === u && backedUpThisSession()) replace(u.backup, callout({ tone: 'blue', icon: 'save', text: t('Settings reset by the update? Restore your backup from the Firmware page once connected.') }));
+    if (ui === u && !dongle && backedUpThisSession()) replace(u.backup, callout({ tone: 'blue', icon: 'save', text: t('Settings reset by the update? Restore your backup from the Firmware page once connected.') }));
   }).catch(() => {});
   actions({ primary: { label: t('Connect'), icon: 'usb', run: async () => { hide(); const { connectController } = await import('../app/shell.js'); connectController(); } } });
   setStatus({ state: 'unknown' });
@@ -490,15 +509,28 @@ async function showBootloaderInstall(preselect) {
   installActions();
 
   u.buildSelect.replaceChildren(h('span.muted.small', t('Loading builds…')));
-  const { builds, offline } = await listBuilds();
-  if (!ui) return;
+  await fillBuildSelect(preselect);
+}
+
+/**
+ * The installer's build list: controllers, then WLAN dongles (only those for the bootloader's chip,
+ * once one has been seen), then the flash nuke. Runs again when a bootloader of the other chip appears.
+ */
+async function fillBuildSelect(preselect) {
+  const { builds, dongles, offline } = await listBuilds();
+  const u = ui;
+  if (!u || st.mode !== 'bootloader-install') return;
+  const forChip = dongles.filter((b) => !st.bootloaderChip || !b.chip || b.chip === st.bootloaderChip);
+  const dongleGroup = t('WLAN dongle');
   const options = [{ value: '', label: t('Choose a controller…') },
     ...builds.map((b) => ({ value: b.id, label: b.label })),
+    ...forChip.map((b) => ({ value: b.id, label: t(b.label), group: dongleGroup })),
     { value: NUKE_BUILD.id, label: t(NUKE_BUILD.label) }];
-  u.select = select({ options, value: preselect || '', ariaLabel: t('Controller build'), onChange: refreshInstallState });
+  const value = options.some((o) => o.value === preselect) ? preselect : '';
+  u.select = select({ options, value, ariaLabel: t('Controller build'), onChange: refreshInstallState });
   u.select.style.width = '100%';
   replace(u.buildSelect, u.select, offline && h('p.small.muted', { style: { marginTop: '6px' } }, t('Offline: showing the last known list. Installing needs an internet connection.')));
-  u.builds = [...builds, NUKE_BUILD];
+  u.builds = [...builds, ...forChip, NUKE_BUILD];
   refreshInstallState();
 }
 
@@ -673,7 +705,17 @@ const ACTIVE = ['awaiting-bootloader', 'bootloader-flash', 'bootloader-install',
 let quiet = false;
 export function setUpdaterQuiet(on) { quiet = !!on; }
 
-async function onBootloaderConnect() {
+/** Remember which chip the bootloader is (RP2350 enumerates as PID 0x000f, RP2040 as 0x0003). */
+function noteBootloader(usb) {
+  if (!usb) return;
+  const chip = usb.productId === 0x000f ? 'rp2350' : 'rp2040';
+  if (chip === st.bootloaderChip) return;
+  st.bootloaderChip = chip;
+  if (st.mode === 'bootloader-install') fillBuildSelect(ui?.select?.value);
+}
+
+async function onBootloaderConnect(usb) {
+  noteBootloader(usb);
   if (quiet) return;
   if (st.mode === 'uf2-drive-select' || st.mode === 'bootloader-flash' || st.mode === 'erase-flash') return;
   if (st.mode === 'update-complete' && !st.pendingUrl) { await showBootloaderInstall(); return; }
@@ -694,6 +736,10 @@ function onBootloaderDisconnect() {
   hide();
 }
 
+/** Shown where an update would start for a controller connected through a WLAN dongle (it can't be updated that way). */
+export const CABLE_UPDATE_TEXT = N_('An update is available. Connect the controller with a USB cable to update it.');
+export const CABLE_ONLY_TEXT = N_('Connect the controller with a USB cable to update it.');
+
 async function onControllerConnect() {
   if (quiet) return;
   if (isDemo()) { setStatus({ state: 'current', latest: null }); if (st.mode !== 'hidden') hide(); return; }
@@ -705,7 +751,10 @@ async function onControllerConnect() {
     if (!latest) setStatus({ state: navigator.onLine === false ? 'offline' : 'unknown', latest: null });
     const available = latest && latest.version > (info.fwVersion >>> 0);
     if (latest) setStatus({ state: available ? 'available' : 'current', latest: latest.version, url: info.firmwareUrl, checksum: latest.checksum });
-    if ((available || debugForce) && info.firmwareUrl) {
+    if (session.caps.viaDongle) {
+      // Through a WLAN dongle the controller can't reach its bootloader: say so instead of offering it.
+      if (available) toast(t(CABLE_UPDATE_TEXT), { tone: 'blue', icon: 'usb', timeout: 8000 });
+    } else if ((available || debugForce) && info.firmwareUrl) {
       showUpdateAvailable(info.firmwareUrl, latest?.checksum ?? null, { debugForced: !available && debugForce });
       shown = true;
     }
@@ -719,9 +768,16 @@ function onControllerDisconnect() {
   if (!ACTIVE.includes(st.mode)) setStatus({ state: 'unknown', latest: null });
 }
 
+/** A WLAN dongle with no controller connected: like a controller, it makes a stale install prompt moot. */
+function onDongleConnect() {
+  if (quiet) return;
+  if (st.mode !== 'hidden') hide();
+}
+
 export function initFirmware() {
   session.on('state', ({ state }) => {
     if (state === 'connected') onControllerConnect();
+    if (state === 'dongle') onDongleConnect();
     if (state === 'disconnected') onControllerDisconnect();
   });
   session.on('legacy', ({ url }) => {
@@ -729,12 +785,13 @@ export function initFirmware() {
     if (url) showUpdateAvailable(url, null, { legacy: true });
     else toast(t('This controller runs legacy firmware we don’t recognize. Use Firmware → Install with BOOTSEL.'), { tone: 'yellow', timeout: 8000 });
   });
-  session.on('bootloader', () => onBootloaderConnect());
+  session.on('bootloader', ({ usb }) => onBootloaderConnect(usb));
 
   if (navigator.usb) {
-    navigator.usb.addEventListener('connect', (e) => { if (isPicoBootloader(e.device)) onBootloaderConnect(); });
+    navigator.usb.addEventListener('connect', (e) => { if (isPicoBootloader(e.device)) onBootloaderConnect(e.device); });
     navigator.usb.addEventListener('disconnect', (e) => { if (isPicoBootloader(e.device)) onBootloaderDisconnect(); });
     navigator.usb.getDevices().then(async (devs) => {
+      noteBootloader(devs.find(isPicoBootloader));
       if (!quiet && devs.some(isPicoBootloader) && !st.pendingUrl) await showBootloaderInstall();
     }).catch((err) => console.warn('[fw] getDevices failed', err));
   }
@@ -746,6 +803,7 @@ export function initFirmware() {
  */
 export async function openUpdateWizard({ reinstall = false } = {}) {
   if (!session.connected) { toast(t('Connect your controller first.'), { tone: 'yellow' }); return; }
+  if (session.caps.viaDongle) { toast(t(CABLE_ONLY_TEXT), { tone: 'blue', icon: 'usb', timeout: 6000 }); return; }
   const latest = await fetchManifest(session.info.manifestUrl);
   const url = session.info.firmwareUrl;
   if (!url) { toast(t('This controller doesn’t report a firmware download location.'), { tone: 'yellow' }); return; }
@@ -759,9 +817,34 @@ export async function openInstallWizard(buildId) {
 
 /** Reboot the connected controller into BOOTSEL without starting an update (Gamepad page). */
 export async function rebootToBootloaderOnly() {
+  // Through a WLAN dongle the firmware refuses this: a bootloader can't be reached wirelessly.
+  if (session.caps.viaDongle) throw new Error(CABLE_ONLY_TEXT);
   // When the bootloader then appears, onBootloaderConnect() offers the installer (as in hoja2).
   await device.rebootToBootloader();
   return true;
+}
+
+/**
+ * Newest firmware for the connected WLAN dongle (on its own or with a controller through it), or null
+ * without one. latest is null when its build has no manifest (not published yet, or offline): no update.
+ * @returns {Promise<{build: object|null, installed: number, latest: number|null, checksum: string|null, available: boolean}|null>}
+ */
+export async function checkDongleUpdate() {
+  const dongle = session.dongle;
+  if (!dongle) return null;
+  const build = dongleBuild(dongle.board);
+  const latest = build ? await fetchManifest(build.manifestUrl) : null;
+  return {
+    build, installed: dongle.fwVersion, latest: latest?.version ?? null, checksum: latest?.checksum ?? null,
+    available: !!latest && latest.version > (dongle.fwVersion >>> 0),
+  };
+}
+
+/** Update the connected WLAN dongle: it reboots into BOOTSEL (0xD1), then its build is written. */
+export async function openDongleUpdateWizard() {
+  const u = await checkDongleUpdate();
+  if (!u?.build) return;
+  showUpdateAvailable(u.build.uf2Url, u.checksum, { dongle: true });
 }
 
 /** Restart a controller that's sitting in the bootloader. */

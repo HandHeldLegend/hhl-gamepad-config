@@ -2,25 +2,35 @@
  * session.js: App-level view of the connected controller.
  *
  * Views should talk to `session` rather than the raw driver for anything stateful:
- *   session.state         'disconnected' | 'connecting' | 'connected' | 'legacy'
- *   session.caps          capability flags derived from the static info blocks (what this build has)
+ *   session.state         'disconnected' | 'connecting' | 'connected' | 'legacy' | 'dongle'
+ *                         ('dongle': a WLAN dongle with no controller; nothing to configure yet)
+ *   session.caps          capability flags derived from the static info blocks (what this build has);
+ *                         caps.viaDongle: the controller is connected through a WLAN dongle
  *   session.info          { name, maker, fwVersion, manifestUrl, firmwareUrl, manualUrl }
+ *   session.dongle        the WLAN dongle's status (decodeDongleInfo in hoja-device.js), or null
  *   session.config.<blk>  live config structs (same objects as device.config)
  *   session.static.<blk>  static info structs
  *   session.commit(blk)   push a block to the device (debounced) and mark it unsaved
  *   session.save()        flush pending writes and commit everything to flash
  *   session.on(evt, fn)   subscribe; returns an unsubscribe function
  *
- * Events: 'state', 'dirty', 'saved', 'attention', 'legacy', 'bootloader', 'esp32-update'
+ * Events: 'state', 'dirty', 'saved', 'attention', 'legacy', 'bootloader', 'esp32-update', 'dongle'
  *
  * HOJA firmware applies a written block immediately (RAM); "Save" persists it to flash.
  * That's why every change is pushed live and the Save button lights up until committed.
+ *
+ * A WLAN dongle drops off USB and comes back under a new identity whenever a controller joins or
+ * leaves it. After a dongle disappears like that, the session reconnects to whatever comes back
+ * (see #followDongle). The browser only reports devices this site may already use, so when the
+ * new identity was never allowed, the owner presses Connect once.
  */
-import { device } from './hoja-device.js';
+import { device, USB_FILTERS, isPicoBootloader, isCh340 } from './hoja-device.js';
 import { decodeText } from './struct.js';
 import { N_ } from '../i18n/index.js'; // attention texts are translated where displayed
 
 const WRITE_DEBOUNCE_MS = 120;
+/** How long to wait for a WLAN dongle to come back after it drops off USB. */
+const DONGLE_FOLLOW_MS = 10000;
 
 /** IMU config block version that added imu_mode_disable_mask (per-mode motion on/off). */
 export const IMU_MODE_MASK_VERSION = 0x13;
@@ -68,7 +78,8 @@ export function computeCaps(s, c) {
 
 const NO_CAPS = Object.freeze(Object.fromEntries(
   ['analog', 'leftStick', 'rightStick', 'triggers', 'invertAllowed', 'rgb', 'imu', 'haptics', 'hapticHD',
-    'battery', 'bluetooth', 'wlan', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'imuModes', 'imuModeWii', 'flicks', 'splitDefaults'].map((k) => [k, false]),
+    'battery', 'bluetooth', 'wlan', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'imuModes', 'imuModeWii', 'flicks', 'splitDefaults',
+    'viaDongle'].map((k) => [k, false]),
 ));
 
 class Session extends EventTarget {
@@ -82,12 +93,14 @@ class Session extends EventTarget {
   attention = {};
   #timers = new Map();
   #pending = new Map();
+  #follow = null; // { stop } while waiting for a WLAN dongle to come back
 
   constructor() {
     super();
     device.addEventListener('connect', () => this.#onConnect());
-    device.addEventListener('disconnect', () => this.#onDisconnect());
+    device.addEventListener('disconnect', (e) => this.#onDisconnect(e.detail));
     device.addEventListener('legacy', (e) => { this.#setState('legacy'); this.#emit('legacy', e.detail); });
+    device.addEventListener('dongle', () => this.#onDongle());
     device.addEventListener('bootloader', (e) => this.#emit('bootloader', e.detail));
     device.addEventListener('esp32-update', (e) => this.#emit('esp32-update', e.detail));
   }
@@ -95,6 +108,7 @@ class Session extends EventTarget {
   get config() { return device.config; }
   get static() { return device.static; }
   get connected() { return this.state === 'connected'; }
+  get dongle() { return device.dongle ?? null; }
 
   on(type, fn) {
     const handler = (e) => fn(e.detail, e);
@@ -112,6 +126,7 @@ class Session extends EventTarget {
 
   /** Open the browser device picker. Resolves true / false / 'bootloader'. */
   async connect() {
+    this.#follow?.stop();
     this.#setState('connecting');
     try {
       const result = await device.connect();
@@ -125,6 +140,7 @@ class Session extends EventTarget {
 
   /** Re-open a controller the user already authorized (no picker). */
   async reconnect(usb) {
+    this.#follow?.stop();
     this.#setState('connecting');
     try {
       return await device.open(usb);
@@ -135,13 +151,22 @@ class Session extends EventTarget {
   }
 
   async disconnect() {
+    this.#follow?.stop();
     await this.flush().catch(() => {});
     return device.disconnect();
   }
 
+  /** Ask the WLAN dongle for its status again (PIN, detected host, controller). */
+  async refreshDongle() {
+    if (!this.dongle) return null;
+    const info = await device.refreshDongle();
+    this.#emit('dongle', { dongle: this.dongle });
+    return info;
+  }
+
   #onConnect() {
     const s = device.static;
-    this.caps = computeCaps(s, device.config);
+    this.caps = { ...computeCaps(s, device.config), viaDongle: !!device.dongle };
     this.info = {
       name: decodeText(s.device.name) || 'HOJA Controller',
       maker: decodeText(s.device.maker),
@@ -155,7 +180,17 @@ class Session extends EventTarget {
     this.refreshAttention();
   }
 
-  #onDisconnect() {
+  /** A WLAN dongle with no controller: nothing to configure, but it can be shown and updated. */
+  #onDongle() {
+    this.caps = NO_CAPS;
+    this.info = {};
+    this.attention = {};
+    this.dirty.clear();
+    this.#setState('dongle');
+    this.#emit('dongle', { dongle: this.dongle });
+  }
+
+  #onDisconnect({ dongle = null, requested = false } = {}) {
     for (const t of this.#timers.values()) clearTimeout(t);
     this.#timers.clear();
     this.#pending.clear();
@@ -165,6 +200,39 @@ class Session extends EventTarget {
     this.#emit('dirty', { dirty: false });
     this.#emit('attention', this.attention);
     this.#setState('disconnected');
+    if (dongle && !requested) this.#followDongle();
+  }
+
+  /**
+   * The WLAN dongle dropped off USB without being asked to: usually a controller joined it (it comes
+   * back as that controller) or left it (it comes back as the dongle). Reconnect to the next HOJA
+   * device the browser reports within DONGLE_FOLLOW_MS. A bootloader (dongle update) is left to the
+   * firmware updater.
+   */
+  #followDongle() {
+    if (!navigator.usb) return;
+    this.#follow?.stop();
+    const isHoja = (usb) => USB_FILTERS.some((f) => f.vendorId === usb.vendorId && f.productId === usb.productId)
+      && !isPicoBootloader(usb) && !isCh340(usb);
+    const onConnect = async (e) => {
+      if (!isHoja(e.device)) return;
+      stop();
+      // A controller that has only just joined may not answer straight away: try a few times.
+      for (let attempt = 0; attempt < 3 && this.state === 'disconnected'; attempt++) {
+        await new Promise((r) => setTimeout(r, attempt ? 1000 : 300));
+        if (this.state !== 'disconnected') return;
+        try { await this.reconnect(e.device); return; } catch (err) { console.warn('[session] dongle reconnect failed', err?.message || err); }
+      }
+    };
+    const stop = () => {
+      navigator.usb.removeEventListener('connect', onConnect);
+      clearTimeout(timer);
+      if (this.#follow === follow) this.#follow = null;
+    };
+    const timer = setTimeout(stop, DONGLE_FOLLOW_MS);
+    const follow = { stop };
+    this.#follow = follow;
+    navigator.usb.addEventListener('connect', onConnect);
   }
 
   /**
@@ -240,7 +308,8 @@ class Session extends EventTarget {
     if (!device.config.hover.hover_calibration_set) next.input = { level: 'warn', text: N_('Analog inputs need calibration') };
     if (this.caps.analog && !device.config.analog.analog_calibration_set) next.joysticks = { level: 'warn', text: N_('Joysticks need calibration') };
 
-    if (this.caps.externalBaseband) {
+    // Through a WLAN dongle the controller can't enter wireless-module update mode: no badge for it.
+    if (this.caps.externalBaseband && !this.caps.viaDongle) {
       const { resolveModuleUpdate } = await import('../sections/wireless/channels.js');
       const u = await resolveModuleUpdate(device.static.bluetooth);
       if (u.migrate) next.wireless = { level: 'info', text: N_('Recommended wireless module update') };

@@ -48,4 +48,6 @@ export default {
   "{n} change": "{n} changement",
   "{n} changes": "{n} changements",
   "Earlier releases": "Versions précédentes",
+  "Update the dongle itself, not the controller.": "Mettez à jour le dongle lui-même, pas la manette.",
+  "To update a WLAN dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W or Pico 2 W, hold BOOTSEL), then choose its firmware here.": "Pour mettre à jour un dongle WLAN à la main, maintenez les deux boutons du dongle enfoncés en le branchant (sur une Pico W ou Pico 2 W, maintenez BOOTSEL), puis choisissez son firmware ici.",
 };

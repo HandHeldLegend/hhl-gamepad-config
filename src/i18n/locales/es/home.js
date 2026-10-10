@@ -17,4 +17,6 @@ export default {
   "Open": "Abrir",
   "Configure": "Configurar",
   "Explore": "Explorar",
+  "Connected through a WLAN dongle.": "Conectado a través de un dongle WLAN.",
+  "Dongle details": "Detalles del dongle",
 };

@@ -50,4 +50,6 @@ export default {
   "Nothing listed here yet.": "这里暂时没有内容。",
   "Earlier releases": "更早的版本",
   "Couldn’t load the changelog. It needs an internet connection the first time.": "无法加载更新日志。首次加载需要联网。",
+  "Update the dongle itself, not the controller.": "更新接收器本身，而不是手柄。",
+  "To update a WLAN dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W or Pico 2 W, hold BOOTSEL), then choose its firmware here.": "要手动更新 WLAN 接收器，请按住接收器上的两个按钮再插入（Pico W 或 Pico 2 W 请按住 BOOTSEL），然后在此选择其固件。",
 };
