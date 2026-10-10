@@ -23,6 +23,8 @@ const fmt = (name) => (LAYOUT.enums.core_reportformat_t || []).find((e) => e.nam
  * (gamepad_defaults_split == GAMEPAD_DEFAULTS_SPLIT); older firmware treats it as Switch.
  */
 export const AUTO_MODE = 0xfe;
+/** gamepad_default_wireless value for the WLAN dongle (GAMEPAD_DEFAULT_WIRELESS_WLAN in the firmware). */
+export const WLAN_MODE = 0xfd;
 /** gamepad_defaults_split once the firmware has migrated to separate wired / battery defaults. */
 export const DEFAULTS_SPLIT = 0x01;
 
@@ -51,8 +53,10 @@ export const WIRED_MODES = [
   ...['SINPUT', 'SWPRO', 'XINPUT', 'GAMECUBE', 'N64', 'SNES', 'SLIPPI'].map(byFmt).filter(Boolean),
 ];
 
-/** Wireless default (byte 45, on battery): Auto, Switch, Steam, Wii (Wii needs wii_supported). */
-export const WIRELESS_MODES = [AUTO, ...['SWPRO', 'SINPUT', 'WII'].map(byFmt).filter(Boolean)];
+const WLAN_DONGLE = { value: WLAN_MODE, label: 'WLAN', aliases: ['wlan', 'dongle', 'wifi'], requires: 'wlan', about: N_('Joins your WLAN dongle and takes the mode it detects (PC, Switch, N64 or GameCube).') };
+
+/** Wireless default (byte 45, on battery): Auto, Switch, Steam, Wii (needs wii_supported), WLAN dongle (needs wlan_supported). */
+export const WIRELESS_MODES = [AUTO, ...['SWPRO', 'SINPUT', 'WII'].map(byFmt).filter(Boolean), WLAN_DONGLE];
 
 /** Switch color fields, in the order hoja2 showed them. */
 const COLORS = [
@@ -76,7 +80,7 @@ export default [
   {
     key: 'gamepad.defaultWireless',
     label: 'Wireless default',
-    description: 'The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC.',
+    description: 'The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. WLAN joins your WLAN dongle and takes the mode it detects. Hold the WLAN button at power-on for the other one (Bluetooth or WLAN).',
     block: 'gamepad',
     type: 'enum',
     requires: 'splitDefaults',

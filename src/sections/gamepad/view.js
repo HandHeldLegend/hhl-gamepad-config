@@ -75,7 +75,7 @@ export function mount(root, { session, navigate }) {
   const wirelessValue = wirelessModes.some((m) => m.value === wirelessDef.get(session)) ? wirelessDef.get(session) : AUTO_MODE;
   const wirelessPicker = split && session.caps.bluetooth && h('div.gp-default-group',
     h('div.gp-default-head', h('span.field-label', t('Wireless')),
-      h('span.small.muted', t('Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC.'))),
+      h('span.small.muted', t('Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. WLAN uses your WLAN dongle.'))),
     segmented({
       options: wirelessModes.map((m) => ({ value: m.value, label: m.label })),
       value: wirelessValue, tone: TONE, ariaLabel: t('Wireless default'),
