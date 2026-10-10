@@ -32,14 +32,14 @@
 .wl-step[data-state="active"] .wl-step-label { color: var(--text); }
 .wl-step[data-state="done"] .wl-step-label { color: var(--text-muted); }
 .wl-skip { margin: calc(var(--space-2) * -1) 0 0; }
-.wl-skip .link-btn { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--accent-text, var(--blue));
+.wl-skip .link-btn { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--accent-ink);
   text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .wl-skip .link-btn:hover { color: var(--text); }
 .wl-log-box .wl-help-links { margin: var(--space-2) 0 0 calc(var(--space-3) * -1); }
 .callout .wl-help-links { margin: var(--space-1) 0 0 calc(var(--space-3) * -1); }
 .wl-linux-steps { margin: 6px 0 4px; padding-left: 1.2em; display: grid; gap: 6px; }
 .wl-cmd { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-.wl-cmd code { font-family: var(--font-mono, monospace); font-size: var(--text-sm); padding: 2px 8px; border-radius: var(--radius-sm, 6px);
+.wl-cmd code { font-family: var(--font-mono, monospace); font-size: var(--text-sm); padding: 2px 8px; border-radius: var(--radius-sm);
   background: var(--surface-sunken); user-select: all; }
 .wl-transport { display: flex; flex-direction: column; gap: var(--space-2); }
 .wl-transport p { margin: 0; }

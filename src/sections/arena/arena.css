@@ -223,7 +223,7 @@
   flex: 0 0 auto; width: 10.5rem; scroll-snap-align: start;
   display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; gap: 0 var(--space-2);
   align-items: center; text-align: start; padding: 8px 10px; cursor: pointer;
-  border-radius: var(--radius-md, 10px); border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text);
   font: inherit;
 }
 .arena-fighter:hover { border-color: var(--border-strong, var(--text-faint)); }
