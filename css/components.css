@@ -516,4 +516,6 @@ dialog.dialog::backdrop { background: var(--scrim); backdrop-filter: blur(3px); 
   70% { box-shadow: 0 0 0 10px transparent; }
   100% { box-shadow: 0 0 0 0 transparent; }
 }
+/* Reduced motion (OS setting or the in-app switch): a steady outline instead of the pulse. */
 @media (prefers-reduced-motion: reduce) { .btn-attention { animation: none; outline: 2px solid var(--tone, var(--accent)); outline-offset: 2px; } }
+:root.reduce-motion .btn-attention { animation: none; outline: 2px solid var(--tone, var(--accent)); outline-offset: 2px; }
