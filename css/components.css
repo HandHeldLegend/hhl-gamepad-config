@@ -448,7 +448,16 @@ dialog.dialog::backdrop { background: var(--scrim); backdrop-filter: blur(3px); 
 .slider .slider-step:active:not(:disabled) { background: var(--surface-3); }
 .slider .slider-step:focus-visible { box-shadow: var(--focus-ring); outline: none; }
 .slider .slider-step:disabled { opacity: 0.35; cursor: default; }
-@media (pointer: coarse) { .slider .slider-step { width: 40px; height: 40px; } }
+/* Touch screens: every control is at least 40px to tap (the same floor as .btn). Small things that
+   should still look small (the "?" help buttons) get an invisible 40px hit area instead. */
+@media (pointer: coarse) {
+  .slider .slider-step { width: 40px; height: 40px; }
+  .btn-sm { min-height: 40px; }
+  .btn-icon.btn-sm { width: 40px; min-width: 40px; }
+  .seg button { min-height: 40px; }
+  .tip { position: relative; }
+  .tip::before { content: ""; position: absolute; inset: -10px; border-radius: 50%; }
+}
 @media (max-width: 560px) {
   /* Phones: the control column must not grow past the card (min-content of the slider row). */
   .field { grid-template-columns: minmax(0, 1fr); }

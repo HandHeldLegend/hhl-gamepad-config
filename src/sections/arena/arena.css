@@ -250,7 +250,7 @@
   .arena-tools .arena-step:disabled { display: none; }
   .arena-speed { min-width: 0; width: 4.25rem; padding: 0 22px 0 8px; background-position: right 4px center; }
   .arena-fighters { padding-bottom: 4px; }
-  .arena-fighter { width: auto; padding: 4px 10px 4px 6px; grid-template-rows: auto; }
+  .arena-fighter { width: auto; min-height: 40px; padding: 4px 10px 4px 6px; grid-template-rows: auto; }
   .arena-fighter[aria-checked="true"] { padding: 3px 9px 3px 5px; }
   .arena-fighter-dot { grid-row: 1; width: 1.25rem; height: 1.25rem; }
   .arena-fighter-name { font-size: var(--text-sm); white-space: nowrap; }
