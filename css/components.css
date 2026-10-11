@@ -303,6 +303,29 @@
 @keyframes sheen { to { background-position: 300% 0; } }
 @keyframes indet { 0% { transform: translateX(-110%); } 100% { transform: translateX(310%); } }
 
+/* ---- Scroll strips ------------------------------------------------------------------- */
+/* A row that scrolls sideways when it does not fit (tabs, segmented controls, the Arena fighter list)
+   fades at whichever edge still has content, so a clipped last item reads as "more this way" instead
+   of a cut-off label. The fade is driven by the row's own scroll position, so it costs no JS and
+   disappears entirely when everything fits (an inactive scroll timeline leaves the fades at 0). The
+   reduced-motion rules in base.css leave .scroll-fade alone: it is not motion, and a 0ms duration
+   would pin the fade to its end state. */
+@property --scroll-fade-start { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --scroll-fade-end { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@supports (animation-timeline: scroll()) {
+  .scroll-fade {
+    mask-image: linear-gradient(to right,
+      transparent, #000 var(--scroll-fade-start),
+      #000 calc(100% - var(--scroll-fade-end)), transparent);
+    animation: scroll-fade linear both;
+    animation-timeline: scroll(self inline);
+  }
+  @keyframes scroll-fade {
+    from { --scroll-fade-start: 0px; --scroll-fade-end: 28px; }
+    to { --scroll-fade-start: 28px; --scroll-fade-end: 0px; }
+  }
+}
+
 /* ---- Tabs ---------------------------------------------------------------------------- */
 .tabs { display: flex; gap: var(--space-1); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
 .tabs button {
