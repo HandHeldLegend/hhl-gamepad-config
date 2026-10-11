@@ -65,6 +65,8 @@ export function toast(message, o = {}) {
 // Dialogs
 // ---------------------------------------------------------------------------------------------
 
+let dialogSeq = 0; // unique ids for aria-labelledby
+
 /**
  * Open a modal dialog built on <dialog>.
  * @param {{title: string, icon?: string, tone?: string, body?: Node|Node[]|string,
@@ -75,13 +77,14 @@ export function toast(message, o = {}) {
  */
 export function openDialog(o) {
   const dismissible = o.dismissible !== false;
-  const titleEl = h('h2', o.title);
+  const titleId = `dialog-title-${++dialogSeq}`;
+  const titleEl = h('h2', { id: titleId }, o.title);
   const art = h('span.dialog-art', o.icon ? icon(o.icon) : null);
   if (!o.icon) art.hidden = true;
   const body = h('div.dialog-body');
   const foot = h('div.dialog-foot');
   const closeBtn = dismissible ? button({ icon: 'close', variant: 'ghost', title: t('Close'), onClick: () => close(undefined) }) : null;
-  const el = h('dialog.dialog', { class: o.tone ? `tone-${o.tone}` : null, style: o.wide ? { width: 'min(760px, calc(100vw - 24px))' } : null },
+  const el = h('dialog.dialog', { 'aria-labelledby': titleId, class: o.tone ? `tone-${o.tone}` : null, style: o.wide ? { width: 'min(760px, calc(100vw - 24px))' } : null },
     h('div.dialog-head', art, titleEl, closeBtn), body, foot);
 
   let resolve;
@@ -98,6 +101,15 @@ export function openDialog(o) {
   }
 
   el.addEventListener('cancel', (e) => { e.preventDefault(); if (dismissible) close(undefined); });
+  // The browser can close a <dialog> without close(): Chrome ignores cancel.preventDefault() on a
+  // second Escape without a click in between, and a <form method="dialog"> closes it too. A dialog
+  // that must stay up (firmware write, calibration) opens again; any other one ends as dismissed, so
+  // `result` settles, onClose runs and the element is removed.
+  el.addEventListener('close', () => {
+    if (closed) return;
+    if (!dismissible && el.isConnected) { el.showModal(); return; }
+    close(undefined);
+  });
   el.addEventListener('click', (e) => { if (dismissible && e.target === el) close(undefined); }); // backdrop
 
   const api = {
