@@ -107,4 +107,5 @@ export default {
   "The output mode the controller starts in. On firmware with separate defaults this is the one used when plugged in, and Auto detects the console or PC. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here.": "コントローラーが起動するときの出力モードです。デフォルトが分かれたファームウェアでは接続時に使われ、オートはゲーム機やPCを検出します。このアプリで使えるのはSwitchモードとSteamモードだけです。変更した後は、AまたはBを押しながら接続するとここに戻れます。",
   "The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. WLAN joins your WLAN dongle and takes the mode it detects. Hold the WLAN button at power-on for the other one (Bluetooth or WLAN).": "バッテリー駆動時にコントローラーが起動するモードです（デフォルトが分かれたファームウェア）。オートは保存済みのゲーム機やPCのうち、最初に応答したものに接続します（Switch、Wii、PCの順）。WLANはWLANドングルに接続し、ドングルが検出したモードを使います。電源を入れるときにWLANボタンを押し続けると、もう一方（BluetoothまたはWLAN）を使います。",
   "Wireless default": "ワイヤレス時のデフォルト",
+  "To start in another mode just once, hold its button while you plug in or turn on the controller.": "一度だけ別のモードで起動するには、そのボタンを押したままコントローラーを接続するか電源を入れます。",
 };

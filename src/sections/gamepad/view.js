@@ -25,7 +25,7 @@ import { getSetting } from '../../settings/schema.js';
 import { rebootToBootloaderOnly, formatFwVersion, cableOnlyNote } from '../../firmware/updater.js';
 import { DEFAULT_MODES, WIRED_MODES, WIRELESS_MODES, AUTO_MODE } from './settings.js';
 import { padPreview } from './pad-preview.js';
-import { openConnectGuide } from '../../app/connect-guide.js';
+import { openConnectGuide, modeCombo } from '../../app/connect-guide.js';
 import { macEditor, formatMac } from './mac-editor.js';
 
 loadStyles(new URL('./gamepad.css', import.meta.url));
@@ -61,6 +61,7 @@ export function mount(root, { session, navigate }) {
   const split = !!session.caps.splitDefaults;
   const supported = (m) => !m.requires || session.caps[m.requires];
   const modePicker = modeTiles({
+    session,
     modes: (split ? WIRED_MODES : DEFAULT_MODES).filter(supported),
     value: modeDef.get(session),
     onChange: (v) => {
@@ -88,13 +89,15 @@ export function mount(root, { session, navigate }) {
     title: t('Default mode'), subtitle: t('What the controller pretends to be when it starts up.'), icon: 'gamepad', tone: TONE,
     actions: button({
       label: t('How to connect'), icon: 'help', size: 'sm', variant: 'ghost',
-      onClick: () => openConnectGuide({ focus: 'switch', session }),
+      onClick: () => openConnectGuide({ session }),
     }),
   },
     callout({ tone: 'yellow', title: t('Warning.') },
       ...tNodes(t('Only {modes} connect to this app. After changing the default, hold {button} while plugging in to connect here.'),
         { modes: h('strong', t('Switch & Steam modes')), button: h('strong', t('A or B')) })),
-    wiredHead, modePicker, wirelessPicker);
+    wiredHead, modePicker,
+    h('div.field-desc', t('To start in another mode just once, hold its button while you plug in or turn on the controller.')),
+    wirelessPicker);
 
   // ---- 2. Switch colors -----------------------------------------------------------------------
   const current = () => Object.fromEntries(COLOR_KEYS.map(([k, slot]) => [slot, defs[k].get(session)]));
@@ -223,7 +226,8 @@ export function mount(root, { session, navigate }) {
 
 /**
  * Grid of radio tiles for the output modes this controller has (more readable than a 7-way segmented control).
- * @param {{modes: Array, value: number, onChange: (v: number) => void}} o
+ * Each tile leads with the button that boots that mode, in the connected controller's own glyphs.
+ * @param {{session: object, modes: Array, value: number, onChange: (v: number) => void}} o
  */
 function modeTiles(o) {
   const modes = o.modes;
@@ -232,9 +236,9 @@ function modeTiles(o) {
     type: 'button', role: 'radio', 'aria-checked': 'false', dataset: { value: m.value },
     onclick: () => select(m.value, true),
   },
-  h('span.gp-mode-top', h('span.gp-mode-name', m.label), APP_MODES.has(m.label) && badge(t('Config app'), 'green'),
+  h('span.gp-mode-top', modeCombo(o.session, m.label, 22), h('span.gp-mode-name', m.label),
     h('span.gp-mode-check', icon('check'))),
-  h('span.gp-mode-about', t(m.about))));
+  APP_MODES.has(m.label) && h('span.gp-mode-tags', badge(t('Config app'), 'green'))));
   const el = h('div.gp-modes', { role: 'radiogroup', 'aria-label': t('Default mode') }, tiles);
 
   function select(v, fire) {

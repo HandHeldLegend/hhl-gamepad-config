@@ -2,7 +2,7 @@
  * connect-guide.js ("How to connect" dialog): a modes-at-a-glance table (button per mode, wired /
  * battery behavior, pairing), then Switch (wired and Bluetooth), Bluetooth pairing in Steam mode,
  * and Wii mode on controllers that support it. Opened from the Wireless page (pairing
- * tip) and the Gamepad page (Default mode card).
+ * tip) and the Gamepad page (Default mode card), always at the top.
  *
  * The guide shows only what applies to the connected controller:
  *   - Button names come from the controller itself (static input info: the names printed on the
@@ -146,6 +146,21 @@ function combo(...buttons) {
     buttons.flatMap((b, i) => [i ? h('span.guide-plus', { 'aria-hidden': 'true' }, '+') : null, glyph(b.glyph, { size: 28 })]));
 }
 
+/** The boot button for each mode label in DEFAULT_MODES / WIRED_MODES (Auto has none). */
+const MODE_BUTTON = { Switch: 'east', Steam: 'south', XInput: 'x', Slippi: 'y', Wii: 'up', GameCube: 'right', N64: 'down', SNES: 'left' };
+
+/**
+ * The button that starts the controller in mode `label` ('Switch', 'Steam'…), drawn with this
+ * controller's glyphs (Gamepad page mode tiles). Null for Auto, which has no button.
+ */
+export function modeCombo(session, label, size = 28) {
+  const key = MODE_BUTTON[label];
+  if (!key) return null;
+  const el = combo(connectProfile(session)[key]);
+  el.querySelectorAll('.inp-glyph').forEach((g) => g.style.setProperty('--g', `${size}px`));
+  return el;
+}
+
 const section = (title, ...steps) => h('section.guide-section',
   h('h3', title),
   h('ol', steps.filter(Boolean).map((s) => h('li', s))));
@@ -162,8 +177,8 @@ export function pairingTipNodes(session) {
 }
 
 /**
- * @param {{focus?: 'switch'|'bluetooth', session?: object}} [o]
- *   focus: scroll that part into view; session: the connected controller (tailors the guide).
+ * Opens at the top (the modes table first), wherever it was opened from.
+ * @param {{session?: object}} [o] session: the connected controller (tailors the guide).
  */
 export function openConnectGuide(o = {}) {
   const p = connectProfile(o.session);
@@ -207,7 +222,7 @@ export function openConnectGuide(o = {}) {
     bt && h('li', t('Erasing the controller (“Start fresh” firmware install) forgets its pairings, so pair again afterwards.')),
     !bt && h('li', t('This controller is wired only.')));
 
-  const dlg = openDialog({
+  return openDialog({
     title: t('How to connect'), icon: 'link', tone: 'blue', wide: true,
     body: [
       !p.known && h('p.muted.small', t('Connect your controller to see the exact buttons and options for it.')),
@@ -215,7 +230,4 @@ export function openConnectGuide(o = {}) {
     ].filter(Boolean),
     actions: [{ label: t('Done'), variant: 'primary' }],
   });
-  const target = o.focus === 'bluetooth' ? (btSwitch || wired) : o.focus === 'switch' ? wired : null;
-  if (target) requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
-  return dlg;
 }

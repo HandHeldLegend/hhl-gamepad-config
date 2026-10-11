@@ -26,8 +26,8 @@
 .gp-mode:active { transform: translateY(1px); }
 .gp-mode:focus-visible { box-shadow: var(--focus-ring); outline: none; }
 .gp-mode[aria-checked="true"] { border-color: var(--tone); background: var(--tone-soft); }
-.gp-mode-top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); padding-right: 26px; }
-.gp-mode-name { font-weight: 700; font-family: var(--font-display); }
+.gp-mode-top { display: flex; align-items: center; gap: var(--space-2); min-height: 22px; padding-right: 26px; }
+.gp-mode-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-family: var(--font-display); }
 .gp-mode-check {
   position: absolute; top: var(--space-2); right: var(--space-2);
   width: 22px; height: 22px; border-radius: 50%;
@@ -38,7 +38,8 @@
 }
 .gp-mode-check .icon { width: 14px; height: 14px; }
 .gp-mode[aria-checked="true"] .gp-mode-check { opacity: 1; transform: none; }
-.gp-mode-about { font-size: var(--text-sm); color: var(--text-muted); }
+.gp-mode-top .guide-combo { margin: 0; flex: none; }
+.gp-mode-tags { display: flex; }
 
 /* ---- Switch colors ------------------------------------------------------------------------ */
 .gp-colors {
