@@ -361,7 +361,10 @@ export function createShell(root) {
       await applyFromRoute(route);
       return;
     }
-    const section = getSection(route.section) || getSection('home');
+    // Unknown page (old or mistyped link): go home and fix the URL, so the sidebar, page title,
+    // assistant status and Escape handling all agree on where we are.
+    if (!getSection(route.section)) { navigate('home', {}, { replace: true }); return; }
+    const section = getSection(route.section);
     const token = ++renderToken;
     const reason = unavailableReason(section);
     // `stable` pages (the factory station) stay mounted through connects and disconnects.

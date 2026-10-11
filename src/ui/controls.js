@@ -32,7 +32,12 @@ export function button(o = {}) {
     type: 'button', class: cls, title: o.title, 'aria-label': o.title || o.label,
     disabled: !!o.disabled, onclick: o.onClick,
   }, o.icon && icon(o.icon), o.label && h('span.btn-label', o.label));
-  el.setLabel = (text) => { const l = el.querySelector('.btn-label'); if (l) l.textContent = text; };
+  el.setLabel = (text) => {
+    const l = el.querySelector('.btn-label');
+    if (l) l.textContent = text;
+    // Without a title the accessible name is the label, so it follows (Connect → Disconnect, busy/ok).
+    if (!o.title) el.setAttribute('aria-label', text);
+  };
   return el;
 }
 
@@ -77,7 +82,7 @@ function normOptions(options) {
 export function segmented(o) {
   const opts = normOptions(o.options);
   const thumb = h('span.seg-thumb');
-  const el = h('div.seg', { role: 'radiogroup', 'aria-label': o.ariaLabel, class: toneClass(o.tone) }, thumb);
+  const el = h('div.seg.scroll-fade', { role: 'radiogroup', 'aria-label': o.ariaLabel, class: toneClass(o.tone) }, thumb);
   let current = o.value;
 
   const buttons = opts.map((opt) => h('button', {
@@ -408,7 +413,7 @@ export function progressBar(o = {}) {
  * Returns an element with `.select(id)`; each tab's render may return a cleanup fn.
  */
 export function tabView(o) {
-  const bar = h('div.tabs', { role: 'tablist', class: toneClass(o.tone) });
+  const bar = h('div.tabs.scroll-fade', { role: 'tablist', class: toneClass(o.tone) });
   const panel = h('div.tab-panel', { role: 'tabpanel' });
   const el = h('div.stack', bar, panel);
   let current = null;

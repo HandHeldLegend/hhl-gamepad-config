@@ -7,16 +7,22 @@
  *   2. When it's installed and waiting, we show "Update ready: Restart".
  *   3. Restart → postMessage('skip-waiting') → controllerchange → reload.
  *
+ * Only the tab that asked for the update reloads. When another tab applies it, this tab is told
+ * "ready" again and decides for itself (update-ui.js), so it is never reloaded mid-session.
+ *
  * The service worker is skipped on localhost unless the URL has ?sw, so edits show up on a
  * plain refresh during development (see tools/serve.mjs).
  *
- * Events: pwa.on('installable', bool) · pwa.on('offline-ready') · pwa.on('update', {state, done, total})
+ * Events: pwa.on('installable', bool) · pwa.on('offline-ready') ·
+ *         pwa.on('update', {state: 'downloading'|'ready'|'failed', done, total})
  */
 const listeners = new Map();
 const emit = (type, detail) => { for (const fn of listeners.get(type) || []) fn(detail); };
 
 let deferredPrompt = null;
 let waitingWorker = null;
+let requested = false; // this tab asked for the update (Restart, or applied automatically)
+const tracked = new WeakSet();
 
 export const pwa = {
   canInstall: false,
@@ -42,7 +48,9 @@ export const pwa = {
   },
   get isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); },
   applyUpdate() {
-    if (!waitingWorker) return location.reload();
+    requested = true;
+    // Already in charge (another tab applied it): the reload is all that is left.
+    if (!waitingWorker || navigator.serviceWorker?.controller === waitingWorker) return location.reload();
     waitingWorker.postMessage({ type: 'skip-waiting' });
   },
   async checkForUpdate() {
@@ -74,8 +82,18 @@ export async function loadVersion() {
 }
 
 function trackWorker(worker) {
+  // register() can resolve with the worker already installing and then fire updatefound for it too.
+  if (!worker || tracked.has(worker)) return;
+  tracked.add(worker);
+  let installed = false;
   worker.addEventListener('statechange', () => {
-    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+    if (worker.state === 'installed') installed = true;
+    if (worker.state === 'redundant' && !installed) {
+      // The install failed (a file 404ed or the CDN still had the old copy). The browser retries later;
+      // until then the current version keeps working, so drop the progress UI.
+      if (pwa.updateState === 'downloading') pwa.updateState = 'idle';
+      emit('update', { state: 'failed' });
+    } else if (worker.state === 'installed' && navigator.serviceWorker.controller) {
       waitingWorker = worker;
       pwa.updateState = 'ready';
       emit('update', { state: 'ready' });
@@ -107,6 +125,9 @@ export async function registerServiceWorker() {
   let reloading = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (reloading || !waitingWorker) return;
+    // Another tab applied the update. Reloading here could cut off a firmware write or drop unsaved
+    // settings, so ask again; update-ui.js reloads right away only when nothing is going on.
+    if (!requested) { emit('update', { state: 'ready' }); return; }
     reloading = true;
     location.reload();
   });
