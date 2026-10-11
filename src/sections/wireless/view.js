@@ -205,7 +205,7 @@ export function mount(root, ctx) {
   const tipNodes = hasBt && pairingTipNodes(session);
   const pairTip = tipNodes && callout({ tone: 'blue', icon: 'wireless', title: t('Pairing over Bluetooth:') },
     ...tipNodes, ' ',
-    button({ label: t('How to connect'), size: 'sm', variant: 'ghost', icon: 'help', onClick: () => openConnectGuide({ focus: 'bluetooth', session }) }));
+    button({ label: t('How to connect'), size: 'sm', variant: 'ghost', icon: 'help', onClick: () => openConnectGuide({ session }) }));
   if (pairTip) { pairTip.style.marginBottom = 'var(--space-4)'; root.append(pairTip); }
 
   // Side by side on wide pages; the long regulatory text spans the full row.

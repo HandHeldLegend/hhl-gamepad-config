@@ -79,4 +79,5 @@ export default {
   "Right handle color as drawn by the Switch.": "Switch 绘制的右握把颜色。",
   "WebUSB popup": "WebUSB 弹窗",
   "Show the browser’s “open the config app” notification when the controller is plugged in.": "插入手柄时显示浏览器的“打开配置应用”通知。",
+  "To start in another mode just once, hold its button while you plug in or turn on the controller.": "若只想这一次以其他模式启动，请在插入或打开手柄时按住该模式的按钮。",
 };
