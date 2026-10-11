@@ -7,9 +7,12 @@
  *             hash (see fetchVerified). Posts { type: 'precache-progress', done, total, downloaded }
  *             to open pages for the progress UI.
  * - activate: delete caches from older versions.
- * - fetch:    same-origin GETs are served cache-first (navigations fall back to index.html);
- *             cross-origin requests (GitHub firmware downloads, update manifests) go straight to the
- *             network and are never cached, so firmware checks are always fresh.
+ * - fetch:    same-origin GETs are served cache-first. A navigation to a shipped file (llms.txt, a .uf2)
+ *             gets that file; any other navigation gets index.html (hash routes). precache-manifest.js
+ *             is answered from this worker's own copy, so the page always reads the version it is
+ *             running, offline too. Cross-origin requests (GitHub firmware downloads, update
+ *             manifests) go straight to the network and are never cached, so firmware checks are
+ *             always fresh.
  * - message:  'skip-waiting' lets the page apply a waiting update when the user taps Restart.
  */
 importScripts('precache-manifest.js');
@@ -17,6 +20,10 @@ importScripts('precache-manifest.js');
 const { version, files, hashes = {} } = self.__PRECACHE;
 const CACHE = `hhl-config-${version}`;
 const PREFIX = 'hhl-config-';
+// The manifest can't list itself (it holds its own hash), so it is never precached. Pages import it to
+// read the app version; serve the copy this worker was built from instead of the network's latest.
+const MANIFEST_PATH = new URL('precache-manifest.js', self.location).pathname;
+const MANIFEST_JS = `self.__PRECACHE = ${JSON.stringify(self.__PRECACHE)};\n`;
 const CONCURRENCY = 6;
 
 async function broadcast(msg) {
@@ -109,13 +116,18 @@ self.addEventListener('fetch', (event) => {
   const scope = new URL(self.registration.scope);
   if (!url.pathname.startsWith(scope.pathname)) return;
 
+  if (url.pathname === MANIFEST_PATH) {
+    event.respondWith(new Response(MANIFEST_JS, { headers: { 'Content-Type': 'text/javascript' } }));
+    return;
+  }
+
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
+    const hit = await cache.match(req, { ignoreSearch: true });
+    if (hit) return hit;
     if (req.mode === 'navigate') {
       return (await cache.match('./')) || (await cache.match('index.html')) || fetch(req);
     }
-    const hit = await cache.match(req, { ignoreSearch: true });
-    if (hit) return hit;
     try {
       return await fetch(req);
     } catch {
