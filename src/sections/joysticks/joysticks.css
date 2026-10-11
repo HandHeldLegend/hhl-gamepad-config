@@ -29,14 +29,16 @@
 
 /* ---- Live visualizer --------------------------------------------------------------- */
 /* Compact: the canvas is capped at 240px. Cards ≥ 420px wide put the readout beside the canvas;
-   narrower ones stack it underneath. */
+   narrower ones stack it underneath. The readout column keeps at least 15rem: the table needs ~14rem
+   for "-2048.0" in both columns plus the "Distance" label, and the Full/GC/Melee/N64 selector ~15rem;
+   below that the canvas column gives way first (it can shrink to 150px). */
 .js-visual { container: jsvis / inline-size; width: 100%; }
 .js-vis-grid { display: grid; gap: var(--space-2) var(--space-4); grid-template-columns: minmax(0, 1fr); }
 .js-vis-main { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 .js-vis-side { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
 .js-visual .cv-surface { width: 100%; max-width: 220px; margin: 0 auto; }
 @container jsvis (min-width: 420px) {
-  .js-vis-grid { grid-template-columns: minmax(150px, 240px) minmax(0, 1fr); align-items: start; }
+  .js-vis-grid { grid-template-columns: minmax(150px, 240px) minmax(15rem, 1fr); align-items: start; }
   .js-visual .cv-surface { max-width: 240px; }
 }
 
@@ -207,6 +209,11 @@
 .am-row .input.num::-webkit-inner-spin-button, .am-row .input.num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .am-unit { font-size: var(--text-sm); color: var(--text-muted); width: 0.6em; flex: none; }
 .am-c-act .btn { min-height: 32px; width: 32px; padding: 0; }
+/* Touch screens: the compact 32px controls above go back to the app's 40px tap floor. */
+@media (pointer: coarse) {
+  .js-page .card.compact .card-head .card-actions .btn, .js-controls .seg button { min-height: 40px; }
+  .am-c-act .btn { min-height: 40px; width: 40px; }
+}
 /* Smaller switch inside rows. */
 .am-row .switch .track { width: 36px; height: 22px; }
 .am-row .switch .track::after { width: 16px; height: 16px; top: 2px; left: 2px; }

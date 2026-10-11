@@ -57,6 +57,7 @@
   transition: background-color var(--dur-fast), border-color var(--dur-fast);
 }
 .sb-chip:hover { border-color: var(--tone); }
+@media (pointer: coarse) { .sb-chip { min-height: 40px; padding-inline: 14px; } }
 .sb-chip[aria-pressed="true"] { background: var(--tone-soft); border-color: var(--tone); }
 .sb-chip-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tone); }
 .sb-chip .faint { font-weight: 500; font-variant-numeric: tabular-nums; }

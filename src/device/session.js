@@ -99,6 +99,8 @@ class Session extends EventTarget {
   connecting = null;
   #timers = new Map();
   #pending = new Map();
+  #editSeq = 0;              // bumps on every commit()
+  #editedAt = new Map();     // block -> #editSeq of its latest commit (see save())
   #follow = null; // { stop } while waiting for a WLAN dongle to come back
 
   constructor() {
@@ -294,6 +296,7 @@ class Session extends EventTarget {
   commit(block, { immediate = false } = {}) {
     if (!this.connected) return Promise.resolve();
     this.dirty.add(block);
+    this.#editedAt.set(block, ++this.#editSeq);
     this.#emit('dirty', { dirty: true, block });
 
     let entry = this.#pending.get(block);
@@ -319,13 +322,21 @@ class Session extends EventTarget {
     await Promise.all(blocks.map((b) => this.commit(b, { immediate: true })));
   }
 
-  /** Persist everything to flash. */
+  /**
+   * Persist everything to flash. Edits made while SAVE_ALL is in flight (it can take seconds) are
+   * written after it, so they stay unsaved: only blocks last changed before the save was sent, with
+   * no debounced write still waiting, are marked saved.
+   */
   async save() {
     await this.flush();
+    const sentAt = this.#editSeq;
+    const waiting = new Set(this.#timers.keys());
     const ok = await device.save();
     if (ok) {
-      this.dirty.clear();
-      this.#emit('dirty', { dirty: false });
+      for (const b of [...this.dirty]) {
+        if (!waiting.has(b) && (this.#editedAt.get(b) ?? 0) <= sentAt) this.dirty.delete(b);
+      }
+      this.#emit('dirty', { dirty: this.dirty.size > 0 });
       this.#emit('saved', {});
     }
     return ok;

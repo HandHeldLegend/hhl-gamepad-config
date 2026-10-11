@@ -65,8 +65,6 @@
   border: 2px dashed var(--border-strong, var(--border)); border-radius: var(--radius-md); user-select: all; }
 .fac-failed { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 640px; margin-top: var(--space-2); }
 .fac-failed-chip { padding: 4px 10px; border-radius: var(--radius-pill); background: var(--red-soft); color: var(--red); font-weight: 700; font-size: var(--text-sm); }
-.btn.fac-pass-btn { background: var(--green); color: #fff; }
-.btn.fac-pass-btn:hover { background: color-mix(in srgb, var(--green) 85%, #000); }
 .fac-actions { justify-content: center; align-items: center; }
 .fac-actions .fac-back { margin-left: var(--space-4); }
 
