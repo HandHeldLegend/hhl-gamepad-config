@@ -31,6 +31,9 @@ export const GROUPS = [
   { id: 'app', title: 'App' },
 ];
 
+/** Pages that moved: old id → where it lives now (old links and bookmarks still land). */
+export const ALIASES = { user: 'gamepad' };
+
 export const SECTIONS = [
   {
     id: 'home', title: 'Home', icon: 'home', tone: 'lavender', group: 'start', device: false, requires: null,
@@ -101,20 +104,14 @@ export const SECTIONS = [
   },
   {
     id: 'gamepad', title: 'Gamepad', icon: 'gamepad', tone: 'blue', group: 'device', device: true, requires: null,
-    summary: 'Default mode, Switch body colors, MAC address and device info.',
-    keywords: ['mode', 'default mode', 'switch', 'xinput', 'wii', 'colors', 'mac', 'bootloader'],
+    summary: 'Default mode, Switch body colors, player name and MAC address.',
+    keywords: ['mode', 'default mode', 'switch', 'xinput', 'wii', 'colors', 'mac', 'player', 'name', 'username'],
     load: () => import('./gamepad/view.js'),
   },
   {
-    id: 'user', title: 'User', icon: 'user', tone: 'green', group: 'device', device: true, requires: null,
-    summary: 'Your player name stored on the controller.',
-    keywords: ['username', 'name', 'player'],
-    load: () => import('./user/view.js'),
-  },
-  {
-    id: 'firmware', title: 'Firmware', icon: 'firmware', tone: 'blue', group: 'device', device: false, requires: null,
-    summary: 'Update firmware, install HOJA on a blank board, or recover a controller.',
-    keywords: ['update', 'firmware', 'bootloader', 'bootsel', 'uf2', 'flash', 'nuke', 'install', 'recover', 'backup', 'restore', 'export settings', 'import settings'],
+    id: 'firmware', title: 'Firmware & backup', icon: 'firmware', tone: 'blue', group: 'device', device: false, requires: null,
+    summary: 'Update firmware, back up settings, recover a controller, or set up other hardware.',
+    keywords: ['update', 'firmware', 'bootloader', 'reboot to bootloader', 'bootsel', 'uf2', 'flash', 'nuke', 'install', 'recover', 'backup', 'restore', 'export settings', 'import settings', 'automatic backup', 'device info', 'manual'],
     params: {
       build: 'Build id to preselect for install (e.g. gcu_2, progcc_3.2)',
     },

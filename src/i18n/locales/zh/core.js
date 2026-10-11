@@ -371,4 +371,7 @@ export default {
   "USB device": "USB 设备",
   "Choose a USB device…": "选择 USB 设备…",
   "Reading settings… {percent}": "正在读取设置… {percent}",
+  "Firmware & backup": "固件与备份",
+  "Default mode, Switch body colors, player name and MAC address.": "默认模式、Switch 机身颜色、玩家名称和 MAC 地址。",
+  "Update firmware, back up settings, recover a controller, or set up other hardware.": "更新固件、备份设置、恢复手柄，或设置其他硬件。",
 };

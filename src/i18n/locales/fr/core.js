@@ -386,4 +386,7 @@ export default {
   "USB device": "Appareil USB",
   "Choose a USB device…": "Choisir un appareil USB…",
   "Reading settings… {percent}": "Lecture des réglages… {percent}",
+  "Firmware & backup": "Firmware et sauvegarde",
+  "Default mode, Switch body colors, player name and MAC address.": "Mode par défaut, couleurs Switch, nom du joueur et adresse MAC.",
+  "Update firmware, back up settings, recover a controller, or set up other hardware.": "Mettez à jour le firmware, sauvegardez les réglages, récupérez une manette ou configurez d’autres matériels.",
 };

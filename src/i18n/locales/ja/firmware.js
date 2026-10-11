@@ -50,4 +50,12 @@ export default {
   "Earlier releases": "以前のリリース",
   "Update the dongle itself, not the controller.": "コントローラーではなく、ドングル本体をアップデートします。",
   "To update a WLAN dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W or Pico 2 W, hold BOOTSEL), then choose its firmware here.": "WLANドングルを手動でアップデートするには、ドングルの両方のボタンを押したまま接続し（Pico W / Pico 2 W では BOOTSEL を押したまま）、ここでファームウェアを選んでください。",
+  "Manual downloads: UF2 files to copy onto the RPI-RP2 drive yourself": "手動ダウンロード: RPI-RP2 ドライブに自分でコピーする UF2 ファイル",
+  "Restarts the connected controller in update mode, to install firmware by hand.": "接続中のコントローラーをアップデートモードで再起動し、ファームウェアを手動でインストールできるようにします。",
+  "Only needed if something went wrong, or to install firmware by hand.": "問題が起きたときや、ファームウェアを手動でインストールするときだけ使います。",
+  "This controller": "このコントローラー",
+  "Other hardware": "その他のハードウェア",
+  "Install firmware by hand": "ファームウェアを手動でインストール",
+  "Stuck in the bootloader?": "ブートローダーから抜けられない場合",
+  "After an interrupted update, restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.": "アップデートが中断された場合は、再起動するかインストーラーから再インストールしてください。再インストール後も基板の動作がおかしい場合は、もう一度再インストールし、「{fresh}」を選んで設定・キャリブレーション・ペアリングをすべて消去してください。",
 };

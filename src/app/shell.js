@@ -18,7 +18,7 @@ import { h, replace } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
 import { button, emptyState, dot, face } from '../ui/controls.js';
 import { toast, confirmDialog, openDialog } from '../ui/overlay.js';
-import { SECTIONS, GROUPS, getSection } from '../sections/registry.js';
+import { SECTIONS, GROUPS, ALIASES, getSection } from '../sections/registry.js';
 import { session } from '../device/session.js';
 import { device, USB_FILTERS, OPTIONAL_BLOCKS } from '../device/hoja-device.js';
 import { listLanPads, lanPermission } from '../device/lan-transport.js';
@@ -363,6 +363,8 @@ export function createShell(root) {
       await applyFromRoute(route);
       return;
     }
+    // A page that moved: open it where it lives now, keeping the link's params.
+    if (ALIASES[route.section]) { navigate(ALIASES[route.section], route.params, { replace: true }); return; }
     // Unknown page (old or mistyped link): go home and fix the URL, so the sidebar, page title,
     // assistant status and Escape handling all agree on where we are.
     if (!getSection(route.section)) { navigate('home', {}, { replace: true }); return; }

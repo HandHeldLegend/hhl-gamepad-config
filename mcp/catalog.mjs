@@ -93,6 +93,9 @@ export function paramChoices(description) {
 
 // ---- Settings → public, JSON-safe shape ----------------------------------------------------------
 
+/** The page a setting is shown on: its `section`, else its key's prefix (as sectionOf in src/settings/schema.js). */
+const pageOf = (def) => def.section || def.key.split('.')[0];
+
 /** Copy every JSON-safe property of a SettingDef (drops get/set and any other functions). */
 export function publicSetting(def) {
   const out = { section: def.key.split('.')[0] };
@@ -211,7 +214,7 @@ export async function loadCatalog({ appUrl = process.env.HHL_APP_URL } = {}) {
     requiresNote: capabilityNote(s.requires),
     keywords: s.keywords || [],
     params: Object.entries(s.params || {}).map(([name, description]) => ({ name, description, choices: paramChoices(description) })),
-    settingKeys: defs.filter((d) => d.key.startsWith(`${s.id}.`)).map((d) => d.key),
+    settingKeys: defs.filter((d) => pageOf(d) === s.id).map((d) => d.key),
     url: base + buildRoute(s.id),
   }));
   const pageById = new Map(pages.map((p) => [p.id, p]));
@@ -271,7 +274,7 @@ export async function loadCatalog({ appUrl = process.env.HHL_APP_URL } = {}) {
         if (!def) { errors.push(`Unknown setting "${key}". Use list_settings to see valid keys.`); continue; }
         const r = coerce(def, raw);
         if (!r.ok) { errors.push(r.error); continue; }
-        changes.push({ key, label: def.label, value: r.value, display: format(def, r.value), requires: def.requires || null, page: key.split('.')[0], link: linkValue(def, r.value) });
+        changes.push({ key, label: def.label, value: r.value, display: format(def, r.value), requires: def.requires || null, page: pageOf(def), link: linkValue(def, r.value) });
       }
     }
     if (then != null && then !== '' && !pageById.has(then)) errors.push(`Unknown "then" page "${then}"`);
@@ -295,7 +298,7 @@ export async function loadCatalog({ appUrl = process.env.HHL_APP_URL } = {}) {
     settings: defs.map(publicSetting),
     getPage: (id) => pageById.get(id) || null,
     getSetting: (key) => (defByKey.has(key) ? publicSetting(defByKey.get(key)) : null),
-    settingsFor: (sectionId) => defs.filter((d) => d.key.startsWith(`${sectionId}.`)).map(publicSetting),
+    settingsFor: (sectionId) => defs.filter((d) => pageOf(d) === sectionId).map(publicSetting),
     describeRange: (key) => (defByKey.has(key) ? describeRange(defByKey.get(key)) : null),
     pageUrl: (id, params) => pageLink(id, params),
     planSettingsLink,
