@@ -46,7 +46,7 @@ import { listBuilds, getBuildManifest, dongleBuild, NUKE_BUILD } from './builds.
 import { loadChangelog, pendingActions, buildIdFromManifestUrl, inlineRuns } from './changelog.js';
 import {
   pico_update_attempt_flash, pico_exit_bootloader_attempt, pico_complete_uf2_picker_flash,
-  pico_has_cached_uf2, pico_get_cached_uf2, supportsDirectoryPicker, setUpdateStatus, onFlashProgress,
+  pico_has_cached_uf2, pico_get_cached_uf2, pico_clear_cached_uf2, supportsDirectoryPicker, setUpdateStatus, onFlashProgress,
 } from './picoboot.js';
 import { t, N_, fmt } from '../i18n/index.js';
 import { fetchableUrl } from './urls.js';
@@ -338,6 +338,7 @@ function hide() {
   st.pendingLegacy = false;
   st.dongle = false;
   resetFresh();
+  pico_clear_cached_uf2(); // a later run must download its own image
   ui?.dlg.close();
   ui = null;
 }
