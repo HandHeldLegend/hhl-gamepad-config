@@ -72,3 +72,4 @@
 .wl-pc-body { display: grid; gap: var(--space-2); margin-top: var(--space-1); }
 .wl-pc .field-desc { margin: 0; }
 .wl-pc p { margin: 0; line-height: 1.5; }
+.wl-pc-steps { margin: 0; padding-left: 1.4em; display: grid; gap: 2px; line-height: 1.5; }

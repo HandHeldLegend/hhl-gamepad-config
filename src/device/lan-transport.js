@@ -25,33 +25,26 @@ export const LAN_APP_URL = 'https://github.com/HandHeldLegend/hhl-gamepad-wlan/r
 /**
  * Chromium's permission names for requests to this PC: newer versions split Local Network Access into
  * 'loopback-network' (this PC, what we need) and 'local-network'; earlier ones had one 'local-network-access'.
- * Browsers disagree on which one they mean: Brave reports 'loopback-network' as denied while
- * 'local-network-access' can still prompt (Brave asks through its own Localhost access setting).
+ * The first one the browser knows is the one that decides. Brave reports 'loopback-network' as denied
+ * until the site is allowed in its site settings (Localhost access): it blocks without asking.
  */
-const LAN_PERMISSIONS = ['loopback-network', 'local-network-access', 'local-network'];
-
-/** Set once HHL Gamepad WLAN answered this browser, so the page knows it is allowed (see lanPermission). */
-const REACHED_KEY = 'hhl-lan-reached';
-const reachedBefore = () => { try { return localStorage.getItem(REACHED_KEY) === '1'; } catch { return false; } };
+const LAN_PERMISSIONS = ['loopback-network', 'local-network-access'];
 
 /**
  * May this page talk to HHL Gamepad WLAN without a browser prompt?
  * Resolves { state: 'granted' | 'prompt' | 'denied', status } (status: the PermissionStatus to watch for
- * changes, or null). Every name the browser knows is asked: granted if any is granted (or HHL Gamepad
- * WLAN has answered here before, since Brave's own Localhost access setting doesn't show in this API),
- * else 'prompt' if any can still ask, else 'denied'. Browsers that know none don't gate this PC:
- * 'granted'. Neither does a page served from this PC (the dev server), whatever the query says.
+ * changes, or null). Browsers that know neither permission don't gate this PC: 'granted'. Neither do
+ * they gate a page that is itself served from this PC (the dev server), whatever the query says.
  */
 export async function lanPermission() {
   if (['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) return { state: 'granted', status: null };
-  const known = [];
   for (const name of LAN_PERMISSIONS) {
-    try { known.push(await navigator.permissions.query({ name })); } catch { /* not a permission this browser knows */ }
+    try {
+      const status = await navigator.permissions.query({ name });
+      return { state: status.state, status };
+    } catch { /* not a permission this browser knows */ }
   }
-  if (!known.length) return { state: 'granted', status: null };
-  const pick = (state) => known.find((s) => s.state === state);
-  const status = pick('granted') || pick('prompt') || known[0];
-  return { state: pick('granted') || reachedBefore() ? 'granted' : status.state, status };
+  return { state: 'granted', status: null };
 }
 
 /**
@@ -62,7 +55,6 @@ export async function listLanPads({ timeout } = {}) {
   const res = await fetch(`${LAN_ORIGIN}/pads`, { cache: 'no-store', signal: timeout ? AbortSignal.timeout(timeout) : undefined });
   if (!res.ok) throw new Error(`HHL Gamepad WLAN answered HTTP ${res.status}`);
   const pads = await res.json();
-  try { localStorage.setItem(REACHED_KEY, '1'); } catch { /* private mode: asked again next visit */ }
   return Array.isArray(pads) ? pads.filter((p) => typeof p?.id === 'string' && p.id) : [];
 }
 

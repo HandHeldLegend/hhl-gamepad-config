@@ -182,6 +182,10 @@ export default {
   "HHL Gamepad WLAN for Windows": "适用于 Windows 的 HHL Gamepad WLAN",
   "Play on your PC over this network, no dongle needed: games and Steam see the controller as if it were plugged in. While the app runs, this page can also configure the controller without a cable.": "通过此网络在电脑上游玩，无需接收器：游戏和 Steam 会把手柄识别为有线连接的手柄。应用运行时，此页面还可以无线配置手柄。",
   "To find HHL Gamepad WLAN, this page needs your browser’s permission to reach apps on this PC. The connection stays on your PC; nothing is sent to the internet.": "要找到 HHL Gamepad WLAN，此页面需要浏览器允许它连接这台电脑上的应用。连接只在你的电脑内进行，不会向互联网发送任何内容。",
-  "This page can’t reach apps on this PC yet. If your browser asks, choose Allow. If it doesn’t, open the site settings (the icon next to the address) and allow Local network access, then try again. HHL Gamepad WLAN must be running too.": "此页面暂时无法连接这台电脑上的应用。如果浏览器询问，请选择允许。如果没有询问，请打开网站设置（地址旁边的图标），允许本地网络访问，然后重试。HHL Gamepad WLAN 也必须在运行。",
-  "This page can’t reach apps on this PC yet. If your browser asks, choose Allow. If it doesn’t, open the site settings (the icon next to the address) and allow Localhost access, then try again. HHL Gamepad WLAN must be running too.": "此页面暂时无法连接这台电脑上的应用。如果浏览器询问，请选择允许。如果没有询问，请打开网站设置（地址旁边的图标），允许 Localhost 访问，然后重试。HHL Gamepad WLAN 也必须在运行。",
+  "Brave blocks this page from reaching apps on this PC until you allow it:": "在你允许之前，Brave 会阻止此页面连接这台电脑上的应用：",
+  "Your browser blocked this page from reaching apps on this PC. To allow it:": "浏览器阻止了此页面连接这台电脑上的应用。要允许它：",
+  "Click the icon to the left of the web address.": "点击网址左侧的图标。",
+  "Open Site settings.": "打开“网站设置”。",
+  "Set Localhost access to Allow.": "将“Localhost 访问”设为“允许”。",
+  "Set Local network access to Allow.": "将“本地网络访问”设为“允许”。",
 };
