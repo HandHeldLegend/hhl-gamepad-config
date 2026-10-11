@@ -11,6 +11,8 @@ import { createShell } from './app/shell.js';
 import { installTooltips, toast } from './ui/overlay.js';
 import { registerServiceWorker, loadVersion, pwa } from './app/pwa.js';
 import { initFirmware } from './firmware/updater.js';
+import { initAutoBackup } from './sections/backup/history.js';
+import { session } from './device/session.js';
 import { initUpdateUi } from './app/update-ui.js';
 import { startDemo } from './device/mock.js';
 import { installBridge } from './agent/bridge.js';
@@ -25,6 +27,7 @@ async function boot() {
   installTooltips();
   createShell(document.getElementById('app-root'));
   initFirmware();
+  initAutoBackup(session);
   initUpdateUi();
   installBridge();
   loadVersion();

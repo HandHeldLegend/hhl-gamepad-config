@@ -88,7 +88,7 @@ function profileToNames(slots, outEnum) {
 // ---- Export ----------------------------------------------------------------------------------
 
 /** Short stable id for "is this the same controller" (hash of its MAC; the MAC itself isn't stored). */
-async function unitId(config) {
+export async function unitId(config) {
   const mac = config.gamepad?.gamepad_mac_address;
   if (!mac || !crypto?.subtle) return null;
   const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new Uint8Array(mac)));
