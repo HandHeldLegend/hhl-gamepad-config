@@ -10,7 +10,7 @@
 .gp-default-group .seg { max-width: 100%; justify-self: start; }
 .gp-modes {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
   gap: var(--space-2);
 }
 .gp-mode {
@@ -27,7 +27,7 @@
 .gp-mode:focus-visible { box-shadow: var(--focus-ring); outline: none; }
 .gp-mode[aria-checked="true"] { border-color: var(--tone); background: var(--tone-soft); }
 .gp-mode-top { display: flex; align-items: center; gap: var(--space-2); min-height: 22px; padding-right: 26px; }
-.gp-mode-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-family: var(--font-display); }
+.gp-mode-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-weight: 700; font-family: var(--font-display); }
 .gp-mode-check {
   position: absolute; top: var(--space-2); right: var(--space-2);
   width: 22px; height: 22px; border-radius: 50%;
@@ -38,7 +38,7 @@
 }
 .gp-mode-check .icon { width: 14px; height: 14px; }
 .gp-mode[aria-checked="true"] .gp-mode-check { opacity: 1; transform: none; }
-.gp-mode-top .guide-combo { margin: 0; flex: none; }
+.gp-mode-top .guide-combo { margin: 0 0 0 auto; flex: none; }
 .gp-mode-tags { display: flex; }
 
 /* ---- Switch colors ------------------------------------------------------------------------ */
