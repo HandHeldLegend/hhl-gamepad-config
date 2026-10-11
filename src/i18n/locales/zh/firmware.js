@@ -52,4 +52,12 @@ export default {
   "Couldn’t load the changelog. It needs an internet connection the first time.": "无法加载更新日志。首次加载需要联网。",
   "Update the dongle itself, not the controller.": "更新接收器本身，而不是手柄。",
   "To update a WLAN dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W or Pico 2 W, hold BOOTSEL), then choose its firmware here.": "要手动更新 WLAN 接收器，请按住接收器上的两个按钮再插入（Pico W 或 Pico 2 W 请按住 BOOTSEL），然后在此选择其固件。",
+  "Manual downloads: UF2 files to copy onto the RPI-RP2 drive yourself": "手动下载：自行复制到 RPI-RP2 驱动器的 UF2 文件",
+  "Restarts the connected controller in update mode, to install firmware by hand.": "让已连接的手柄以更新模式重启，以便手动安装固件。",
+  "Only needed if something went wrong, or to install firmware by hand.": "仅在出现问题或需要手动安装固件时使用。",
+  "This controller": "此手柄",
+  "Other hardware": "其他硬件",
+  "Install firmware by hand": "手动安装固件",
+  "Stuck in the bootloader?": "卡在引导程序中？",
+  "After an interrupted update, restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.": "更新中断后，请重启它，或从安装程序重新安装。如果重新安装后电路板仍然异常，请再次安装并选择“{fresh}”，先清除所有设置、校准和配对。",
 };

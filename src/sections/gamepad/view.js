@@ -7,22 +7,21 @@
  *                         default (with Auto), plus gamepad_default_wireless for battery. The block
  *                         is always written whole, so the version byte and gamepad_defaults_split stay.
  *   2. Switch colors     body / buttons / grips (0x00RRGGBB) with a live controller preview
- *   3. Connection         WebUSB popup; WLAN dongle PIN link/editor (only when session.caps.wlan;
+ *   3. Player             the player name (user.name; the User page before it moved here)
+ *   4. Connection         WebUSB popup; WLAN dongle PIN link/editor (only when session.caps.wlan;
  *                         the PIN setting itself is owned by the Wireless section)
- *   4. MAC address base   6 hex bytes; the first byte's LSB is forced even (hoja2's rule)
- *   5. Device             name, maker, firmware build
- *   6. Support            reboot into the bootloader (firmware update mode), behind a confirmation
+ *   5. MAC address base   6 hex bytes; the first byte's LSB is forced even (hoja2's rule)
+ * Device info and the bootloader reboot live on the Firmware & backup page; a line at the end links there.
  *
  * All writes go through session.commit('gamepad'): live on the controller, persisted by Save.
  */
-import { h, loadStyles } from '../../ui/dom.js';
-import { card, callout, field, button, badge, kv, infoTip, segmented } from '../../ui/controls.js';
-import { confirmDialog, toast } from '../../ui/overlay.js';
+import { h, loadStyles, fillNodes } from '../../ui/dom.js';
+import { card, callout, field, button, badge, infoTip, segmented } from '../../ui/controls.js';
+import { toast } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { t, N_ } from '../../i18n/index.js';
 import { settingField, refreshSettings } from '../../settings/field.js';
 import { getSetting } from '../../settings/schema.js';
-import { rebootToBootloaderOnly, formatFwVersion, cableOnlyNote } from '../../firmware/updater.js';
 import { DEFAULT_MODES, WIRED_MODES, WIRELESS_MODES, AUTO_MODE } from './settings.js';
 import { padPreview } from './pad-preview.js';
 import { openConnectGuide, modeCombo } from '../../app/connect-guide.js';
@@ -135,12 +134,16 @@ export function mount(root, { session, navigate }) {
   h('div.gp-colors', preview, h('div.gp-color-fields', colorRows)),
   h('div.gp-presets-wrap', h('div.gp-presets-label', t('Presets')), presetRow));
 
-  // ---- 3. Connection ---------------------------------------------------------------------------
+  // ---- 3. Player ------------------------------------------------------------------------------
+  const playerCard = card({ title: t('Player'), icon: 'user', tone: TONE },
+    settingField('user.name', { stacked: true, tone: TONE }));
+
+  // ---- 4. Connection ---------------------------------------------------------------------------
   const connCard = card({ title: t('Connection'), subtitle: t('How the controller introduces itself when you plug it in.'), icon: 'usb', tone: TONE },
     settingField('gamepad.webusbPopup', { tone: TONE }),
     session.caps.wlan && wlanPinRow(session, navigate));
 
-  // ---- 4. MAC address --------------------------------------------------------------------------
+  // ---- 5. MAC address --------------------------------------------------------------------------
   const macNote = h('div.field-desc.gp-mac-note', { 'aria-live': 'polite' });
   const mac = macEditor({
     value: cfg().gamepad_mac_address,
@@ -168,50 +171,12 @@ export function mount(root, { session, navigate }) {
   const macCard = card({ title: t('MAC address base'), subtitle: t('The hardware address used for USB and Bluetooth modes.'), icon: 'wireless', tone: TONE },
     macField, macNote);
 
-  // ---- 5. Device info --------------------------------------------------------------------------
-  const info = session.info;
-  const devCard = card({ title: t('Device'), subtitle: t('What this controller reports about itself.'), icon: 'info', tone: TONE },
-    kv([
-      [t('Device'), info.name || t('Unknown')],
-      info.maker && [t('Maker'), info.maker],
-      [t('Firmware build'), h('span.gp-build', formatFwVersion(info.fwVersion))],
-      info.manualUrl && [t('Manual'), h('a', { href: info.manualUrl, target: '_blank', rel: 'noopener' }, t('Open manual'), ' ', icon('external'))],
-    ]));
+  // Firmware updates, backups and the bootloader reboot have their own page.
+  const firmwareLink = h('p.small.muted.gp-firmware-link', fillNodes(t('Firmware updates, settings backups and recovery are on the {page} page.'), {
+    page: h('a', { href: '#/firmware' }, t('Firmware & backup')),
+  }));
 
-  // ---- 6. Support ------------------------------------------------------------------------------
-  const rebootBtn = button({
-    label: t('Reboot to bootloader'), icon: 'firmware', variant: 'danger',
-    onClick: async () => {
-      const ok = await confirmDialog({
-        title: t('Reboot into update mode?'),
-        message: t('The controller will disconnect and restart in its bootloader so new firmware can be installed. This app offers to install it when the controller reappears. Unsaved changes will be lost. Only do this if you are updating the firmware.'),
-        confirmLabel: t('Reboot'), danger: true,
-      });
-      if (!ok) return;
-      const reset = () => { if (rebootBtn.isConnected) { rebootBtn.disabled = false; rebootBtn.setLabel(t('Reboot to bootloader')); } };
-      rebootBtn.disabled = true;
-      rebootBtn.setLabel(t('Rebooting…'));
-      try {
-        await rebootToBootloaderOnly(); // the button already reads "Rebooting…"; no toast
-        // Normally the controller drops off and this page unmounts; re-arm the button if it didn't.
-        setTimeout(reset, 8000);
-      } catch (err) {
-        console.error(err);
-        toast(t('Couldn’t reboot the controller.'), { tone: 'red' });
-        reset();
-      }
-    },
-  });
-  // Without a USB cable the firmware refuses this: its bootloader can't be reached wirelessly.
-  rebootBtn.disabled = session.caps.viaWireless;
-  const supportCard = card({ title: t('Support options'), subtitle: t('For firmware updates and troubleshooting.'), icon: 'firmware', tone: TONE },
-    session.caps.viaWireless
-      ? callout({ tone: 'blue', icon: 'usb', text: cableOnlyNote() })
-      : callout({ tone: 'red', title: t('Warning.') },
-        t('Pressing the button below will reboot your controller into a firmware update mode. This is only necessary if you are updating the firmware.')),
-    h('div.row', rebootBtn));
-
-  root.append(modeCard, colorCard, h('div.card-grid', connCard, macCard, devCard, supportCard));
+  root.append(modeCard, colorCard, h('div.card-grid', playerCard, connCard, macCard), firmwareLink);
 
   // Re-read everything if the block is refreshed elsewhere (e.g. a deep link re-applied values).
   return {

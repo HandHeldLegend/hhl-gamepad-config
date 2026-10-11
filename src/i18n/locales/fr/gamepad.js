@@ -109,4 +109,5 @@ export default {
   "The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. WLAN joins your WLAN dongle and takes the mode it detects. Hold the WLAN button at power-on for the other one (Bluetooth or WLAN).": "Le mode au démarrage de la manette sur batterie (firmware avec des modes par défaut séparés). Auto se connecte à la première console ou au premier PC enregistré qui répond : Switch, puis Wii, puis PC. WLAN se connecte à votre dongle WLAN et prend le mode qu'il détecte. Maintenez le bouton WLAN à l'allumage pour utiliser l'autre (Bluetooth ou WLAN).",
   "Wireless default": "Par défaut sans fil",
   "To start in another mode just once, hold its button while you plug in or turn on the controller.": "Pour démarrer une seule fois dans un autre mode, maintenez son bouton enfoncé en branchant ou en allumant la manette.",
+  "Firmware updates, settings backups and recovery are on the {page} page.": "Les mises à jour du firmware, les sauvegardes des réglages et la récupération se trouvent sur la page {page}.",
 };

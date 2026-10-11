@@ -1,5 +1,8 @@
 /**
- * Firmware: update the connected controller, install HOJA on a blank board, and recovery tools.
+ * Firmware & backup, in three groups:
+ *   This controller   its firmware (update / reinstall, maker, manual), Backup & restore, and Recovery
+ *                     (reboot into the bootloader, restart out of it, manual UF2 downloads)
+ *   Other hardware    install HOJA on a blank board, the WLAN dongle, the wireless module in update mode
  *
  * The flashing itself lives in src/firmware/ (updater.js state machine + picoboot.js protocol);
  * this page is the friendly front door to it. Deep links: #/firmware?build=<id> preselects a build
@@ -8,10 +11,12 @@
 import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
 import { card, button, asyncButton, callout, kv, badge } from '../../ui/controls.js';
+import { confirmDialog, toast } from '../../ui/overlay.js';
 import { connectController } from '../../app/shell.js';
 import { listBuilds } from '../../firmware/builds.js';
 import {
   firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion, CABLE_UPDATE_TEXT, cableOnlyNote,
+  rebootToBootloaderOnly,
 } from '../../firmware/updater.js';
 import { t, N_ } from '../../i18n/index.js';
 import { openModuleUpdaterInUpdateMode } from '../wireless/module-updater.js';
@@ -38,6 +43,7 @@ function controllerCard(session) {
   const [label, tone] = STATUS_TEXT[s.state] || STATUS_TEXT.unknown;
   return card({ title: session.info.name, icon: 'firmware', tone: 'blue', subtitle: t('Firmware on this controller'), actions: badge(t(label), tone) },
     kv([
+      session.info.maker && [t('Maker'), session.info.maker],
       [t('Installed build'), formatFwVersion(session.info.fwVersion)],
       s.latest && [t('Latest build'), formatFwVersion(s.latest)],
       session.info.manualUrl && [t('Manual'), h('a', { href: session.info.manualUrl, target: '_blank', rel: 'noopener' }, t('Open manual'), ' ', icon('external'))],
@@ -76,10 +82,68 @@ function dongleInstallCard() {
     h('div.row', button({ label: t('Open installer'), icon: 'firmware', variant: 'tonal', onClick: () => openInstallWizard() })));
 }
 
-function recoveryCard() {
-  return card({ title: t('Recovery'), icon: 'warning', tone: 'red', subtitle: t('Only needed if something went wrong.') },
-    h('p.muted.small', t('Stuck in the bootloader after an interrupted update? Restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.', { fresh: t('Start fresh: erase everything first') })),
-    h('div.row', asyncButton({ label: t('Restart from bootloader'), icon: 'refresh', variant: 'tonal', busyLabel: t('Restarting…'), okLabel: t('Restarted'), run: exitBootloader })));
+/** Reboot the connected controller into its bootloader (update mode), after a confirmation. */
+function rebootButton(session) {
+  const btn = button({
+    label: t('Reboot to bootloader'), icon: 'firmware', variant: 'tonal',
+    // Without a USB cable the firmware refuses this: its bootloader can't be reached wirelessly.
+    disabled: !session.connected || session.caps.viaWireless,
+    onClick: async () => {
+      const ok = await confirmDialog({
+        title: t('Reboot into update mode?'),
+        message: t('The controller will disconnect and restart in its bootloader so new firmware can be installed. This app offers to install it when the controller reappears. Unsaved changes will be lost. Only do this if you are updating the firmware.'),
+        confirmLabel: t('Reboot'), danger: true,
+      });
+      if (!ok) return;
+      const reset = () => { if (btn.isConnected) { btn.disabled = false; btn.setLabel(t('Reboot to bootloader')); } };
+      btn.disabled = true;
+      btn.setLabel(t('Rebooting…'));
+      try {
+        await rebootToBootloaderOnly();
+        // Normally the controller drops off and the page re-renders; re-arm the button if it didn't.
+        setTimeout(reset, 8000);
+      } catch (err) {
+        console.error(err);
+        toast(t('Couldn’t reboot the controller.'), { tone: 'red' });
+        reset();
+      }
+    },
+  });
+  return btn;
+}
+
+/** Manual UF2 downloads, loaded the first time the list is opened. */
+function downloadsList() {
+  const list = h('div.build-list', h('span.muted.small', t('Loading…')));
+  const el = h('details.fw-downloads', h('summary', t('Manual downloads: UF2 files to copy onto the RPI-RP2 drive yourself')), list);
+  el.addEventListener('toggle', () => {
+    if (!el.open || el.dataset.loaded) return;
+    el.dataset.loaded = '1';
+    listBuilds().then(({ builds, offline }) => {
+      replace(list,
+        offline && callout({ tone: 'yellow', text: t('You’re offline. Downloads need an internet connection.') }),
+        h('div.build-grid', builds.map((b) => h('a.build-link', { href: b.uf2Url, download: '', rel: 'noopener' }, icon('download'), h('span', b.label)))));
+    });
+  });
+  return el;
+}
+
+function recoveryCard(session) {
+  const body = h('div.stack');
+  const render = () => body.replaceChildren(
+    h('div.fw-recovery-row',
+      h('div', h('div.field-label', t('Install firmware by hand')),
+        h('div.field-desc', session.caps.viaWireless ? cableOnlyNote() : t('Restarts the connected controller in update mode, to install firmware by hand.'))),
+      rebootButton(session)),
+    h('div.fw-recovery-row',
+      h('div', h('div.field-label', t('Stuck in the bootloader?')),
+        h('div.field-desc', t('After an interrupted update, restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.', { fresh: t('Start fresh: erase everything first') }))),
+      asyncButton({ label: t('Restart from bootloader'), icon: 'refresh', variant: 'tonal', busyLabel: t('Restarting…'), okLabel: t('Restarted'), run: exitBootloader })),
+    downloadsList());
+  render();
+  const el = card({ title: t('Recovery'), icon: 'warning', tone: 'red', subtitle: t('Only needed if something went wrong, or to install firmware by hand.') }, body);
+  el.refresh = render;
+  return el;
 }
 
 /**
@@ -92,16 +156,6 @@ function wirelessModuleCard(params) {
     h('div.row', button({ label: t('Update wireless module'), icon: 'download', variant: 'tonal', onClick: () => openModuleUpdaterInUpdateMode(params) })));
 }
 
-function downloadsCard() {
-  const list = h('div.build-list', h('span.muted.small', t('Loading…')));
-  listBuilds().then(({ builds, offline }) => {
-    replace(list,
-      offline && callout({ tone: 'yellow', text: t('You’re offline. Downloads need an internet connection.') }),
-      h('div.build-grid', builds.map((b) => h('a.build-link', { href: b.uf2Url, download: '', rel: 'noopener' }, icon('download'), h('span', b.label)))));
-  });
-  return card({ title: t('Manual downloads'), icon: 'download', tone: 'green', subtitle: t('UF2 files you can copy onto the RPI-RP2 drive yourself.') }, list);
-}
-
 export function mount(root, { session, params }) {
   // Old deep link: the changelog moved to its own page.
   if (params?.changes) { location.replace(`#/whats-new?changes=${encodeURIComponent(params.changes)}`); return; }
@@ -112,12 +166,25 @@ export function mount(root, { session, params }) {
       transition: background-color var(--dur-med); }
     .build-link:hover { background: var(--green-soft); color: var(--text); }
     .build-link .icon { color: var(--green); }
+    .fw-recovery-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+    .fw-recovery-row > div { flex: 1 1 18rem; min-width: 0; }
+    .fw-recovery-row + .fw-recovery-row { padding-top: var(--space-3); border-top: 1px solid var(--border); }
+    .fw-downloads { padding-top: var(--space-3); border-top: 1px solid var(--border); }
+    .fw-downloads summary { cursor: pointer; color: var(--text-muted); font-size: var(--text-sm); }
+    .fw-downloads .build-list { margin-top: var(--space-3); }
 `);
   const slot = h('div');
   const render = () => slot.replaceChildren(controllerCard(session));
   render();
   const backup = backupCard(session);
-  root.append(style, slot, backup, installCard(params), dongleInstallCard(), recoveryCard(), wirelessModuleCard(params), downloadsCard());
-  const offs = [session.on('firmware', render), session.on('state', render), session.on('state', () => backup.refresh()), backup.destroy];
+  const recovery = recoveryCard(session);
+  root.append(style,
+    h('h2.section-heading', t('This controller')), slot, backup, recovery,
+    h('h2.section-heading', t('Other hardware')),
+    h('div.card-grid', installCard(params), dongleInstallCard(), wirelessModuleCard(params)));
+  const offs = [
+    session.on('firmware', render), session.on('state', render),
+    session.on('state', () => { backup.refresh(); recovery.refresh(); }), backup.destroy,
+  ];
   return () => offs.forEach((f) => f());
 }

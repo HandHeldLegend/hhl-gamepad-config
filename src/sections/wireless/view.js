@@ -210,7 +210,8 @@ export function mount(root, ctx) {
 
   // Side by side on wide pages; the long regulatory text spans the full row.
   const connectedDongle = caps.viaDongle && session.dongle && dongleCard(session, { title: t('Connected dongle') });
-  root.append(h('div.card-grid', ...[chipCard, connectedDongle, firmwareCard, wlanCard, homeCard, hostsCard, fccCard].filter(Boolean)));
+  // What people come here for first (pairings, networks, the dongle), then the hardware behind it.
+  root.append(h('div.card-grid', ...[hostsCard, homeCard, wlanCard, connectedDongle, chipCard, firmwareCard, fccCard].filter(Boolean)));
 
   return {
     destroy() { alive = false; },

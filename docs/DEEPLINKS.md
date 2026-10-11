@@ -31,9 +31,8 @@ Add `?demo` before the `#` to try any page with a simulated controller, e.g. <ht
 | `#/haptics` | Haptics | Rumble strength, trigger haptics and a feedback test. | Controller + haptics | – |
 | `#/battery` | Battery | Battery, charger (PMIC) and fuel gauge status. | Controller + battery | – |
 | `#/wireless` | Wireless | Bluetooth pairing info, wireless module firmware and WLAN dongle settings. | Controller + wireless | `update`: Set to 1 to open the wireless module update dialog<br>`baud`: esptool baud rate override (default 115200) |
-| `#/gamepad` | Gamepad | Default mode, Switch body colors, MAC address and device info. | Controller | – |
-| `#/user` | User | Your player name stored on the controller. | Controller | – |
-| `#/firmware` | Firmware | Update firmware, install HOJA on a blank board, or recover a controller. | – | `build`: Build id to preselect for install (e.g. gcu_2, progcc_3.2) |
+| `#/gamepad` | Gamepad | Default mode, Switch body colors, player name and MAC address. | Controller | – |
+| `#/firmware` | Firmware & backup | Update firmware, back up settings, recover a controller, or set up other hardware. | – | `build`: Build id to preselect for install (e.g. gcu_2, progcc_3.2) |
 | `#/arena` | Arena | Gameplay testing arena: try your connected controller in a platform-fighter sandbox. | Controller | `tab`: play \| help<br>`mode`: free \| targets (help also opens that tab) |
 | `#/platformer` | 3D Platformer | Run, jump, long jump, ground pound and wall kick around a small 3D test course with your controller. | Controller | `tab`: play \| help |
 | `#/settings` | App settings | Theme (dark, light or system), motion, install and updates. | – | `theme`: dark \| light \| system |
@@ -172,11 +171,6 @@ colors (`#rrggbb` or `#rgb`; encode `#` as `%23` in hand-written links), text (U
 | `gamepad.leftGripColor` | Left grip color | hex color like #ff8800 | – | Left handle color as drawn by the Switch. |
 | `gamepad.rightGripColor` | Right grip color | hex color like #ff8800 | – | Right handle color as drawn by the Switch. |
 | `gamepad.webusbPopup` | WebUSB popup | on \| off | – | Show the browser’s “open the config app” notification when the controller is plugged in. |
-
-### User (`user`)
-
-| Key | Label | Values | Needs | Description |
-|---|---|---|---|---|
 | `user.name` | Player name | text, up to 24 bytes | – | Stored on the controller. Up to 24 characters. |
 
 ### Capability flags

@@ -47,8 +47,11 @@ export function getSetting(key) {
   return SETTINGS.find((d) => d.key === key);
 }
 
+/** The page a setting is shown on: its `section`, else its key's prefix ("rgb.mode" → rgb). */
+export const sectionOf = (def) => def.section || def.key.split('.')[0];
+
 export function settingsForSection(sectionId) {
-  return SETTINGS.filter((d) => d.key.startsWith(`${sectionId}.`));
+  return SETTINGS.filter((d) => sectionOf(d) === sectionId);
 }
 
 /**

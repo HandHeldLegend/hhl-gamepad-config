@@ -50,4 +50,12 @@ export default {
   "Earlier releases": "Versiones anteriores",
   "Update the dongle itself, not the controller.": "Actualiza el propio dongle, no el control.",
   "To update a WLAN dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W or Pico 2 W, hold BOOTSEL), then choose its firmware here.": "Para actualizar un dongle WLAN a mano, mantén pulsados los dos botones del dongle mientras lo conectas (en una Pico W o Pico 2 W, mantén pulsado BOOTSEL) y luego elige su firmware aquí.",
+  "Manual downloads: UF2 files to copy onto the RPI-RP2 drive yourself": "Descargas manuales: archivos UF2 para copiar tú mismo en la unidad RPI-RP2",
+  "Restarts the connected controller in update mode, to install firmware by hand.": "Reinicia el mando conectado en modo de actualización para instalar el firmware manualmente.",
+  "Only needed if something went wrong, or to install firmware by hand.": "Solo si algo ha fallado o para instalar el firmware manualmente.",
+  "This controller": "Este mando",
+  "Other hardware": "Otro hardware",
+  "Install firmware by hand": "Instalar el firmware manualmente",
+  "Stuck in the bootloader?": "¿Atascado en el bootloader?",
+  "After an interrupted update, restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.": "Tras una actualización interrumpida, reinícialo o reinstala desde el instalador. Si la placa sigue fallando después de reinstalar, vuelve a instalar y elige «{fresh}» para borrar antes todos los ajustes, calibraciones y emparejamientos.",
 };
