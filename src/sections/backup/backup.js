@@ -23,6 +23,7 @@ import { device } from '../../device/hoja-device.js';
 import { buildIdFromManifestUrl } from '../../firmware/changelog.js';
 import { loadVersion } from '../../app/pwa.js';
 import { t } from '../../i18n/index.js';
+import { OUTPUT_MODE } from '../input/mapping.js';
 
 export const BACKUP_FORMAT = 'hoja-config-backup';
 export const BACKUP_FORMAT_VERSION = 1;
@@ -59,10 +60,19 @@ const shortName = (full) => full.replace(/^.*?_CODE_/, '').replace(/^MAPPER_OUTP
 const names = (enumName) => new Map(enumValues(enumName).map((e) => [e.value, shortName(e.name)]));
 const values = (enumName) => new Map(enumValues(enumName).map((e) => [shortName(e.name), e.value]));
 
+/**
+ * A slot's output_mode is mapper.c's private mode enum (RAPID / THRESHOLD / PASSTHROUGH, mirrored as
+ * OUTPUT_MODE), not mapper_output_type_t. Backups made before this was fixed named the mode with the
+ * output-type names (DISABLED=0, DIGITAL=1, HOVER=2…); both enums start at 0, so those names still
+ * restore by their number.
+ */
+const MODE_NAMES = new Map(Object.entries(OUTPUT_MODE).map(([name, v]) => [v, name]));
+const modeValues = () => new Map([...values('mapper_output_type_t'), ...Object.entries(OUTPUT_MODE)]);
+
 function profileToNames(slots, outEnum) {
   const inputs = names('mapper_input_code_t');
   const outs = names(outEnum);
-  const modes = names('mapper_output_type_t');
+  const modes = MODE_NAMES;
   const out = {};
   slots.forEach((s, i) => {
     out[inputs.get(i) ?? `#${i}`] = {
@@ -172,7 +182,7 @@ function profileFromNames(inst, field, named, skipped, label) {
   const outEnum = outputEnumOf(field.name);
   const inputs = values('mapper_input_code_t');
   const outs = values(outEnum);
-  const modes = values('mapper_output_type_t');
+  const modes = modeValues();
   const slots = inst[field.name];
   for (const [inputName, s] of Object.entries(named || {})) {
     const i = inputs.get(inputName);
@@ -233,10 +243,12 @@ export async function planRestore(backup, session, { calibration = false } = {})
 
 /** Write the planned blocks to the controller and save them. Resolves with the save result. */
 export async function applyRestore(plan, session) {
-  for (const b of plan.blocks) {
+  // Every write must land before saving: a failed one (cable pulled) rejects, so the restore reports
+  // failure instead of "restored and saved".
+  await Promise.all(plan.blocks.map((b) => {
     session.config[b.key].buffer.set(b.next.buffer);
-    session.commit(b.key, { immediate: true });
-  }
+    return session.commit(b.key, { immediate: true });
+  }));
   const ok = await session.save();
   session.refreshAttention?.();
   return ok;
