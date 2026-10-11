@@ -618,7 +618,7 @@ export function mount(root, { session, params = {} }) {
         const last = getSku(station.sku);
         const pick = (x) => { setSku(x.id); continueAfterColors(session, x, x.label); };
         return big('palette', t('Which color is this unit?'), t('Check the shell color. It sets the colors the Switch shows for the controller.'),
-          last && button({ label: t('Continue with {sku}', { sku: last.label }), icon: 'check', variant: 'primary', size: 'lg', class: 'fac-pass-btn', onClick: () => pick(last) }),
+          last && button({ label: t('Continue with {sku}', { sku: last.label }), icon: 'check', variant: 'success', size: 'lg', class: 'fac-pass-btn', onClick: () => pick(last) }),
           h('div.fac-skus', COLOR_SKUS.map((x) => h('button.fac-sku-btn', { type: 'button', class: x.id === station.sku ? 'is-last' : null, onclick: () => pick(x) }, dots(x), x.label))));
       }
       case 'colors': return colorsView();
@@ -672,7 +672,7 @@ export function mount(root, { session, params = {} }) {
         h('div.fac-recents', recents.map((c) => h('button.fac-recent', { type: 'button', title: COLOR_PARTS.map(([, k]) => c[k].toUpperCase()).join(' · '), onclick: () => use(c) }, dots(c))))) : null,
       h('div.fac-colors-body', preview, h('div.fac-color-fields', fields.map((x) => x.row))),
       h('div.row.fac-actions',
-        button({ label: t('Use these colors'), icon: 'check', variant: 'primary', size: 'lg', class: 'fac-pass-btn', onClick: () => {
+        button({ label: t('Use these colors'), icon: 'check', variant: 'success', size: 'lg', class: 'fac-pass-btn', onClick: () => {
           addRecent({ ...cur });
           continueAfterColors(session, cur, t('Custom'));
         } })));
@@ -703,7 +703,7 @@ export function mount(root, { session, params = {} }) {
     stageCleanup = off; // the engine itself stays (redraws must not cancel a calibration)
     const fail = async () => { await cal.cancel(); dropStickCal(); setResult('sticks', N_('Stick calibration'), 'fail'); render(); };
     const actions = calibrating
-      ? [button({ label: t('Finish'), icon: 'check', variant: 'primary', size: 'lg', class: 'fac-pass-btn', onClick: async (e) => {
+      ? [button({ label: t('Finish'), icon: 'check', variant: 'success', size: 'lg', class: 'fac-pass-btn', onClick: async (e) => {
           e.currentTarget.disabled = true;
           const ok = await cal.finish();
           dropStickCal();
@@ -870,7 +870,7 @@ export function mount(root, { session, params = {} }) {
     const fccId = identityText(session.static.bluetooth?.fcc_id ?? new Uint8Array());
     const judge = (ok) => { setResult(which, label, ok ? 'pass' : 'fail', which === 'fcc-label' ? fccId : ''); render(); };
     const verdict = h('div.row.fac-actions',
-      button({ label: t('Pass'), icon: 'check', variant: 'primary', size: 'lg', class: 'fac-pass-btn', onClick: () => judge(true) }),
+      button({ label: t('Pass'), icon: 'check', variant: 'success', size: 'lg', class: 'fac-pass-btn', onClick: () => judge(true) }),
       button({ label: t('Fail'), icon: 'close', variant: 'danger', size: 'lg', onClick: () => judge(false) }),
       backButton(() => back('operator')));
     if (which === 'fcc-label') {
