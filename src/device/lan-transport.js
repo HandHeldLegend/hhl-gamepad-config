@@ -10,7 +10,12 @@
  *                   Refused (HTTP 409) when that gamepad isn't open; closes when the gamepad goes away.
  *
  * LanTransport puts that socket behind the part of the USBDevice interface hoja-device.js uses, so the
- * driver and the session work unchanged. It fires 'close' once the socket has closed. The firmware
+ * driver and the session work unchanged. It fires 'close' once the socket has closed.
+ *
+ * Keepalive: HHL Gamepad WLAN only notices that a gamepad went quiet (turned off, out of range) when
+ * this page next sends it something, and pages without a live view send nothing. So an empty message
+ * goes out every KEEPALIVE_MS: HHL Gamepad WLAN ignores it (nothing reaches the gamepad), but it wakes
+ * its loop, which closes the socket once the gamepad is gone, and this page disconnects. The firmware
  * refuses updates and the bootloader over this link, as through the WLAN dongle (session.caps.viaLan).
  *
  * Chromium browsers gate requests to this PC behind a Local Network Access permission: the first one
@@ -19,6 +24,9 @@
  */
 
 export const LAN_ORIGIN = 'http://127.0.0.1:51702';
+/** How often the keepalive goes out (see above). The gamepad counts as gone after ~3 s of silence. */
+const KEEPALIVE_MS = 1000;
+
 /** Where HHL Gamepad WLAN is downloaded (Windows). */
 export const LAN_APP_URL = 'https://github.com/HandHeldLegend/hhl-gamepad-wlan/releases/latest';
 
@@ -64,6 +72,7 @@ export class LanTransport extends EventTarget {
   #inbox = [];   // packets that arrived before anyone asked for them
   #waiting = []; // transferIn() calls waiting for a packet: { resolve, reject }
   #closed = false;
+  #keepalive = 0;
 
   /** @param {{id: string, name?: string, title?: string, mode?: string}} pad an entry from listLanPads() */
   constructor(pad) {
@@ -79,7 +88,12 @@ export class LanTransport extends EventTarget {
     return new Promise((resolve, reject) => {
       const socket = new WebSocket(`${LAN_ORIGIN.replace(/^http/, 'ws')}/pad/${encodeURIComponent(this.pad.id)}`);
       socket.binaryType = 'arraybuffer';
-      socket.onopen = () => resolve();
+      socket.onopen = () => {
+        this.#keepalive = setInterval(() => {
+          if (socket.readyState === WebSocket.OPEN) socket.send(new ArrayBuffer(0));
+        }, KEEPALIVE_MS);
+        resolve();
+      };
       socket.onmessage = (e) => this.#receive(e.data);
       // Before it opened this is the refusal; afterwards rejecting does nothing.
       socket.onclose = () => { reject(new Error('HHL Gamepad WLAN closed the connection')); this.#onClose(); };
@@ -120,6 +134,7 @@ export class LanTransport extends EventTarget {
   #onClose() {
     if (this.#closed) return;
     this.#closed = true;
+    clearInterval(this.#keepalive);
     // Tell the driver first, so its read loops see the disconnect when their reads fail.
     this.dispatchEvent(new Event('close'));
     for (const w of this.#waiting.splice(0)) w.reject(new Error('HHL Gamepad WLAN connection is closed'));
