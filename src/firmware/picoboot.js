@@ -450,6 +450,12 @@ export async function pico_complete_uf2_picker_flash() {
     return pico_write_uf2_via_picker(cachedUf2ForPicker);
 }
 
+/** Forget the staged UF2 (the updater calls this when its dialog closes). */
+export function pico_clear_cached_uf2() {
+    cachedUf2ForPicker = null;
+    cachedUf2Url = null;
+}
+
 export function pico_has_cached_uf2() {
     return !!cachedUf2ForPicker;
 }
@@ -480,6 +486,10 @@ function stageUf2Picker(uf2Data, uf2Url) {
  * @returns {Promise<boolean|{ needsUserAction: true, reason: string }>}
  */
 export async function pico_update_attempt_flash(url, checksum = null, options = {}) {
+    // A file staged by an earlier attempt belongs to that attempt (often a different image: the flash
+    // nuke before the firmware, or another build). Drop it, so a failed download here can never leave
+    // the drive step writing or saving the old bytes under this image's name.
+    pico_clear_cached_uf2();
     const allowRequestDevice = options.allowRequestDevice !== false;
     const uf2Only = options.uf2Only === true;
     const uf2Url = ensureUf2Url(url);
