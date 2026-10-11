@@ -7,10 +7,10 @@
  * triggers that prompt, so this is where it is explained first, and "Allow" makes the first request:
  *   not Windows   HHL Gamepad WLAN is a Windows app: a download link only, no permission query
  *   'prompt'      what the browser is about to ask and why, and an Allow button
- *   'denied'      where to turn it on (site settings), and Try again (a browser that can still ask, asks)
+ *   'denied'      the steps to allow it in the site settings (named the way this browser names the
+ *                 setting: Localhost access in Brave, which blocks without asking), and Check again
  *   'granted'     whether HHL Gamepad WLAN is running, with how many gamepads, or where to get it
- * The button is always there until it works: browsers report this permission inconsistently, so the
- * request itself is the real test. If it reached HHL Gamepad WLAN, the page shows it running.
+ * There is always a button: Allow, or Check again once the browser has said no.
  * The permission's change event repaints it (e.g. allowed or blocked from the site settings).
  */
 import { h } from '../../ui/dom.js';
@@ -55,14 +55,27 @@ export function pcAppSection() {
       : t('HHL Gamepad WLAN is running on this PC. No gamepads are open in it yet.')), h('div.wl-actions', again));
   }
 
-  // This request is what makes the browser ask. Reaching HHL Gamepad WLAN settles it; otherwise show
-  // whatever the browser now reports, as blocked once it has been tried.
+  // This request is what makes the browser ask; then show whatever was decided. A browser that still
+  // says "prompt" after it (the question was dismissed) gets the same steps as a blocked one.
   let tried = false;
   async function ask() {
-    const pads = await listLanPads().catch(() => null);
+    await listLanPads().catch(() => {});
     tried = true;
-    refresh();
-    return pads;
+    await refresh();
+  }
+
+  /** How to allow it by hand, in this browser's words. */
+  function blockedSteps() {
+    const brave = !!navigator.brave; // Brave calls the setting Localhost access and never asks for it
+    return [
+      text(brave
+        ? t('Brave blocks this page from reaching apps on this PC until you allow it:')
+        : t('Your browser blocked this page from reaching apps on this PC. To allow it:')),
+      h('ol.small.muted.wl-pc-steps',
+        h('li', t('Click the icon to the left of the web address.')),
+        h('li', t('Open Site settings.')),
+        h('li', brave ? t('Set Localhost access to Allow.') : t('Set Local network access to Allow.'))),
+    ];
   }
 
   async function refresh() {
@@ -74,12 +87,10 @@ export function pcAppSection() {
     }
     if (state === 'granted') return running();
     if (state === 'denied' || tried) {
-      show(
-        // Brave names this setting differently and asks through it instead of Local network access.
-        text(navigator.brave
-          ? t('This page can’t reach apps on this PC yet. If your browser asks, choose Allow. If it doesn’t, open the site settings (the icon next to the address) and allow Localhost access, then try again. HHL Gamepad WLAN must be running too.')
-          : t('This page can’t reach apps on this PC yet. If your browser asks, choose Allow. If it doesn’t, open the site settings (the icon next to the address) and allow Local network access, then try again. HHL Gamepad WLAN must be running too.')),
-        h('div.wl-actions', asyncButton({ label: t('Try again'), icon: 'refresh', variant: 'tonal', size: 'sm', run: ask }), downloadLink()));
+      // The permission's change event repaints this as soon as it is allowed; Check again covers
+      // browsers that don't fire it.
+      show(...blockedSteps(),
+        h('div.wl-actions', asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'tonal', size: 'sm', run: ask })));
       return;
     }
     show(

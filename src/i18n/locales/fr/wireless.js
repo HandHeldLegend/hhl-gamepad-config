@@ -202,6 +202,10 @@ export default {
   "HHL Gamepad WLAN for Windows": "HHL Gamepad WLAN pour Windows",
   "Play on your PC over this network, no dongle needed: games and Steam see the controller as if it were plugged in. While the app runs, this page can also configure the controller without a cable.": "Jouez sur votre PC via ce réseau, sans dongle : les jeux et Steam voient la manette comme si elle était branchée. Tant que l’application tourne, cette page peut aussi configurer la manette sans câble.",
   "To find HHL Gamepad WLAN, this page needs your browser’s permission to reach apps on this PC. The connection stays on your PC; nothing is sent to the internet.": "Pour trouver HHL Gamepad WLAN, cette page a besoin de l’autorisation du navigateur pour joindre les applications de ce PC. La connexion reste sur votre PC ; rien n’est envoyé sur internet.",
-  "This page can’t reach apps on this PC yet. If your browser asks, choose Allow. If it doesn’t, open the site settings (the icon next to the address) and allow Local network access, then try again. HHL Gamepad WLAN must be running too.": "Cette page ne peut pas encore joindre les applications de ce PC. Si le navigateur le demande, choisissez Autoriser. Sinon, ouvrez les paramètres du site (l’icône à côté de l’adresse), autorisez l’accès au réseau local, puis réessayez. HHL Gamepad WLAN doit aussi être lancé.",
-  "This page can’t reach apps on this PC yet. If your browser asks, choose Allow. If it doesn’t, open the site settings (the icon next to the address) and allow Localhost access, then try again. HHL Gamepad WLAN must be running too.": "Cette page ne peut pas encore joindre les applications de ce PC. Si le navigateur le demande, choisissez Autoriser. Sinon, ouvrez les paramètres du site (l’icône à côté de l’adresse), autorisez l’accès à localhost, puis réessayez. HHL Gamepad WLAN doit aussi être lancé.",
+  "Brave blocks this page from reaching apps on this PC until you allow it:": "Brave empêche cette page de joindre les applications de ce PC tant que vous ne l’autorisez pas :",
+  "Your browser blocked this page from reaching apps on this PC. To allow it:": "Votre navigateur a empêché cette page de joindre les applications de ce PC. Pour l’autoriser :",
+  "Click the icon to the left of the web address.": "Cliquez sur l’icône à gauche de l’adresse web.",
+  "Open Site settings.": "Ouvrez Paramètres des sites.",
+  "Set Localhost access to Allow.": "Réglez Accès à localhost sur Autoriser.",
+  "Set Local network access to Allow.": "Réglez Accès au réseau local sur Autoriser.",
 };
