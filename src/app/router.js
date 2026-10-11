@@ -12,11 +12,14 @@
 
 /** @typedef {{ section: string, sub: string[], params: Record<string,string>, raw: string }} Route */
 
+/** decodeURIComponent that keeps a malformed escape ("%E0", a link cut off after "%") as typed. */
+const decode = (s) => { try { return decodeURIComponent(s); } catch { return s; } };
+
 /** Parse a hash like "#/joysticks/left?tab=calibrate". */
 export function parseRoute(hash = location.hash) {
   const raw = hash.replace(/^#\/?/, '');
   const [path, query = ''] = raw.split('?');
-  const parts = path.split('/').filter(Boolean).map(decodeURIComponent);
+  const parts = path.split('/').filter(Boolean).map(decode);
   const params = Object.fromEntries(new URLSearchParams(query));
   return { section: parts[0] || 'home', sub: parts.slice(1), params, raw };
 }
