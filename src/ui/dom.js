@@ -26,6 +26,8 @@ export function h(tag, props, ...children) {
 
   if (props) {
     for (const [key, value] of Object.entries(props)) {
+      // spellcheck: false must reach the element (its default is on); other false values are skipped.
+      if (key === 'spellcheck') { if (value != null) el.spellcheck = !!value; continue; }
       if (value == null || value === false) continue;
       if (key === 'class' || key === 'className') {
         for (const c of [].concat(value).join(' ').split(/\s+/)) if (c) el.classList.add(c);
