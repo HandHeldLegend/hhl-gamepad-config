@@ -11,12 +11,15 @@
  * form, with KEEP_PASSWORD while the password box is left empty, so a saved password survives a name
  * or on/off change. Never send this block as read: that would erase the saved password. Like every
  * block, the change is live at once and Save keeps it.
+ *
+ * Below the form, "Use from this PC" (pc-app.js) says whether HHL Gamepad WLAN can be reached from here.
  */
 import { h, loadStyles } from '../../ui/dom.js';
 import { card, badge, field, toggle, textInput, button, asyncButton } from '../../ui/controls.js';
 import { confirmDialog, toast } from '../../ui/overlay.js';
 import { encodeText, fwDefine } from '../../device/struct.js';
 import { ssidText, ssidProblem, passwordProblem } from './info.js';
+import { pcAppSection } from './pc-app.js';
 import { t } from '../../i18n/index.js';
 
 loadStyles(new URL('./wireless.css', import.meta.url));
@@ -127,7 +130,8 @@ export function homeWlanCard(session) {
   problem,
   h('div.wl-actions',
     asyncButton({ label: t('Use this network'), icon: 'check', variant: 'tonal', run: apply }),
-    forgetBtn));
+    forgetBtn),
+  pcAppSection());
 
   paint();
   return el;
