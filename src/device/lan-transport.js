@@ -13,10 +13,37 @@
  * driver and the session work unchanged. It fires 'close' once the socket has closed. The firmware
  * refuses updates and the bootloader over this link, as through the WLAN dongle (session.caps.viaLan).
  *
- * The first request may make the browser ask to allow access to devices on the local network.
+ * Chromium browsers gate requests to this PC behind a Local Network Access permission: the first one
+ * asks ("access other apps and services on this device"). Connect only asks HHL Gamepad WLAN once
+ * lanPermission() is 'granted'; the Home WLAN card explains the prompt and makes that first request.
  */
 
 export const LAN_ORIGIN = 'http://127.0.0.1:51702';
+/** Where HHL Gamepad WLAN is downloaded (Windows). */
+export const LAN_APP_URL = 'https://github.com/HandHeldLegend/hhl-gamepad-wlan/releases/latest';
+
+/**
+ * Chromium's permission names for requests to this PC: newer versions split Local Network Access into
+ * 'loopback-network' (this PC, what we need) and 'local-network'; earlier ones had one 'local-network-access'.
+ */
+const LAN_PERMISSIONS = ['loopback-network', 'local-network-access'];
+
+/**
+ * May this page talk to HHL Gamepad WLAN without a browser prompt?
+ * Resolves { state: 'granted' | 'prompt' | 'denied', status } (status: the PermissionStatus to watch for
+ * changes, or null). Browsers that know neither permission don't gate this PC: 'granted'. Neither do
+ * they gate a page that is itself served from this PC (the dev server), whatever the query says.
+ */
+export async function lanPermission() {
+  if (['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) return { state: 'granted', status: null };
+  for (const name of LAN_PERMISSIONS) {
+    try {
+      const status = await navigator.permissions.query({ name });
+      return { state: status.state, status };
+    } catch { /* not a permission this browser knows */ }
+  }
+  return { state: 'granted', status: null };
+}
 
 /**
  * The gamepads HHL Gamepad WLAN has open on this PC. Rejects when HHL Gamepad WLAN can't be reached, or hasn't answered

@@ -21,7 +21,7 @@ import { toast, confirmDialog, openDialog } from '../ui/overlay.js';
 import { SECTIONS, GROUPS, getSection } from '../sections/registry.js';
 import { session } from '../device/session.js';
 import { device, USB_FILTERS, OPTIONAL_BLOCKS } from '../device/hoja-device.js';
-import { listLanPads } from '../device/lan-transport.js';
+import { listLanPads, lanPermission } from '../device/lan-transport.js';
 import { isDemo, startDemo } from '../device/mock.js';
 import { onRoute, currentRoute, navigate, setParams } from './router.js';
 import { prefs } from './prefs.js';
@@ -121,10 +121,12 @@ async function knownUsbDevices() {
 
 /**
  * Gamepads HHL Gamepad WLAN has open on this PC, or [] when it isn't running, has none, or doesn't answer in
- * time. Only on Windows (HHL Gamepad WLAN is a Windows app); a pending local network prompt counts as no answer.
+ * time. Only on Windows (HHL Gamepad WLAN is a Windows app), and only once the browser allows this page to
+ * reach it: Connect never triggers the local network prompt (the Home WLAN card asks for it).
  */
 async function lanPadsQuickly() {
   if (!isWindows() || isDemo()) return [];
+  if ((await lanPermission()).state !== 'granted') return [];
   return listLanPads({ timeout: LAN_CHECK_MS }).catch(() => []);
 }
 
