@@ -226,7 +226,7 @@ export function mount(root, { session, navigate }) {
 
 /**
  * Grid of radio tiles for the output modes this controller has (more readable than a 7-way segmented control).
- * Each tile leads with the button that boots that mode, in the connected controller's own glyphs.
+ * Each tile shows the mode name with the button that boots that mode on its right, in the controller's own glyphs.
  * @param {{session: object, modes: Array, value: number, onChange: (v: number) => void}} o
  */
 function modeTiles(o) {
@@ -236,7 +236,7 @@ function modeTiles(o) {
     type: 'button', role: 'radio', 'aria-checked': 'false', dataset: { value: m.value },
     onclick: () => select(m.value, true),
   },
-  h('span.gp-mode-top', modeCombo(o.session, m.label, 22), h('span.gp-mode-name', m.label),
+  h('span.gp-mode-top', h('span.gp-mode-name', m.label), modeCombo(o.session, m.label, 22),
     h('span.gp-mode-check', icon('check'))),
   APP_MODES.has(m.label) && h('span.gp-mode-tags', badge(t('Config app'), 'green'))));
   const el = h('div.gp-modes', { role: 'radiogroup', 'aria-label': t('Default mode') }, tiles);
