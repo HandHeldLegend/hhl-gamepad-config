@@ -69,7 +69,8 @@
   box-shadow: 0 0 0 0 var(--yellow-soft);
   animation: pip 2.2s ease-in-out infinite;
 }
-@keyframes pip { 0%,100% { box-shadow: 0 0 0 0 rgb(247 193 64 / 0.0); } 50% { box-shadow: 0 0 0 5px rgb(247 193 64 / 0.25); } }
+/* Glow in the theme's own yellow (it differs between dark and light), like @keyframes live below. */
+@keyframes pip { 0%,100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--yellow) 25%, transparent); } }
 
 /* ---- Spinner & SFC loader ------------------------------------------------------------- */
 .spinner {

@@ -20,7 +20,7 @@
 .fac-stage { min-height: 420px; display: grid; padding: var(--space-5); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
 
 .fac-big { display: grid; justify-items: center; align-content: center; gap: var(--space-3); text-align: center; }
-.fac-big h2 { margin: 0; font-size: var(--text-xl, 1.6rem); }
+.fac-big h2 { margin: 0; font-size: var(--text-xl); }
 .fac-big p { margin: 0; max-width: 46ch; }
 .fac-big .progress { width: min(520px, 100%); }
 .fac-big-icon { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: var(--green-soft); color: var(--green); }
@@ -35,7 +35,7 @@
 
 .fac-list { display: grid; gap: 2px; padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
 .fac-list-head { display: flex; justify-content: space-between; gap: var(--space-2); font-weight: 700; padding: 0 var(--space-1) var(--space-2); }
-.fac-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2px var(--space-2); padding: 6px var(--space-1); font-size: var(--text-sm); border-radius: var(--radius-sm, 6px); }
+.fac-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2px var(--space-2); padding: 6px var(--space-1); font-size: var(--text-sm); border-radius: var(--radius-sm); }
 .fac-row .badge { grid-column: 3; grid-row: 1; }
 .fac-row-icon .icon { width: 16px; height: 16px; }
 .fac-row.is-pass .fac-row-icon { color: var(--green); }
@@ -70,7 +70,7 @@
 
 /* Stick calibration: both sticks side by side */
 .fac-cal { display: grid; justify-items: center; align-content: center; gap: var(--space-3); text-align: center; }
-.fac-cal h2 { margin: 0; font-size: var(--text-xl, 1.6rem); }
+.fac-cal h2 { margin: 0; font-size: var(--text-xl); }
 .fac-cal p { margin: 0; max-width: 56ch; }
 .fac-cal-sticks { display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 260px)); justify-content: center; gap: var(--space-5); width: 100%; }
 .fac-cal-sticks .cal-stick { min-width: 0; }
