@@ -118,6 +118,6 @@ export function mount(root, { session, params }) {
   render();
   const backup = backupCard(session);
   root.append(style, slot, backup, installCard(params), dongleInstallCard(), recoveryCard(), wirelessModuleCard(params), downloadsCard());
-  const offs = [session.on('firmware', render), session.on('state', render), session.on('state', () => backup.refresh())];
+  const offs = [session.on('firmware', render), session.on('state', render), session.on('state', () => backup.refresh()), backup.destroy];
   return () => offs.forEach((f) => f());
 }
