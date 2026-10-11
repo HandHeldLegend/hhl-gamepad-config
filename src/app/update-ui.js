@@ -3,14 +3,16 @@
  *
  * First visit: a small card shows "Saving for offline use… 42%" and then "Ready to work offline".
  * New version: "Downloading update…" with a progress bar, then "Update ready: Restart".
- * Updates apply automatically when no controller is connected; otherwise they wait for Restart so a
- * configuration session is never interrupted.
+ * Updates apply automatically only when nothing is going on (see idle()); otherwise they wait for
+ * Restart so a configuration session or a firmware write is never interrupted.
  */
 import { h } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
 import { button, progressBar } from '../ui/controls.js';
 import { pwa } from './pwa.js';
 import { session } from '../device/session.js';
+import { currentRoute } from './router.js';
+import { getSection } from '../sections/registry.js';
 import { t, plural, fmt } from '../i18n/index.js';
 
 let card = null;
@@ -40,6 +42,16 @@ function close() {
   setTimeout(() => el.remove(), 250);
 }
 
+/**
+ * Safe to reload without asking: no controller (not even connecting), no unsaved changes, no dialog
+ * open, and not on a page that runs its own connections (the factory station). A firmware write
+ * counts as "no controller" because the controller is in its bootloader, but its dialog is open.
+ */
+function idle() {
+  return session.state === 'disconnected' && !session.dirty.size
+    && !document.querySelector('dialog[open]') && !getSection(currentRoute().section)?.stable;
+}
+
 export function initUpdateUi() {
   pwa.on('update', (e) => {
     if (e.state === 'downloading') {
@@ -52,7 +64,7 @@ export function initUpdateUi() {
     } else if (e.state === 'ready') {
       // Nothing to lose (no controller session, no unsaved changes): apply right away so nobody keeps
       // running a stale cached version. Otherwise ask, so a configuration session is never interrupted.
-      if (!session.connected && !session.dirty.size) { pwa.applyUpdate(); return; }
+      if (idle()) { pwa.applyUpdate(); return; }
       const c = ensureCard();
       c.title.textContent = t('Update ready');
       c.bar.set(100, session.dirty.size ? t('Save your controller changes first, then restart.') : t('Restart to use the new version.'));
@@ -60,6 +72,8 @@ export function initUpdateUi() {
       c.actions.replaceChildren(
         button({ label: t('Later'), variant: 'ghost', size: 'sm', onClick: close }),
         button({ label: t('Restart'), icon: 'refresh', variant: 'primary', size: 'sm', onClick: () => pwa.applyUpdate() }));
+    } else if (e.state === 'failed') {
+      close(); // the browser retries the update later; the current version keeps working
     }
   });
 

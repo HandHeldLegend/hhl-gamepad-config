@@ -127,9 +127,11 @@
 }
 .nav-link .nav-icon .icon { width: 17px; height: 17px; }
 .nav-link[aria-current] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-1); }
-.nav-link[aria-current] .nav-icon { background: var(--tone); color: #fff; transform: scale(1.04); }
+.nav-link[aria-current] .nav-icon { background: var(--tone); color: var(--tone-on, #fff); transform: scale(1.04); }
 .nav-link.disabled { opacity: 0.4; }
 .nav-link.waiting .nav-label { opacity: 0.75; }
+/* The current link's shadow outranks the global focus ring; keep both. */
+.nav-link[aria-current]:focus-visible { box-shadow: var(--focus-ring), var(--shadow-1); }
 /* Label + optional BETA pill stay on one line; a long (translated) name ellipsizes instead of wrapping. */
 .nav-label { flex: 1; min-width: 0; display: flex; align-items: center; white-space: nowrap; }
 .nav-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -204,6 +206,7 @@
 }
 .tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); border-color: color-mix(in srgb, var(--tone) 40%, var(--border)); color: var(--text); }
 .tile:active { transform: translateY(0) scale(0.99); }
+.tile:focus-visible { box-shadow: var(--focus-ring), var(--shadow-1); }
 .tile .tile-title { font-weight: 700; font-family: var(--font-display); }
 .tile .tile-sub { color: var(--text-muted); font-size: var(--text-sm); line-height: 1.4; }
 .tile.disabled { opacity: 0.45; pointer-events: none; }
