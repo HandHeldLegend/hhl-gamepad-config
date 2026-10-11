@@ -178,7 +178,10 @@ export default {
   "HHL Gamepad WLAN is running on this PC with {n} gamepad open.": "HHL Gamepad WLAN 正在此电脑上运行，已打开 {n} 个手柄。",
   "HHL Gamepad WLAN is running on this PC with {n} gamepads open.": "HHL Gamepad WLAN 正在此电脑上运行，已打开 {n} 个手柄。",
   "HHL Gamepad WLAN is running on this PC. No gamepads are open in it yet.": "HHL Gamepad WLAN 正在此电脑上运行，尚未打开任何手柄。",
-  "This page isn’t allowed to reach apps on this PC. To use HHL Gamepad WLAN, open the site settings (the icon next to the address) and allow Local network access, then reload.": "此页面不允许访问此电脑上的应用。要使用 HHL Gamepad WLAN，请打开网站设置（地址旁的图标），允许本地网络访问，然后重新加载页面。",
-  "To configure this controller over WLAN, this page connects to HHL Gamepad WLAN, an app on this PC. Your browser will ask to let it access other apps and services on this device. That’s this connection: it stays on your PC, and nothing is sent to the internet.": "为了通过 WLAN 设置此手柄，此页面会连接到此电脑上的应用 HHL Gamepad WLAN。浏览器会请求允许访问此设备上的其他应用和服务。这就是指这个连接：它只在你的电脑上进行，不会向互联网发送任何内容。",
   "Allow": "允许",
+  "HHL Gamepad WLAN for Windows": "适用于 Windows 的 HHL Gamepad WLAN",
+  "Play on your PC over this network, no dongle needed: games and Steam see the controller as if it were plugged in. While the app runs, this page can also configure the controller without a cable.": "通过此网络在电脑上游玩，无需接收器：游戏和 Steam 会把手柄识别为有线连接的手柄。应用运行时，此页面还可以无线配置手柄。",
+  "To find HHL Gamepad WLAN, this page needs your browser’s permission to reach apps on this PC. The connection stays on your PC; nothing is sent to the internet.": "要找到 HHL Gamepad WLAN，此页面需要浏览器允许它连接这台电脑上的应用。连接只在你的电脑内进行，不会向互联网发送任何内容。",
+  "This page can’t reach apps on this PC yet. If your browser asks, choose Allow. If it doesn’t, open the site settings (the icon next to the address) and allow Local network access, then try again. HHL Gamepad WLAN must be running too.": "此页面暂时无法连接这台电脑上的应用。如果浏览器询问，请选择允许。如果没有询问，请打开网站设置（地址旁边的图标），允许本地网络访问，然后重试。HHL Gamepad WLAN 也必须在运行。",
+  "This page can’t reach apps on this PC yet. If your browser asks, choose Allow. If it doesn’t, open the site settings (the icon next to the address) and allow Localhost access, then try again. HHL Gamepad WLAN must be running too.": "此页面暂时无法连接这台电脑上的应用。如果浏览器询问，请选择允许。如果没有询问，请打开网站设置（地址旁边的图标），允许 Localhost 访问，然后重试。HHL Gamepad WLAN 也必须在运行。",
 };

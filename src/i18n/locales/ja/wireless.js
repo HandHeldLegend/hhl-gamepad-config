@@ -201,7 +201,10 @@ export default {
   "HHL Gamepad WLAN is running on this PC with {n} gamepad open.": "このPCでHHL Gamepad WLANが起動中で、{n}台のゲームパッドが開かれています。",
   "HHL Gamepad WLAN is running on this PC with {n} gamepads open.": "このPCでHHL Gamepad WLANが起動中で、{n}台のゲームパッドが開かれています。",
   "HHL Gamepad WLAN is running on this PC. No gamepads are open in it yet.": "このPCでHHL Gamepad WLANが起動中です。まだゲームパッドは開かれていません。",
-  "This page isn’t allowed to reach apps on this PC. To use HHL Gamepad WLAN, open the site settings (the icon next to the address) and allow Local network access, then reload.": "このページはこのPCのアプリへのアクセスが許可されていません。HHL Gamepad WLANを使うには、サイトの設定（アドレスの横のアイコン）を開いてローカルネットワークへのアクセスを許可し、ページを再読み込みしてください。",
-  "To configure this controller over WLAN, this page connects to HHL Gamepad WLAN, an app on this PC. Your browser will ask to let it access other apps and services on this device. That’s this connection: it stays on your PC, and nothing is sent to the internet.": "WLAN経由でこのコントローラーを設定するため、このページはこのPCのアプリ「HHL Gamepad WLAN」に接続します。ブラウザーから、このデバイス上の他のアプリやサービスへのアクセス許可を求められます。これはこの接続のことで、通信はPC内だけで行われ、インターネットには何も送信されません。",
   "Allow": "許可",
+  "HHL Gamepad WLAN for Windows": "Windows 用 HHL Gamepad WLAN",
+  "Play on your PC over this network, no dongle needed: games and Steam see the controller as if it were plugged in. While the app runs, this page can also configure the controller without a cable.": "このネットワーク経由でPCでプレイできます。ドングルは不要で、ゲームや Steam からは有線接続のコントローラーとして認識されます。アプリの起動中は、このページからケーブルなしでコントローラーを設定することもできます。",
+  "To find HHL Gamepad WLAN, this page needs your browser’s permission to reach apps on this PC. The connection stays on your PC; nothing is sent to the internet.": "HHL Gamepad WLAN を見つけるには、このPCのアプリに接続するためのブラウザーの許可が必要です。接続はPC内だけで行われ、インターネットには何も送信されません。",
+  "This page can’t reach apps on this PC yet. If your browser asks, choose Allow. If it doesn’t, open the site settings (the icon next to the address) and allow Local network access, then try again. HHL Gamepad WLAN must be running too.": "このページはまだこのPCのアプリに接続できません。ブラウザーに確認されたら「許可」を選んでください。確認されない場合は、サイトの設定（アドレスの横のアイコン）を開いてローカルネットワークへのアクセスを許可し、もう一度お試しください。HHL Gamepad WLAN も起動している必要があります。",
+  "This page can’t reach apps on this PC yet. If your browser asks, choose Allow. If it doesn’t, open the site settings (the icon next to the address) and allow Localhost access, then try again. HHL Gamepad WLAN must be running too.": "このページはまだこのPCのアプリに接続できません。ブラウザーに確認されたら「許可」を選んでください。確認されない場合は、サイトの設定（アドレスの横のアイコン）を開いて Localhost へのアクセスを許可し、もう一度お試しください。HHL Gamepad WLAN も起動している必要があります。",
 };
