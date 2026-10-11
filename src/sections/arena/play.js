@@ -60,7 +60,7 @@ export function renderPlay(panel, app) {
     style: { '--f-body': `var(--${CSS_TOKEN[f.look.body] || f.look.body})`, '--f-band': `var(--${CSS_TOKEN[f.look.band] || f.look.band})` },
     onclick: () => chooseFighter(f.id, true),
   }, h('span.arena-fighter-dot', { 'aria-hidden': 'true' }), h('span.arena-fighter-name', f.name), h('span.arena-fighter-feel', t(f.feel))));
-  const picker = h('div.arena-fighters', {
+  const picker = h('div.arena-fighters.scroll-fade', {
     role: 'radiogroup', 'aria-label': t('Fighter'),
     onkeydown: (e) => {
       const i = FIGHTERS.findIndex((f) => f.id === game.fighter.profile.id);
