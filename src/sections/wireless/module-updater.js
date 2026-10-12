@@ -356,6 +356,15 @@ async function connectAndInstall() {
     log(t('Error: {message}', { message: err?.message || err }));
     // Picker closed without a choice isn't a failed connection; anything else offers the other method.
     if (err?.name !== 'NotFoundError') run.connectFailed = true;
+    // Every reset restarted the module normally, never into its update mode: this PC changes the reset
+    // lines too slowly for the board (Windows with some AMD USB controllers). Retrying won't help.
+    const boots = run.flasher.bootStats;
+    if (run.transport === 'serial' && !isLinux() && boots?.normal > 0 && !boots.download) {
+      log(`Diagnosis: the module restarted normally after ${boots.normal} reset(s) and never entered download mode (boot:0x13). This PC applies DTR/RTS too far apart for the board's reset circuit.`);
+      showConnect(t('This PC can’t start the wireless module’s update mode: the module restarts normally instead. This happens on some PCs, often with AMD processors, and trying again won’t change it.'),
+        t('Update from an Android phone or tablet in Chrome, from a Mac or Linux PC (offline updater below), or from another Windows PC.'));
+      return;
+    }
     showConnect(errorText(err), run.connectFailed && isLinux() && run.transport === 'serial'
       ? t('On Linux, the serial route can’t start the update on some controllers. Choose USB above and follow its steps.')
       : null);

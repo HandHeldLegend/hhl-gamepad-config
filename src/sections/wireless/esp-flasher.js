@@ -116,15 +116,22 @@ function tightSignals(transport, port) {
  * Limit esptool's post-reset "read until quiet" loop (see BOOT_DRAIN_MAX_MS). A reset is a DTR/RTS
  * change; the loop ends at the next write (the first sync). In between, reads time out once the cap
  * has passed, exactly as if the line had gone quiet.
+ *
+ * `stats` counts how the module came up after each reset, from the ROM's boot line: `download`
+ * ("boot:0x3", the ROM loader) or `normal` ("boot:0x13", its own firmware). Only normal boots means
+ * the reset worked but IO0 wasn't low when EN released: the PC applied DTR and RTS too far apart for
+ * the board's auto-reset circuit (seen on Windows PCs with AMD USB controllers; see #/diagnostics).
  */
-function capBootDrain(transport) {
+function capBootDrain(transport, stats = { normal: 0, download: 0 }) {
   let since = 0;
   // Diagnostics for Details: what the module printed after each reset, and whether syncs got replies.
-  let boot = { bytes: 0, sample: '' };
+  let boot = { bytes: 0, sample: '', text: '' };
   let replies = -1; // -1 until the first reset (nothing to report before it)
   const report = () => {
     if (since || boot.bytes) console.log(`Boot output after reset: ${boot.bytes} bytes${boot.bytes ? ` · ${boot.sample}` : ''}`);
-    boot = { bytes: 0, sample: '' };
+    if (/waiting for download|boot:0x(3|23)\b/i.test(boot.text)) stats.download++;
+    else if (/boot:0x[0-9a-f]+/i.test(boot.text)) stats.normal++;
+    boot = { bytes: 0, sample: '', text: '' };
   };
   const ascii = (d) => Array.from(d, (b) => (b >= 32 && b < 127 ? String.fromCharCode(b) : b === 10 ? '⏎' : '·')).join('');
   const onReset = () => {
@@ -140,7 +147,11 @@ function capBootDrain(transport) {
     if (since && Date.now() - since > BOOT_DRAIN_MAX_MS) { report(); since = 0; return Promise.reject(new Error('Timeout')); }
     return orig(...a).then((d) => {
       if (d?.length) {
-        if (since) { boot.bytes += d.length; if (boot.sample.length < 120) boot.sample += ascii(d); } else replies += d.length;
+        if (since) {
+          boot.bytes += d.length;
+          if (boot.sample.length < 120) boot.sample += ascii(d);
+          if (boot.text.length < 4000) boot.text += ascii(d);
+        } else replies += d.length;
       }
       return d;
     });
@@ -270,7 +281,9 @@ export class EspFlasher {
     this.kind = kind;
     this.transport = new Transport(this.port, TRACE, false);
     tightSignals(this.transport, this.port);
-    capBootDrain(this.transport);
+    /** How the module came up after each reset in this connect (see capBootDrain). */
+    this.bootStats = { normal: 0, download: 0 };
+    capBootDrain(this.transport, this.bootStats);
     // Same options as the standalone updater. Note enableTracing overrides the Transport's tracing flag
     // (it did in the standalone updater too). Over WebUSB, esptool's debug log goes to Details for diagnosis.
     // esptool's debug lines (resets, sync attempts) go to Details on every route, for support logs.

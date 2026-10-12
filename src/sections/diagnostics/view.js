@@ -3,6 +3,8 @@
  * (ESP32) update won't connect. Linked from the update dialog's Details, Help & about and the support
  * guide. It collects what support needs to find the cause, and nothing is written to the controller:
  *
+ *   Before you start  puts the controller in update mode: connects it over USB if needed and sends
+ *                   ENABLE_BLUETOOTH_UPLOAD, as the update dialog does (by hand works too)
  *   Your setup      controller, which USB port, anything else (optional)
  *   PC details      Windows only: a read-only PowerShell command (./powershell.js) for CPU, board,
  *                   BIOS, USB controllers and the CH340 driver; the user pastes its output back
@@ -17,6 +19,9 @@ import { icon } from '../../ui/icons.js';
 import { card, button, asyncButton, callout, select, textInput } from '../../ui/controls.js';
 import { toast } from '../../ui/overlay.js';
 import { isWindows } from '../../app/platform.js';
+import { connectController } from '../../app/shell.js';
+import { formatFwVersion } from '../../firmware/updater.js';
+import { decodeText } from '../../device/struct.js';
 import { loadVersion } from '../../app/pwa.js';
 import { t, N_ } from '../../i18n/index.js';
 import { POWERSHELL_COMMAND } from './powershell.js';
@@ -41,6 +46,9 @@ function customerVerdict(r) {
   if (resets.some((x) => x.outcome === 'normal-boot')) return [t('The module restarted but didn’t enter its update mode. This points to USB timing on this PC. Try another USB port or a USB 2.0 hub.'), 'yellow'];
   return [t('Nothing came back from the module. Check that its lights pulse orange, then try another cable and port.'), 'red'];
 }
+
+/** How long to wait for the controller to drop off USB after the update-mode command (as the update dialog). */
+const RESTART_TIMEOUT_MS = 6000;
 
 /** Browser and system details the page can read on its own. */
 async function environment() {
@@ -75,6 +83,8 @@ function reportText(rep) {
   add('HHL wireless module diagnostics', `Created: ${rep.created}`, `App: ${rep.env?.appVersion ?? '?'}`, '');
   add('== Setup ==', `Controller: ${rep.setup.controller || '-'}`, `Port: ${rep.setup.port || '-'} / ${rep.setup.portType || '-'}`, `Notes: ${rep.setup.notes || '-'}`, '');
   const e = rep.env || {};
+  const m = rep.updateMode;
+  add('== Update mode ==', m ? `Entered from this page: ${m.result}; controller ${m.name || '?'}, firmware ${m.firmware || '?'}, wireless part ${m.part || '?'}` : 'Entered by hand (or not recorded)', '');
   add('== Browser ==', `User agent: ${e.userAgent}`, `Client hints: ${JSON.stringify(e.clientHints || null)}`, `GPU: ${e.gpu || '-'}`,
     `Web Serial: ${e.webSerial}, WebUSB: ${e.webUSB}, cores: ${e.cores}, memory: ${e.memoryGB} GB, granted ports: ${(e.grantedSerialPorts || []).join(', ') || '-'}`, '');
   const s = rep.serial;
@@ -100,23 +110,50 @@ export function mount(root, { session }) {
   const report = {
     created: new Date().toISOString(), env: null,
     setup: { controller: '', port: '', portType: '', notes: '' },
-    serial: null, usb: null, powershell: '', updateLog: lastModuleUpdateLog(),
+    serial: null, usb: null, powershell: '', updateLog: lastModuleUpdateLog(), updateMode: null,
   };
   environment().then((env) => { report.env = env; });
 
   // ---- Before you start ------------------------------------------------------------------------
-  const canRestart = session.connected && session.caps.externalBaseband && !session.caps.viaWireless;
+  const modeStatus = h('div');
+  const say = (tone, text) => modeStatus.replaceChildren(callout({ tone, text }));
+
+  /** Connect the controller (USB) if needed, then restart it into update mode, as the update dialog does. */
+  async function enterUpdateMode() {
+    if (!session.connected) {
+      await connectController({ usbOnly: true });
+      if (!session.connected) { say('yellow', t('No controller connected. Connect it with a USB cable and try again, or enter update mode by hand.')); return false; }
+    }
+    if (session.caps.viaWireless) { say('yellow', t('Update mode needs a USB cable. Plug the controller in with a cable and try again.')); return false; }
+    if (!session.caps.externalBaseband) { say('yellow', t('This controller has no ESP32 wireless module, so there’s nothing to test here.')); return false; }
+    const info = {
+      name: session.info?.name, firmware: formatFwVersion(session.info?.fwVersion),
+      part: session.static?.bluetooth?.part_number ? decodeText(session.static.bluetooth.part_number) || null : null,
+    };
+    say('blue', t('The controller is restarting. Its lights will pulse orange.'));
+    const dropped = new Promise((resolve) => {
+      const off = session.on('state', ({ state }) => { if (state !== 'connected') { off(); resolve(true); } });
+      setTimeout(() => { off(); resolve(false); }, RESTART_TIMEOUT_MS);
+    });
+    try { await session.flush(); } catch { /* the command below matters more */ }
+    // The firmware reboots without answering (settings.c), so don't wait for a reply.
+    session.command('gamepad', 'ENABLE_BLUETOOTH_UPLOAD', { timeout: 2000 }).catch(() => {});
+    const ok = await dropped;
+    report.updateMode = { ...info, result: ok ? 'controller left USB (update mode)' : 'controller stayed connected' };
+    renderReport();
+    if (ok) say('green', t('Done. The lights should now pulse orange: run the connection test below.'));
+    else say('yellow', t('The controller didn’t restart. Unplug it and enter update mode by hand (step 2 above).'));
+    return ok;
+  }
+
   const intro = card({ title: t('Before you start'), icon: 'info', tone: TONE, subtitle: t('For a wireless module update that won’t connect.') },
     h('p.small.muted', t('This page tests each step the wireless module update relies on and collects the details we need to fix it. Nothing is written to the controller.')),
     h('ol.tips',
       h('li', t('Close other tabs and apps that use the controller, including the update dialog.')),
-      h('li', t('Put the controller in update mode: unplug it, hold R + Start (ZR + Start on the GC Ultimate 1) and plug it in. Its lights pulse orange.')),
+      h('li', t('Put the controller in update mode: press the button below and choose the controller. Or do it by hand: unplug it, hold R + Start (ZR + Start on the GC Ultimate 1) and plug it in. Its lights pulse orange.')),
       h('li', t('Use the same cable and USB port that didn’t work, so the test sees the same problem.'))),
-    canRestart && h('div.row', button({
-      label: t('Restart into update mode'), icon: 'refresh', variant: 'tonal', size: 'sm',
-      // The firmware reboots without answering (settings.c), so don't wait for a reply.
-      onClick: () => { session.command('gamepad', 'ENABLE_BLUETOOTH_UPLOAD', { timeout: 2000 }).catch(() => {}); },
-    })));
+    h('div.row', asyncButton({ label: t('Put the controller in update mode'), icon: 'refresh', variant: 'tonal', busyLabel: t('Restarting…'), run: enterUpdateMode })),
+    modeStatus);
 
   // ---- Your setup ------------------------------------------------------------------------------
   const opt = (list) => list.map((x) => ({ value: x, label: t(x) }));
