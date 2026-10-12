@@ -30,8 +30,9 @@ const SYNC_FRAME = (() => {
 
 /**
  * Reset sequences to try, in order. "split" sends DTR and RTS as separate calls (as esptool-js does);
- * "tight" sends both lines in one call (as the app's updater does). The first one only restarts the
- * module normally: it shows whether the module prints anything at all.
+ * "tight" sends both lines in one call (as the app's updater does; on Windows the browser may still
+ * apply them one at a time). A step is [dtr, rts], a pause in ms, or { dtr } / { rts } for one line.
+ * The first one only restarts the module normally: it shows whether the module prints anything at all.
  */
 export const RESETS = [
   { id: 'run', label: 'Normal restart (IO0 high)', steps: [[false, true], 100, [false, false]] },
@@ -39,6 +40,13 @@ export const RESETS = [
   { id: 'tight-50', label: 'Download reset, lines together, 50 ms', steps: [[false, true], 100, [true, false], 50, [false, false]] },
   { id: 'split-550', label: 'Download reset, separate lines, 550 ms', split: true, steps: [[false, true], 100, [true, false], 550, [false, false]] },
   { id: 'tight-550', label: 'Download reset, lines together, 550 ms', steps: [[false, true], 100, [true, false], 550, [false, false]] },
+  // A deliberate 10 ms gap between the DTR and RTS changes: if this fails where the others work, the
+  // reset depends on how fast the second change arrives (EN's RC delay).
+  { id: 'gap-10', label: 'Download reset, DTR then RTS 10 ms apart', steps: [[false, true], 100, { dtr: true }, 10, { rts: false }, 50, [false, false]] },
+  // IO0 low first, then release EN alone. On the standard two-transistor circuit DTR=RTS=1 releases EN
+  // (so this only restarts normally); on boards wired with IO0 and EN independent it reaches download
+  // mode however slow the host is.
+  { id: 'io0-first', label: 'IO0 low first (DTR+RTS), then release RTS', steps: [[false, true], 100, [true, true], 100, { rts: false }, 50, [false, false]] },
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -155,8 +163,14 @@ export async function probeSerialPort(port, { onStep = () => {} } = {}) {
         const stepTimes = [];
         for (const step of r.steps) {
           if (typeof step === 'number') { await sleep(step); continue; }
-          const [dtr, rts] = step;
           const s = now();
+          if (!Array.isArray(step)) {
+            // One line on its own: { dtr } or { rts }.
+            await port.setSignals('dtr' in step ? { dataTerminalReady: step.dtr } : { requestToSend: step.rts });
+            stepTimes.push(round(now() - s));
+            continue;
+          }
+          const [dtr, rts] = step;
           if (r.split) {
             // As esptool-js does it: DTR, then RTS, as two separate changes.
             await port.setSignals({ dataTerminalReady: dtr });
