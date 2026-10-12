@@ -389,4 +389,5 @@ export default {
   "Firmware & backup": "Firmware et sauvegarde",
   "Default mode, Switch body colors, player name and MAC address.": "Mode par défaut, couleurs Switch, nom du joueur et adresse MAC.",
   "Update firmware, back up settings, recover a controller, or set up other hardware.": "Mettez à jour le firmware, sauvegardez les réglages, récupérez une manette ou configurez d’autres matériels.",
+  "Tests the wireless module update connection step by step and builds a report for support.": "Teste pas à pas la connexion de la mise à jour du module sans fil et crée un rapport pour le support.",
 };

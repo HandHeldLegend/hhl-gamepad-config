@@ -208,4 +208,5 @@ export default {
   "Open Site settings.": "Abre Configuración del sitio.",
   "Set Localhost access to Allow.": "Cambia Acceso a localhost a Permitir.",
   "Set Local network access to Allow.": "Cambia Acceso a la red local a Permitir.",
+  "Run diagnostics": "Ejecutar diagnóstico",
 };

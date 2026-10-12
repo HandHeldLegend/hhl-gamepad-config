@@ -28,6 +28,8 @@ const FAQ = [
     { label: N_('How to connect'), icon: 'help', guide: 'connect' }],
   [N_('I’m on an iPhone or iPad'), N_('iPhone and iPad browsers can’t use WebUSB, so they can’t connect to the controller. This is Apple’s choice and out of our hands. The demo still works.'),
     { label: N_('Why?'), icon: 'info', guide: 'ios' }],
+  [N_('The wireless module update won’t connect'), N_('Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.'),
+    { label: N_('Wireless diagnostics'), icon: 'wireless', guide: 'diagnostics' }],
   [N_('A firmware update was interrupted'), N_('Hold BOOTSEL while plugging in, then open Firmware → Install and pick your controller. Your board is very hard to permanently brick.')],
 ];
 
@@ -39,6 +41,7 @@ function openGuide(name, session) {
   if (name === 'linux') return explainLinux();
   if (name === 'connect') return openConnectGuide({ session });
   if (name === 'ios') return explainIOS();
+  if (name === 'diagnostics') { location.hash = '#/diagnostics'; return null; }
   return null;
 }
 

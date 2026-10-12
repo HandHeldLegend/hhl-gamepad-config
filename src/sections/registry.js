@@ -139,6 +139,12 @@ export const SECTIONS = [
     load: () => import('./factory/view.js'),
   },
   {
+    id: 'diagnostics', title: 'Wireless diagnostics', icon: 'wireless', tone: 'blue', group: 'app', device: false, requires: null, hidden: true, stable: true,
+    summary: 'Tests the wireless module update connection step by step and builds a report for support.',
+    keywords: ['diagnostics', 'esp32', 'baseband', 'ch340', 'wireless module', 'update won’t connect', 'support report'],
+    load: () => import('./diagnostics/view.js'),
+  },
+  {
     id: 'settings', title: 'App settings', icon: 'settings', tone: 'lavender', group: 'app', device: false, requires: null,
     summary: 'Theme (dark, light or system), motion, install and updates.',
     keywords: ['theme', 'dark mode', 'light mode', 'install app', 'offline'],

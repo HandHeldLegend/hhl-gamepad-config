@@ -1,0 +1,17 @@
+/* Wireless diagnostics page (view.js). */
+.dg-fields { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }
+.dg-field { display: grid; gap: var(--space-1); }
+.dg-field .select, .dg-field .input { width: 100%; }
+.dg-paste { width: 100%; min-height: 7rem; font-family: var(--font-mono); font-size: var(--text-xs, 0.75rem); resize: vertical; }
+
+.dg-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.dg-steps li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: 6px var(--space-3); border-radius: var(--radius-sm); background: var(--surface-sunken); font-size: var(--text-sm); }
+.dg-state { display: inline-flex; align-items: center; gap: 6px; color: var(--green); font-weight: 600; white-space: nowrap; }
+.dg-state.bad { color: var(--red); }
+.dg-state .icon { width: 16px; height: 16px; }
+
+.dg-more summary, .dg-preview summary { cursor: pointer; color: var(--text-muted); font-size: var(--text-sm); }
+.dg-more { display: grid; gap: var(--space-2); }
+.dg-report { max-height: 22rem; overflow: auto; margin: var(--space-2) 0 0; padding: var(--space-3); border-radius: var(--radius-sm);
+  background: var(--surface-sunken); font-family: var(--font-mono); font-size: var(--text-xs, 0.75rem); white-space: pre-wrap; word-break: break-word; }

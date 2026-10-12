@@ -54,4 +54,7 @@ export default {
   "Arena movement numbers (initial dash, shield, weights), move behavior, and Sir Retro's hitbox tables, frame timing and special moves.": "アリーナの移動の数値（初速ダッシュ、シールド、重さ）と技の動作、Sir Retro のヒットボックス表・フレームのタイミング・必殺ワザ。",
   "Sir Retro's hitbox values (damage, angle, knockback growth, base and set knockback, element) and attributes.": "Sir Retro のヒットボックスの値（ダメージ、角度、ふっとばし成長値、基礎・固定ふっとばし、属性）と基本性能。",
   "Sir Retro's shield size.": "Sir Retro のシールドの大きさ。",
+  "The wireless module update won’t connect": "ワイヤレスモジュールのアップデートが接続できない",
+  "Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.": "コントローラーをアップデートモードにしてワイヤレス診断を実行します。接続の各ステップをテストし、サポートに送るレポートを作成します。",
+  "Wireless diagnostics": "ワイヤレス診断",
 };

@@ -52,4 +52,7 @@ export default {
   "References": "参考资料",
   "Behavior and data we learned from. Nothing is copied from these.": "我们从中学习了行为和数据，未复制其中任何内容。",
   "Super Famicom-inspired colors are a tribute; this app is not affiliated with or endorsed by Nintendo.": "受 Super Famicom 启发的配色只是致敬；本应用与 Nintendo 无关，也未获其认可。",
+  "The wireless module update won’t connect": "无线模块更新无法连接",
+  "Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.": "让手柄进入更新模式后运行无线诊断。它会测试连接的每个步骤，并生成发给客服的报告。",
+  "Wireless diagnostics": "无线诊断",
 };
