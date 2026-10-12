@@ -212,4 +212,6 @@ export default {
   "Set Localhost access to Allow.": "「Localhost へのアクセス」を「許可」にします。",
   "Set Local network access to Allow.": "「ローカル ネットワークへのアクセス」を「許可」にします。",
   "Run diagnostics": "診断を実行",
+  "This PC can’t start the wireless module’s update mode: the module restarts normally instead. This happens on some PCs, often with AMD processors, and trying again won’t change it.": "この PC ではワイヤレスモジュールのアップデートモードを開始できません。モジュールは通常どおり再起動してしまいます。一部の PC（AMD プロセッサー搭載機が多い）で起こり、再試行しても変わりません。",
+  "Update from an Android phone or tablet in Chrome, from a Mac or Linux PC (offline updater below), or from another Windows PC.": "Android のスマートフォンやタブレットの Chrome、Mac や Linux の PC（下のオフラインアップデーター）、または別の Windows PC からアップデートしてください。",
 };

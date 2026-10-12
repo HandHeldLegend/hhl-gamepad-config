@@ -69,4 +69,11 @@ export default {
   "Report copied": "Rapport copié",
   "Download report": "Télécharger le rapport",
   "Show report": "Afficher le rapport",
+  "No controller connected. Connect it with a USB cable and try again, or enter update mode by hand.": "Aucune manette connectée. Branchez-la avec un câble USB et réessayez, ou passez en mode mise à jour à la main.",
+  "Update mode needs a USB cable. Plug the controller in with a cable and try again.": "Le mode mise à jour nécessite un câble USB. Branchez la manette avec un câble et réessayez.",
+  "This controller has no ESP32 wireless module, so there’s nothing to test here.": "Cette manette n’a pas de module sans fil ESP32 : il n’y a rien à tester ici.",
+  "Done. The lights should now pulse orange: run the connection test below.": "C’est fait. Les voyants devraient clignoter en orange : lancez le test de connexion ci-dessous.",
+  "The controller didn’t restart. Unplug it and enter update mode by hand (step 2 above).": "La manette n’a pas redémarré. Débranchez-la et passez en mode mise à jour à la main (étape 2 ci-dessus).",
+  "Put the controller in update mode: press the button below and choose the controller. Or do it by hand: unplug it, hold R + Start (ZR + Start on the GC Ultimate 1) and plug it in. Its lights pulse orange.": "Mettez la manette en mode mise à jour : appuyez sur le bouton ci-dessous et choisissez la manette. Ou à la main : débranchez-la, maintenez R + Start (ZR + Start sur la GC Ultimate 1) et branchez-la. Ses voyants clignotent en orange.",
+  "Put the controller in update mode": "Mettre la manette en mode mise à jour",
 };

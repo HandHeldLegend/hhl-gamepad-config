@@ -69,4 +69,11 @@ export default {
   "Report copied": "Informe copiado",
   "Download report": "Descargar informe",
   "Show report": "Mostrar informe",
+  "No controller connected. Connect it with a USB cable and try again, or enter update mode by hand.": "No hay ningún mando conectado. Conéctalo con un cable USB y vuelve a intentarlo, o entra en el modo de actualización manualmente.",
+  "Update mode needs a USB cable. Plug the controller in with a cable and try again.": "El modo de actualización necesita un cable USB. Conecta el mando con un cable y vuelve a intentarlo.",
+  "This controller has no ESP32 wireless module, so there’s nothing to test here.": "Este mando no tiene módulo inalámbrico ESP32, así que no hay nada que probar aquí.",
+  "Done. The lights should now pulse orange: run the connection test below.": "Listo. Las luces deberían parpadear en naranja: ejecuta la prueba de conexión de abajo.",
+  "The controller didn’t restart. Unplug it and enter update mode by hand (step 2 above).": "El mando no se reinició. Desconéctalo y entra en el modo de actualización manualmente (paso 2 de arriba).",
+  "Put the controller in update mode: press the button below and choose the controller. Or do it by hand: unplug it, hold R + Start (ZR + Start on the GC Ultimate 1) and plug it in. Its lights pulse orange.": "Pon el mando en modo de actualización: pulsa el botón de abajo y elige el mando. O hazlo manualmente: desconéctalo, mantén pulsados R + Start (ZR + Start en el GC Ultimate 1) y conéctalo. Sus luces parpadean en naranja.",
+  "Put the controller in update mode": "Poner el mando en modo de actualización",
 };

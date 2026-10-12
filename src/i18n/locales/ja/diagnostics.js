@@ -69,4 +69,11 @@ export default {
   "Report copied": "レポートをコピーしました",
   "Download report": "レポートをダウンロード",
   "Show report": "レポートを表示",
+  "No controller connected. Connect it with a USB cable and try again, or enter update mode by hand.": "コントローラーが接続されていません。USB ケーブルで接続してもう一度試すか、手動でアップデートモードに入ってください。",
+  "Update mode needs a USB cable. Plug the controller in with a cable and try again.": "アップデートモードには USB ケーブルが必要です。ケーブルでコントローラーを接続してもう一度試してください。",
+  "This controller has no ESP32 wireless module, so there’s nothing to test here.": "このコントローラーには ESP32 ワイヤレスモジュールがないため、ここでテストするものはありません。",
+  "Done. The lights should now pulse orange: run the connection test below.": "完了しました。ライトがオレンジに点滅しているはずです。下の接続テストを実行してください。",
+  "The controller didn’t restart. Unplug it and enter update mode by hand (step 2 above).": "コントローラーが再起動しませんでした。ケーブルを抜いて、手動でアップデートモードに入ってください（上の手順 2）。",
+  "Put the controller in update mode: press the button below and choose the controller. Or do it by hand: unplug it, hold R + Start (ZR + Start on the GC Ultimate 1) and plug it in. Its lights pulse orange.": "コントローラーをアップデートモードにします。下のボタンを押してコントローラーを選ぶか、手動で行います。ケーブルを抜き、R + Start（GC Ultimate 1 は ZR + Start）を押したまま接続すると、ライトがオレンジに点滅します。",
+  "Put the controller in update mode": "コントローラーをアップデートモードにする",
 };

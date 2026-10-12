@@ -69,4 +69,11 @@ export default {
   "Report copied": "报告已复制",
   "Download report": "下载报告",
   "Show report": "显示报告",
+  "No controller connected. Connect it with a USB cable and try again, or enter update mode by hand.": "没有连接手柄。请用 USB 数据线连接后重试，或手动进入更新模式。",
+  "Update mode needs a USB cable. Plug the controller in with a cable and try again.": "更新模式需要 USB 数据线。请用数据线连接手柄后重试。",
+  "This controller has no ESP32 wireless module, so there’s nothing to test here.": "此手柄没有 ESP32 无线模块，因此这里没有可测试的内容。",
+  "Done. The lights should now pulse orange: run the connection test below.": "完成。指示灯现在应该在橙色闪烁：请运行下方的连接测试。",
+  "The controller didn’t restart. Unplug it and enter update mode by hand (step 2 above).": "手柄没有重启。请拔下手柄，手动进入更新模式（上方第 2 步）。",
+  "Put the controller in update mode: press the button below and choose the controller. Or do it by hand: unplug it, hold R + Start (ZR + Start on the GC Ultimate 1) and plug it in. Its lights pulse orange.": "让手柄进入更新模式：点击下方按钮并选择手柄。也可以手动操作：拔下手柄，按住 R + Start（GC Ultimate 1 为 ZR + Start）再插上，指示灯会橙色闪烁。",
+  "Put the controller in update mode": "让手柄进入更新模式",
 };

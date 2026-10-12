@@ -209,4 +209,6 @@ export default {
   "Set Localhost access to Allow.": "Cambia Acceso a localhost a Permitir.",
   "Set Local network access to Allow.": "Cambia Acceso a la red local a Permitir.",
   "Run diagnostics": "Ejecutar diagnóstico",
+  "This PC can’t start the wireless module’s update mode: the module restarts normally instead. This happens on some PCs, often with AMD processors, and trying again won’t change it.": "Este PC no puede iniciar el modo de actualización del módulo inalámbrico: el módulo se reinicia con normalidad. Ocurre en algunos PC, a menudo con procesadores AMD, y volver a intentarlo no lo cambiará.",
+  "Update from an Android phone or tablet in Chrome, from a Mac or Linux PC (offline updater below), or from another Windows PC.": "Actualiza desde un teléfono o tableta Android con Chrome, desde un Mac o PC con Linux (actualizador sin conexión de abajo) o desde otro PC con Windows.",
 };
