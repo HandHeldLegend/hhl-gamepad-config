@@ -188,4 +188,5 @@ export default {
   "Open Site settings.": "打开“网站设置”。",
   "Set Localhost access to Allow.": "将“Localhost 访问”设为“允许”。",
   "Set Local network access to Allow.": "将“本地网络访问”设为“允许”。",
+  "Run diagnostics": "运行诊断",
 };

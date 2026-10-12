@@ -211,4 +211,5 @@ export default {
   "Open Site settings.": "「サイトの設定」を開きます。",
   "Set Localhost access to Allow.": "「Localhost へのアクセス」を「許可」にします。",
   "Set Local network access to Allow.": "「ローカル ネットワークへのアクセス」を「許可」にします。",
+  "Run diagnostics": "診断を実行",
 };

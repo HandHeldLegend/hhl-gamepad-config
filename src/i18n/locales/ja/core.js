@@ -389,4 +389,5 @@ export default {
   "Firmware & backup": "ファームウェアとバックアップ",
   "Default mode, Switch body colors, player name and MAC address.": "デフォルトモード、Switch の本体カラー、プレイヤー名、MAC アドレス。",
   "Update firmware, back up settings, recover a controller, or set up other hardware.": "ファームウェアの更新、設定のバックアップ、コントローラーの復旧、その他のハードウェアのセットアップ。",
+  "Tests the wireless module update connection step by step and builds a report for support.": "ワイヤレスモジュールのアップデート接続を段階的にテストし、サポート用のレポートを作成します。",
 };

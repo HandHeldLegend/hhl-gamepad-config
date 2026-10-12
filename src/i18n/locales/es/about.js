@@ -54,4 +54,7 @@ export default {
   "Arena movement numbers (initial dash, shield, weights), move behavior, and Sir Retro's hitbox tables, frame timing and special moves.": "Cifras de movimiento de la Arena (dash inicial, escudo, pesos), comportamiento de los movimientos, y las tablas de hitboxes, los tiempos y los especiales de Sir Retro.",
   "Sir Retro's hitbox values (damage, angle, knockback growth, base and set knockback, element) and attributes.": "Valores de las hitboxes de Sir Retro (daño, ángulo, crecimiento del knockback, knockback base y fijo, elemento) y sus atributos.",
   "Sir Retro's shield size.": "El tamaño del escudo de Sir Retro.",
+  "The wireless module update won’t connect": "La actualización del módulo inalámbrico no conecta",
+  "Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.": "Ejecuta el diagnóstico inalámbrico con el mando en modo de actualización. Prueba cada paso de la conexión y crea un informe para enviar a soporte.",
+  "Wireless diagnostics": "Diagnóstico inalámbrico",
 };

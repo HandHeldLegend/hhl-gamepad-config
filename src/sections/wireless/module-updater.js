@@ -48,6 +48,10 @@ const BUSY = new Set(['downloading', 'restarting', 'connecting', 'installing']);
 /** The one running update (null when the dialog is closed). */
 let run = null;
 
+/** The last update's log, kept after the dialog closes for the diagnostics report (#/diagnostics). */
+let lastLog = [];
+export const lastModuleUpdateLog = () => lastLog.join('\n');
+
 /** True while the update dialog is open (the page uses this to avoid opening a second one). */
 export const moduleUpdateOpen = () => !!run;
 
@@ -62,6 +66,7 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
   if (run) return;
   const demo = isDemo();
   const transports = availableTransports();
+  lastLog = [];
 
   run = {
     mode: 'intro',
@@ -90,6 +95,8 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
   const logPre = h('pre.wl-log', { 'aria-live': 'off', 'data-empty': t('Nothing yet.') });
   // Other ways to update: shown with errors, and always inside Details.
   const helpLinks = () => h('div.wl-help-links',
+    // Diagnostics need the port this dialog holds: close it first (unplugging isn't needed).
+    h('a.btn.btn-ghost.btn-sm', { href: '#/diagnostics', onclick: () => run?.ui?.dlg.close() }, h('span.btn-label', t('Run diagnostics'))),
     linkButton(t('Update guide'), UPDATE_GUIDE_URL),
     linkButton(t('Windows updater (.zip)'), LOCAL_UPDATER_URL, t('Command-line updater for Windows driver or connection problems')),
     linkButton(t('Linux/macOS updater (.sh)'), LOCAL_UPDATER_SH_URL, t('Command-line updater using esptool. Run it with: bash hoja_wireless_update.sh')));
@@ -149,6 +156,8 @@ function log(line) {
   if (!pre) return;
   const text = String(line ?? '').replace(/\s+$/, '');
   if (!text) return;
+  lastLog.push(text);
+  if (lastLog.length > LOG_MAX_LINES) lastLog.shift();
   pre.append(`${text}\n`);
   while (pre.childNodes.length > LOG_MAX_LINES) pre.firstChild.remove();
   pre.scrollTop = pre.scrollHeight;
