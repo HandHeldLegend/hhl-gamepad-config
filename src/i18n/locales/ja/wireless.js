@@ -214,4 +214,6 @@ export default {
   "Run diagnostics": "診断を実行",
   "This PC can’t start the wireless module’s update mode: the module restarts normally instead. This happens on some PCs, often with AMD processors, and trying again won’t change it.": "この PC ではワイヤレスモジュールのアップデートモードを開始できません。モジュールは通常どおり再起動してしまいます。一部の PC（AMD プロセッサー搭載機が多い）で起こり、再試行しても変わりません。",
   "Update from an Android phone or tablet in Chrome, from a Mac or Linux PC (offline updater below), or from another Windows PC.": "Android のスマートフォンやタブレットの Chrome、Mac や Linux の PC（下のオフラインアップデーター）、または別の Windows PC からアップデートしてください。",
+  "USB is the reliable route on a Mac: macOS has no driver for this USB serial chip unless you installed one, so the serial list can be empty.": "Mac では USB が確実です。ドライバーをインストールしていない限り、macOS にはこの USB シリアルチップのドライバーがないため、シリアルポートの一覧が空になることがあります。",
+  "Nothing to choose in the serial list? Your computer may have no driver for this USB serial chip. Choose USB (WebUSB) above and press Connect again.": "シリアルポートの一覧に何も表示されませんか？このパソコンにはこの USB シリアルチップのドライバーがない可能性があります。上で USB (WebUSB) を選び、もう一度「接続」を押してください。",
 };

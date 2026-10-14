@@ -114,7 +114,9 @@ export function openModuleUpdater({ installed, latest = null, channel = CHANNELS
       }),
       h('p.small.muted', transports.linux
         ? t('USB is the reliable route on Linux. Serial uses the system’s CH340 driver and can’t start the update on some controllers.')
-        : t('Didn’t connect? Try the other method. Serial uses the computer’s CH340 driver; USB talks to the chip directly.')));
+        : transports.mac
+          ? t('USB is the reliable route on a Mac: macOS has no driver for this USB serial chip unless you installed one, so the serial list can be empty.')
+          : t('Didn’t connect? Try the other method. Serial uses the computer’s CH340 driver; USB talks to the chip directly.')));
   }
   // Linux + USB: the two one-time steps, shown before Connect.
   const copyCmd = (cmd) => h('span.wl-cmd', h('code', cmd), button({ label: t('Copy'), icon: 'copy', size: 'sm', variant: 'ghost', onClick: async () => {
@@ -180,7 +182,7 @@ function paint(title, text, { tone = 'blue', icon = 'wireless' } = {}) {
   u.progress.hidden = run.mode === 'intro' || run.mode === 'connect';
   const connecting = run.mode === 'connect' || run.mode === 'connecting';
   // Linux shows the choice up front (USB is the default there); elsewhere only after a failed connect.
-  u.transportRow.hidden = !((run.connectFailed || run.transports.linux) && connecting);
+  u.transportRow.hidden = !((run.connectFailed || run.transports.linux || run.transports.mac) && connecting);
   u.linuxSteps.hidden = !(run.transports.linux && run.transport === 'usb' && run.mode === 'connect');
   u.transportRow.querySelectorAll('button').forEach((b) => { b.disabled = run.mode === 'connecting'; });
 }
@@ -356,6 +358,12 @@ async function connectAndInstall() {
     log(t('Error: {message}', { message: err?.message || err }));
     // Picker closed without a choice isn't a failed connection; anything else offers the other method.
     if (err?.name !== 'NotFoundError') run.connectFailed = true;
+    // An empty serial list (no driver for the chip, as on a Mac) can only be closed: offer USB instead.
+    else if (run.transport === 'serial' && run.transports.usb) {
+      run.connectFailed = true;
+      showConnect(t('Nothing to choose in the serial list? Your computer may have no driver for this USB serial chip. Choose USB (WebUSB) above and press Connect again.'));
+      return;
+    }
     // Every reset restarted the module normally, never into its update mode: this PC changes the reset
     // lines too slowly for the board (Windows with some AMD USB controllers). Retrying won't help.
     const boots = run.flasher.bootStats;

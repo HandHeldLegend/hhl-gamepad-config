@@ -191,4 +191,6 @@ export default {
   "Run diagnostics": "运行诊断",
   "This PC can’t start the wireless module’s update mode: the module restarts normally instead. This happens on some PCs, often with AMD processors, and trying again won’t change it.": "这台电脑无法启动无线模块的更新模式：模块会正常重启。这种情况出现在部分电脑上（通常是 AMD 处理器），重试也无法解决。",
   "Update from an Android phone or tablet in Chrome, from a Mac or Linux PC (offline updater below), or from another Windows PC.": "请使用 Android 手机或平板上的 Chrome、Mac 或 Linux 电脑（使用下方的离线更新工具），或另一台 Windows 电脑进行更新。",
+  "USB is the reliable route on a Mac: macOS has no driver for this USB serial chip unless you installed one, so the serial list can be empty.": "在 Mac 上，USB 方式更可靠：除非你安装过驱动，否则 macOS 没有这款 USB 串口芯片的驱动，串口列表可能是空的。",
+  "Nothing to choose in the serial list? Your computer may have no driver for this USB serial chip. Choose USB (WebUSB) above and press Connect again.": "串口列表里没有可选项？你的电脑可能没有这款 USB 串口芯片的驱动。请在上方选择 USB (WebUSB)，然后再次点击“连接”。",
 };

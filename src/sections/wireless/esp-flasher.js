@@ -65,10 +65,22 @@ export function availableTransports() {
   if (!force && isLinux() && (navigator.serial || navigator.usb)) {
     return { serial: !!navigator.serial, usb: !!navigator.usb, preferred: navigator.usb ? 'usb' : 'serial', linux: true };
   }
+  // macOS: USB first. macOS has no driver for the module's CH340K (1A86:7522) unless the owner
+  // installed WCH's, so there is no serial port and the Web Serial picker stays empty, while WebUSB
+  // reaches the chip directly (and sets DTR and RTS in one transfer). Serial stays one click away.
+  if (!force && isMac() && navigator.usb) {
+    return { serial: !!navigator.serial, usb: true, preferred: 'usb', mac: true };
+  }
   if (force === 'serial' && navigator.serial) return { serial: true, usb: false, preferred: 'serial' };
   if (force === 'usb' && navigator.usb) return { serial: false, usb: true, preferred: 'usb' };
   const serial = !!navigator.serial && !isAndroid();
   return { serial, usb: !!navigator.usb, preferred: serial ? 'serial' : 'usb' };
+}
+
+/** macOS (not iPadOS, which also reports "Macintosh" but has touch). */
+function isMac() {
+  const platform = navigator.userAgentData?.platform || navigator.platform || '';
+  return (/mac/i.test(platform) || /Macintosh/.test(navigator.userAgent || '')) && !(navigator.maxTouchPoints > 1);
 }
 
 /**
