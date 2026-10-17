@@ -22,8 +22,8 @@ const fmt = (name) => (LAYOUT.enums.core_reportformat_t || []).find((e) => e.nam
  * (gamepad_defaults_split == GAMEPAD_DEFAULTS_SPLIT); older firmware treats it as Switch.
  */
 export const AUTO_MODE = 0xfe;
-/** gamepad_default_wireless value for the dongle (GAMEPAD_DEFAULT_WIRELESS_DONGLE in the firmware). */
-export const DONGLE_MODE = 0xfd;
+/** gamepad_default_wireless value older firmware used for the dongle; the firmware now reads it as Auto. */
+const OLD_DONGLE_MODE = 0xfd;
 /** gamepad_defaults_split once the firmware has migrated to separate wired / battery defaults. */
 export const DEFAULTS_SPLIT = 0x01;
 
@@ -52,10 +52,8 @@ export const WIRED_MODES = [
   ...['SINPUT', 'SWPRO', 'XINPUT', 'GAMECUBE', 'N64', 'SNES', 'SLIPPI'].map(byFmt).filter(Boolean),
 ];
 
-const DONGLE = { value: DONGLE_MODE, label: 'Dongle', aliases: ['dongle', 'receiver'], requires: 'dongle', about: N_('Connects through your dongle and takes the mode it detects (PC, Switch, N64 or GameCube).') };
-
-/** Wireless default (byte 45, on battery): Auto, Switch, Steam, Wii (needs wii_supported), the dongle (needs dongle_supported). */
-export const WIRELESS_MODES = [AUTO, ...['SWPRO', 'SINPUT', 'WII'].map(byFmt).filter(Boolean), DONGLE];
+/** Wireless default (byte 45, on battery): Auto, Switch, Steam, Wii (needs wii_supported). Each looks for the dongle first. */
+export const WIRELESS_MODES = [AUTO, ...['SWPRO', 'SINPUT', 'WII'].map(byFmt).filter(Boolean)];
 
 /** Switch color fields, in the order hoja2 showed them. */
 const COLORS = [
@@ -79,12 +77,12 @@ export default [
   {
     key: 'gamepad.defaultWireless',
     label: 'Wireless default',
-    description: 'The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. Dongle connects through your dongle and takes the mode it detects. Hold the dongle button at power-on for the other one (Bluetooth or the dongle).',
+    description: 'The mode the controller starts in on battery (firmware with separate defaults). It looks for your dongle first and takes the mode the dongle detects; with no dongle around it goes to Bluetooth. There, Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. Wii mode always goes straight to Bluetooth.',
     block: 'gamepad',
     type: 'enum',
     requires: 'splitDefaults',
     options: WIRELESS_MODES.map(({ value, label, aliases, requires }) => ({ value, label, aliases, requires: requires === 'splitDefaults' ? undefined : requires })),
-    get: (s) => s.config.gamepad.gamepad_default_wireless,
+    get: (s) => (s.config.gamepad.gamepad_default_wireless === OLD_DONGLE_MODE ? AUTO_MODE : s.config.gamepad.gamepad_default_wireless),
     set: (s, v) => { s.config.gamepad.gamepad_default_wireless = v; },
   },
   ...COLORS.map(([name, fieldName, label, description]) => ({

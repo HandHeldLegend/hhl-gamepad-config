@@ -74,7 +74,6 @@ export default {
   "Show the browser’s “open the config app” notification when the controller is plugged in.": "插入手柄时显示浏览器的“打开配置应用”通知。",
   "To start in another mode just once, hold its button while you plug in or turn on the controller.": "若只想这一次以其他模式启动，请在插入或打开手柄时按住该模式的按钮。",
   "Firmware updates, settings backups and recovery are on the {page} page.": "固件更新、设置备份和恢复都在 {page} 页面。",
-  "Connects through your dongle and takes the mode it detects (PC, Switch, N64 or GameCube).": "通过你的接收器连接，并采用它检测到的模式（PC、Switch、N64 或 GameCube）。",
   "Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. Dongle connects through your dongle.": "使用电池时生效。自动模式会连接最先响应的已保存主机或 PC：依次为 Switch、Wii、PC。接收器模式通过你的接收器连接。",
-  "The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. Dongle connects through your dongle and takes the mode it detects. Hold the dongle button at power-on for the other one (Bluetooth or the dongle).": "使用电池时手柄启动的模式（适用于支持分别设置默认模式的固件）。自动模式会连接最先响应的已保存主机或 PC：依次为 Switch、Wii、PC。接收器模式通过你的接收器连接，并采用它检测到的模式。开机时按住接收器按钮可改用另一种（蓝牙或接收器）。",
+  "The mode the controller starts in on battery (firmware with separate defaults). It looks for your dongle first and takes the mode the dongle detects; with no dongle around it goes to Bluetooth. There, Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. Wii mode always goes straight to Bluetooth.": "使用电池时手柄启动的模式（适用于支持分别设置默认模式的固件）。手柄会先寻找你的接收器，并采用接收器检测到的模式；附近没有接收器时改用蓝牙。此时，自动模式会连接最先响应的已保存主机或 PC：依次为 Switch、Wii、PC。Wii 模式始终直接使用蓝牙。",
 };
