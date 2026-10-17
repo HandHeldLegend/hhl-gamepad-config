@@ -283,7 +283,7 @@ export function openConnectModule({ cable = false } = {}) {
       try {
         usb = await requestUsbController(); // first thing in the click: the browser requires it
       } catch (err) {
-        console.warn('[connect] USB chooser failed', err);
+        console.warn(`[connect] USB chooser failed: ${err?.name}: ${err?.message}`);
         if (!settled) { problem = t('Couldn’t connect. Unplug the controller, hold A or B while plugging it back in, then try again.'); renderNotes(); }
         return;
       }
@@ -297,7 +297,7 @@ export function openConnectModule({ cable = false } = {}) {
       try {
         bt = await requestBluetoothController(); // first thing in the click: the browser requires it
       } catch (err) {
-        console.warn('[connect] Bluetooth chooser failed', err);
+        console.warn(`[connect] Bluetooth chooser failed: ${err?.name}: ${err?.message}`);
         if (settled) return;
         problem = null;
         // Brave can offer the API and still refuse it while its flag is off
@@ -336,7 +336,8 @@ export function openConnectModule({ cable = false } = {}) {
         await attempt.open(tryFor ? { connectTimeout: tryFor } : undefined);
       } catch (err) {
         if (pending === attempt) pending = null;
-        if (manual && seq === attemptSeq && !settled) { console.warn('[connect] Bluetooth connect failed', err); backToList(t(CONNECT_FAILED, { buttons })); }
+        console.warn(`[connect] Bluetooth connect failed${manual ? '' : ' (looking for it)'}: ${err?.name}: ${err?.message}`);
+        if (manual && seq === attemptSeq && !settled) backToList(t(CONNECT_FAILED, { buttons }));
         return;
       }
       if (pending === attempt) pending = null;
@@ -358,7 +359,7 @@ export function openConnectModule({ cable = false } = {}) {
         showBusy(t('Asking the controller for a code…'));
         await attempt.requestCode();
       } catch (err) {
-        console.warn('[connect] Bluetooth sign-in failed', err);
+        console.warn(`[connect] Bluetooth sign-in failed: ${err?.name}: ${err?.message}`);
         if (link === attempt && !settled) backToList(t(CONNECT_FAILED, { buttons }));
       }
     }
@@ -435,7 +436,7 @@ export function openConnectModule({ cable = false } = {}) {
       try {
         await current.requestCode();
       } catch (err) {
-        console.warn('[connect] no code', err);
+        console.warn(`[connect] no code: ${err?.name}: ${err?.message}`);
         // A dropped link already went back to the list ('gone')
         if (link === current && !settled) backToList(t(CONNECT_FAILED, { buttons: chordText(null) }));
       }

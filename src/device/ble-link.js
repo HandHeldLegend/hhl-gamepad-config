@@ -22,6 +22,17 @@
  * browser lets go, Windows often keeps the LE link open, so the controller would never see a disconnect
  * and couldn't advertise again.
  *
+ * Connecting again in the same page (Chrome hands back the same BluetoothDevice every time):
+ *   - Chrome keeps the page's notification session across a disconnect, and startNotifications() on the next
+ *     connection then resolves without writing the controller's CCCD, so the controller can't notify and
+ *     nothing ever answers (only a page reload cleared it). open() stops notifications before starting them,
+ *     and close() stops them before BYE.
+ *   - Every connection fetches the service and characteristics again; nothing from an earlier one is kept.
+ *   - A connection left over from an earlier session is let go first, a connect that fails right after a
+ *     disconnect is tried again, and close() always disconnects (that also cancels a connect under way).
+ *   - 'gattserverdisconnected' stays on the device object: an event that arrives while the device is
+ *     connected again belongs to an earlier connection and is ignored.
+ *
  * The controller's Start and Select pressed together (Plus and Minus on some boards) make it visible for
  * 10 seconds. A controller this site was
  * allowed on before (rememberedBluetoothControllers) can then be connected without the browser's chooser;
@@ -64,8 +75,14 @@ const STEP_TIMEOUT_MS = 5000;
 const ANSWER_TIMEOUT_MS = 4000;
 /** A write the controller refused because its receive queue was full is tried again this often. */
 const WRITE_RETRIES = 3;
-/** close() waits this long for BYE to go out before it disconnects. */
+/** close() waits this long for notifications to stop and BYE to go out before it disconnects. */
+const STOP_WAIT_MS = 300;
 const BYE_WAIT_MS = 500;
+/** Connect tries: a failure right after a disconnect is common; wait a little longer each time. */
+const CONNECT_TRIES = 3;
+const CONNECT_RETRY_MS = 400;
+/** Let go of a connection left over from an earlier session, then wait this long. */
+const STALE_SETTLE_MS = 300;
 
 /** The newest link per BluetoothDevice: a late disconnect from an older one must not end it. */
 const newestLink = new WeakMap();
@@ -159,20 +176,61 @@ export class BleLink extends EventTarget {
    * how long to try reaching it (short when looking for a remembered controller that may not be visible).
    */
   async open({ connectTimeout = CONNECT_TIMEOUT_MS } = {}) {
+    const previous = newestLink.get(this.#bt);
     newestLink.set(this.#bt, this);
-    this.#bt.addEventListener('gattserverdisconnected', this.#onGone);
+    const until = performance.now() + connectTimeout;
     try {
-      const gatt = await withTimeout(this.#bt.gatt.connect(), connectTimeout, 'Connecting over Bluetooth');
-      const service = await withTimeout(gatt.getPrimaryService(BLE_SERVICE), STEP_TIMEOUT_MS, 'Finding the config service');
-      this.#toPad = await withTimeout(service.getCharacteristic(BLE_TO_PAD), STEP_TIMEOUT_MS, 'Finding the config service');
-      this.#toApp = await withTimeout(service.getCharacteristic(BLE_TO_APP), STEP_TIMEOUT_MS, 'Finding the config service');
-      this.#toApp.addEventListener('characteristicvaluechanged', this.#onNotify);
-      await withTimeout(this.#toApp.startNotifications(), STEP_TIMEOUT_MS, 'Starting notifications');
-      if (!this.#closed) openLinks.add(this);
+      // Connected without an open link: left over from an earlier session (or a page that went away)
+      if (this.#bt.gatt.connected && !previous?.isOpen) {
+        console.warn('[ble] letting go of a connection left from before');
+        this.#bt.gatt.disconnect();
+        await sleep(STALE_SETTLE_MS);
+      }
+      for (let attempt = 1; ; attempt++) {
+        try {
+          await this.#connect(until - performance.now());
+          break;
+        } catch (err) {
+          console.warn(`[ble] connect try ${attempt} failed: ${err?.name}: ${err?.message}`);
+          const wait = CONNECT_RETRY_MS * attempt;
+          if (this.#closed || attempt >= CONNECT_TRIES || until - performance.now() < wait + 500) throw err;
+          this.#dropCharacteristics();
+          try { this.#bt.gatt.disconnect(); } catch { /* not connected */ }
+          await sleep(wait);
+          if (this.#closed) throw err;
+        }
+      }
+      if (this.#closed) throw new Error('Bluetooth link closed');
+      this.#bt.addEventListener('gattserverdisconnected', this.#onDisconnected);
+      openLinks.add(this);
     } catch (err) {
       this.close();
       throw err;
     }
+  }
+
+  /** One connection, from scratch: the service and characteristics are fetched again every time. */
+  async #connect(timeLeft) {
+    if (timeLeft <= 0) throw new Error('Connecting over Bluetooth timed out');
+    const gatt = await withTimeout(this.#bt.gatt.connect(), timeLeft, 'Connecting over Bluetooth');
+    const service = await withTimeout(gatt.getPrimaryService(BLE_SERVICE), STEP_TIMEOUT_MS, 'Finding the config service');
+    this.#toPad = await withTimeout(service.getCharacteristic(BLE_TO_PAD), STEP_TIMEOUT_MS, 'Finding the config service');
+    this.#toApp = await withTimeout(service.getCharacteristic(BLE_TO_APP), STEP_TIMEOUT_MS, 'Finding the config service');
+    this.#toApp.addEventListener('characteristicvaluechanged', this.#onNotify);
+    // Chrome keeps the page's notification session across a disconnect, and starting it again would then
+    // skip writing the controller's CCCD: stop first, so starting really subscribes on this connection
+    try {
+      await withTimeout(this.#toApp.stopNotifications(), STEP_TIMEOUT_MS, 'Stopping notifications');
+    } catch (err) {
+      console.warn(`[ble] stopping old notifications failed (fine): ${err?.name}: ${err?.message}`);
+    }
+    await withTimeout(this.#toApp.startNotifications(), STEP_TIMEOUT_MS, 'Starting notifications');
+  }
+
+  #dropCharacteristics() {
+    this.#toApp?.removeEventListener('characteristicvaluechanged', this.#onNotify);
+    this.#toApp = null;
+    this.#toPad = null;
   }
 
   /**
@@ -213,33 +271,32 @@ export class BleLink extends EventTarget {
   }
 
   /**
-   * End the session on purpose: BYE first, so the controller closes the link itself, then disconnect once
-   * it went out (or BYE_WAIT_MS passed). 'gone' follows at once.
+   * End the session on purpose: stop notifications (so the page keeps no session for the next connection),
+   * BYE (so the controller closes the link itself), then disconnect, each with a short time limit. Always
+   * disconnects, connected or not: that also cancels a connect still under way. 'gone' follows at once.
    */
   close() {
     const gatt = this.#bt.gatt;
-    const bye = this.#closed ? null : this.#bye();
+    const toApp = this.#toApp;
+    const goodbye = this.#closed ? null : this.#writes.then(async () => {
+      if (!gatt?.connected) return;
+      if (toApp) await withTimeout(toApp.stopNotifications(), STOP_WAIT_MS, 'Stopping notifications').catch(() => {});
+      const bye = this.#writeBye();
+      if (bye) await withTimeout(bye, BYE_WAIT_MS, 'Saying goodbye').catch(() => {});
+    });
     this.#onGone();
-    if (!gatt?.connected) return;
     const disconnect = () => {
-      // A newer link to this controller may be up by now: leave it
-      if (newestLink.get(this.#bt) !== this || !gatt.connected) return;
-      try { gatt.disconnect(); } catch { /* already gone */ }
+      // A newer link to this controller may have started by now: leave it
+      if (newestLink.get(this.#bt) !== this) return;
+      try { gatt?.disconnect(); } catch { /* already gone */ }
     };
-    if (bye) withTimeout(bye, BYE_WAIT_MS, 'Saying goodbye').catch(() => {}).finally(disconnect);
+    if (goodbye) goodbye.finally(disconnect);
     else disconnect();
   }
 
   /** The page is going away: BYE now, best effort, nothing awaited (the browser drops the link itself). */
   sayBye() {
     try { this.#writeBye()?.catch(() => {}); } catch { /* best effort */ }
-  }
-
-  /** BYE after the writes already queued (one GATT operation at a time), or null without a link. */
-  #bye() {
-    if (!this.#toPad || !this.#bt.gatt?.connected) return null;
-    const write = () => this.#writeBye();
-    return this.#writes.then(write, write);
   }
 
   #writeBye() {
@@ -280,6 +337,7 @@ export class BleLink extends EventTarget {
   }
 
   #onNotify = (event) => {
+    if (this.#closed) return;
     const v = event.target.value;
     if (!v || v.byteLength < 1) return;
     const type = v.getUint8(0);
@@ -318,11 +376,18 @@ export class BleLink extends EventTarget {
     }
   };
 
+  /** The device reported a disconnect. One that arrives while it is connected again is an earlier connection's. */
+  #onDisconnected = () => {
+    if (this.#bt.gatt?.connected) return;
+    console.warn('[ble] the controller disconnected');
+    this.#onGone();
+  };
+
   #onGone = () => {
     if (this.#closed) return;
     this.#closed = true;
     openLinks.delete(this);
-    this.#bt.removeEventListener('gattserverdisconnected', this.#onGone);
+    this.#bt.removeEventListener('gattserverdisconnected', this.#onDisconnected);
     this.#toApp?.removeEventListener('characteristicvaluechanged', this.#onNotify);
     for (const waiting of this.#waiters.values()) waiting.forEach((resolve) => resolve(null));
     this.#waiters.clear();
