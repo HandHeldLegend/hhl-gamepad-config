@@ -13,6 +13,11 @@
  *   0x03 READ_STATIC_BLOCK   out: [3, block]                in: same shape as 0x01
  *   0x04 CONFIG_COMMAND      out: [4, block, cmd]           in: [4, block, cmd, ok, data...]
  *   0x05 INPUT MODE/FOCUS    out: [5, 0, 254|255] (joystick|hover stream), [5, 1, inputCode]
+ *   0x06 BLOCK_FINGERPRINTS  out: [6]                       in: [6, 0, count, CRC32 LE × count] (config blocks),
+ *                                                                then [6, 1, count, CRC32 LE × count] (static blocks)
+ *                            Each CRC32 covers exactly the bytes a read of that block sends; older firmware
+ *                            doesn't answer. Connecting reads only blocks whose CRC32 differs from the copy
+ *                            cached in this browser (block-cache.js) and uses the cached bytes for the rest.
  *   0xFE / 0xFF              in: live input reports (joystick / raw hover)
  *   0xFA                     in: analog (snapback) dump
  *   0xAF                     in/out: legacy firmware version probe
@@ -51,6 +56,7 @@
  */
 import { LAYOUT, createStruct, decodeText } from './struct.js';
 import { legacyFirmwareUrl } from './legacy.js';
+import { cachedBlock, findCacheByBlock, loadCache, storeCacheBlocks } from './block-cache.js';
 
 /** USB filters offered in the browser's device picker. */
 export const USB_FILTERS = [
@@ -122,6 +128,9 @@ function findConfigPort(usb) {
   return null;
 }
 const CHUNK_MAX = 32;
+/** How long to wait for the block fingerprints: older firmware never answers, so this is what it costs. */
+const FINGERPRINT_WAIT_USB_MS = 300;
+const FINGERPRINT_WAIT_BLE_MS = 1000;
 /** Time limit for one USB step (open, claim, a single OUT transfer). */
 const STEP_TIMEOUT_MS = 5000;
 /** Reject when `promise` hasn't settled within `ms` (the USB call itself is cancelled by closing the device). */
@@ -144,6 +153,7 @@ const REPORT = {
   READ_STATIC: 3,
   COMMAND: 4,
   INPUT_MODE: 5,
+  FINGERPRINTS: 6,
   SNAPBACK_DUMP: 250,
   INPUT_JOYSTICKS: 254,
   INPUT_RAW: 255,
@@ -226,10 +236,12 @@ export class HojaDevice extends EventTarget {
   #usbListenerInstalled = false;
 
   // Pending read/command state, filled in by the report parser.
-  #read = { kind: null, block: -1, done: false };
+  #read = { kind: null, block: -1, done: false, parts: [] };
   #cmd = { block: -1, command: -1, done: false, ok: false, data: null };
   #legacy = { done: false, isLegacy: false };
   #dongleReply = null;
+  #fingerprints = null;    // { config: [crc…] | null, static: [crc…] | null } while asking
+  #cacheKey = null;        // this controller's entry in the block cache, once known
 
   /** Dongle status (decodeDongleInfo) when connected through one, else null. */
   dongle = null;
@@ -386,14 +398,61 @@ export class HojaDevice extends EventTarget {
     return true;
   }
 
-  /** Read every settings block. Through the dongle or over Bluetooth this takes a few seconds: report each
-   *  block so the app can show how far it got. */
+  /**
+   * Read every settings block. Through the dongle or over Bluetooth this takes a few seconds: report each
+   * block so the app can show how far it got. Firmware that sends block fingerprints gets only the blocks
+   * that changed since this browser last read them; the rest come from the cache (block-cache.js), fed in
+   * exactly as if they had just been read.
+   */
   async #readSettings() {
+    this.#cacheKey = null;
     const total = this.#configTable.length + this.#staticTable.length;
     let done = 0;
     const step = () => this.#emit('progress', { done: ++done, total });
-    await this.#exclusive(() => this.#readAll('config', this.#configTable, step));
-    await this.#exclusive(() => this.#readAll('static', this.#staticTable, step));
+    const plan = await this.#exclusive(() => this.#cachePlan());
+    await this.#exclusive(() => this.#readAll('config', this.#configTable, step, plan));
+    await this.#exclusive(() => this.#readAll('static', this.#staticTable, step, plan));
+    if (!plan) return;
+    this.#cacheKey = plan.key ?? this.#identity();
+    storeCacheBlocks(this.#cacheKey, plan.fresh);
+    console.debug(`[cache] reused ${plan.reused} of ${total} blocks`);
+  }
+
+  /** This controller's key in the block cache: its MAC address (gamepad config block), or null. */
+  #identity() {
+    const mac = this.missing.config.includes('gamepad') ? null : this.config.gamepad?.gamepad_mac_address;
+    if (!mac || ![...mac].some((b) => b)) return null;
+    return `mac:${[...mac].map((b) => b.toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  /**
+   * Ask for the block fingerprints. Resolves { fp, entry, key, reused, fresh } to read with, or null
+   * (older firmware: read everything). The cache entry is found by the gamepad block, which holds the MAC.
+   */
+  async #cachePlan() {
+    this.#fingerprints = { config: null, static: null };
+    try {
+      await this.#out([REPORT.FINGERPRINTS]);
+    } catch {
+      return null;
+    }
+    const wait = this.#ble ? FINGERPRINT_WAIT_BLE_MS : FINGERPRINT_WAIT_USB_MS;
+    await waitFor(() => this.#fingerprints.config && this.#fingerprints.static, wait);
+    const fp = this.#fingerprints;
+    this.#fingerprints = null;
+    if (!fp.config || !fp.static) return null;
+    const gamepad = this.#configTable.find((b) => b.key === 'gamepad')?.index ?? 0;
+    const entry = await findCacheByBlock('config', gamepad, fp.config[gamepad]);
+    return { fp, entry, key: entry?.key ?? null, reused: 0, fresh: [] };
+  }
+
+  #onFingerprints(view) {
+    if (!this.#fingerprints || view.byteLength < 3) return;
+    const kind = view.getUint8(1) === 0 ? 'config' : 'static';
+    const count = view.getUint8(2);
+    const crcs = [];
+    for (let i = 0; i < count && 3 + 4 * (i + 1) <= view.byteLength; i++) crcs.push(view.getUint32(3 + 4 * i, true));
+    this.#fingerprints[kind] = crcs;
   }
 
   /**
@@ -549,6 +608,7 @@ export class HojaDevice extends EventTarget {
         case REPORT.READ_STATIC: return this.#onChunk(view, 'static');
         case REPORT.WRITE_CONFIG: return; // write acks are not awaited (matches hoja2)
         case REPORT.COMMAND: return this.#onCommand(view);
+        case REPORT.FINGERPRINTS: return this.#onFingerprints(view);
         case REPORT.INPUT_JOYSTICKS:
         case REPORT.INPUT_RAW: return this.#emit('input', view);
         case REPORT.SNAPBACK_DUMP: return this.#emit('snapback', view);
@@ -565,24 +625,38 @@ export class HojaDevice extends EventTarget {
     const blockIdx = view.getUint8(1);
     const size = view.getUint8(2);
     const idx = view.getUint8(3);
-    const table = kind === 'config' ? this.#configTable : this.#staticTable;
-    const entry = table.find((b) => b.index === blockIdx);
-    if (!entry) return;
-    const target = (kind === 'config' ? this.config : this.static)[entry.key];
-
+    const reading = this.#read.kind === kind && this.#read.block === blockIdx;
     if (size > 0) {
       const chunk = new Uint8Array(view.buffer, view.byteOffset + 4, size);
-      const at = idx * CHUNK_MAX;
-      // Newer firmware may send a larger block than this app knows about: grow, don't throw.
-      if (at + size > target.buffer.length) {
-        const grown = new Uint8Array(at + size);
-        grown.set(target.buffer);
-        target.updateBuffer(grown);
-      }
-      target.buffer.set(chunk, at);
+      if (!this.#storeChunk(kind, blockIdx, idx, chunk)) return;
+      if (reading) this.#read.parts.push([idx * CHUNK_MAX, chunk.slice()]); // the block's bytes, for the cache
     }
-    if (idx === 0xff && this.#read.kind === kind && this.#read.block === blockIdx) {
+    if (idx === 0xff && reading) {
       this.#read.done = true;
+    }
+  }
+
+  /** One chunk of a block into its struct: from the controller, or from the cache (#applyCached). */
+  #storeChunk(kind, blockIdx, idx, chunk) {
+    const table = kind === 'config' ? this.#configTable : this.#staticTable;
+    const entry = table.find((b) => b.index === blockIdx);
+    if (!entry) return false;
+    const target = (kind === 'config' ? this.config : this.static)[entry.key];
+    const at = idx * CHUNK_MAX;
+    // Newer firmware may send a larger block than this app knows about: grow, don't throw.
+    if (at + chunk.length > target.buffer.length) {
+      const grown = new Uint8Array(at + chunk.length);
+      grown.set(target.buffer);
+      target.updateBuffer(grown);
+    }
+    target.buffer.set(chunk, at);
+    return true;
+  }
+
+  /** A cached block, chunk by chunk through the same path as a read. */
+  #applyCached(kind, index, bytes) {
+    for (let idx = 0, pos = 0; pos < bytes.length; idx++, pos += CHUNK_MAX) {
+      this.#storeChunk(kind, index, idx, bytes.subarray(pos, pos + CHUNK_MAX));
     }
   }
 
@@ -628,12 +702,18 @@ export class HojaDevice extends EventTarget {
   // Memory blocks
   // ---------------------------------------------------------------------------------------
 
+  /** Read one block. Resolves its bytes as sent (kept in the block cache once the controller is known). */
   async #readBlock(kind, index, timeout = 5000) {
-    this.#read = { kind, block: index, done: false };
+    const read = { kind, block: index, done: false, parts: [] };
+    this.#read = read;
     await this.#out([kind === 'config' ? REPORT.READ_CONFIG : REPORT.READ_STATIC, index]);
-    if (!(await waitFor(() => this.#read.done, timeout))) {
+    if (!(await waitFor(() => read.done, timeout))) {
       throw new Error(`Timed out reading ${kind} block ${index}`);
     }
+    const bytes = new Uint8Array(read.parts.reduce((n, [at, c]) => Math.max(n, at + c.length), 0));
+    for (const [at, c] of read.parts) bytes.set(c, at);
+    if (this.#cacheKey) storeCacheBlocks(this.#cacheKey, [{ kind, index, bytes }]);
+    return bytes;
   }
 
   /** Re-read one config block from the device. Accepts a name ('analog') or index. */
@@ -660,11 +740,23 @@ export class HojaDevice extends EventTarget {
    * drops, so a firmware without several blocks doesn't stall the connect for long. `onBlock` runs
    * after each.
    */
-  async #readAll(kind, table, onBlock) {
+  async #readAll(kind, table, onBlock, plan = null) {
     let timeout = 3000;
     for (const b of table) {
       try {
-        await this.#readBlock(kind, b.index, timeout);
+        const cached = plan && cachedBlock(plan.entry, kind, b.index, plan.fp[kind][b.index]);
+        if (cached) {
+          this.#applyCached(kind, b.index, cached);
+          plan.reused++;
+        } else {
+          const bytes = await this.#readBlock(kind, b.index, timeout);
+          plan?.fresh.push({ kind, index: b.index, bytes });
+          // The gamepad block names the controller: its cache entry, when the block itself changed
+          if (plan && !plan.entry && kind === 'config' && b.key === 'gamepad') {
+            plan.key = this.#identity();
+            plan.entry = await loadCache(plan.key);
+          }
+        }
       } catch (err) {
         if (!this.#connected) throw err;
         console.warn(`[device] ${kind} block ${b.index} (${b.key}) didn't answer; continuing without it`);
@@ -699,6 +791,8 @@ export class HojaDevice extends EventTarget {
         await this.#out(out);
       }
       await this.#out([REPORT.WRITE_CONFIG, index, 0, 0xff]);
+      // The controller holds these bytes now; if it keeps them differently, the next fingerprint says so
+      if (this.#cacheKey) storeCacheBlocks(this.#cacheKey, [{ kind: 'config', index, bytes: buf.slice() }]);
     });
   }
 

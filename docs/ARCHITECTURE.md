@@ -48,6 +48,10 @@ choosers. Over Bluetooth, a new browser enters a code of button presses on the c
 token it gets).
 Nothing needing the cable is offered then either (`caps.viaBluetooth`; `caps.noCable` covers both).
 
+Connecting is fast on a controller this browser saw before: the firmware sends a CRC32 of every block first
+(report 6), and `device/block-cache.js` (IndexedDB, keyed by the controller's MAC) supplies each block whose cached
+bytes still match; only changed blocks are read. Firmware without report 6 gets the full read.
+
 HOJA applies a written block immediately (RAM). `Save` sends `GAMEPAD_CMD_SAVE_ALL` to persist everything to flash.
 `session.commit(block)` debounces writes (sliders) and marks the block dirty; the Save button glows until saved.
 
