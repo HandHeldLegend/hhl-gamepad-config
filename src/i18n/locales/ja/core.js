@@ -425,5 +425,4 @@ export default {
   "Press {buttons} on it to connect": "{buttons}を押すと接続します",
   "If it doesn’t connect, press {buttons} on the controller.": "接続されない場合は、コントローラーの{buttons}を押してください。",
   "The controller disconnected. Press {buttons} on it again, then choose it.": "コントローラーとの接続が切れました。もう一度{buttons}を押してから、選択してください。",
-  "{start} + {select} ({plus} + {minus} on Nintendo-style controllers)": "{start} + {select}（Nintendo風のコントローラーでは{plus} + {minus}）",
 };

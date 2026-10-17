@@ -425,5 +425,4 @@ export default {
   "Press {buttons} on it to connect": "Appuyez sur {buttons} pour la connecter",
   "If it doesn’t connect, press {buttons} on the controller.": "Si elle ne se connecte pas, appuyez sur {buttons} sur la manette.",
   "The controller disconnected. Press {buttons} on it again, then choose it.": "La manette s’est déconnectée. Appuyez à nouveau sur {buttons} sur celle-ci, puis choisissez-la.",
-  "{start} + {select} ({plus} + {minus} on Nintendo-style controllers)": "{start} + {select} ({plus} + {minus} sur les manettes de style Nintendo)",
 };

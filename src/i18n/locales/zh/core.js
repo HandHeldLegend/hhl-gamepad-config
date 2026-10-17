@@ -409,5 +409,4 @@ export default {
   "Press {buttons} on it to connect": "在手柄上按下 {buttons} 即可连接",
   "If it doesn’t connect, press {buttons} on the controller.": "如果没有连接，请在手柄上按下 {buttons}。",
   "The controller disconnected. Press {buttons} on it again, then choose it.": "手柄已断开连接。请在手柄上再次按下 {buttons}，然后选择它。",
-  "{start} + {select} ({plus} + {minus} on Nintendo-style controllers)": "{start} + {select}（任天堂风格手柄为 {plus} + {minus}）",
 };

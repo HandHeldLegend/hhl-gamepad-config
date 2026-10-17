@@ -6,7 +6,8 @@
  * What it shows
  *   - How a controller turns up: plugged in with a USB data cable, or (on and running wirelessly) with its
  *     Start and Select pressed together (Plus and Minus on some), which makes it visible over Bluetooth for
- *     10 seconds (ble_config.c). The buttons are drawn as the controller names them (see the chord below).
+ *     10 seconds (ble_config.c). Each controller's card names it and its buttons as the controller does
+ *     (see "Controllers this browser knows" below).
  *   - A live list, each entry marked USB or Bluetooth:
  *       USB        controllers this site may already use that are plugged in (navigator.usb.getDevices,
  *                  kept current on connect / disconnect). A click connects, with no browser chooser.
@@ -63,18 +64,19 @@ async function isBraveBrowser() {
   try { return !!(await navigator.brave?.isBrave?.()); } catch { return false; }
 }
 
-// ---- The Bluetooth chord ------------------------------------------------------------------------
-// The controller's own Start and Select buttons pressed together (ble_config.c: INPUT_CODE_START +
-// INPUT_CODE_SELECT), named as each board names them: Plus and Minus on a GCU 2, Start and Select on
-// others. The names of the controller connected last, and of each one by its USB serial or Bluetooth id,
-// are kept per browser, so the popup can show the right buttons before anything is connected.
+// ---- Controllers this browser knows -------------------------------------------------------------
+// Each controller's card shows it as the app knows it: its model and the owner's name for it (user
+// config), and for Bluetooth the buttons that make it visible, its own Start and Select (ble_config.c:
+// INPUT_CODE_START + INPUT_CODE_SELECT), which boards name differently (Plus and Minus on a GCU 2). All of
+// it is kept per browser when a session reads the settings, and again after each save, by USB serial or
+// Bluetooth id. Before a controller ever connected, its card falls back to what the browser reports.
 
-const CHORDS_KEY = 'hhl-config:chords';
-const CHORDS_MAX = 16;
+const KNOWN_KEY = 'hhl-config:known-controllers';
+const KNOWN_MAX = 16;
 
-function loadChords() {
+function loadKnown() {
   try {
-    const v = JSON.parse(localStorage.getItem(CHORDS_KEY) || '{}');
+    const v = JSON.parse(localStorage.getItem(KNOWN_KEY) || '{}');
     return v && typeof v === 'object' ? v : {};
   } catch { return {}; } // private mode, storage blocked
 }
@@ -86,36 +88,39 @@ function inputName(key) {
   return info?.input_type ? decodeText(info.input_name ?? new Uint8Array()).trim() : '';
 }
 
-/** Keep the connected controller's chord names (not the demo's). */
-function rememberChord() {
-  if (isDemo()) return;
-  const chord = { start: inputName('START'), select: inputName('SELECT') };
-  if (!chord.start || !chord.select) return;
-  const all = loadChords();
-  all.last = chord;
+/** Keep what the connected controller's card shows (not the demo's). */
+function rememberController() {
   const id = device.transportId;
-  if (id) {
-    const byId = { ...(all.byId || {}) };
-    delete byId[id];
-    byId[id] = chord; // newest last; the oldest make room
-    all.byId = Object.fromEntries(Object.entries(byId).slice(-CHORDS_MAX));
-  }
-  try { localStorage.setItem(CHORDS_KEY, JSON.stringify(all)); } catch { /* storage blocked */ }
+  if (isDemo() || !id || !session.connected) return;
+  const known = loadKnown();
+  delete known[id];
+  known[id] = { // newest last; the oldest make room
+    model: session.info.name || '',
+    user: decodeText(device.config.user?.user_name ?? new Uint8Array()).trim(),
+    start: inputName('START'),
+    select: inputName('SELECT'),
+  };
+  const kept = Object.fromEntries(Object.entries(known).slice(-KNOWN_MAX));
+  try { localStorage.setItem(KNOWN_KEY, JSON.stringify(kept)); } catch { /* storage blocked */ }
 }
-session.on('state', ({ state }) => { if (state === 'connected') rememberChord(); });
+session.on('state', ({ state }) => { if (state === 'connected') rememberController(); });
+session.on('saved', rememberController); // the owner's name may have changed
 
-/** The chord as text: the controller's own names, or both conventions when it isn't known. */
-function chordText(chord) {
-  return chord ? `${outputName(chord.start)} + ${outputName(chord.select)}`
-    : t('{start} + {select} ({plus} + {minus} on Nintendo-style controllers)',
-      { start: 'Start', select: 'Select', plus: outputName('Plus'), minus: outputName('Minus') });
+/** A card's title: "GCU 2 · Mitch", the model alone without an owner's name, else `fallback`. */
+function cardTitle(info, fallback) {
+  if (!info?.model) return fallback;
+  return info.user ? `${info.model} · ${info.user}` : info.model;
 }
 
-/** The chord as glyphs, the way the connect guide draws a combo; both pairs when it isn't known. */
-function chordArt(chord, size) {
-  const pair = (a, b) => h('span.guide-combo', glyph(a, { size }), h('span.guide-plus', '+'), glyph(b, { size }));
-  return h('span.cm-chord', { role: 'img', 'aria-label': chordText(chord) },
-    chord ? pair(chord.start, chord.select) : [pair('Start', 'Select'), h('span.guide-plus', '/'), pair('Plus', 'Minus')]);
+/** A controller's Start + Select as text, in its own names; "Start + Select" when it isn't known. */
+function chordText(info) {
+  return info?.start && info?.select ? `${outputName(info.start)} + ${outputName(info.select)}` : 'Start + Select';
+}
+
+/** Two buttons as glyphs, the way the connect guide draws a combo. */
+function chordGlyphs(a, b, size) {
+  return h('span.guide-combo.cm-chord', { role: 'img', 'aria-label': `${outputName(a)} + ${outputName(b)}` },
+    glyph(a, { size }), h('span.guide-plus', { 'aria-hidden': 'true' }, '+'), glyph(b, { size }));
 }
 
 /** The six presses as big glyphs; `entered` of them are done and the next one is marked. */
@@ -161,10 +166,9 @@ export function openConnectModule({ cable = false } = {}) {
     let code = '';
     let codeNote = '';    // shown with the next code (after a wrong press)
     const watching = new AbortController();
-    const chords = loadChords();
-    const lastChord = chords.last || null; // the controller connected last, if any
-    /** The chord for a Bluetooth controller: its own when it was connected before. */
-    const chordOf = (bt) => (bt && chords.byId?.[`ble:${bt.id}`]) || lastChord;
+    const known = loadKnown();
+    const knownBt = (bt) => known[`ble:${bt.id}`] || null;
+    const btTitle = (bt) => cardTitle(knownBt(bt), bt.name || t('Bluetooth controller'));
 
     const dlg = openDialog({ title: t('Connect a controller'), icon: 'gamepad', tone: 'blue', onClose: () => finish(null) });
 
@@ -200,11 +204,17 @@ export function openConnectModule({ cable = false } = {}) {
     function renderList() {
       if (step !== 'list') return;
       const rows = [
-        ...usbDevices.map((usb) => item({ kind: 'usb', name: usb.productName || t('USB device'), status: t('Plugged in now'), live: true,
+        ...usbDevices.map((usb) => item({ kind: 'usb', live: true, status: t('Plugged in now'),
+          name: cardTitle(usb.serialNumber && known[`usb:${usb.serialNumber}`], usb.productName || t('USB device')),
           onClick: () => finish({ usb }) })),
-        ...remembered.map((e) => item({ kind: 'bluetooth', name: e.bt.name || t('Bluetooth controller'), live: seenNow(e),
-          status: seenNow(e) ? t('Visible now') : t('Press {buttons} on it to connect', { buttons: chordText(chordOf(e.bt)) }),
-          onClick: () => { cancelAttempt(); reach(e.bt, { manual: true }); } })),
+        ...remembered.map((e) => {
+          const info = knownBt(e.bt);
+          // Its own buttons where it connected before
+          const buttons = info?.start && info?.select ? chordGlyphs(info.start, info.select, 18) : h('strong', chordText(null));
+          return item({ kind: 'bluetooth', name: btTitle(e.bt), live: seenNow(e),
+            status: seenNow(e) ? t('Visible now') : fillNodes(t('Press {buttons} on it to connect'), { buttons }),
+            onClick: () => { cancelAttempt(); reach(e.bt, { manual: true }); } });
+        }),
       ];
       listEl.replaceChildren(...(rows.length ? rows
         : [h('p.cm-empty', t('No controllers here yet. Plug one in, or add one below.'))]));
@@ -227,11 +237,11 @@ export function openConnectModule({ cable = false } = {}) {
       dlg.setBody(
         h('div.cm-ways',
           h('div.cm-way', h('span.cm-way-art', icon('usb')), h('p', t('Plug the controller in with a USB data cable.'))),
-          canBluetooth && h('div.cm-way', h('span.cm-way-art', chordArt(lastChord, 28)),
+          canBluetooth && h('div.cm-way', h('span.cm-way-art', chordGlyphs('Plus', 'Minus', 28)),
             h('p', fillNodes(remembers
               ? t('Or, with it on and running wirelessly, press {buttons} together to connect over Bluetooth.')
               : t('Or, for Bluetooth: with it on and running wirelessly, press {buttons} together, then choose it with Connect over Bluetooth.'),
-            { buttons: h('strong', chordText(lastChord)) })))),
+            { buttons: h('strong', chordText(null)) })))),
         notesEl,
         h('div.cm-list-head', t('Controllers')),
         listEl,
@@ -294,7 +304,7 @@ export function openConnectModule({ cable = false } = {}) {
         if (brave) btNote = braveNote();
         else if (err?.name === 'NotFoundError') problem = t(BT_OFF);
         else if (err?.name === 'SecurityError' || err?.name === 'NotAllowedError') problem = t('This browser didn’t allow Bluetooth here.');
-        else problem = t(CONNECT_FAILED, { buttons: chordText(lastChord) });
+        else problem = t(CONNECT_FAILED, { buttons: chordText(null) });
         renderNotes();
         return;
       }
@@ -318,8 +328,8 @@ export function openConnectModule({ cable = false } = {}) {
       if (settled || pending || link) return;
       const seq = attemptSeq;
       const attempt = new BleLink(bt);
-      const name = bt.name || t('your controller');
-      const buttons = chordText(chordOf(bt));
+      const name = cardTitle(knownBt(bt), bt.name || t('your controller'));
+      const buttons = chordText(knownBt(bt));
       pending = attempt;
       if (manual) showBusy(t('Connecting to {name}…', { name }), t('If it doesn’t connect, press {buttons} on the controller.', { buttons }));
       try {
@@ -427,7 +437,7 @@ export function openConnectModule({ cable = false } = {}) {
       } catch (err) {
         console.warn('[connect] no code', err);
         // A dropped link already went back to the list ('gone')
-        if (link === current && !settled) backToList(t(CONNECT_FAILED, { buttons: chordText(lastChord) }));
+        if (link === current && !settled) backToList(t(CONNECT_FAILED, { buttons: chordText(null) }));
       }
     }
 
