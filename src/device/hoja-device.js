@@ -7,7 +7,7 @@
  *   - request/response operations are serialized so two views can't clobber each other's reads;
  *   - the USB disconnect listener is registered once and only reacts to *our* device.
  *
- * Wire protocol summary (endpoint 2, interface 1, 64-byte reports; first byte = report id):
+ * Wire protocol summary (the config interface, 64-byte reports; first byte = report id):
  *   0x01 READ_CONFIG_BLOCK   out: [1, block]                in: [1, block, chunkSize, idx|0xFF, data...]
  *   0x02 WRITE_CONFIG_BLOCK  out: [2, block, size, idx, data...] then [2, block, 0, 0xFF]
  *   0x03 READ_STATIC_BLOCK   out: [3, block]                in: same shape as 0x01
@@ -16,38 +16,43 @@
  *   0xFE / 0xFF              in: live input reports (joystick / raw hover)
  *   0xFA                     in: analog (snapback) dump
  *   0xAF                     in/out: legacy firmware version probe
- *   0xD0 DONGLE_INFO         out: [0xD0]                    in: WLAN dongle status (see decodeDongleInfo)
+ *   0xD0 DONGLE_INFO         out: [0xD0]                    in: dongle status (see decodeDongleInfo)
  *   0xD1 DONGLE_BOOTLOADER   out: [0xD1]                    the dongle reboots into BOOTSEL (no reply)
+ *   0xD2 DONGLE_PC_MODE      out: [0xD2, mode]              in: 0xD0's reply (the dongle's mode on a computer)
+ *   0x04 + GAMEPAD_CMD_USB_MODE  out: [4, gamepad block, 5, mode]  a controller on its cable: another mode now
  *
- * WLAN dongle: a USB receiver a wireless controller joins over WLAN. With a controller it takes the
+ * The config interface is the vendor interface (class 0xFF, subclass 0) with a bulk endpoint each
+ * way: interface 1 on endpoint 2 in Switch and Steam modes. A dongle on a computer puts it beside the
+ * GameCube adapter (Slippi) and XInput too, on the next free endpoint (3). Windows' Xbox 360 driver
+ * takes the whole XInput device, so there only other systems reach it.
+ *
+ * Dongle: a USB receiver a wireless controller joins over Bluetooth. With a controller it takes the
  * controller's USB identity and passes this protocol through, so everything works unchanged; only
  * the dongle itself answers 0xD0/0xD1 (which is how we tell). Without a controller it is a generic
  * "HOJA Dongle" (2e8a:10c6) that answers nothing else, so it connects as dongle-only.
- *
- * HHL Gamepad WLAN: a PC app that has the controller open over the home network. connectLan() opens it
- * through a LanTransport (lan-transport.js), which stands in for the USBDevice: same packets, no cable.
  *
  * Events (all CustomEvent; read `event.detail`):
  *   'opening'     { name }                           a device was chosen and is being opened (USB product name)
  *   'progress'    { done, total }                    settings blocks read so far while connecting
  *   'connect'     { device: this }                   blocks + statics loaded
- *   'disconnect'  { dongle, requested }              dongle: its status if it was a WLAN dongle; requested:
+ *   'disconnect'  { dongle, requested }              dongle: its status if it was a dongle; requested:
  *                                                     disconnect() was called (not an unplug or re-enumeration)
  *   'input'       DataView                            live input report (0xFE/0xFF)
  *   'snapback'    DataView                            analog dump (0xFA)
  *   'legacy'      { deviceId, url }                   pre-HOJA2 firmware detected
- *   'dongle'      { dongle }                          a WLAN dongle with no controller connected to it
+ *   'dongle'      { dongle }                          a dongle with no controller connected to it
  *   'bootloader'  {}                                  user picked a bare RP2040/RP2350 bootloader
  *   'esp32-update' {}                                 user picked the CH340 of a controller in wireless-module
  *                                                     update mode (only that chip is on USB then)
  */
 import { LAYOUT, createStruct, decodeText } from './struct.js';
 import { legacyFirmwareUrl } from './legacy.js';
-import { LanTransport } from './lan-transport.js';
 
 /** USB filters offered in the browser's device picker. */
 export const USB_FILTERS = [
   { vendorId: 0x057e, productId: 0x2009 }, // Switch Pro Controller mode
+  { vendorId: 0x057e, productId: 0x0337 }, // GameCube adapter: a dongle in Slippi mode on a computer
+  ...(isWindowsHost() ? [] : [{ vendorId: 0x045e, productId: 0x028e }]), // XInput: a dongle in XInput mode
   { vendorId: 0x2e8a, productId: 0x10c6 }, // HOJA Gamepad (generic)
   { vendorId: 0x2e8a, productId: 0x10dd }, // GC Ultimate
   { vendorId: 0x2e8a, productId: 0x10df }, // ProGCC
@@ -55,6 +60,18 @@ export const USB_FILTERS = [
   { vendorId: 0x2e8a, productId: 0x000f }, // RP2350 bootloader
   { vendorId: 0x1a86, productId: 0x7522 }, // CH340: controller in wireless-module (ESP32) update mode
 ];
+
+/** Windows, where the Xbox 360 driver takes a whole XInput device (see USB_FILTERS). */
+function isWindowsHost() {
+  return typeof navigator !== 'undefined'
+    && (/Windows/i.test(navigator.userAgentData?.platform || '') || /Windows/.test(navigator.userAgent || ''));
+}
+
+/** The GameCube adapter's IDs (Slippi mode). With Zadig's driver Windows lets one program at a time
+ *  open it: while Dolphin has it, nothing else can. */
+export function isGameCubeAdapter(device) {
+  return device?.vendorId === 0x057e && device?.productId === 0x0337;
+}
 
 /** The CH340 USB-serial chip a controller exposes in wireless-module (ESP32) update mode. */
 export function isCh340(device) {
@@ -65,15 +82,22 @@ export function isPicoBootloader(device) {
   return device?.vendorId === 0x2e8a && (device?.productId === 0x0003 || device?.productId === 0x000f);
 }
 
-/**
- * Config blocks only newer firmware has. Older firmware doesn't answer them, which is expected: they
- * get a short read timeout and no "missing settings" warning (they still go in `missing`).
- */
-export const OPTIONAL_BLOCKS = new Set(['wlan']);
-const OPTIONAL_TIMEOUT_MS = 500;
+/** Where the config interface was before it was looked up by class. */
+const LEGACY_PORT = { number: 1, epIn: 2, epOut: 2 };
 
-const EP = 2;
-const ITF = 1;
+/** The config interface ({ number, epIn, epOut }), or null on a device without one (see the header). */
+function findConfigPort(usb) {
+  for (const itf of usb.configuration.interfaces) {
+    for (const alt of itf.alternates) {
+      if (alt.interfaceClass !== 0xff || alt.interfaceSubclass !== 0) continue;
+      const bulk = (dir) => alt.endpoints.find((e) => e.type === 'bulk' && e.direction === dir);
+      if (bulk('in') && bulk('out')) {
+        return { number: itf.interfaceNumber, epIn: bulk('in').endpointNumber, epOut: bulk('out').endpointNumber };
+      }
+    }
+  }
+  return null;
+}
 const CHUNK_MAX = 32;
 /** Time limit for one USB step (open, claim, a single OUT transfer). */
 const STEP_TIMEOUT_MS = 5000;
@@ -104,12 +128,24 @@ const REPORT = {
   LEGACY_FW_SET: 0x0f,
   DONGLE_INFO: 0xd0,
   DONGLE_BOOTLOADER: 0xd1,
+  DONGLE_PC_MODE: 0xd2,
 };
 
 /**
- * Decode the WLAN dongle's 0xD0 reply (64 bytes):
+ * The modes the app can switch to live, until the controller (or dongle) is unplugged: the controller's
+ * own number (core_reportformat_t) on its cable, the dongle's (dongle_mode_t) through it. Only modes the
+ * app can reach again, so not XInput: Windows' Xbox 360 driver takes the whole device.
+ */
+export const LIVE_MODES = {
+  steam: { usb: 6, dongle: 1 },
+  slippi: { usb: 2, dongle: 3 },
+  switch: { usb: 0, dongle: 0 },
+};
+
+/**
+ * Decode the dongle's 0xD0 reply (64 bytes):
  *   [1] protocol version   [2] board: 0 unknown, 1 HOJA, 2 Pico W, 3 Pico 2 W   [3] 1 = controller connected
- *   [4..7] dongle firmware version (u32 LE build stamp)   [8..9] PIN (u16 LE)
+ *   [4..7] dongle firmware version (u32 LE build stamp)   [8..9] reserved (0)
  *   [10] detected host: 0 unknown, 1 PC, 2 Switch, 3 N64, 4 GameCube
  *   [11] mode the dongle presents, [12] the controller's mode (0xFF without one):
  *        0 Switch, 1 SInput, 2 XInput, 3 Slippi, 4 SNES, 5 N64, 6 GameCube, 15 unknown
@@ -124,7 +160,6 @@ export function decodeDongleInfo(v) {
     protocol: v.getUint8(1),
     board: v.getUint8(2),
     fwVersion: v.getUint32(4, true),
-    pin: v.getUint16(8, true),
     host: v.getUint8(10),
     hostMode: v.getUint8(11),
     gamepad: connected ? {
@@ -153,6 +188,8 @@ async function waitFor(predicate, timeout) {
 export class HojaDevice extends EventTarget {
   /** @type {USBDevice|null} */
   #usb = null;
+  #port = LEGACY_PORT; // the open device's config interface
+  #switching = false;  // a live mode change was asked for: the device leaves and comes back
   #opening = null;
   #connected = false;
   #queue = Promise.resolve();
@@ -169,7 +206,7 @@ export class HojaDevice extends EventTarget {
   #legacy = { done: false, isLegacy: false };
   #dongleReply = null;
 
-  /** WLAN dongle status (decodeDongleInfo) when connected through one, else null. */
+  /** Dongle status (decodeDongleInfo) when connected through one, else null. */
   dongle = null;
 
   /** Config blocks keyed by name ('gamepad', 'analog', ...). Writable; push with sendBlock(). */
@@ -202,8 +239,6 @@ export class HojaDevice extends EventTarget {
 
   get isConnected() { return this.#connected; }
   get usbDevice() { return this.#usb; }
-  /** The pad ({ id, name, title, mode }) when connected over WLAN through HHL Gamepad WLAN, else null. */
-  get lan() { return this.#usb instanceof LanTransport ? this.#usb.pad : null; }
 
   /** Block index for a config block name, e.g. blockIndex('analog') === 2. */
   blockIndex(key) {
@@ -238,7 +273,7 @@ export class HojaDevice extends EventTarget {
    * Show the browser device picker and connect. Resolves:
    *   true            connected (or legacy device detected; see 'legacy' event)
    *   'bootloader'    user chose a bare bootloader ('bootloader' event fired)
-   *   'dongle'        a WLAN dongle with no controller ('dongle' event fired; the device stays open)
+   *   'dongle'        a dongle with no controller ('dongle' event fired; the device stays open)
    *   false           canceled / failed
    */
   async connect() {
@@ -251,11 +286,6 @@ export class HojaDevice extends EventTarget {
       throw err;
     }
     return this.open(usb);
-  }
-
-  /** Connect to a gamepad HHL Gamepad WLAN has open on this PC (a pad from listLanPads()). Resolves like open(). */
-  connectLan(pad) {
-    return this.open(new LanTransport(pad));
   }
 
   /**
@@ -280,19 +310,26 @@ export class HojaDevice extends EventTarget {
     }
 
     this.#emit('opening', { name: usb.productName || '' });
+    let port;
     try {
       // Right after a firmware update the OS may still be setting the device up; these can then wait
       // forever instead of failing, so each gets a time limit (the caller retries).
       await withTimeout(usb.open(), STEP_TIMEOUT_MS, 'Opening the controller');
       await withTimeout(usb.selectConfiguration(1), STEP_TIMEOUT_MS, 'Selecting the USB configuration');
-      await withTimeout(usb.claimInterface(ITF), STEP_TIMEOUT_MS, 'Claiming the controller');
+      port = findConfigPort(usb);
+      if (!port) throw Object.assign(new Error('This device has no config interface'), { noConfigInterface: true });
+      await withTimeout(usb.claimInterface(port.number), STEP_TIMEOUT_MS, 'Claiming the controller');
     } catch (err) {
       console.error('[device] open failed', err);
+      // Dolphin keeps the adapter open while it runs
+      if (isGameCubeAdapter(usb) && /Access denied/i.test(err?.message || '')) err.adapterInUse = true;
       try { await usb.close(); } catch { /* ignore */ }
       throw err;
     }
 
     this.#usb = usb;
+    this.#port = port;
+    this.#switching = false;
     this.#connected = true;
     this.#streaming = false;
     this.#resetMemory();
@@ -310,7 +347,7 @@ export class HojaDevice extends EventTarget {
         this.#emit('dongle', { dongle: this.dongle });
         return 'dongle';
       }
-      // Over WLAN this takes a few seconds: report each block so the app can show how far it got.
+      // Through the dongle this takes a few seconds: report each block so the app can show how far it got.
       const total = this.#configTable.length + this.#staticTable.length;
       let done = 0;
       const step = () => this.#emit('progress', { done: ++done, total });
@@ -353,22 +390,17 @@ export class HojaDevice extends EventTarget {
   }
 
   #installDisconnectListener(usb) {
-    // HHL Gamepad WLAN: the socket closing is the unplug.
-    if (usb instanceof LanTransport) {
-      usb.addEventListener('close', () => this.#onGone(usb), { once: true });
-      return;
-    }
     if (this.#usbListenerInstalled) return;
     this.#usbListenerInstalled = true;
     navigator.usb.addEventListener('disconnect', (event) => this.#onGone(event.device));
   }
 
-  /** Our device went away without disconnect(): unplugged, re-enumerated, or HHL Gamepad WLAN let go of it. */
+  /** Our device went away without disconnect(): unplugged or re-enumerated. */
   #onGone(usb) {
     if (usb !== this.#usb) return;
     this.#connected = false;
     this.#usb = null;
-    this.#emit('disconnect', { dongle: this.dongle, requested: false });
+    this.#emit('disconnect', { dongle: this.dongle, requested: false, switching: this.#switching });
     this.dongle = null;
   }
 
@@ -378,7 +410,7 @@ export class HojaDevice extends EventTarget {
 
   async #out(bytes) {
     if (!this.#connected || !this.#usb) throw new Error('Device not connected');
-    return withTimeout(this.#usb.transferOut(EP, bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)), STEP_TIMEOUT_MS, 'Sending to the controller');
+    return withTimeout(this.#usb.transferOut(this.#port.epOut, bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)), STEP_TIMEOUT_MS, 'Sending to the controller');
   }
 
   /** Send a report: [reportId, ...data]. */
@@ -398,8 +430,8 @@ export class HojaDevice extends EventTarget {
     let failures = 0;
     while (this.#connected && this.#usb) {
       try {
-        const result = await this.#usb.transferIn(EP, 64);
-        if (result.status === 'stall') { await this.#usb.clearHalt('in', EP); continue; }
+        const result = await this.#usb.transferIn(this.#port.epIn, 64);
+        if (result.status === 'stall') { await this.#usb.clearHalt('in', this.#port.epIn); continue; }
         // Zero-length packets happen on the bulk endpoint; ignore them rather than parse.
         if (result.data && result.data.byteLength > 0) {
           this.#lastReportAt = performance.now();
@@ -484,7 +516,7 @@ export class HojaDevice extends EventTarget {
     return this.#legacy.isLegacy;
   }
 
-  /** Ask for the WLAN dongle's status. Resolves the decoded reply, or null when nothing answers (no dongle). */
+  /** Ask for the dongle's status. Resolves the decoded reply, or null when nothing answers (no dongle). */
   async #probeDongle(timeout = 150) {
     this.#dongleReply = { done: false, info: null };
     await this.#out([REPORT.DONGLE_INFO]);
@@ -531,21 +563,18 @@ export class HojaDevice extends EventTarget {
   /**
    * Read every block of one kind. A block that doesn't answer is recorded in `missing` instead of
    * failing the whole connection (hoja2 behaved the same way). After the first miss the timeout
-   * drops, so a firmware without several blocks doesn't stall the connect for long. OPTIONAL_BLOCKS
-   * only get a short wait: most controllers run firmware from before them. `onBlock` runs after each.
+   * drops, so a firmware without several blocks doesn't stall the connect for long. `onBlock` runs
+   * after each.
    */
   async #readAll(kind, table, onBlock) {
     let timeout = 3000;
     for (const b of table) {
-      const optional = kind === 'config' && OPTIONAL_BLOCKS.has(b.key);
       try {
-        await this.#readBlock(kind, b.index, optional ? Math.min(timeout, OPTIONAL_TIMEOUT_MS) : timeout);
+        await this.#readBlock(kind, b.index, timeout);
       } catch (err) {
         if (!this.#connected) throw err;
-        if (!optional) {
-          console.warn(`[device] ${kind} block ${b.index} (${b.key}) didn't answer; continuing without it`);
-          timeout = 1000;
-        }
+        console.warn(`[device] ${kind} block ${b.index} (${b.key}) didn't answer; continuing without it`);
+        timeout = 1000;
         this.missing[kind].push(b.key);
       }
       onBlock?.();
@@ -585,13 +614,13 @@ export class HojaDevice extends EventTarget {
    * @param {string|number} command command name from the firmware enum (e.g. 'SAVE_ALL') or id
    * @returns {Promise<{status: boolean, data: Uint8Array|null}>}
    */
-  sendConfigCommand(block, command, timeout = 5000) {
+  sendConfigCommand(block, command, timeout = 5000, arg = null) {
     const blockKey = typeof block === 'string' ? block : this.#configTable.find((b) => b.index === block)?.key;
     const index = typeof block === 'string' ? this.blockIndex(block) : block;
     const cmd = typeof command === 'string' ? this.commandId(blockKey, command) : command;
     return this.#exclusive(async () => {
       this.#cmd = { block: index, command: cmd, done: false, ok: false, data: null };
-      await this.#out([REPORT.COMMAND, index, cmd]);
+      await this.#out(arg == null ? [REPORT.COMMAND, index, cmd] : [REPORT.COMMAND, index, cmd, arg]);
       const done = await waitFor(() => this.#cmd.done, timeout ?? 5000);
       return done ? { status: this.#cmd.ok, data: this.#cmd.data } : { status: false, data: null };
     });
@@ -609,7 +638,7 @@ export class HojaDevice extends EventTarget {
     return true;
   }
 
-  /** Re-read the WLAN dongle's status (e.g. after a Check again). Resolves the new info, or null. */
+  /** Re-read the dongle's status (e.g. after a Check again). Resolves the new info, or null. */
   refreshDongle() {
     return this.#exclusive(async () => {
       const info = await this.#probeDongle(1000);
@@ -618,7 +647,35 @@ export class HojaDevice extends EventTarget {
     });
   }
 
-  /** Reboot the WLAN dongle (not the controller) into its RP2040/RP2350 bootloader. No reply: it drops off USB. */
+  /**
+   * The dongle's mode on a computer (a DONGLE_PC_MODES value), until it is unplugged. A controller
+   * that follows the dongle switches with it, and the dongle comes back on USB in that mode: the
+   * session follows it there. Resolves the dongle's new status, or null without a reply.
+   */
+  setDonglePcMode(mode) {
+    this.#switching = true;
+    return this.#exclusive(async () => {
+      this.#dongleReply = { done: false, info: null };
+      await this.#out([REPORT.DONGLE_PC_MODE, mode]);
+      await waitFor(() => this.#dongleReply.done, 1000);
+      if (this.#dongleReply.info) this.dongle = this.#dongleReply.info;
+      return this.#dongleReply.info;
+    });
+  }
+
+  /**
+   * A controller on its cable: another USB mode now (a LIVE_MODES .usb value), until it is unplugged.
+   * Resolves true once it agreed; it then drops off USB and comes back in that mode (about 0.3 s), and
+   * the session follows it there. Older firmware doesn't know the command: false.
+   */
+  async setUsbMode(mode) {
+    this.#switching = true;
+    const { status } = await this.sendConfigCommand('gamepad', this.commandId('gamepad', 'USB_MODE'), 1000, mode);
+    if (!status) this.#switching = false;
+    return status;
+  }
+
+  /** Reboot the dongle (not the controller) into its RP2040/RP2350 bootloader. No reply: it drops off USB. */
   async rebootDongleToBootloader() {
     await this.#out([REPORT.DONGLE_BOOTLOADER]);
     return true;

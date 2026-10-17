@@ -24,7 +24,6 @@ export default {
   "Open": "打开",
   "Configure": "配置",
   "Explore": "探索",
-  "Connected through a WLAN dongle.": "已通过 WLAN 接收器连接。",
   "Dongle details": "接收器详情",
-  "Connected through HHL Gamepad WLAN on this PC.": "已通过此电脑上的 HHL Gamepad WLAN 连接。",
+  "Connected through the dongle.": "已通过接收器连接。",
 };

@@ -2,7 +2,7 @@
  * Firmware & backup, in three groups:
  *   This controller   its firmware (update / reinstall, maker, manual), Backup & restore, and Recovery
  *                     (reboot into the bootloader, restart out of it, manual UF2 downloads)
- *   Other hardware    install HOJA on a blank board, the WLAN dongle, the wireless module in update mode
+ *   Other hardware    install HOJA on a blank board, the dongle, the wireless module in update mode
  *
  * The flashing itself lives in src/firmware/ (updater.js state machine + picoboot.js protocol);
  * this page is the friendly front door to it. Deep links: #/firmware?build=<id> preselects a build
@@ -32,7 +32,7 @@ const STATUS_TEXT = {
 };
 
 function controllerCard(session) {
-  // Only a WLAN dongle is connected: its own firmware can be updated here.
+  // Only a dongle is connected: its own firmware can be updated here.
   if (session.state === 'dongle') return dongleCard(session);
   if (!session.connected) {
     return card({ title: t('Update your controller'), icon: 'download', tone: 'blue', subtitle: t('Connect to check for new firmware.') },
@@ -48,11 +48,11 @@ function controllerCard(session) {
       s.latest && [t('Latest build'), formatFwVersion(s.latest)],
       session.info.manualUrl && [t('Manual'), h('a', { href: session.info.manualUrl, target: '_blank', rel: 'noopener' }, t('Open manual'), ' ', icon('external'))],
     ]),
-    // Without a USB cable (WLAN dongle, HHL Gamepad WLAN) the controller can't reach its bootloader.
-    session.caps.viaWireless && callout({ tone: 'blue', icon: 'usb',
+    // Through the dongle (no USB cable) the controller can't reach its bootloader.
+    session.caps.viaDongle && callout({ tone: 'blue', icon: 'usb',
       text: s.state === 'available' ? t(CABLE_UPDATE_TEXT) : cableOnlyNote() }),
     h('div.row',
-      !session.caps.viaWireless && (s.state === 'available'
+      !session.caps.viaDongle && (s.state === 'available'
         ? button({ label: t('Update now'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() })
         : button({ label: t('Reinstall firmware'), icon: 'download', variant: 'tonal', onClick: () => openUpdateWizard({ reinstall: true }) })),
       asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', busyLabel: t('Checking…'), okLabel: t('Checked'),
@@ -67,18 +67,18 @@ function installCard(params) {
         { bootsel: h('strong', 'BOOTSEL'), drive: h('strong', 'RPI-RP2'), drive2: h('strong', 'RP2350') })),
       h('li', fillNodes(t('Press {button} and pick the “RP2 Boot” device. The installer opens automatically.'), { button: h('strong', t('Select bootloader')) }))),
     h('div.row',
-      button({ label: t('Select bootloader'), icon: 'usb', variant: 'primary', onClick: () => connectController({ usbOnly: true }) }),
+      button({ label: t('Select bootloader'), icon: 'usb', variant: 'primary', onClick: () => connectController() }),
       button({ label: t('Open installer'), icon: 'firmware', variant: 'tonal', onClick: () => openInstallWizard(params.build) })),
     callout({ tone: 'yellow', title: t('Pick the right build.'), text: t('Installing firmware made for different hardware can stop the controller working until it’s re-flashed from BOOTSEL.') }));
 }
 
 /**
- * WLAN dongle by hand. Dongles update from the app (Home, once connected), but only once they run
+ * Dongle by hand. Dongles update from the app (Home, once connected), but only once they run
  * firmware that answers 0xD1; before that the first update goes through BOOTSEL and the installer.
  */
 function dongleInstallCard() {
-  return card({ title: t('WLAN dongle'), icon: 'link', tone: 'blue', subtitle: t('Update the dongle itself, not the controller.') },
-    h('p.muted.small', t('To update a WLAN dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W or Pico 2 W, hold BOOTSEL), then choose its firmware here.')),
+  return card({ title: t('Dongle'), icon: 'link', tone: 'blue', subtitle: t('Update the dongle itself, not the controller.') },
+    h('p.muted.small', t('To update a dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W or Pico 2 W, hold BOOTSEL), then choose its firmware here.')),
     h('div.row', button({ label: t('Open installer'), icon: 'firmware', variant: 'tonal', onClick: () => openInstallWizard() })));
 }
 
@@ -87,7 +87,7 @@ function rebootButton(session) {
   const btn = button({
     label: t('Reboot to bootloader'), icon: 'firmware', variant: 'tonal',
     // Without a USB cable the firmware refuses this: its bootloader can't be reached wirelessly.
-    disabled: !session.connected || session.caps.viaWireless,
+    disabled: !session.connected || session.caps.viaDongle,
     onClick: async () => {
       const ok = await confirmDialog({
         title: t('Reboot into update mode?'),
@@ -133,7 +133,7 @@ function recoveryCard(session) {
   const render = () => body.replaceChildren(
     h('div.fw-recovery-row',
       h('div', h('div.field-label', t('Install firmware by hand')),
-        h('div.field-desc', session.caps.viaWireless ? cableOnlyNote() : t('Restarts the connected controller in update mode, to install firmware by hand.'))),
+        h('div.field-desc', session.caps.viaDongle ? cableOnlyNote() : t('Restarts the connected controller in update mode, to install firmware by hand.'))),
       rebootButton(session)),
     h('div.fw-recovery-row',
       h('div', h('div.field-label', t('Stuck in the bootloader?')),

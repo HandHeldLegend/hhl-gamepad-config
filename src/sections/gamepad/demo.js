@@ -5,7 +5,7 @@
  *                           or undefined for the default success. May dispatch events on device.
  *
  * Nothing extra needed: the base mock seeds mode, MAC, Switch colors and the WebUSB popup, and
- * wireless/demo.js seeds host_mac_switch and wlan_dongle_key.
+ * wireless/demo.js seeds the paired hosts.
  */
 export function seed(device) {}
 

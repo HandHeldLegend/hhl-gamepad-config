@@ -60,9 +60,6 @@ export default {
   "How the controller introduces itself when you plug it in.": "Comment la manette se présente quand vous la branchez.",
   "WebUSB popup": "Notification WebUSB",
   "Show the browser’s “open the config app” notification when the controller is plugged in.": "Affiche la notification du navigateur « ouvrir l’app de configuration » quand la manette est branchée.",
-  "WLAN dongle PIN": "Code PIN du dongle WLAN",
-  "The four-digit PIN that pairs the controller with its WLAN USB dongle is set on the Wireless page.": "Le code PIN à quatre chiffres qui appaire la manette à son dongle USB WLAN se règle sur la page Sans fil.",
-  "Open Wireless": "Ouvrir Sans fil",
 
   // MAC address
   "MAC address base": "Adresse MAC de base",
@@ -100,14 +97,13 @@ export default {
   "Wii": "Wii",
   "Only {modes} connect to this app. After changing the default, hold {button} while plugging in to connect here.": "Seuls les {modes} se connectent à cette app. Après avoir changé le mode par défaut, maintenez {button} en branchant la manette pour vous connecter ici.",
   "Detects a PC, Switch, GameCube, N64 or SNES / NES when plugged in.": "Détecte un PC, une Switch, une GameCube, une N64 ou une SNES / NES une fois branchée.",
-  "Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. WLAN uses your WLAN dongle.": "Utilisé sur batterie. Auto se connecte à la première console ou au premier PC enregistré qui répond : Switch, puis Wii, puis PC. WLAN utilise votre dongle WLAN.",
-  "Joins your WLAN dongle and takes the mode it detects (PC, Switch, N64 or GameCube).": "Se connecte à votre dongle WLAN et prend le mode qu'il détecte (PC, Switch, N64 ou GameCube).",
-  "WLAN": "WLAN",
   "Plugged in": "Branchée",
   "Used when plugged in. Auto detects a PC, Switch, GameCube, N64 or SNES / NES.": "Utilisé une fois branchée. Auto détecte un PC, une Switch, une GameCube, une N64 ou une SNES / NES.",
   "The output mode the controller starts in. On firmware with separate defaults this is the one used when plugged in, and Auto detects the console or PC. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here.": "Le mode de sortie au démarrage de la manette. Sur un firmware avec des modes par défaut séparés, c’est celui utilisé une fois branchée, et Auto détecte la console ou le PC. Seuls les modes Switch et Steam fonctionnent avec cette app. Après l’avoir changé, maintenez A ou B en branchant la manette pour revenir ici.",
-  "The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. WLAN joins your WLAN dongle and takes the mode it detects. Hold the WLAN button at power-on for the other one (Bluetooth or WLAN).": "Le mode au démarrage de la manette sur batterie (firmware avec des modes par défaut séparés). Auto se connecte à la première console ou au premier PC enregistré qui répond : Switch, puis Wii, puis PC. WLAN se connecte à votre dongle WLAN et prend le mode qu'il détecte. Maintenez le bouton WLAN à l'allumage pour utiliser l'autre (Bluetooth ou WLAN).",
   "Wireless default": "Par défaut sans fil",
   "To start in another mode just once, hold its button while you plug in or turn on the controller.": "Pour démarrer une seule fois dans un autre mode, maintenez son bouton enfoncé en branchant ou en allumant la manette.",
   "Firmware updates, settings backups and recovery are on the {page} page.": "Les mises à jour du firmware, les sauvegardes des réglages et la récupération se trouvent sur la page {page}.",
+  "Connects through your dongle and takes the mode it detects (PC, Switch, N64 or GameCube).": "Se connecte via votre dongle et prend le mode qu'il détecte (PC, Switch, N64 ou GameCube).",
+  "Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. Dongle connects through your dongle.": "Utilisé sur batterie. Auto se connecte à la première console ou au premier PC enregistré qui répond : Switch, puis Wii, puis PC. Dongle se connecte via votre dongle.",
+  "The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. Dongle connects through your dongle and takes the mode it detects. Hold the dongle button at power-on for the other one (Bluetooth or the dongle).": "Le mode au démarrage de la manette sur batterie (firmware avec des modes par défaut séparés). Auto se connecte à la première console ou au premier PC enregistré qui répond : Switch, puis Wii, puis PC. Dongle se connecte via votre dongle et prend le mode qu'il détecte. Maintenez le bouton du dongle à l'allumage pour utiliser l'autre (Bluetooth ou le dongle).",
 };

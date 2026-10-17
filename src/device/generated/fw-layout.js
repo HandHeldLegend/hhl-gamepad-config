@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@b330904)
+// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@7f993b9)
 // Validated 6 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "local",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "b330904"
+  "ref": "7f993b9"
  },
  "blocks": {
   "config": [
@@ -54,11 +54,6 @@ export default {
     "index": 8,
     "key": "input",
     "struct": "inputConfig_s"
-   },
-   {
-    "index": 9,
-    "key": "wlan",
-    "struct": "wlanConfig_s"
    }
   ],
   "static": [
@@ -109,6 +104,9 @@ export default {
    "REFRESH": 0,
    "RESET_TO_BOOTLOADER": 1,
    "ENABLE_BLUETOOTH_UPLOAD": 2,
+   "REBOOT_DONGLE": 3,
+   "REBOOT_BLUETOOTH": 4,
+   "USB_MODE": 5,
    "SAVE_ALL": 255
   },
   "input": {
@@ -150,10 +148,6 @@ export default {
   "haptic": {
    "REFRESH": 0,
    "TEST_STRENGTH": 1
-  },
-  "wlan": {
-   "REFRESH": 0,
-   "CLEAR": 1
   }
  },
  "structs": {
@@ -599,10 +593,11 @@ export default {
      "doc": "Whether or not the WebUSB toast should show"
     },
     {
-     "name": "wlan_dongle_key",
+     "name": "reserved_pin",
      "offset": 37,
-     "type": "u16",
-     "doc": "WLAN dongle pairing pin (0000-9999)"
+     "type": "u8",
+     "count": 2,
+     "doc": "Was the WLAN dongle's PIN; settings saved before keep it"
     },
     {
      "name": "host_mac_wii",
@@ -819,35 +814,6 @@ export default {
      "offset": 17,
      "type": "u8",
      "count": 47
-    }
-   ]
-  },
-  "wlanConfig_s": {
-   "size": 100,
-   "fields": [
-    {
-     "name": "wlan_config_version",
-     "offset": 0,
-     "type": "u8"
-    },
-    {
-     "name": "flags",
-     "offset": 1,
-     "type": "u8"
-    },
-    {
-     "name": "ssid",
-     "offset": 2,
-     "type": "u8",
-     "count": 33,
-     "doc": "Up to 32 bytes, NUL terminated"
-    },
-    {
-     "name": "password",
-     "offset": 35,
-     "type": "u8",
-     "count": 65,
-     "doc": "8-63 character passphrase or 64 hex digits, NUL terminated; empty = open"
     }
    ]
   },
@@ -1203,10 +1169,10 @@ export default {
      "count": 24
     },
     {
-     "name": "wlan_supported",
+     "name": "dongle_supported",
      "offset": 54,
      "type": "u8",
-     "doc": "1 when RPI RM2 WLAN dongle transport is available"
+     "doc": "1 when the dongle link is available"
     },
     {
      "name": "wii_supported",
@@ -1328,9 +1294,9 @@ export default {
     "doc": "Wireless Bluetooth modes"
    },
    {
-    "name": "GAMEPAD_METHOD_WLAN",
+    "name": "GAMEPAD_METHOD_DONGLE",
     "value": 3,
-    "doc": "Wireless WLAN modes (dongle)"
+    "doc": "The dongle (3 in saved boot memory)"
    }
   ],
   "gamepad_transport_t": [
@@ -1363,7 +1329,7 @@ export default {
     "value": 4
    },
    {
-    "name": "GAMEPAD_TRANSPORT_WLAN",
+    "name": "GAMEPAD_TRANSPORT_DONGLE",
     "value": 5
    }
   ],
@@ -2562,12 +2528,8 @@ export default {
     "value": 8
    },
    {
-    "name": "CFG_BLOCK_WLAN",
-    "value": 9
-   },
-   {
     "name": "CFG_BLOCK_MAX",
-    "value": 10
+    "value": 9
    }
   ],
   "gamepad_cmd_t": [
@@ -2582,6 +2544,21 @@ export default {
    {
     "name": "GAMEPAD_CMD_ENABLE_BLUETOOTH_UPLOAD",
     "value": 2
+   },
+   {
+    "name": "GAMEPAD_CMD_REBOOT_DONGLE",
+    "value": 3,
+    "doc": "Reboot into the dongle transport (power ignored); argument 0x80 | mode, else the current one"
+   },
+   {
+    "name": "GAMEPAD_CMD_REBOOT_BLUETOOTH",
+    "value": 4,
+    "doc": "Reboot into Bluetooth; argument 0x80 | mode, else the current one"
+   },
+   {
+    "name": "GAMEPAD_CMD_USB_MODE",
+    "value": 5,
+    "doc": "On USB, another mode now, until unplugged (no reboot); argument the mode"
    },
    {
     "name": "GAMEPAD_CMD_SAVE_ALL",
@@ -2718,17 +2695,6 @@ export default {
     "value": 1
    }
   ],
-  "wlan_cmd_t": [
-   {
-    "name": "WLAN_CMD_REFRESH",
-    "value": 0
-   },
-   {
-    "name": "WLAN_CMD_CLEAR",
-    "value": 1,
-    "doc": "Forget the home network: name and password"
-   }
-  ],
   "static_block_t": [
    {
     "name": "STATIC_BLOCK_DEVICE",
@@ -2784,7 +2750,6 @@ export default {
   "CFG_BLOCK_INPUT_VERSION": 20,
   "CFG_INPUT_WII_PROFILE_VERSION": 3,
   "CFG_BLOCK_SWITCHPAIR_VERSION": 16,
-  "CFG_BLOCK_WLAN_VERSION": 16,
   "IMU_SENSITIVITY_MIN": 50,
   "IMU_SENSITIVITY_MAX": 200,
   "IMU_SENSITIVITY_UNITY": 100,
@@ -2798,9 +2763,6 @@ export default {
   "ANALOG_EXP_SENSITIVITY_MAX": 300,
   "ANALOG_EXP_SENSITIVITY_DEFAULT": 100,
   "RGB_BRIGHTNESS_MAX": 4096,
-  "WLAN_FLAG_HOME_ENABLED": 1,
-  "WLAN_FLAG_HAS_PASSWORD": 2,
-  "WLAN_FLAG_KEEP_PASSWORD": 4,
   "FIRMWARE_VERSION_TIMESTAMP": 0
  }
 };

@@ -97,8 +97,8 @@ export const SECTIONS = [
   },
   {
     id: 'wireless', title: 'Wireless', icon: 'wireless', tone: 'blue', group: 'system', device: true, requires: 'wireless',
-    summary: 'Bluetooth pairing info, wireless module firmware and WLAN dongle settings.',
-    keywords: ['bluetooth', 'pairing', 'esp32', 'baseband', 'wlan', 'dongle', 'fcc'],
+    summary: 'Bluetooth pairing info, wireless module firmware and the dongle.',
+    keywords: ['bluetooth', 'pairing', 'esp32', 'baseband', 'dongle', 'fcc'],
     params: { update: 'Set to 1 to open the wireless module update dialog', baud: 'esptool baud rate override (default 115200)' },
     load: () => import('./wireless/view.js'),
   },

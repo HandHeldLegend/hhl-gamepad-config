@@ -3,38 +3,42 @@
  *
  * Views should talk to `session` rather than the raw driver for anything stateful:
  *   session.state         'disconnected' | 'connecting' | 'connected' | 'legacy' | 'dongle'
- *                         ('dongle': a WLAN dongle with no controller; nothing to configure yet;
+ *                         ('dongle': a dongle with no controller; nothing to configure yet;
  *                         'connecting': from the moment a device was chosen until its settings are read)
  *   session.connecting    while connecting: { name, done, total } (device name, settings blocks read), else null
  *   session.caps          capability flags derived from the static info blocks (what this build has);
- *                         caps.viaDongle: the controller is connected through a WLAN dongle;
- *                         caps.viaLan: through HHL Gamepad WLAN on this PC; caps.viaWireless: either one
+ *                         caps.viaDongle: the controller is connected through a dongle, not its cable
  *                         (no firmware, bootloader or wireless-module updates without a USB cable)
  *   session.info          { name, maker, fwVersion, manifestUrl, firmwareUrl, manualUrl }
- *   session.dongle        the WLAN dongle's status (decodeDongleInfo in hoja-device.js), or null
- *   session.connectLan(p) connect through HHL Gamepad WLAN instead of the USB picker (lan-transport.js)
+ *   session.dongle        the dongle's status (decodeDongleInfo in hoja-device.js), or null
+ *   session.liveMode      the mode the app can switch away from live ('steam' | 'slippi' | 'switch'), or null
+ *   session.switchMode(m) switch to another LIVE_MODES mode now (on the cable, or the dongle's on a computer)
  *   session.config.<blk>  live config structs (same objects as device.config)
  *   session.static.<blk>  static info structs
  *   session.commit(blk)   push a block to the device (debounced) and mark it unsaved
  *   session.save()        flush pending writes and commit everything to flash
  *   session.on(evt, fn)   subscribe; returns an unsubscribe function
  *
- * Events: 'state', 'connecting', 'dirty', 'saved', 'attention', 'legacy', 'bootloader', 'esp32-update', 'dongle'
+ * Events: 'state', 'connecting', 'dirty', 'saved', 'attention', 'legacy', 'bootloader', 'esp32-update', 'dongle',
+ *         'adapter-in-use' (the dongle came back as the GameCube adapter, and Dolphin took it first)
  *
  * HOJA firmware applies a written block immediately (RAM); "Save" persists it to flash.
  * That's why every change is pushed live and the Save button lights up until committed.
  *
- * A WLAN dongle drops off USB and comes back under a new identity whenever a controller joins or
- * leaves it. After a dongle disappears like that, the session reconnects to whatever comes back
- * (see #followDongle). The browser only reports devices this site may already use, so when the
+ * A dongle drops off USB and comes back under a new identity whenever a controller joins or
+ * leaves it, and so do both after a live mode change. After that, the session reconnects to whatever
+ * comes back (see #followDongle). The browser only reports devices this site may already use, so when the
  * new identity was never allowed, the owner presses Connect once.
  */
-import { device, USB_FILTERS, isPicoBootloader, isCh340 } from './hoja-device.js';
+import { device, USB_FILTERS, LIVE_MODES, isPicoBootloader, isCh340 } from './hoja-device.js';
 import { decodeText } from './struct.js';
 import { N_ } from '../i18n/index.js'; // attention texts are translated where displayed
 
 const WRITE_DEBOUNCE_MS = 120;
-/** How long to wait for a WLAN dongle to come back after it drops off USB. */
+/** The dongle's host kind (0xD0 byte 10) for a computer. */
+const HOST_PC = 1;
+
+/** How long to wait for a dongle to come back after it drops off USB. */
 const DONGLE_FOLLOW_MS = 10000;
 
 /** IMU config block version that added imu_mode_disable_mask (per-mode motion on/off). */
@@ -62,7 +66,7 @@ export function computeCaps(s, c) {
     hapticHD: hd,
     battery: s.battery.battery_capacity_mah > 0,
     bluetooth,
-    wlan: !!bt.wlan_supported,
+    dongle: !!bt.dongle_supported,
     wireless: bluetooth,
     externalBaseband: bt.external_update_supported > 0,
     snes: !!s.device.snes_supported,
@@ -83,8 +87,8 @@ export function computeCaps(s, c) {
 
 const NO_CAPS = Object.freeze(Object.fromEntries(
   ['analog', 'leftStick', 'rightStick', 'triggers', 'invertAllowed', 'rgb', 'imu', 'haptics', 'hapticHD',
-    'battery', 'bluetooth', 'wlan', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'imuModes', 'imuModeWii', 'flicks', 'splitDefaults',
-    'homeWlan', 'viaDongle', 'viaLan', 'viaWireless'].map((k) => [k, false]),
+    'battery', 'bluetooth', 'dongle', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'imuModes', 'imuModeWii', 'flicks', 'splitDefaults',
+    'viaDongle'].map((k) => [k, false]),
 ));
 
 class Session extends EventTarget {
@@ -101,7 +105,7 @@ class Session extends EventTarget {
   #pending = new Map();
   #editSeq = 0;              // bumps on every commit()
   #editedAt = new Map();     // block -> #editSeq of its latest commit (see save())
-  #follow = null; // { stop } while waiting for a WLAN dongle to come back
+  #follow = null; // { stop } while waiting for a dongle to come back
 
   constructor() {
     super();
@@ -151,20 +155,6 @@ class Session extends EventTarget {
     }
   }
 
-  /** Connect to a gamepad HHL Gamepad WLAN has open on this PC (a pad from listLanPads()). Resolves like connect(). */
-  async connectLan(pad) {
-    this.#follow?.stop();
-    this.#setState('connecting');
-    try {
-      const result = await device.connectLan(pad);
-      if (result !== true && this.state === 'connecting') this.#setState('disconnected');
-      return result;
-    } catch (err) {
-      this.#setState('disconnected');
-      throw err;
-    }
-  }
-
   /** Re-open a controller the user already authorized (no picker). Resolves like connect(). */
   async reconnect(usb) {
     this.#follow?.stop();
@@ -185,7 +175,44 @@ class Session extends EventTarget {
     return device.disconnect();
   }
 
-  /** Ask the WLAN dongle for its status again (PIN, detected host, controller). */
+  /**
+   * The current mode, when the app can switch it live, else null: a controller on its cable, or a dongle
+   * on a computer whose controller follows it (not one whose mode was chosen at power-up). Not from a
+   * mode the app can't reach again (XInput).
+   */
+  get liveMode() {
+    if (this.state !== 'connected' && this.state !== 'dongle') return null;
+    const d = this.dongle;
+    if (d) {
+      if (d.host !== HOST_PC || d.gamepad?.modeAtPowerUp) return null;
+      return Object.keys(LIVE_MODES).find((m) => LIVE_MODES[m].dongle === d.hostMode) ?? null;
+    }
+    const usb = device.usbDevice;
+    if (!usb) return null;
+    if (usb.vendorId === 0x057e && usb.productId === 0x2009) return 'switch';
+    if (usb.vendorId === 0x057e && usb.productId === 0x0337) return 'slippi';
+    if (usb.vendorId === 0x2e8a) return 'steam';
+    return null;
+  }
+
+  /**
+   * Switch to another LIVE_MODES mode now: the dongle's on a computer (its controller follows), or the
+   * controller's own on its cable. The device leaves USB and comes back in that mode, and the session
+   * follows it there. Resolves true once the switch was taken.
+   */
+  async switchMode(mode) {
+    const target = LIVE_MODES[mode];
+    if (!target || !this.liveMode || this.liveMode === mode) return false;
+    await this.flush().catch(() => {});
+    if (this.dongle) {
+      const info = await device.setDonglePcMode(target.dongle);
+      this.#emit('dongle', { dongle: this.dongle });
+      return info?.hostMode === target.dongle;
+    }
+    return device.setUsbMode(target.usb);
+  }
+
+  /** Ask the dongle for its status again (detected host, mode, controller). */
   async refreshDongle() {
     if (!this.dongle) return null;
     const info = await device.refreshDongle();
@@ -208,17 +235,7 @@ class Session extends EventTarget {
 
   #onConnect() {
     const s = device.static;
-    const caps = computeCaps(s, device.config);
-    const viaDongle = !!device.dongle;
-    const viaLan = !!device.lan;
-    this.caps = {
-      ...caps,
-      // Home WLAN (for HHL Gamepad WLAN): a controller with WLAN whose firmware serves the wlan block.
-      homeWlan: caps.wlan && !device.missing.config.includes('wlan'),
-      viaDongle,
-      viaLan,
-      viaWireless: viaDongle || viaLan,
-    };
+    this.caps = { ...computeCaps(s, device.config), viaDongle: !!device.dongle };
     this.info = {
       name: decodeText(s.device.name) || 'HOJA Controller',
       maker: decodeText(s.device.maker),
@@ -232,7 +249,7 @@ class Session extends EventTarget {
     this.refreshAttention();
   }
 
-  /** A WLAN dongle with no controller: nothing to configure, but it can be shown and updated. */
+  /** A dongle with no controller: nothing to configure, but it can be shown and updated. */
   #onDongle() {
     this.caps = NO_CAPS;
     this.info = {};
@@ -242,7 +259,7 @@ class Session extends EventTarget {
     this.#emit('dongle', { dongle: this.dongle });
   }
 
-  #onDisconnect({ dongle = null, requested = false } = {}) {
+  #onDisconnect({ dongle = null, requested = false, switching = false } = {}) {
     for (const t of this.#timers.values()) clearTimeout(t);
     this.#timers.clear();
     this.#pending.clear();
@@ -252,11 +269,11 @@ class Session extends EventTarget {
     this.#emit('dirty', { dirty: false });
     this.#emit('attention', this.attention);
     this.#setState('disconnected');
-    if (dongle && !requested) this.#followDongle();
+    if ((dongle || switching) && !requested) this.#followDongle();
   }
 
   /**
-   * The WLAN dongle dropped off USB without being asked to: usually a controller joined it (it comes
+   * The dongle dropped off USB without being asked to: usually a controller joined it (it comes
    * back as that controller) or left it (it comes back as the dongle). Reconnect to the next HOJA
    * device the browser reports within DONGLE_FOLLOW_MS. A bootloader (dongle update) is left to the
    * firmware updater.
@@ -273,7 +290,13 @@ class Session extends EventTarget {
       for (let attempt = 0; attempt < 3 && this.state === 'disconnected'; attempt++) {
         await new Promise((r) => setTimeout(r, attempt ? 1000 : 300));
         if (this.state !== 'disconnected') return;
-        try { await this.reconnect(e.device); return; } catch (err) { console.warn('[session] dongle reconnect failed', err?.message || err); }
+        try {
+          await this.reconnect(e.device);
+          return;
+        } catch (err) {
+          console.warn('[session] dongle reconnect failed', err?.message || err);
+          if (err?.adapterInUse) { this.#emit('adapter-in-use', {}); return; }
+        }
       }
     };
     const stop = () => {
@@ -370,7 +393,7 @@ class Session extends EventTarget {
     if (this.caps.analog && !device.config.analog.analog_calibration_set) next.joysticks = { level: 'warn', text: N_('Joysticks need calibration') };
 
     // Without a USB cable the controller can't enter wireless-module update mode: no badge for it.
-    if (this.caps.externalBaseband && !this.caps.viaWireless) {
+    if (this.caps.externalBaseband && !this.caps.viaDongle) {
       const { resolveModuleUpdate } = await import('../sections/wireless/channels.js');
       const u = await resolveModuleUpdate(device.static.bluetooth);
       if (u.migrate) next.wireless = { level: 'info', text: N_('Recommended wireless module update') };

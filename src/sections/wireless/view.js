@@ -2,15 +2,12 @@
  * Wireless view: port of hoja2/modules/wireless-md.js.
  *
  * Cards (each hidden exactly when hoja2 hid the matching panel):
- *   Wireless chip       part number + status badge (wireless_part_status), BR/EDR, LE, WLAN support
+ *   Wireless chip       part number + status badge (wireless_part_status), BR/EDR, LE, dongle support
  *   Module firmware     external_update_supported only: installed vs latest baseband version and the
  *                       in-app ESP32 update (module-updater.js, replaces hoja2's "Enter Update Mode"
  *                       button + the separate hoja_baseband/ esptool page)
- *   WLAN dongle         wlan_supported only: the 4-digit pairing PIN (authoritative editor;
- *                       setting `wireless.dongleKey` in settings.js)
- *   Connected dongle    caps.viaDongle only: the WLAN dongle the controller is connected through and
+ *   Connected dongle    caps.viaDongle only: the dongle the controller is connected through and
  *                       its firmware update (dongle.js). The module update needs a USB cable then.
- *   Home WLAN           caps.homeWlan only: the network the controller joins for HHL Gamepad WLAN (home-wlan.js)
  *   Paired hosts        host_mac_switch / host_mac_sinput, plus host_mac_wii on Wii-capable builds (read-only)
  *   Regulatory          FCC ID + Part 15 statement when the controller reports an FCC ID
  *
@@ -21,17 +18,12 @@
  * update mode the shell destroys this view, and the dialog carries on (see module-updater.js).
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { card, badge, kv, field, infoTip, button, asyncButton, callout } from '../../ui/controls.js';
+import { card, badge, kv, infoTip, button, asyncButton, callout } from '../../ui/controls.js';
 import { openConnectGuide, pairingTipNodes } from '../../app/connect-guide.js';
 import { resolveModuleUpdate, familyOf, reportedVersion, CHANNELS, clearManifestCache } from './channels.js';
-import { getSetting } from '../../settings/schema.js';
-import {
-  chipStatus, identityText, isPairedMac, formatMac, formatPin, sanitizePin, pinToValue,
-  FCC_STATEMENT, UPDATE_GUIDE_URL,
-} from './info.js';
+import { chipStatus, identityText, isPairedMac, formatMac, FCC_STATEMENT, UPDATE_GUIDE_URL } from './info.js';
 import { openModuleUpdater } from './module-updater.js';
 import { dongleCard } from './dongle.js';
-import { homeWlanCard } from './home-wlan.js';
 import { cableOnlyNote } from '../../firmware/updater.js';
 import { t, i18n } from '../../i18n/index.js';
 
@@ -60,13 +52,13 @@ export function mount(root, ctx) {
       t('Active: the wireless hardware answered when the controller started. Not responding: it’s fitted but didn’t answer (try a restart; if it persists the module may need its firmware reinstalled). Inactive / Not present: nothing was detected.')))],
     [t('Bluetooth Classic'), h('span.wl-inline', yesNo(bt.bluetooth_bdr_supported), infoTip(t('Bluetooth BR/EDR, used for Switch and most console/PC pairing.')))],
     [t('Bluetooth LE'), h('span.wl-inline', yesNo(bt.bluetooth_ble_supported), infoTip(t('Bluetooth Low Energy.')))],
-    [t('WLAN dongle'), yesNo(bt.wlan_supported)],
+    [t('Dongle'), yesNo(bt.dongle_supported)],
   ]));
 
   // ---- Module firmware (ESP32 baseband) -------------------------------------------------------
   let firmwareCard = null;
   // Without a USB cable the controller can't enter module update mode (the firmware refuses it).
-  const moduleUpdates = !caps.viaWireless;
+  const moduleUpdates = !caps.viaDongle;
   if (caps.externalBaseband) {
     const installed = reportedVersion(bt); // null: the module didn't report a valid version
     const status = h('span', badge(t('Checking…')));
@@ -143,35 +135,6 @@ export function mount(root, ctx) {
     if (ctx.params?.update && moduleUpdates) checked.then(() => { if (!alive) return; updateBtn.click(); ctx.setParams?.({ update: null }); });
   }
 
-  // ---- WLAN dongle PIN -----------------------------------------------------------------------
-  let pinRow = null;
-  if (caps.wlan) {
-    const def = getSetting('wireless.dongleKey');
-    const input = h('input.input.mono.wl-pin', {
-      type: 'text', inputmode: 'numeric', pattern: '[0-9]*', maxLength: 4, autocomplete: 'off', spellcheck: false,
-      value: formatPin(def.get(session)), 'aria-label': t(def.label),
-    });
-    input.addEventListener('input', () => { input.value = sanitizePin(input.value); });
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); });
-    input.addEventListener('change', () => {
-      const value = pinToValue(sanitizePin(input.value));
-      input.value = formatPin(value);
-      if (value === def.get(session)) return;
-      def.set(session, value);
-      session.commit(def.block);
-    });
-    // Setting texts are English data (settings.js); translate where rendered.
-    pinRow = field({ label: t(def.label), description: t(def.description), tip: t(def.tip), control: input, settingKey: def.key });
-    pinRow.refresh = () => { input.value = formatPin(def.get(session)); };
-  }
-  const wlanCard = pinRow && card({
-    title: t('WLAN dongle'), subtitle: t('Pair with a Raspberry Pi wireless dongle instead of Bluetooth.'),
-    icon: 'link', tone: TONE,
-  }, pinRow);
-
-  // ---- Home WLAN (HHL Gamepad WLAN) ----------------------------------------------------------
-  const homeCard = caps.homeWlan && homeWlanCard(session);
-
   // ---- Paired hosts --------------------------------------------------------------------------
   const cfg = session.config.gamepad;
   const macCell = (bytes) => (isPairedMac(bytes)
@@ -210,8 +173,8 @@ export function mount(root, ctx) {
 
   // Side by side on wide pages; the long regulatory text spans the full row.
   const connectedDongle = caps.viaDongle && session.dongle && dongleCard(session, { title: t('Connected dongle') });
-  // What people come here for first (pairings, networks, the dongle), then the hardware behind it.
-  root.append(h('div.card-grid', ...[hostsCard, homeCard, wlanCard, connectedDongle, chipCard, firmwareCard, fccCard].filter(Boolean)));
+  // What people come here for first (pairings, the dongle), then the hardware behind it.
+  root.append(h('div.card-grid', ...[hostsCard, connectedDongle, chipCard, firmwareCard, fccCard].filter(Boolean)));
 
   return {
     destroy() { alive = false; },
@@ -220,7 +183,6 @@ export function mount(root, ctx) {
         openModuleUpdater({ installed: reportedVersion(bt), latest, channel: update?.channel, migrate: !!update?.migrate, params });
         ctx.setParams?.({ update: null });
       }
-      pinRow?.refresh();
     },
   };
 }

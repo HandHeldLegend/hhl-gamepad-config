@@ -200,7 +200,7 @@ also on the Firmware page for copying onto the drive yourself.
   with BOOTSEL.
 
 ## Wireless and pairing
-<!-- topic: wireless-pairing; keywords: wireless, bluetooth, pair, pairing, esp32, baseband, hci bridge, bridge, wireless module, module update, dongle, wlan, pin, mac address -->
+<!-- topic: wireless-pairing; keywords: wireless, bluetooth, pair, pairing, esp32, baseband, hci bridge, bridge, wireless module, module update, dongle, mac address -->
 
 The [Wireless](#/wireless) page appears for controllers with Bluetooth hardware. It shows the wireless chip
 status and, on controllers with an updatable external wireless module (ESP32), its firmware version. Home flags
@@ -216,8 +216,6 @@ the controller first**; update the controller firmware, then the module. Control
 no ESP32 to update. The update itself always restarts the controller into update mode and writes three images
 (bootloader, partition table, app). Offline updaters (Windows .zip, Linux/macOS .sh) install the bridge too.
 
-- **WLAN dongle PIN** (`wireless.dongleKey`, 0000–9999): the controller and the WLAN dongle must use the **same**
-  4-digit PIN. Pick one that differs from friends’ controllers nearby.
 - **MAC address**: the base address used for USB and Bluetooth modes (each mode uses its own increment). Changing
   it can break existing pairings, so it isn’t settable by link.
 - The app doesn’t pair the controller with a console or PC itself; follow the controller’s manual for the pairing
@@ -303,7 +301,7 @@ Press **Save** to keep them.
 ## Pairing over Bluetooth
 <!-- topic: bluetooth-pairing; keywords: bluetooth, pair, pairing, sync, wireless, switch, steam, wii, change grip, pro controller wired communication -->
 
-Bluetooth works in **Switch** and **Steam** modes (XInput, GameCube, N64 and Slippi go wireless through the WLAN
+Bluetooth works in **Switch** and **Steam** modes (XInput, GameCube, N64 and Slippi go wireless through the
 dongle). Unplug the controller, then hold the mode button **plus Start (+)** while turning it on:
 
 - **Switch:** hold **A + Start (+)**. On the Switch, open Controllers → Change Grip/Order

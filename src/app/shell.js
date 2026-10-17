@@ -17,19 +17,19 @@
 import { h, replace } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
 import { button, emptyState, dot, face } from '../ui/controls.js';
-import { toast, confirmDialog, openDialog } from '../ui/overlay.js';
+import { toast, confirmDialog } from '../ui/overlay.js';
 import { SECTIONS, GROUPS, ALIASES, getSection } from '../sections/registry.js';
 import { session } from '../device/session.js';
-import { device, USB_FILTERS, OPTIONAL_BLOCKS } from '../device/hoja-device.js';
-import { listLanPads, lanPermission } from '../device/lan-transport.js';
+import { device } from '../device/hoja-device.js';
 import { isDemo, startDemo } from '../device/mock.js';
 import { onRoute, currentRoute, navigate, setParams } from './router.js';
 import { prefs } from './prefs.js';
 import { pwa } from './pwa.js';
-import { isIOS, isWindows, explainIOS } from './platform.js';
+import { isIOS, explainIOS } from './platform.js';
 import { isLinux, explainLinux } from './linux.js';
+import { modeSwitcher } from './mode-switcher.js';
 import { applyFromRoute } from '../settings/apply.js';
-import { t, fmt, i18n, LANGUAGES, detectLanguage, setLanguage } from '../i18n/index.js';
+import { t, N_, fmt, i18n, LANGUAGES, detectLanguage, setLanguage } from '../i18n/index.js';
 
 const WIDE = matchMedia('(min-width: 960px)');
 
@@ -70,13 +70,12 @@ export function unavailableReason(section) {
  * Only two output modes talk to this app over USB (HOJA-LIB-RP2040 descriptors):
  *   057e:2009          Switch mode (Nintendo Switch Pro Controller descriptor, ns_lib_hid.c)
  *   2e8a:<board PID>   Steam mode (SInput; 0x10C6 generic, or the board's own usb_pid, core_sinput.c)
- * XInput (045e:028e), Slippi (057e:0337) and the console modes can't be reached from the app.
- * Over WLAN the mode comes from HHL Gamepad WLAN's pad list instead.
+ * XInput (045e:028e), Slippi (057e:0337) and the console modes can't be reached from the app, except
+ * through a dongle on a computer (see the dongle card's PC mode).
  */
 export function currentModeLabel() {
   if (!session.connected) return null;
   if (isDemo()) return t('Demo mode');
-  if (device.lan) return lanModeLabel(device.lan.mode);
   const usb = device.usbDevice;
   if (!usb) return null;
   if (usb.vendorId === 0x057e && usb.productId === 0x2009) return t('Switch mode');
@@ -93,72 +92,20 @@ export function connectingText() {
   return c?.total ? t('Reading settings… {percent}', { percent: fmt.percent(c.done / c.total) }) : t('Connecting…');
 }
 
-/** HHL Gamepad WLAN's mode names ("Switch", "SInput") as the app shows them, or null for others. */
-function lanModeLabel(mode) {
-  if (mode === 'Switch') return t('Switch mode');
-  if (mode === 'SInput') return t('Steam mode');
-  return null;
-}
-
 /** Some firmware doesn't serve every settings block; the app connects anyway (see device.missing). */
 function warnMissingBlocks() {
-  // Blocks only newer firmware has are expected to be missing on older firmware.
-  const missing = (device.missing?.config || []).filter((key) => !OPTIONAL_BLOCKS.has(key));
+  const missing = device.missing?.config || [];
   if (!missing.length) return;
   toast(t('Connected, but this controller didn’t send some settings ({blocks}). Those stay unchanged on the controller. A firmware update usually fixes this.', { blocks: missing.join(', ') }),
     { tone: 'yellow', timeout: 10000 });
 }
 
-/** How long Connect waits for HHL Gamepad WLAN before going the USB way (short: WebUSB's picker needs a recent click). */
-const LAN_CHECK_MS = 400;
-
-/** USB devices this site may already open (the browser's picker shows the same kinds). */
-async function knownUsbDevices() {
-  if (!navigator.usb) return [];
-  const devices = await navigator.usb.getDevices().catch(() => []);
-  return devices.filter((usb) => USB_FILTERS.some((f) => f.vendorId === usb.vendorId && f.productId === usb.productId));
-}
-
-/**
- * Gamepads HHL Gamepad WLAN has open on this PC, or [] when it isn't running, has none, or doesn't answer in
- * time. Only on Windows (HHL Gamepad WLAN is a Windows app), and only once the browser allows this page to
- * reach it: Connect never triggers the local network prompt (the Home WLAN card asks for it).
- */
-async function lanPadsQuickly() {
-  if (!isWindows() || isDemo()) return [];
-  if ((await lanPermission()).state !== 'granted') return [];
-  return listLanPads({ timeout: LAN_CHECK_MS }).catch(() => []);
-}
-
-/**
- * Every way to connect right now, in one list: USB devices the browser already allows, "Choose a USB
- * device…" (the browser's picker) and each gamepad HHL Gamepad WLAN has open. Resolves the choice, or null.
- *   { usb: USBDevice } | { picker: true } | { pad }
- */
-function pickConnection(usbDevices, pads) {
-  const choice = (label, ic, value, variant = 'tonal') => button({ label, icon: ic, variant, block: true, onClick: () => dlg.close(value) });
-  // Two of the same model in the same mode look alike: the end of HHL Gamepad WLAN's id tells them apart.
-  const padLabel = (pad) => [pad.title || pad.name, lanModeLabel(pad.mode) || pad.mode].filter(Boolean).join(' · ');
-  const twins = (pad) => pads.filter((p) => padLabel(p) === padLabel(pad)).length > 1;
-  const dlg = openDialog({
-    title: t('Connect a controller'), icon: 'gamepad', tone: 'blue',
-    body: [
-      h('p.muted', t('Choose how to connect.')),
-      navigator.usb && h('div.stack', { style: { '--gap': '8px' } },
-        h('div.field-label', 'USB'),
-        usbDevices.map((usb) => choice(usb.productName || t('USB device'), 'usb', { usb })),
-        choice(t('Choose a USB device…'), 'usb', { picker: true }, 'ghost')),
-      h('div.stack', { style: { '--gap': '8px', marginTop: '16px' } },
-        h('div.field-label', 'WLAN'),
-        pads.map((pad) => choice(twins(pad) ? `${padLabel(pad)} · …${pad.id.slice(-4)}` : padLabel(pad), 'wireless', { pad }))),
-    ],
-    actions: [{ label: t('Cancel'), variant: 'ghost', value: null }],
-  });
-  return dlg.result.then((value) => value || null);
-}
+/** With Zadig's driver, Windows lets one program at a time open the GameCube adapter. */
+const ADAPTER_IN_USE = N_('Dolphin has the dongle open. Close Dolphin, then connect again to change the mode.');
+session.on('adapter-in-use', () => toast(t(ADAPTER_IN_USE), { tone: 'yellow', timeout: 9000 }));
 
 /** Run one connect attempt and explain a failure. `run` resolves like session.connect(). */
-async function attempt(run, { lan = false } = {}) {
+async function attempt(run) {
   try {
     // No "connected" toast: the app bar chip and Home already show the controller and its mode.
     const ok = await run();
@@ -166,14 +113,14 @@ async function attempt(run, { lan = false } = {}) {
     return ok;
   } catch (err) {
     console.error(err);
-    if (lan) {
-      toast(t('Couldn’t connect through HHL Gamepad WLAN. Check that the gamepad is still open there, then try again.'), { tone: 'red', timeout: 7000 });
-      return false;
-    }
     // On Linux, "Access denied" almost always means the udev rule is missing (see linux.js).
     if (isLinux() && /Access denied|SecurityError/i.test(`${err?.name} ${err?.message}`)) {
       toast(t('Linux blocked access to the controller. A one-time udev rule fixes this.'),
         { tone: 'red', timeout: 12000, action: { label: t('Linux setup'), onClick: () => explainLinux() } });
+      return false;
+    }
+    if (err?.adapterInUse) {
+      toast(t(ADAPTER_IN_USE), { tone: 'red', timeout: 9000 });
       return false;
     }
     toast(err?.message?.includes('Access denied')
@@ -183,19 +130,8 @@ async function attempt(run, { lan = false } = {}) {
   }
 }
 
-/**
- * Shared connect flow used by the app bar, Home and empty states. When HHL Gamepad WLAN has gamepads open on
- * this PC, one list offers them next to the USB devices; otherwise it is the browser's USB picker.
- * usbOnly: skip HHL Gamepad WLAN (bootloaders and the factory station are USB only).
- */
-export async function connectController({ usbOnly = false } = {}) {
-  const pads = usbOnly ? [] : await lanPadsQuickly();
-  if (pads.length) {
-    const picked = await pickConnection(await knownUsbDevices(), pads);
-    if (!picked) return false;
-    if (picked.pad) return attempt(() => session.connectLan(picked.pad), { lan: true });
-    if (picked.usb) return attempt(() => session.reconnect(picked.usb));
-  }
+/** Shared connect flow used by the app bar, Home and empty states: the browser's USB picker. */
+export async function connectController() {
   if (!navigator.usb && !isDemo()) {
     if (isIOS()) { explainIOS(); return false; }
     toast(t('This browser can’t talk to USB devices. Use Chrome or Edge on desktop or Android.'), { tone: 'red', timeout: 6000 });
@@ -207,7 +143,7 @@ export async function connectController({ usbOnly = false } = {}) {
 export function createShell(root) {
   // Frame elements; (re)created by build() so a language change can redraw every label.
   let chipDot; let chipName; let chipSub; let chip;
-  let saveBtn; let connectBtn; let installBtn;
+  let saveBtn; let connectBtn; let installBtn; let modeBox;
   let page; let main; let frame;
   const navLinks = new Map();
 
@@ -232,7 +168,8 @@ export function createShell(root) {
     const settingsBtn = button({ icon: 'settings', variant: 'ghost', title: t('App settings'), onClick: () => navigate('settings') });
     settingsBtn.classList.add('appbar-settings');
 
-    const appbar = h('header.appbar', brand, h('div.spacer'), chip, installBtn, saveBtn, connectBtn, languagePicker(), settingsBtn);
+    modeBox = h('div.appbar-mode');
+    const appbar = h('header.appbar', brand, h('div.spacer'), chip, modeBox, installBtn, saveBtn, connectBtn, languagePicker(), settingsBtn);
 
     // ---- Sidebar -------------------------------------------------------------------------
     const nav = h('nav.sidebar', { 'aria-label': t('Sections') });
@@ -260,15 +197,21 @@ export function createShell(root) {
   function renderChrome() {
     const st = session.state;
     const connected = st === 'connected';
-    const dongle = st === 'dongle'; // a WLAN dongle with no controller on it yet
+    const dongle = st === 'dongle'; // a dongle with no controller on it yet
     const connecting = st === 'connecting';
     chipDot.className = `dot tone-${connected ? 'green' : connecting ? 'yellow' : st === 'legacy' ? 'red' : dongle ? 'blue' : 'lavender'}${connected || connecting ? ' live' : ''}`;
-    chipName.textContent = connected ? session.info.name : st === 'legacy' ? t('Legacy firmware') : dongle ? t('WLAN dongle')
+    chipName.textContent = connected ? session.info.name : st === 'legacy' ? t('Legacy firmware') : dongle ? t('Dongle')
       : connecting ? (session.connecting?.name || t('Connecting…')) : t('No controller');
     const mode = currentModeLabel(); // e.g. "Switch mode": what the controller is running as right now
     chipSub.textContent = connected ? (mode || t('Connected')) : connecting ? connectingText() : dongle ? t('No controller') : t('Not connected');
     chip.title = mode ? t('Running in {mode}', { mode }) : '';
     chip.classList.toggle('demo', isDemo());
+
+    // The live mode switcher, while the app can switch this controller or dongle
+    const live = session.liveMode;
+    if (!live) modeBox.replaceChildren();
+    else if (modeBox.dataset.mode !== live || !modeBox.firstChild) modeBox.replaceChildren(modeSwitcher({ compact: true }));
+    modeBox.dataset.mode = live || '';
 
     const open = connected || st === 'legacy' || dongle; // something is connected: the button disconnects it
     connectBtn.setLabel(open ? t('Disconnect') : st === 'connecting' ? t('Connecting…') : t('Connect'));
@@ -393,13 +336,13 @@ export function createShell(root) {
 
     if (reason) {
       const backHome = () => button({ label: t('Back to home'), variant: 'tonal', onClick: () => navigate('home') });
-      // A WLAN dongle with no controller on it: nothing to connect here, the controller has to join it.
-      if (session.state === 'dongle') content.append(emptyState({ icon: 'link', tone: section.tone, title: t('WLAN dongle connected'), text: reason, action: backHome() }));
+      // A dongle with no controller on it: nothing to connect here, the controller has to join it.
+      if (session.state === 'dongle') content.append(emptyState({ icon: 'link', tone: section.tone, title: t('Dongle connected'), text: reason, action: backHome() }));
       else content.append(session.connected
         ? emptyState({ icon: section.icon, tone: section.tone, title: t('Not available on this controller'), text: reason, action: backHome() })
         : emptyState({ icon: 'usb', tone: section.tone, title: t('Connect your controller'), text: t('Plug in your controller with a USB data cable, then press Connect.'),
           action: h('div.row', { style: { justifyContent: 'center' } },
-            button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg', onClick: connectController }),
+            button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg', onClick: () => connectController() }),
             button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() }),
             // Wireless: a controller in module update mode only shows its CH340, so it can't connect here.
             section.id === 'wireless' && button({ label: t('Already in update mode'), icon: 'wireless', variant: 'ghost',
@@ -447,6 +390,7 @@ export function createShell(root) {
   session.on('connecting', renderChrome);
   session.on('dirty', renderChrome);
   session.on('attention', renderChrome);
+  session.on('dongle', renderChrome); // the dongle's mode (the title bar switcher)
   pwa.on('installable', (can) => { installBtn.hidden = !can; });
   onRoute((route) => render(route));
 

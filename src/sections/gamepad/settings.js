@@ -6,7 +6,6 @@
  * Not exposed here (hand-written editors in view.js instead):
  *   - gamepad_mac_address: a 6-byte structured value with a parity rule; editing it by deep link
  *     or assistant would be error-prone and can break existing pairings.
- *   - wlan_dongle_key: owned by the Wireless section ('wireless.dongleKey').
  */
 import LAYOUT from '../../device/generated/fw-layout.js';
 import { u32ToHex, hexToU32 } from '../../settings/schema.js';
@@ -23,8 +22,8 @@ const fmt = (name) => (LAYOUT.enums.core_reportformat_t || []).find((e) => e.nam
  * (gamepad_defaults_split == GAMEPAD_DEFAULTS_SPLIT); older firmware treats it as Switch.
  */
 export const AUTO_MODE = 0xfe;
-/** gamepad_default_wireless value for the WLAN dongle (GAMEPAD_DEFAULT_WIRELESS_WLAN in the firmware). */
-export const WLAN_MODE = 0xfd;
+/** gamepad_default_wireless value for the dongle (GAMEPAD_DEFAULT_WIRELESS_DONGLE in the firmware). */
+export const DONGLE_MODE = 0xfd;
 /** gamepad_defaults_split once the firmware has migrated to separate wired / battery defaults. */
 export const DEFAULTS_SPLIT = 0x01;
 
@@ -53,10 +52,10 @@ export const WIRED_MODES = [
   ...['SINPUT', 'SWPRO', 'XINPUT', 'GAMECUBE', 'N64', 'SNES', 'SLIPPI'].map(byFmt).filter(Boolean),
 ];
 
-const WLAN_DONGLE = { value: WLAN_MODE, label: 'WLAN', aliases: ['wlan', 'dongle'], requires: 'wlan', about: N_('Joins your WLAN dongle and takes the mode it detects (PC, Switch, N64 or GameCube).') };
+const DONGLE = { value: DONGLE_MODE, label: 'Dongle', aliases: ['dongle', 'receiver'], requires: 'dongle', about: N_('Connects through your dongle and takes the mode it detects (PC, Switch, N64 or GameCube).') };
 
-/** Wireless default (byte 45, on battery): Auto, Switch, Steam, Wii (needs wii_supported), WLAN dongle (needs wlan_supported). */
-export const WIRELESS_MODES = [AUTO, ...['SWPRO', 'SINPUT', 'WII'].map(byFmt).filter(Boolean), WLAN_DONGLE];
+/** Wireless default (byte 45, on battery): Auto, Switch, Steam, Wii (needs wii_supported), the dongle (needs dongle_supported). */
+export const WIRELESS_MODES = [AUTO, ...['SWPRO', 'SINPUT', 'WII'].map(byFmt).filter(Boolean), DONGLE];
 
 /** Switch color fields, in the order hoja2 showed them. */
 const COLORS = [
@@ -80,7 +79,7 @@ export default [
   {
     key: 'gamepad.defaultWireless',
     label: 'Wireless default',
-    description: 'The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. WLAN joins your WLAN dongle and takes the mode it detects. Hold the WLAN button at power-on for the other one (Bluetooth or WLAN).',
+    description: 'The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. Dongle connects through your dongle and takes the mode it detects. Hold the dongle button at power-on for the other one (Bluetooth or the dongle).',
     block: 'gamepad',
     type: 'enum',
     requires: 'splitDefaults',

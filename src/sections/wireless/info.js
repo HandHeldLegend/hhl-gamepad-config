@@ -4,10 +4,8 @@
  * Sources of truth (HOJA-LIB-RP2040):
  *   bluetoothInfoStatic_s   include/utilities/static_config.h
  *   wireless_part_status    TRANSPORT_WIRELESS_PART_* in include/transport/transport_bt.h, combined for
- *                           Bluetooth + WLAN by _wireless_part_status_combine() in static_config.c
+ *                           Bluetooth + the dongle link by _wireless_part_status_combine() in static_config.c
  *   host_mac_* validity     _bluetooth_hal_is_stored_identity_valid() in src/hal/rp2040/bluetooth_hal.c
- *   wlan_dongle_key         gamepadConfig_s, clamped with `% 10000` by the firmware on every write
- *   home network            wlanConfig_s in include/settings_shared_types.h (ssid, password, WLAN_FLAG_*)
  */
 import { decodeText } from '../../device/struct.js';
 import { t, N_ } from '../../i18n/index.js';
@@ -71,49 +69,4 @@ export function isPairedMac(bytes) {
 /** Bytes → "AA:BB:CC:DD:EE:FF". */
 export function formatMac(bytes) {
   return Array.from(bytes || [], (b) => b.toString(16).padStart(2, '0')).join(':').toUpperCase();
-}
-
-/** 0..9999 → "0420". */
-export function formatPin(value) {
-  const n = Math.min(9999, Math.max(0, Math.round(Number(value) || 0)));
-  return String(n).padStart(4, '0');
-}
-
-/** Keep only digits, at most four (hoja2: sanitizeWlanPinInput). */
-export function sanitizePin(raw) {
-  return String(raw ?? '').replace(/[^0-9]/g, '').slice(0, 4);
-}
-
-/** "0420" → 420 ('' → 0) (hoja2: wlanPinToValue). */
-export function pinToValue(digits) {
-  if (digits === '') return 0;
-  return Math.min(9999, parseInt(digits, 10) || 0);
-}
-
-/** Home network name limit (wlanConfig_s.ssid holds 32 bytes plus the NUL). */
-export const SSID_MAX_BYTES = 32;
-
-const utf8Length = (text) => new TextEncoder().encode(text).length;
-
-/** Stored network name: the UTF-8 bytes up to the first NUL, spaces kept (they're part of the name). */
-export function ssidText(bytes) {
-  const end = bytes.indexOf(0);
-  return new TextDecoder().decode(end < 0 ? bytes : bytes.subarray(0, end));
-}
-
-/** What's wrong with a home network name, translated, or null when it's fine. */
-export function ssidProblem(name) {
-  if (!name) return t('Enter the network name.');
-  if (utf8Length(name) > SSID_MAX_BYTES) return t('That network name is too long. Network names have up to 32 bytes.');
-  return null;
-}
-
-/**
- * What's wrong with a WLAN password, translated, or null when it's fine. Empty is an open network;
- * otherwise WPA takes an 8–63 character passphrase or a 64-digit hex key.
- */
-export function passwordProblem(password) {
-  if (!password || /^[0-9a-f]{64}$/i.test(password)) return null;
-  const length = utf8Length(password);
-  return length >= 8 && length <= 63 ? null : t('WLAN passwords have 8 to 63 characters, or exactly 64 hex digits.');
 }

@@ -33,7 +33,7 @@ Key facts:
 | `#/rgb` | RGB | LED colors per group, effects, speed and brightness. | Controller + rgb | – |
 | `#/haptics` | Haptics | Rumble strength, trigger haptics and a feedback test. | Controller + haptics | – |
 | `#/battery` | Battery | Battery, charger (PMIC) and fuel gauge status. | Controller + battery | – |
-| `#/wireless` | Wireless | Bluetooth pairing info, wireless module firmware and WLAN dongle settings. | Controller + wireless | `update`: Set to 1 to open the wireless module update dialog<br>`baud`: esptool baud rate override (default 115200) |
+| `#/wireless` | Wireless | Bluetooth pairing info, wireless module firmware and the dongle. | Controller + wireless | `update`: Set to 1 to open the wireless module update dialog<br>`baud`: esptool baud rate override (default 115200) |
 | `#/gamepad` | Gamepad | Default mode, Switch body colors, player name and MAC address. | Controller | – |
 | `#/firmware` | Firmware & backup | Update firmware, back up settings, recover a controller, or set up other hardware. | – | `build`: Build id to preselect for install (e.g. gcu_2, progcc_3.2) |
 | `#/arena` | Arena | Gameplay testing arena: try your connected controller in a platform-fighter sandbox. | Controller | `tab`: play \| help<br>`mode`: free \| targets (help also opens that tab) |
@@ -45,6 +45,7 @@ Capability flags used in “Needs” columns (detected from the connected contro
 
 - `analog`: the controller has at least one analog stick
 - `battery`: the controller has a battery
+- `dongle`: the controller supports the dongle (a USB receiver it joins over Bluetooth)
 - `hapticHD`: the controller has HD (linear) haptics
 - `haptics`: the controller has rumble (HD or standard)
 - `imu`: the controller has a gyro/accelerometer (IMU)
@@ -57,11 +58,10 @@ Capability flags used in “Needs” columns (detected from the connected contro
 - `splitDefaults`: capability "splitDefaults"
 - `wii`: the controller supports Wii mode (Wii Remote over Bluetooth, RM2 wireless module)
 - `wireless`: the controller has wireless (Bluetooth) hardware
-- `wlan`: the controller supports the WLAN dongle
 
 ## Settings catalog
 
-72 settings can be read and proposed by key. Anything not listed (calibration, button remapping, angle maps, pairing, firmware) is done interactively on its page.
+71 settings can be read and proposed by key. Anything not listed (calibration, button remapping, angle maps, pairing, firmware) is done interactively on its page.
 
 ### Joysticks (`joysticks`)
 
@@ -151,18 +151,12 @@ Capability flags used in “Needs” columns (detected from the connected contro
 | `haptics.intensity` | Intensity | number 0% – 100% | haptics | How strong rumble feels, from off to full power. |
 | `haptics.triggerFeedback` | Trigger haptics | on \| off | hapticHD | Pulse when an analog trigger passes its activation threshold or rapid-trigger delta (set in Input). |
 
-### Wireless (`wireless`)
-
-| Key | Label | Values | Needs | Description |
-|---|---|---|---|---|
-| `wireless.dongleKey` | WLAN dongle PIN | number 0 – 9999 | wlan | Four-digit pairing PIN (0000–9999). Set the same PIN on your WLAN dongle so they pair. |
-
 ### Gamepad (`gamepad`)
 
 | Key | Label | Values | Needs | Description |
 |---|---|---|---|---|
 | `gamepad.defaultMode` | Default mode | 254 = Auto (also: auto, automatic, detect) (needs splitDefaults); 0 = Switch (also: switch, swpro, pro, nintendo switch, switch pro); 1 = XInput (also: xinput, xbox, x-input, pc); 2 = Slippi (also: slippi, dolphin, melee); 3 = GameCube (also: gamecube, gc, gcube, ngc); 4 = N64 (also: n64, nintendo 64); 5 = SNES (also: snes, sfc, super famicom, super nintendo, nes); 6 = Steam (also: steam, sinput, s-input); 7 = Wii (also: wii, wiimote, wii remote) (needs wii) | – | The output mode the controller starts in. On firmware with separate defaults this is the one used when plugged in, and Auto detects the console or PC. Only Switch and Steam modes work with this config app. After changing it, hold A or B while plugging in to come back here. |
-| `gamepad.defaultWireless` | Wireless default | 254 = Auto (also: auto, automatic, detect); 0 = Switch (also: switch, swpro, pro, nintendo switch, switch pro); 6 = Steam (also: steam, sinput, s-input); 7 = Wii (also: wii, wiimote, wii remote) (needs wii); 253 = WLAN (also: wlan, dongle) (needs wlan) | splitDefaults | The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. WLAN joins your WLAN dongle and takes the mode it detects. Hold the WLAN button at power-on for the other one (Bluetooth or WLAN). |
+| `gamepad.defaultWireless` | Wireless default | 254 = Auto (also: auto, automatic, detect); 0 = Switch (also: switch, swpro, pro, nintendo switch, switch pro); 6 = Steam (also: steam, sinput, s-input); 7 = Wii (also: wii, wiimote, wii remote) (needs wii); 253 = Dongle (also: dongle, receiver) (needs dongle) | splitDefaults | The mode the controller starts in on battery (firmware with separate defaults). Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. Dongle connects through your dongle and takes the mode it detects. Hold the dongle button at power-on for the other one (Bluetooth or the dongle). |
 | `gamepad.bodyColor` | Body color | hex color like #ff8800 | – | Main shell color the Switch shows in its menus and some games. |
 | `gamepad.buttonsColor` | Buttons color | hex color like #ff8800 | – | Color of the buttons as drawn by the Switch. |
 | `gamepad.leftGripColor` | Left grip color | hex color like #ff8800 | – | Left handle color as drawn by the Switch. |

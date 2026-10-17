@@ -43,7 +43,7 @@ export const CAPABILITY_NOTES = {
   hapticHD: 'the controller has HD (linear) haptics',
   battery: 'the controller has a battery',
   bluetooth: 'the controller has Bluetooth',
-  wlan: 'the controller supports the WLAN dongle',
+  dongle: 'the controller supports the dongle (a USB receiver it joins over Bluetooth)',
   wireless: 'the controller has wireless (Bluetooth) hardware',
   externalBaseband: 'the controller has an updatable external wireless module (ESP32)',
   snes: 'the controller supports SNES output',
@@ -52,10 +52,7 @@ export const CAPABILITY_NOTES = {
   imuModes: 'the controller has a gyro/accelerometer (IMU) and firmware that can turn motion on or off per output mode',
   imuModeWii: 'the controller has a gyro/accelerometer (IMU), Wii mode, and firmware that can turn motion on or off per output mode',
   flicks: 'the firmware has the motion flick outputs (Flick Up/Down/Left/Right in the Switch remap picker)',
-  viaDongle: 'the controller is connected through a WLAN dongle (settings work; firmware and wireless module updates need a USB cable)',
-  viaLan: 'the controller is connected through HHL Gamepad WLAN on this PC, over the home network (settings work; firmware and wireless module updates need a USB cable)',
-  viaWireless: 'the controller is connected without a USB cable, through a WLAN dongle or HHL Gamepad WLAN (firmware and wireless module updates need a cable)',
-  homeWlan: 'the controller can join a home WLAN network for HHL Gamepad WLAN (Home WLAN card on the Wireless page)',
+  viaDongle: 'the controller is connected through a dongle, not its USB cable (settings work; firmware and wireless module updates need a USB cable)',
 };
 
 export const capabilityNote = (flag) => (flag ? CAPABILITY_NOTES[flag] || `capability "${flag}"` : null);

@@ -14,6 +14,7 @@
  *   node tools/sync-firmware.mjs --lib ../../hoja-device-fw/library/HOJA-LIB-RP2040
  *   node tools/sync-firmware.mjs --github main           # fetch headers from GitHub (branch/tag/sha)
  *   node tools/sync-firmware.mjs --check                 # exit 1 if the generated file is stale
+ *   HOJA_LIB=<path> node tools/sync-firmware.mjs         # as --lib (also for --check and tools/test.mjs)
  *
  * Output: src/device/generated/fw-layout.js   (do not edit by hand)
  */
@@ -92,7 +93,9 @@ async function loadHeaders(args) {
     return { files, source: { kind: 'github', repo: GITHUB_REPO, ref } };
   }
 
-  let libDir = args.lib ? path.resolve(args.lib) : null;
+  // --lib, else HOJA_LIB (a checkout other than the usual ones, e.g. a branch's worktree), else the candidates
+  const lib = args.lib || process.env.HOJA_LIB;
+  let libDir = lib ? path.resolve(lib) : null;
   if (!libDir) {
     for (const cand of LOCAL_CANDIDATES) {
       const p = path.resolve(APP_ROOT, '..', cand);
@@ -299,7 +302,6 @@ function commandTable(enums) {
     rgb_cmd_t: ['rgb', 'RGB_CMD_'],
     imu_cmd_t: ['imu', 'IMU_CMD_'],
     haptic_cmd_t: ['haptic', 'HAPTIC_CMD_'],
-    wlan_cmd_t: ['wlan', 'WLAN_CMD_'],
   };
   const out = {};
   for (const [enumName, [block, prefix]] of Object.entries(map)) {

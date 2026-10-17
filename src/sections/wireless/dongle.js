@@ -1,15 +1,15 @@
 /**
- * dongle.js: The WLAN dongle card: what the dongle reports about itself (board, firmware, PIN, the
- * host it detected and the mode it presents) and its firmware update.
+ * dongle.js: The dongle card: what the dongle reports about itself (board, firmware, the host it
+ * detected and the mode it presents) and its firmware update.
  *
  * Shown on Home and the Firmware page while only a dongle is connected (session.state 'dongle'),
  * and on the Wireless page while the controller is connected through one (session.caps.viaDongle).
  * The values come from the dongle's 0xD0 reply (decodeDongleInfo in src/device/hoja-device.js).
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { card, kv, badge, button, asyncButton, callout } from '../../ui/controls.js';
+import { card, kv, badge, button, asyncButton, callout, field } from '../../ui/controls.js';
+import { modeSwitcher } from '../../app/mode-switcher.js';
 import { checkDongleUpdate, openDongleUpdateWizard, formatFwVersion } from '../../firmware/updater.js';
-import { formatPin } from './info.js';
 import { t, N_ } from '../../i18n/index.js';
 
 loadStyles(new URL('./wireless.css', import.meta.url));
@@ -23,12 +23,27 @@ const MODES = { 0: 'Switch', 1: 'Steam', 2: 'XInput', 3: 'Slippi', 4: 'SNES', 5:
 
 const name = (table, value) => (table[value] ? t(table[value]) : t('Unknown'));
 
+/** Host kind (byte 10) for a computer. */
+const HOST_PC = 1;
+
+/**
+ * The dongle's mode on a computer, changed live: the controller follows and the dongle comes back on
+ * USB in the new mode (about half a second), where the app reconnects to it. Not when the
+ * controller's mode was chosen at power-up: it keeps that one. Not XInput: Windows' Xbox 360 driver
+ * takes the whole device, so the app couldn't reach the dongle to change it back (it refuses it too).
+ */
+function pcModePicker(session) {
+  const pinned = !!session.dongle.gamepad?.modeAtPowerUp;
+  return h('div',
+    !pinned && field({ label: t('PC mode'), description: t('What the dongle shows your PC, until you unplug it. Your controller switches with it.'), control: modeSwitcher() }),
+    pinned && callout({ tone: 'blue', icon: 'info', text: t('Your controller’s mode was chosen at power-up, so it keeps that mode.') }));
+}
+
 function rows(d) {
   const pad = d.gamepad;
   return [
     [t('Board'), name(BOARDS, d.board)],
     [t('Firmware build'), formatFwVersion(d.fwVersion)],
-    [t('PIN'), h('span.mono', formatPin(d.pin))],
     [t('Plugged into'), name(HOSTS, d.host)],
     [t('Mode'), name(MODES, d.hostMode)],
     pad && [t('Controller'), pad.name || t('Unknown')],
@@ -38,19 +53,21 @@ function rows(d) {
 
 /**
  * @param {object} session
- * @param {{title?: string}} [o] title: defaults to "WLAN dongle"
+ * @param {{title?: string}} [o] title: defaults to "Dongle"
  */
-export function dongleCard(session, { title = t('WLAN dongle') } = {}) {
+export function dongleCard(session, { title = t('Dongle') } = {}) {
   const status = h('span', badge(t('Checking…')));
   const details = h('div');
   const latestCell = h('span.muted', t('Checking…'));
   const updateBtn = button({ label: t('Update dongle'), icon: 'download', variant: 'primary', onClick: () => openDongleUpdateWizard() });
   updateBtn.hidden = true;
 
+  const modes = h('div');
   const paint = () => {
     const d = session.dongle;
     if (!d) return;
     details.replaceChildren(kv([...rows(d), [t('Latest build'), latestCell]]));
+    modes.replaceChildren(...(d.host === HOST_PC ? [pcModePicker(session)] : []));
   };
 
   // Newest firmware for this board. No manifest yet (or offline): nothing to offer.
@@ -73,6 +90,7 @@ export function dongleCard(session, { title = t('WLAN dongle') } = {}) {
     subtitle: session.dongle?.gamepad ? t('Your controller is connected through this dongle.') : t('No controller is connected to it yet.'),
   },
   details,
+  modes,
   !session.dongle?.gamepad && callout({ tone: 'blue', icon: 'gamepad', text: t('Turn on your controller to set it up through the dongle.') }),
   h('div.wl-actions', updateBtn,
     asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', size: 'sm', busyLabel: t('Checking…'), okLabel: t('Checked'),

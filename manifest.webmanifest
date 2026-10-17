@@ -32,7 +32,10 @@
       "short_name": "Arena",
       "url": "./#/arena",
       "icons": [{ "src": "assets/icons/app/shortcut-arena.png", "sizes": "96x96", "type": "image/png" }]
-    }
+    },
+    { "name": "Steam mode", "short_name": "Steam", "url": "./?mode=steam" },
+    { "name": "Slippi mode", "short_name": "Slippi", "url": "./?mode=slippi" },
+    { "name": "Switch mode", "short_name": "Switch", "url": "./?mode=switch" }
   ],
   "launch_handler": { "client_mode": ["focus-existing", "auto"] }
 }

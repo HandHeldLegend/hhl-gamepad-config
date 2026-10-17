@@ -1,5 +1,5 @@
 /**
- * Home: connect hero (disconnected), device overview (connected) or the WLAN dongle (only a dongle
+ * Home: connect hero (disconnected), device overview (connected) or the dongle (only a dongle
  * connected, no controller on it yet), plus the section grid.
  */
 import { h, replace, fillNodes } from '../../ui/dom.js';
@@ -11,7 +11,7 @@ import { startDemo, isDemo } from '../../device/mock.js';
 import { firmwareStatus, openUpdateWizard, formatFwVersion, CABLE_UPDATE_TEXT } from '../../firmware/updater.js';
 import { dongleCard } from '../wireless/dongle.js';
 import { t } from '../../i18n/index.js';
-import { isIOS, isWindows, explainIOS } from '../../app/platform.js';
+import { isIOS, explainIOS } from '../../app/platform.js';
 import { isLinux, explainLinux } from '../../app/linux.js';
 
 function tiles(session) {
@@ -31,10 +31,9 @@ function tiles(session) {
 function hero(session) {
   const webusb = !!navigator.usb;
   // While a controller is being opened the button says so (Home remounts when the state changes).
-  // Windows without WebUSB can still connect through HHL Gamepad WLAN (connectController offers it).
   const connecting = session.state === 'connecting';
   const connectBtn = button({ label: connecting ? t('Connecting…') : t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg',
-    disabled: connecting || (!webusb && !isWindows()), onClick: connectController });
+    disabled: connecting || !webusb, onClick: () => connectController() });
   if (connecting) connectBtn.prepend(h('span.spinner.motion-ok'));
   return h('section.hero',
     h('div',
@@ -65,8 +64,8 @@ function connectTips() {
 
 function deviceCard(session) {
   const fw = firmwareStatus();
-  const { viaDongle, viaLan, viaWireless } = session.caps; // no updates without a USB cable
-  const updateBtn = fw.state === 'available' && !viaWireless
+  const { viaDongle } = session.caps; // no updates without a USB cable
+  const updateBtn = fw.state === 'available' && !viaDongle
     ? button({ label: t('Update firmware'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() })
     : button({ label: t('Firmware'), icon: 'firmware', variant: 'tonal', onClick: () => { location.hash = '#/firmware'; } });
   const atts = Object.entries(session.attention);
@@ -86,10 +85,9 @@ function deviceCard(session) {
       session.info.maker && [t('Maker'), session.info.maker],
       [t('Firmware build'), formatFwVersion(session.info.fwVersion)],
     ]),
-    viaDongle && callout({ tone: 'blue', icon: 'link', text: `${t('Connected through a WLAN dongle.')} ` },
+    viaDongle && callout({ tone: 'blue', icon: 'link', text: `${t('Connected through the dongle.')} ` },
       h('a', { href: '#/wireless' }, t('Dongle details'), icon('chevron-right'))),
-    viaLan && callout({ tone: 'blue', icon: 'link', text: t('Connected through HHL Gamepad WLAN on this PC.') }),
-    viaWireless && fw.state === 'available' && callout({ tone: 'blue', icon: 'usb', text: t(CABLE_UPDATE_TEXT) }),
+    viaDongle && fw.state === 'available' && callout({ tone: 'blue', icon: 'usb', text: t(CABLE_UPDATE_TEXT) }),
     atts.map(([id, a]) => callout({ tone: a.level === 'warn' ? 'yellow' : 'blue', text: `${t(a.text)} ` },
       h('a', { href: `#/${id}` }, t('Open'), icon('chevron-right')))));
 }

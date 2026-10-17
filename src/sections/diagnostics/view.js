@@ -121,10 +121,10 @@ export function mount(root, { session }) {
   /** Connect the controller (USB) if needed, then restart it into update mode, as the update dialog does. */
   async function enterUpdateMode() {
     if (!session.connected) {
-      await connectController({ usbOnly: true });
+      await connectController();
       if (!session.connected) { say('yellow', t('No controller connected. Connect it with a USB cable and try again, or enter update mode by hand.')); return false; }
     }
-    if (session.caps.viaWireless) { say('yellow', t('Update mode needs a USB cable. Plug the controller in with a cable and try again.')); return false; }
+    if (session.caps.viaDongle) { say('yellow', t('Update mode needs a USB cable. Plug the controller in with a cable and try again.')); return false; }
     if (!session.caps.externalBaseband) { say('yellow', t('This controller has no ESP32 wireless module, so there’s nothing to test here.')); return false; }
     const info = {
       name: session.info?.name, firmware: formatFwVersion(session.info?.fwVersion),

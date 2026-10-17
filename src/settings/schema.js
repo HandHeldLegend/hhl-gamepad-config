@@ -35,12 +35,11 @@ import motion from '../sections/motion/settings.js';
 import rgb from '../sections/rgb/settings.js';
 import haptics from '../sections/haptics/settings.js';
 import battery from '../sections/battery/settings.js';
-import wireless from '../sections/wireless/settings.js';
 import user from '../sections/user/settings.js';
 
 /** @type {SettingDef[]} */
 export const SETTINGS = [
-  ...gamepad, ...input, ...joysticks, ...snapback, ...motion, ...rgb, ...haptics, ...battery, ...wireless, ...user,
+  ...gamepad, ...input, ...joysticks, ...snapback, ...motion, ...rgb, ...haptics, ...battery, ...user,
 ];
 
 export function getSetting(key) {

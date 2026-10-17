@@ -34,10 +34,9 @@ instance per config block (`device.config.<name>`) and static block (`device.sta
 `disconnect`, `input`, `snapback`, `legacy`, `bootloader` events, and serializes request/response exchanges so
 concurrent views can't interleave reads.
 
-Without a USB cable the same packets travel through HHL Gamepad WLAN, the PC app that has the controller open over the
-home network: `src/device/lan-transport.js` stands in for the `USBDevice` (one WebSocket message per 64-byte
-packet), so the driver and session work unchanged. As through a WLAN dongle, firmware updates aren't offered
-then (`caps.viaWireless`).
+Without a USB cable the same packets travel through the dongle, a USB receiver the controller joins over
+Bluetooth: with a controller on it the dongle takes the controller's USB identity and passes the protocol through,
+so the driver and session work unchanged. Firmware updates aren't offered then (`caps.viaDongle`).
 
 HOJA applies a written block immediately (RAM). `Save` sends `GAMEPAD_CMD_SAVE_ALL` to persist everything to flash.
 `session.commit(block)` debounces writes (sliders) and marks the block dirty; the Save button glows until saved.

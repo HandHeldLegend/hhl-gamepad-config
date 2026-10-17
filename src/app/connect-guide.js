@@ -9,7 +9,7 @@
  *     hardware), so it says "A + Plus" or "East + Start" as appropriate. Without a controller it
  *     falls back to "A", "B", "Start (+)".
  *   - Bluetooth parts appear only on controllers with a radio; USB-cable pairing only on the RPi RM2
- *     module (Switch mode); the WLAN dongle note only when the build supports a dongle; Wii mode only
+ *     module (Switch mode); the dongle note only when the build supports a dongle; Wii mode only
  *     when the controller reports it (session.caps.wii: RM2 builds, and ESP32 builds with the HCI bridge).
  *
  * Firmware facts (HOJA-LIB-RP2040 utilities/boot.c, hal/rp2040/bluetooth_hal.c, device main.c files):
@@ -23,7 +23,7 @@
  *   - RM2 (bluetooth part "RPI RM2"): in Switch mode the Switch can pair over the USB cable (the link
  *     key arrives through ns_api_hook_set_usbpair), then the controller reconnects over Bluetooth.
  *   - On battery, Switch and Steam (SInput) modes use Bluetooth; XInput, GameCube, N64 and Slippi use
- *     the WLAN dongle where supported. Plugged in, every mode is wired.
+ *     the dongle where supported. Plugged in, every mode is wired.
  *   - One host per mode is remembered (Paired hosts card); pairing again replaces it.
  *   - The controller doesn't wake on a button press: turn it on to reconnect.
  *   - Console modes by d-pad at boot (k_dpad_formats): Left = SNES, Down = N64, Right = GameCube.
@@ -75,7 +75,7 @@ function modeButton(session, label, fallbackKey) {
 /**
  * What to tell this controller's owner. Without a connected controller everything is generic.
  * @returns {{known: boolean, east: string, south: string, start: string, up: string, capture: string,
- *            radio: 'rm2'|'esp32'|'other'|'none'|'unknown', wlan: boolean, wii: boolean}}
+ *            radio: 'rm2'|'esp32'|'other'|'none'|'unknown', dongle: boolean, wii: boolean}}
  */
 export function connectProfile(session) {
   const known = !!session?.connected;
@@ -102,10 +102,10 @@ export function connectProfile(session) {
     else if (/ESP32/i.test(part) || session.caps.externalBaseband) radio = 'esp32';
     else radio = 'other';
   }
-  // The WLAN dongle pairs with the RM2 radio only (not ESP32 or wired-only builds).
+  // The dongle pairs with the RM2 radio only (not ESP32 or wired-only builds).
   const caps = session?.caps || {};
   return {
-    known, east, south, start, up, capture, x, y, left, down, right, radio, wlan: radio === 'rm2' && !!caps.wlan, wii: known && !!caps.wii,
+    known, east, south, start, up, capture, x, y, left, down, right, radio, dongle: radio === 'rm2' && !!caps.dongle, wii: known && !!caps.wii,
     // Unknown controller: list every mode. Known: only what this build has.
     joybus: !known || !!caps.joybus, snes: !known || !!caps.snes, auto: !!caps.splitDefaults,
   };
@@ -118,16 +118,16 @@ export function connectProfile(session) {
 function modesTable(p) {
   const bt = p.radio !== 'none';
   const dash = () => h('span.faint', '–'); // a new node per cell
-  const wlanOr = () => (p.wlan ? t('WLAN dongle') : dash());
+  const dongleOr = () => (p.dongle ? t('Dongle') : dash());
   const rows = [
     p.auto && [t('Auto'), h('span', t('No button')), t('Detects a PC, Switch or console'), bt ? t('Connects to the first saved host that answers') : dash()],
     [t('Switch'), combo(p.east), h('span', t('Wired'), ' · ', h('span.guide-app', t('config app'))), bt ? fillNodes(t('Bluetooth. Pair: {buttons}'), { buttons: combo(p.east, p.start) }) : dash()],
     [t('Steam'), combo(p.south), h('span', t('Wired'), ' · ', h('span.guide-app', t('config app'))), bt ? fillNodes(t('Bluetooth. Pair: {buttons}'), { buttons: combo(p.south, p.start) }) : dash()],
-    [t('XInput'), combo(p.x), t('Wired'), wlanOr()],
-    [t('Slippi'), combo(p.y), t('Wired'), wlanOr()],
+    [t('XInput'), combo(p.x), t('Wired'), dongleOr()],
+    [t('Slippi'), combo(p.y), t('Wired'), dongleOr()],
     p.wii && [t('Wii'), combo(p.up), dash(), fillNodes(t('Bluetooth. Pair: {buttons}, then SYNC on the Wii'), { buttons: combo(p.up, p.start) })],
-    p.joybus && [t('GameCube'), combo(p.right), t('Wired'), wlanOr()],
-    p.joybus && [t('N64'), combo(p.down), t('Wired'), wlanOr()],
+    p.joybus && [t('GameCube'), combo(p.right), t('Wired'), dongleOr()],
+    p.joybus && [t('N64'), combo(p.down), t('Wired'), dongleOr()],
     p.snes && [t('SNES / NES'), combo(p.left), t('Wired'), dash()],
   ].filter(Boolean);
   return h('section.guide-section',
@@ -215,7 +215,7 @@ export function openConnectGuide(o = {}) {
 
   const notes = h('ul.guide-notes',
     bt && h('li', p.wii ? t('Bluetooth works in Switch, Steam and Wii modes.') : t('Bluetooth works in Switch and Steam modes.')),
-    p.wlan && h('li', t('XInput, GameCube, N64 and Slippi modes go wireless through the WLAN dongle instead.')),
+    p.dongle && h('li', t('XInput, GameCube, N64 and Slippi modes go wireless through the dongle instead.')),
     bt && h('li', p.wii
       ? t('The controller remembers one Switch, one Steam host and one Wii. Pairing again replaces it. The Wireless page shows all three.')
       : t('The controller remembers one Switch and one Steam host. Pairing again replaces it. The Wireless page shows both.')),

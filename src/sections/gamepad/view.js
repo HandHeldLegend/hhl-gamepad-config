@@ -8,8 +8,7 @@
  *                         is always written whole, so the version byte and gamepad_defaults_split stay.
  *   2. Switch colors     body / buttons / grips (0x00RRGGBB) with a live controller preview
  *   3. Player             the player name (user.name; the User page before it moved here)
- *   4. Connection         WebUSB popup; WLAN dongle PIN link/editor (only when session.caps.wlan;
- *                         the PIN setting itself is owned by the Wireless section)
+ *   4. Connection         WebUSB popup
  *   5. MAC address base   6 hex bytes; the first byte's LSB is forced even (hoja2's rule)
  * Device info and the bootloader reboot live on the Firmware & backup page; a line at the end links there.
  *
@@ -51,7 +50,7 @@ const COLOR_PRESETS = [
 /** Modes that the config app can talk to (from hoja2's warning). Auto picks Steam on a PC. */
 const APP_MODES = new Set(['Switch', 'Steam', 'Auto']);
 
-export function mount(root, { session, navigate }) {
+export function mount(root, { session }) {
   const cfg = () => session.config.gamepad;
   const defs = Object.fromEntries(COLOR_KEYS.map(([k]) => [k, getSetting(k)]));
 
@@ -75,9 +74,9 @@ export function mount(root, { session, navigate }) {
   const wirelessValue = wirelessModes.some((m) => m.value === wirelessDef.get(session)) ? wirelessDef.get(session) : AUTO_MODE;
   const wirelessPicker = split && session.caps.bluetooth && h('div.gp-default-group',
     h('div.gp-default-head', h('span.field-label', t('Wireless')),
-      h('span.small.muted', t('Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. WLAN uses your WLAN dongle.'))),
+      h('span.small.muted', t('Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. Dongle connects through your dongle.'))),
     segmented({
-      options: wirelessModes.map((m) => ({ value: m.value, label: m.label })),
+      options: wirelessModes.map((m) => ({ value: m.value, label: t(m.label) })),
       value: wirelessValue, tone: TONE, ariaLabel: t('Wireless default'),
       onChange: (v) => { wirelessDef.set(session, v); session.commit('gamepad'); },
     }));
@@ -140,8 +139,7 @@ export function mount(root, { session, navigate }) {
 
   // ---- 4. Connection ---------------------------------------------------------------------------
   const connCard = card({ title: t('Connection'), subtitle: t('How the controller introduces itself when you plug it in.'), icon: 'usb', tone: TONE },
-    settingField('gamepad.webusbPopup', { tone: TONE }),
-    session.caps.wlan && wlanPinRow(session, navigate));
+    settingField('gamepad.webusbPopup', { tone: TONE }));
 
   // ---- 5. MAC address --------------------------------------------------------------------------
   const macNote = h('div.field-desc.gp-mac-note', { 'aria-live': 'polite' });
@@ -236,21 +234,4 @@ function modeTiles(o) {
 function tNodes(text, nodes) {
   return text.split(/(\{\w+\})/).filter(Boolean)
     .map((part) => { const k = part.match(/^\{(\w+)\}$/)?.[1]; return k && k in nodes ? nodes[k] : part; });
-}
-
-/**
- * WLAN dongle PIN row. The editor belongs to the Wireless section ('wireless.dongleKey'); when the
- * Wireless page is available we just link there, otherwise (WLAN without Bluetooth, so the page is
- * hidden) we render that same SettingDef here so the PIN is still reachable.
- */
-function wlanPinRow(session, navigate) {
-  const def = getSetting('wireless.dongleKey');
-  if (session.caps.wireless || !def) {
-    return field({
-      label: t('WLAN dongle PIN'),
-      description: t('The four-digit PIN that pairs the controller with its WLAN USB dongle is set on the Wireless page.'),
-      control: button({ label: t('Open Wireless'), icon: 'wireless', variant: 'tonal', size: 'sm', onClick: () => navigate('wireless') }),
-    });
-  }
-  return settingField(def, { tone: TONE });
 }

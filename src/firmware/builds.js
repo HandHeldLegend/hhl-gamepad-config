@@ -4,7 +4,7 @@
  * Builds are listed live from GitHub's contents API. The last successful list is kept in
  * localStorage so the picker still shows names offline (flashing itself needs a download).
  *
- * Folders named dongle_* hold WLAN dongle firmware (the USB receiver, not a controller). They are
+ * Folders named dongle_* hold dongle firmware (the USB receiver, not a controller). They are
  * kept apart from the controller builds: listBuilds() returns them as `dongles`.
  */
 // Marks a literal for translation (tools/test-i18n.mjs); kept local so this module stays Node-importable
@@ -44,13 +44,13 @@ export const HIDDEN_BUILDS = new Set(['gcu_r5', 'gcu_s1', 'gcu_r4k']);
 const visible = (ids) => ids.filter((id) => !HIDDEN_BUILDS.has(id));
 
 /**
- * WLAN dongle builds, keyed by the board the dongle reports (0xD0 reply byte 2). `chip` is the
+ * Dongle builds, keyed by the board the dongle reports (0xD0 reply byte 2). `chip` is the
  * bootloader that runs it: RP2040 (USB PID 0x0003) or RP2350 (0x000f). Labels: t() them where shown.
  */
 export const DONGLE_BUILDS = {
-  1: { id: 'dongle_hoja', label: N_('HOJA WLAN Dongle'), chip: 'rp2350' },
-  2: { id: 'dongle_pico_w', label: N_('WLAN Dongle (Pico W)'), chip: 'rp2040' },
-  3: { id: 'dongle_pico2_w', label: N_('WLAN Dongle (Pico 2 W)'), chip: 'rp2350' },
+  1: { id: 'dongle_hoja', label: N_('HOJA Dongle'), chip: 'rp2350' },
+  2: { id: 'dongle_pico_w', label: N_('Dongle (Pico W)'), chip: 'rp2040' },
+  3: { id: 'dongle_pico2_w', label: N_('Dongle (Pico 2 W)'), chip: 'rp2350' },
 };
 
 export const isDongleBuild = (id) => id.startsWith('dongle_');
@@ -79,7 +79,7 @@ function toBuild(id) {
   };
 }
 
-/** The firmware build for a WLAN dongle board (1 HOJA, 2 Pico W, 3 Pico 2 W), or null when unknown. */
+/** The firmware build for a dongle board (1 HOJA, 2 Pico W, 3 Pico 2 W), or null when unknown. */
 export function dongleBuild(board) {
   const d = DONGLE_BUILDS[board];
   return d ? { ...toBuild(d.id), chip: d.chip } : null;

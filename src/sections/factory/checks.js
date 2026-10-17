@@ -10,7 +10,7 @@
  * Results: 'pass' | 'fail' | 'na' (not fitted on this build, not counted).
  */
 import { decodeText } from '../../device/struct.js';
-import { device, OPTIONAL_BLOCKS } from '../../device/hoja-device.js';
+import { device } from '../../device/hoja-device.js';
 import { decodePmicStatus, decodeFuelGauge, PACK } from '../battery/status.js';
 import { chipStatus } from '../wireless/info.js';
 import { reportedVersion } from '../wireless/channels.js';
@@ -31,9 +31,8 @@ export function hardwareChecks(session) {
   const st = session.static;
   const out = [];
 
-  // Settings blocks the firmware didn't serve (the app can't read or save them). Blocks only newer
-  // firmware has (Home WLAN) aren't faults: the connect warning in shell.js skips them the same way.
-  const missing = (device.missing?.config || []).filter((key) => !OPTIONAL_BLOCKS.has(key));
+  // Settings blocks the firmware didn't serve (the app can't read or save them).
+  const missing = device.missing?.config || [];
   out.push(row('settings', N_('Settings memory'), missing.length ? 'fail' : 'pass', missing.join(', ')));
 
   // Charger (PMIC) and battery pack.

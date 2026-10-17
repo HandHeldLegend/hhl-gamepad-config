@@ -12,9 +12,9 @@
  *   await applyRestore(plan, session);                   // writes the changed blocks and saves
  *
  * Never copied: block version fields (the controller's own stay), the controller's MAC address, the
- * paired host addresses, the split-defaults migration marker (gamepad_defaults_split) and the home
- * WLAN block (its password can't be read back, so restoring the block would erase it). Calibration (stick centers and angle maps, hall trigger ranges, gyro and
- * accelerometer offsets) belongs to one physical controller: restoring it is opt-in.
+ * paired host addresses and the split-defaults migration marker (gamepad_defaults_split). Calibration
+ * (stick centers and angle maps, hall trigger ranges, gyro and accelerometer offsets) belongs to one
+ * physical controller: restoring it is opt-in.
  *
  * Self-contained on purpose: ./card.js is the only UI, hooked into the Firmware page and updater.
  */
@@ -28,8 +28,6 @@ import { OUTPUT_MODE } from '../input/mapping.js';
 export const BACKUP_FORMAT = 'hoja-config-backup';
 export const BACKUP_FORMAT_VERSION = 1;
 
-/** Blocks that are never backed up or restored (see above). */
-const NEVER_BLOCKS = new Set(['wlan']);
 /** Fields that are never written from a backup (identity and pairing). */
 const NEVER = new Set(['gamepad_mac_address', 'host_mac_switch', 'host_mac_sinput', 'host_mac_wii', 'gamepad_defaults_split']);
 
@@ -99,7 +97,7 @@ export async function unitId(config) {
 export async function createBackup(session) {
   const blocks = {};
   for (const b of LAYOUT.blocks.config) {
-    if (NEVER_BLOCKS.has(b.key) || device.missing.config.includes(b.key)) continue; // or never read from this controller
+    if (device.missing.config.includes(b.key)) continue; // never read from this controller
     const data = session.config[b.key].toJSON();
     const fields = {};
     for (const [name, value] of Object.entries(data)) {
@@ -210,7 +208,7 @@ export async function planRestore(backup, session, { calibration = false } = {})
   let hasCalibration = false;
   for (const b of LAYOUT.blocks.config) {
     const saved = backup.blocks[b.key];
-    if (!saved?.fields || NEVER_BLOCKS.has(b.key)) continue;
+    if (!saved?.fields) continue;
     if (device.missing.config.includes(b.key)) { skipped.push(b.key); continue; }
     const current = session.config[b.key];
     const next = createStruct(b.struct, current.buffer.slice());

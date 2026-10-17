@@ -83,7 +83,7 @@ function status() {
     demo: isDemo(),
     controller: session.connected ? { ...session.info } : null,
     caps: session.connected ? { ...session.caps } : null,
-    dongle: session.dongle ? { ...session.dongle } : null, // WLAN dongle (state 'dongle': no controller on it yet)
+    dongle: session.dongle ? { ...session.dongle } : null, // the dongle (state 'dongle': no controller on it yet)
     unsaved: [...session.dirty],
     attention: { ...session.attention },
     route: { ...currentRoute() },
