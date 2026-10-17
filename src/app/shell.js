@@ -28,7 +28,7 @@ import { pwa } from './pwa.js';
 import { isIOS, explainIOS } from './platform.js';
 import { isLinux, explainLinux } from './linux.js';
 import { modeSwitcher } from './mode-switcher.js';
-import { chooseBluetoothController, canBluetooth } from './bluetooth-connect.js';
+import { openConnectModule } from './connect-module.js';
 import { applyFromRoute } from '../settings/apply.js';
 import { t, N_, fmt, i18n, LANGUAGES, detectLanguage, setLanguage } from '../i18n/index.js';
 
@@ -138,8 +138,22 @@ async function attempt(run, { bluetooth = false } = {}) {
   }
 }
 
-/** Shared connect flow used by the app bar, Home and empty states: the browser's USB picker. */
-export async function connectController() {
+/**
+ * Shared connect flow used by the app bar, Home and empty states: the Connect popup (connect-module.js),
+ * listing USB and Bluetooth controllers. cable: only USB, for flows that need the cable. Resolves like
+ * session.connect().
+ */
+export async function connectController({ cable = false } = {}) {
+  if (isDemo()) return attempt(() => session.connect());
+  if (isIOS() && !navigator.usb && !navigator.bluetooth) { explainIOS(); return false; }
+  const pick = await openConnectModule({ cable });
+  if (pick?.usb) return attempt(() => session.reconnect(pick.usb));
+  if (pick?.link) return attempt(() => session.connectBluetooth(pick.link), { bluetooth: true });
+  return false;
+}
+
+/** The browser's USB chooser straight away (picking a bootloader, the factory station). */
+export async function connectWithUsbChooser() {
   if (!navigator.usb && !isDemo()) {
     if (isIOS()) { explainIOS(); return false; }
     toast(t('This browser can’t talk to USB devices. Use Chrome or Edge on desktop or Android.'), { tone: 'red', timeout: 6000 });
@@ -148,21 +162,10 @@ export async function connectController() {
   return attempt(() => session.connect());
 }
 
-/**
- * Shared Bluetooth connect flow, offered next to the USB one where the browser has Web Bluetooth: the
- * steps to find and allow the controller (bluetooth-connect.js), then the session as over USB.
- */
-export async function connectBluetooth() {
-  if (!canBluetooth()) return false;
-  const link = await chooseBluetoothController();
-  if (!link) return false;
-  return attempt(() => session.connectBluetooth(link), { bluetooth: true });
-}
-
 export function createShell(root) {
   // Frame elements; (re)created by build() so a language change can redraw every label.
   let chipDot; let chipName; let chipSub; let chip;
-  let saveBtn; let connectBtn; let btConnectBtn; let installBtn; let modeBox;
+  let saveBtn; let connectBtn; let installBtn; let modeBox;
   let page; let main; let frame;
   const navLinks = new Map();
 
@@ -181,8 +184,6 @@ export function createShell(root) {
     saveBtn.classList.add('save-btn');
     connectBtn = button({ label: t('Connect'), icon: 'usb', variant: 'primary', onClick: onConnectClick });
     connectBtn.classList.add('connect-btn');
-    btConnectBtn = button({ icon: 'bluetooth', variant: 'ghost', title: t('Connect over Bluetooth'), onClick: () => connectBluetooth() });
-    btConnectBtn.classList.add('bt-connect-btn');
     installBtn = button({ label: t('Install'), icon: 'install', variant: 'ghost', title: t('Install as an app'), onClick: () => pwa.promptInstall() });
     installBtn.classList.add('install-btn');
     installBtn.hidden = !pwa.canInstall;
@@ -190,7 +191,7 @@ export function createShell(root) {
     settingsBtn.classList.add('appbar-settings');
 
     modeBox = h('div.appbar-mode');
-    const appbar = h('header.appbar', brand, h('div.spacer'), chip, modeBox, installBtn, saveBtn, btConnectBtn, connectBtn, languagePicker(), settingsBtn);
+    const appbar = h('header.appbar', brand, h('div.spacer'), chip, modeBox, installBtn, saveBtn, connectBtn, languagePicker(), settingsBtn);
 
     // ---- Sidebar -------------------------------------------------------------------------
     const nav = h('nav.sidebar', { 'aria-label': t('Sections') });
@@ -239,7 +240,6 @@ export function createShell(root) {
     connectBtn.className = `btn connect-btn ${open ? 'btn-ghost' : 'btn-primary'}`;
     connectBtn.querySelector('use').setAttribute('href', connectBtn.querySelector('use').getAttribute('href').replace(/#i-.*/, open ? '#i-unplug' : '#i-usb'));
     connectBtn.disabled = connecting;
-    btConnectBtn.hidden = open || connecting || !canBluetooth();
     connectBtn.querySelector('.spinner')?.remove();
     if (connecting) connectBtn.prepend(h('span.spinner.motion-ok'));
 
@@ -365,7 +365,6 @@ export function createShell(root) {
         : emptyState({ icon: 'usb', tone: section.tone, title: t('Connect your controller'), text: t('Plug in your controller with a USB data cable, then press Connect.'),
           action: h('div.row', { style: { justifyContent: 'center' } },
             button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg', onClick: () => connectController() }),
-            canBluetooth() && button({ label: t('Connect over Bluetooth'), icon: 'bluetooth', variant: 'tonal', size: 'lg', onClick: () => connectBluetooth() }),
             button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() }),
             // Wireless: a controller in module update mode only shows its CH340, so it can't connect here.
             section.id === 'wireless' && button({ label: t('Already in update mode'), icon: 'wireless', variant: 'ghost',

@@ -497,7 +497,7 @@ function showUpdateComplete() {
   import('../sections/backup/card.js').then(({ backedUpThisSession }) => {
     if (ui === u && !dongle && backedUpThisSession()) replace(u.backup, callout({ tone: 'blue', icon: 'save', text: t('Settings reset by the update? Restore your backup from the Firmware page once connected.') }));
   }).catch(() => {});
-  actions({ primary: { label: t('Connect'), icon: 'usb', run: async () => { hide(); const { connectController } = await import('../app/shell.js'); connectController(); } } });
+  actions({ primary: { label: t('Connect'), icon: 'usb', run: async () => { hide(); const { connectController } = await import('../app/shell.js'); connectController({ cable: true }); } } });
   setStatus({ state: 'unknown' });
 }
 

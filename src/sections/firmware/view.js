@@ -12,7 +12,7 @@ import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
 import { card, button, asyncButton, callout, kv, badge } from '../../ui/controls.js';
 import { confirmDialog, toast } from '../../ui/overlay.js';
-import { connectController } from '../../app/shell.js';
+import { connectController, connectWithUsbChooser } from '../../app/shell.js';
 import { listBuilds } from '../../firmware/builds.js';
 import {
   firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion, CABLE_UPDATE_TEXT, cableOnlyNote,
@@ -37,7 +37,7 @@ function controllerCard(session) {
   if (!session.connected) {
     return card({ title: t('Update your controller'), icon: 'download', tone: 'blue', subtitle: t('Connect to check for new firmware.') },
       h('p.muted', t('Updates are checked automatically every time you connect. Firmware downloads need an internet connection.')),
-      h('div.row', button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', onClick: connectController })));
+      h('div.row', button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', onClick: () => connectController({ cable: true }) })));
   }
   const s = firmwareStatus();
   const [label, tone] = STATUS_TEXT[s.state] || STATUS_TEXT.unknown;
@@ -67,7 +67,7 @@ function installCard(params) {
         { bootsel: h('strong', 'BOOTSEL'), drive: h('strong', 'RPI-RP2'), drive2: h('strong', 'RP2350') })),
       h('li', fillNodes(t('Press {button} and pick the “RP2 Boot” device. The installer opens automatically.'), { button: h('strong', t('Select bootloader')) }))),
     h('div.row',
-      button({ label: t('Select bootloader'), icon: 'usb', variant: 'primary', onClick: () => connectController() }),
+      button({ label: t('Select bootloader'), icon: 'usb', variant: 'primary', onClick: () => connectWithUsbChooser() }),
       button({ label: t('Open installer'), icon: 'firmware', variant: 'tonal', onClick: () => openInstallWizard(params.build) })),
     callout({ tone: 'yellow', title: t('Pick the right build.'), text: t('Installing firmware made for different hardware can stop the controller working until it’s re-flashed from BOOTSEL.') }));
 }

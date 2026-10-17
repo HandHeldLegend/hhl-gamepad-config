@@ -439,7 +439,7 @@ function showDone() {
         dismiss();
         if (demo) { startDemo(); return; }
         const { connectController } = await import('../../app/shell.js');
-        connectController();
+        connectController({ cable: true });
       },
     },
   });

@@ -37,7 +37,7 @@ import { isDemo } from '../../device/mock.js';
 import { listBuilds, getBuildManifest, humanizeBuildId } from '../../firmware/builds.js';
 import { buildIdFromManifestUrl } from '../../firmware/changelog.js';
 import { setUpdaterQuiet, formatFwVersion, exitBootloader } from '../../firmware/updater.js';
-import { languagePicker, connectController } from '../../app/shell.js';
+import { languagePicker, connectWithUsbChooser } from '../../app/shell.js';
 import { pico_update_attempt_flash, pico_prefetch_firmware, pico_complete_uf2_picker_flash, onFlashProgress } from '../../firmware/picoboot.js';
 import { createStickCalibration } from '../joysticks/calibration.js';
 import { createImuReadout } from '../motion/imu-readout.js';
@@ -647,7 +647,7 @@ export function mount(root, { session, params = {} }) {
       if (session.connected) await session.disconnect().catch(() => {});
       render();
     }
-    const r = await connectController();
+    const r = await connectWithUsbChooser();
     if (r === 'bootloader') onBootloader(true);
   };
   const backButton = (onClick) => button({ label: t('Back'), icon: 'back', variant: 'ghost', class: 'fac-back', onClick });

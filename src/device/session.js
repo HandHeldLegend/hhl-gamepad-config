@@ -12,7 +12,7 @@
  *                         (no firmware, bootloader or wireless-module updates without a USB cable)
  *   session.info          { name, maker, fwVersion, manifestUrl, firmwareUrl, manualUrl }
  *   session.dongle        the dongle's status (decodeDongleInfo in hoja-device.js), or null
- *   session.connectBluetooth(link)  connect over an allowed Bluetooth link (app/bluetooth-connect.js does the rest)
+ *   session.connectBluetooth(link)  connect over an allowed Bluetooth link (app/connect-module.js gets it)
  *   session.liveMode      the mode the app can switch away from live ('steam' | 'slippi' | 'switch'), or null
  *   session.switchMode(m) switch to another LIVE_MODES mode now (on the cable, or the dongle's on a computer)
  *   session.config.<blk>  live config structs (same objects as device.config)
@@ -159,7 +159,7 @@ class Session extends EventTarget {
 
   /**
    * Connect over Bluetooth: `link` is an open BleLink this browser is allowed on (see
-   * app/bluetooth-connect.js for the steps before). Resolves true, or throws like connect().
+   * app/connect-module.js for the steps before). Resolves true, or throws like connect().
    */
   async connectBluetooth(link) {
     this.#follow?.stop();

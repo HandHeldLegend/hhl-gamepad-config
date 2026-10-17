@@ -6,8 +6,7 @@ import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
 import { button, card, callout, badge, face, kv } from '../../ui/controls.js';
 import { SECTIONS } from '../registry.js';
-import { connectController, connectBluetooth, unavailableReason, currentModeLabel, betaBadge } from '../../app/shell.js';
-import { canBluetooth } from '../../app/bluetooth-connect.js';
+import { connectController, unavailableReason, currentModeLabel, betaBadge } from '../../app/shell.js';
 import { startDemo, isDemo } from '../../device/mock.js';
 import { firmwareStatus, openUpdateWizard, formatFwVersion, CABLE_UPDATE_TEXT } from '../../firmware/updater.js';
 import { dongleCard } from '../wireless/dongle.js';
@@ -34,7 +33,7 @@ function hero(session) {
   // While a controller is being opened the button says so (Home remounts when the state changes).
   const connecting = session.state === 'connecting';
   const connectBtn = button({ label: connecting ? t('Connecting…') : t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg',
-    disabled: connecting || !webusb, onClick: () => connectController() });
+    disabled: connecting, onClick: () => connectController() });
   if (connecting) connectBtn.prepend(h('span.spinner.motion-ok'));
   return h('section.hero',
     h('div',
@@ -42,7 +41,6 @@ function hero(session) {
       h('p', t('Plug your HOJA controller in with a USB data cable, then connect. Everything you change applies instantly. Press Save to keep it.')),
       h('div.hero-actions',
         connectBtn,
-        canBluetooth() && button({ label: t('Connect over Bluetooth'), icon: 'bluetooth', variant: 'tonal', size: 'lg', disabled: connecting, onClick: () => connectBluetooth() }),
         button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', size: 'lg', onClick: () => startDemo() })),
       !webusb && h('div', { style: { marginTop: '16px' } }, isIOS()
         ? callout({ tone: 'yellow', title: t('iPhone and iPad can’t connect to controllers.'), text: t('Use a computer or an Android device to change settings. The demo works here.') },

@@ -15,8 +15,9 @@
  * DATA is only accepted once the browser is allowed: a token it was given before (AUTH), or a code entered on
  * the controller (PAIR). Tokens are kept per browser in localStorage, keyed by BluetoothDevice.id.
  *
- * Plus and Minus pressed together make the controller visible for 10 seconds; the browser's chooser
- * (requestBluetoothController) has to be opened from a click.
+ * Plus and Minus pressed together make the controller visible for 10 seconds. A controller this site was
+ * allowed on before (rememberedBluetoothControllers) can then be connected without the browser's chooser;
+ * a new one comes from the chooser (requestBluetoothController), which has to be opened from a click.
  *
  * Events (CustomEvent; read `event.detail`):
  *   'report'      DataView          a packet from the controller (DATA or INPUT), as from the WebUSB IN endpoint
@@ -94,6 +95,18 @@ export async function requestBluetoothController() {
   }
 }
 
+/**
+ * Controllers this site was allowed on before, where the browser can list them (getDevices is newer than
+ * the rest of Web Bluetooth). Resolves [] where it can't.
+ */
+export async function rememberedBluetoothControllers() {
+  try {
+    return (await navigator.bluetooth?.getDevices?.()) || [];
+  } catch {
+    return [];
+  }
+}
+
 export class BleLink extends EventTarget {
   /** @type {BluetoothDevice} */
   #bt;
@@ -116,11 +129,14 @@ export class BleLink extends EventTarget {
     this.dispatchEvent(new CustomEvent(type, { detail }));
   }
 
-  /** Connect and subscribe to the controller's notifications (before anything is sent). */
-  async open() {
+  /**
+   * Connect and subscribe to the controller's notifications (before anything is sent). `connectTimeout`:
+   * how long to try reaching it (short when looking for a remembered controller that may not be visible).
+   */
+  async open({ connectTimeout = CONNECT_TIMEOUT_MS } = {}) {
     this.#bt.addEventListener('gattserverdisconnected', this.#onGone);
     try {
-      const gatt = await withTimeout(this.#bt.gatt.connect(), CONNECT_TIMEOUT_MS, 'Connecting over Bluetooth');
+      const gatt = await withTimeout(this.#bt.gatt.connect(), connectTimeout, 'Connecting over Bluetooth');
       const service = await withTimeout(gatt.getPrimaryService(BLE_SERVICE), STEP_TIMEOUT_MS, 'Finding the config service');
       this.#toPad = await withTimeout(service.getCharacteristic(BLE_TO_PAD), STEP_TIMEOUT_MS, 'Finding the config service');
       this.#toApp = await withTimeout(service.getCharacteristic(BLE_TO_APP), STEP_TIMEOUT_MS, 'Finding the config service');

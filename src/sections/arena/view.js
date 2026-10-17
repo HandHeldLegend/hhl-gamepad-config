@@ -22,8 +22,7 @@
  */
 import { h, loadStyles } from '../../ui/dom.js';
 import { tabView, emptyState, button } from '../../ui/controls.js';
-import { connectController, connectBluetooth } from '../../app/shell.js';
-import { canBluetooth } from '../../app/bluetooth-connect.js';
+import { connectController } from '../../app/shell.js';
 import { startDemo } from '../../device/mock.js';
 import { InputManager } from './input.js';
 import { Game } from './game.js';
@@ -72,8 +71,7 @@ function mountConnectPrompt(root) {
     icon: 'usb', tone: 'red', title: t('Connect your controller to use the Arena'),
     text: t('The Arena tests the HOJA controller connected to this app and doesn’t read any other gamepad. Plug it in with a USB data cable, then press Connect.'),
     action: h('div.row', { style: { justifyContent: 'center' } },
-      button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg', disabled: !navigator.usb, onClick: connectController }),
-      canBluetooth() && button({ label: t('Connect over Bluetooth'), icon: 'bluetooth', variant: 'tonal', size: 'lg', onClick: () => connectBluetooth() }),
+      button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg', onClick: () => connectController() }),
       button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() })),
   }));
   return { destroy() {} };

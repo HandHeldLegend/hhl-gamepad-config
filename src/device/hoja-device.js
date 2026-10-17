@@ -65,6 +65,25 @@ export const USB_FILTERS = [
   { vendorId: 0x1a86, productId: 0x7522 }, // CH340: controller in wireless-module (ESP32) update mode
 ];
 
+/** A device USB_FILTERS lists (a HOJA controller, dongle, bootloader or wireless-module update chip). */
+export function isListedUsb(usb) {
+  return USB_FILTERS.some((f) => f.vendorId === usb?.vendorId && f.productId === usb?.productId);
+}
+
+/**
+ * Show the browser's USB chooser (call it from a click). Resolves the USBDevice, or null when it was
+ * closed without one.
+ */
+export async function requestUsbController() {
+  if (!navigator.usb) throw new Error('WebUSB is not available in this browser.');
+  try {
+    return await navigator.usb.requestDevice({ filters: USB_FILTERS });
+  } catch (err) {
+    if (err?.name === 'NotFoundError') return null; // user canceled
+    throw err;
+  }
+}
+
 /** Windows, where the Xbox 360 driver takes a whole XInput device (see USB_FILTERS). */
 function isWindowsHost() {
   return typeof navigator !== 'undefined'
@@ -285,15 +304,8 @@ export class HojaDevice extends EventTarget {
    *   false           canceled / failed
    */
   async connect() {
-    if (!navigator.usb) throw new Error('WebUSB is not available in this browser.');
-    let usb;
-    try {
-      usb = await navigator.usb.requestDevice({ filters: USB_FILTERS });
-    } catch (err) {
-      if (err?.name === 'NotFoundError') return false; // user canceled
-      throw err;
-    }
-    return this.open(usb);
+    const usb = await requestUsbController();
+    return usb ? this.open(usb) : false;
   }
 
   /**

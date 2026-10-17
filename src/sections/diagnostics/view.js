@@ -121,7 +121,7 @@ export function mount(root, { session }) {
   /** Connect the controller (USB) if needed, then restart it into update mode, as the update dialog does. */
   async function enterUpdateMode() {
     if (!session.connected) {
-      await connectController();
+      await connectController({ cable: true });
       if (!session.connected) { say('yellow', t('No controller connected. Connect it with a USB cable and try again, or enter update mode by hand.')); return false; }
     }
     if (session.caps.noCable) { say('yellow', t('Update mode needs a USB cable. Plug the controller in with a cable and try again.')); return false; }
