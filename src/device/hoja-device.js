@@ -266,6 +266,11 @@ export class HojaDevice extends EventTarget {
   get usbDevice() { return this.#usb; }
   /** How the controller is connected: 'usb', 'ble' (Bluetooth), or null. */
   get transport() { return this.#ble ? 'ble' : this.#usb ? 'usb' : null; }
+  /** Which controller this is to the browser: 'ble:<BluetoothDevice.id>' or 'usb:<serial number>', or null. */
+  get transportId() {
+    if (this.#ble) return `ble:${this.#ble.id}`;
+    return this.#usb?.serialNumber ? `usb:${this.#usb.serialNumber}` : null;
+  }
 
   /** Block index for a config block name, e.g. blockIndex('analog') === 2. */
   blockIndex(key) {

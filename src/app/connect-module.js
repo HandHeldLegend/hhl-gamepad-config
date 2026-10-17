@@ -4,8 +4,9 @@
  * and it is always clear which controllers are on a cable and which are wireless.
  *
  * What it shows
- *   - How a controller turns up: plugged in with a USB data cable, or (on and running wirelessly) with Plus
- *     and Minus pressed together, which makes it visible over Bluetooth for 10 seconds (ble_config.c).
+ *   - How a controller turns up: plugged in with a USB data cable, or (on and running wirelessly) with its
+ *     Start and Select pressed together (Plus and Minus on some), which makes it visible over Bluetooth for
+ *     10 seconds (ble_config.c). The buttons are drawn as the controller names them (see the chord below).
  *   - A live list, each entry marked USB or Bluetooth:
  *       USB        controllers this site may already use that are plugged in (navigator.usb.getDevices,
  *                  kept current on connect / disconnect). A click connects, with no browser chooser.
@@ -33,7 +34,11 @@ import { icon } from '../ui/icons.js';
 import { openDialog } from '../ui/overlay.js';
 import { callout } from '../ui/controls.js';
 import { glyph, outputName } from '../sections/input/parts.js';
-import { isListedUsb, requestUsbController } from '../device/hoja-device.js';
+import { INPUT_CODES } from '../sections/input/mapping.js';
+import { device, isListedUsb, requestUsbController } from '../device/hoja-device.js';
+import { session } from '../device/session.js';
+import { decodeText } from '../device/struct.js';
+import { isDemo } from '../device/mock.js';
 import { BleLink, requestBluetoothController, rememberedBluetoothControllers } from '../device/ble-link.js';
 import { t, N_ } from '../i18n/index.js';
 
@@ -50,7 +55,7 @@ const SEARCH_TRY_MS = 3000;
 const SEEN_MS = 12000;
 
 const BT_OFF = N_('Bluetooth is off or missing on this device. Turn it on, then try again.');
-const CONNECT_FAILED = N_('Couldn’t connect over Bluetooth. Press + and − on the controller again, then choose it.');
+const CONNECT_FAILED = N_('Couldn’t connect over Bluetooth. Press {buttons} on the controller again, then choose it.');
 const NO_USB = N_('This browser can’t talk to USB devices. Use Chrome or Edge on desktop or Android.');
 
 /** Brave ships Web Bluetooth switched off (navigator.brave exists only there). */
@@ -58,11 +63,59 @@ async function isBraveBrowser() {
   try { return !!(await navigator.brave?.isBrave?.()); } catch { return false; }
 }
 
-/** Plus + Minus, the way the connect guide draws a button combo. */
-function beaconCombo(size) {
-  const label = `${outputName('Plus')} + ${outputName('Minus')}`;
-  return h('span.guide-combo', { title: label, role: 'img', 'aria-label': label },
-    glyph('Plus', { size }), h('span.guide-plus', { 'aria-hidden': 'true' }, '+'), glyph('Minus', { size }));
+// ---- The Bluetooth chord ------------------------------------------------------------------------
+// The controller's own Start and Select buttons pressed together (ble_config.c: INPUT_CODE_START +
+// INPUT_CODE_SELECT), named as each board names them: Plus and Minus on a GCU 2, Start and Select on
+// others. The names of the controller connected last, and of each one by its USB serial or Bluetooth id,
+// are kept per browser, so the popup can show the right buttons before anything is connected.
+
+const CHORDS_KEY = 'hhl-config:chords';
+const CHORDS_MAX = 16;
+
+function loadChords() {
+  try {
+    const v = JSON.parse(localStorage.getItem(CHORDS_KEY) || '{}');
+    return v && typeof v === 'object' ? v : {};
+  } catch { return {}; } // private mode, storage blocked
+}
+
+/** The connected controller's name for an input (static input info), or ''. */
+function inputName(key) {
+  const code = INPUT_CODES.find((c) => c.key === key)?.code;
+  const info = code == null ? null : device.static?.input?.input_info?.[code];
+  return info?.input_type ? decodeText(info.input_name ?? new Uint8Array()).trim() : '';
+}
+
+/** Keep the connected controller's chord names (not the demo's). */
+function rememberChord() {
+  if (isDemo()) return;
+  const chord = { start: inputName('START'), select: inputName('SELECT') };
+  if (!chord.start || !chord.select) return;
+  const all = loadChords();
+  all.last = chord;
+  const id = device.transportId;
+  if (id) {
+    const byId = { ...(all.byId || {}) };
+    delete byId[id];
+    byId[id] = chord; // newest last; the oldest make room
+    all.byId = Object.fromEntries(Object.entries(byId).slice(-CHORDS_MAX));
+  }
+  try { localStorage.setItem(CHORDS_KEY, JSON.stringify(all)); } catch { /* storage blocked */ }
+}
+session.on('state', ({ state }) => { if (state === 'connected') rememberChord(); });
+
+/** The chord as text: the controller's own names, or both conventions when it isn't known. */
+function chordText(chord) {
+  return chord ? `${outputName(chord.start)} + ${outputName(chord.select)}`
+    : t('{start} + {select} ({plus} + {minus} on Nintendo-style controllers)',
+      { start: 'Start', select: 'Select', plus: outputName('Plus'), minus: outputName('Minus') });
+}
+
+/** The chord as glyphs, the way the connect guide draws a combo; both pairs when it isn't known. */
+function chordArt(chord, size) {
+  const pair = (a, b) => h('span.guide-combo', glyph(a, { size }), h('span.guide-plus', '+'), glyph(b, { size }));
+  return h('span.cm-chord', { role: 'img', 'aria-label': chordText(chord) },
+    chord ? pair(chord.start, chord.select) : [pair('Start', 'Select'), h('span.guide-plus', '/'), pair('Plus', 'Minus')]);
 }
 
 /** The six presses as big glyphs; `entered` of them are done and the next one is marked. */
@@ -108,6 +161,10 @@ export function openConnectModule({ cable = false } = {}) {
     let code = '';
     let codeNote = '';    // shown with the next code (after a wrong press)
     const watching = new AbortController();
+    const chords = loadChords();
+    const lastChord = chords.last || null; // the controller connected last, if any
+    /** The chord for a Bluetooth controller: its own when it was connected before. */
+    const chordOf = (bt) => (bt && chords.byId?.[`ble:${bt.id}`]) || lastChord;
 
     const dlg = openDialog({ title: t('Connect a controller'), icon: 'gamepad', tone: 'blue', onClose: () => finish(null) });
 
@@ -146,7 +203,7 @@ export function openConnectModule({ cable = false } = {}) {
         ...usbDevices.map((usb) => item({ kind: 'usb', name: usb.productName || t('USB device'), status: t('Plugged in now'), live: true,
           onClick: () => finish({ usb }) })),
         ...remembered.map((e) => item({ kind: 'bluetooth', name: e.bt.name || t('Bluetooth controller'), live: seenNow(e),
-          status: seenNow(e) ? t('Visible now') : t('Press + and − on it to connect'),
+          status: seenNow(e) ? t('Visible now') : t('Press {buttons} on it to connect', { buttons: chordText(chordOf(e.bt)) }),
           onClick: () => { cancelAttempt(); reach(e.bt, { manual: true }); } })),
       ];
       listEl.replaceChildren(...(rows.length ? rows
@@ -170,11 +227,11 @@ export function openConnectModule({ cable = false } = {}) {
       dlg.setBody(
         h('div.cm-ways',
           h('div.cm-way', h('span.cm-way-art', icon('usb')), h('p', t('Plug the controller in with a USB data cable.'))),
-          canBluetooth && h('div.cm-way', h('span.cm-way-art', beaconCombo(30)),
+          canBluetooth && h('div.cm-way', h('span.cm-way-art', chordArt(lastChord, 28)),
             h('p', fillNodes(remembers
               ? t('Or, with it on and running wirelessly, press {buttons} together to connect over Bluetooth.')
               : t('Or, for Bluetooth: with it on and running wirelessly, press {buttons} together, then choose it with Connect over Bluetooth.'),
-            { buttons: h('strong', `${outputName('Plus')} + ${outputName('Minus')}`) })))),
+            { buttons: h('strong', chordText(lastChord)) })))),
         notesEl,
         h('div.cm-list-head', t('Controllers')),
         listEl,
@@ -237,7 +294,7 @@ export function openConnectModule({ cable = false } = {}) {
         if (brave) btNote = braveNote();
         else if (err?.name === 'NotFoundError') problem = t(BT_OFF);
         else if (err?.name === 'SecurityError' || err?.name === 'NotAllowedError') problem = t('This browser didn’t allow Bluetooth here.');
-        else problem = t(CONNECT_FAILED);
+        else problem = t(CONNECT_FAILED, { buttons: chordText(lastChord) });
         renderNotes();
         return;
       }
@@ -262,13 +319,14 @@ export function openConnectModule({ cable = false } = {}) {
       const seq = attemptSeq;
       const attempt = new BleLink(bt);
       const name = bt.name || t('your controller');
+      const buttons = chordText(chordOf(bt));
       pending = attempt;
-      if (manual) showBusy(t('Connecting to {name}…', { name }), t('If it doesn’t connect, press + and − on the controller.'));
+      if (manual) showBusy(t('Connecting to {name}…', { name }), t('If it doesn’t connect, press {buttons} on the controller.', { buttons }));
       try {
         await attempt.open(tryFor ? { connectTimeout: tryFor } : undefined);
       } catch (err) {
         if (pending === attempt) pending = null;
-        if (manual && seq === attemptSeq && !settled) { console.warn('[connect] Bluetooth connect failed', err); backToList(t(CONNECT_FAILED)); }
+        if (manual && seq === attemptSeq && !settled) { console.warn('[connect] Bluetooth connect failed', err); backToList(t(CONNECT_FAILED, { buttons })); }
         return;
       }
       if (pending === attempt) pending = null;
@@ -281,7 +339,7 @@ export function openConnectModule({ cable = false } = {}) {
       attempt.addEventListener('code-state', (e) => onCodeState(e.detail));
       attempt.addEventListener('paired', () => { if (link === attempt) finish({ link: attempt }); });
       attempt.addEventListener('gone', () => {
-        if (link === attempt && !settled) backToList(t('The controller disconnected. Press + and − on it again, then choose it.'));
+        if (link === attempt && !settled) backToList(t('The controller disconnected. Press {buttons} on it again, then choose it.', { buttons }));
       });
       showBusy(t('Connecting to {name}…', { name }));
       try {
@@ -291,7 +349,7 @@ export function openConnectModule({ cable = false } = {}) {
         await attempt.requestCode();
       } catch (err) {
         console.warn('[connect] Bluetooth sign-in failed', err);
-        if (link === attempt && !settled) backToList(t(CONNECT_FAILED));
+        if (link === attempt && !settled) backToList(t(CONNECT_FAILED, { buttons }));
       }
     }
 
@@ -369,7 +427,7 @@ export function openConnectModule({ cable = false } = {}) {
       } catch (err) {
         console.warn('[connect] no code', err);
         // A dropped link already went back to the list ('gone')
-        if (link === current && !settled) backToList(t(CONNECT_FAILED));
+        if (link === current && !settled) backToList(t(CONNECT_FAILED, { buttons: chordText(lastChord) }));
       }
     }
 

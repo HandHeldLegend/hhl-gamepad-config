@@ -555,7 +555,8 @@ dialog.dialog::backdrop { background: var(--scrim); backdrop-filter: blur(3px); 
 .cm-ways { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-md); background: var(--surface-sunken); }
 .cm-way { display: flex; align-items: center; gap: var(--space-3); }
 .cm-way p { margin: 0; font-size: var(--text-sm); }
-.cm-way-art { flex: none; width: 76px; display: flex; justify-content: center; color: var(--text-muted); }
+.cm-way-art { flex: none; min-width: 76px; display: flex; justify-content: center; color: var(--text-muted); }
+.cm-chord { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: center; }
 .cm-way-art > .icon { width: 26px; height: 26px; }
 .cm-notes { display: grid; gap: var(--space-2); }
 .cm-notes:empty { display: none; }

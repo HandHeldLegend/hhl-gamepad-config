@@ -6,16 +6,24 @@
  * controller notifies on another:
  *
  *   app → controller   0x01 AUTH [token 16]    0x02 PAIR (ask for a code)    0x03 DATA [one WebUSB packet]
+ *                      0x04 BYE: the app is done, the controller closes the link itself
  *   controller → app   0x81 AUTH result [0 allowed, 1 refused]
  *                      0x82 CODE [six letters: A B X Y as printed on the face buttons, U D L R for the d-pad]
  *                      0x83 CODE_STATE [presses entered][0 entering, 1 wrong (a new code follows), 2 timed out]
  *                      0x84 PAIRED [token 16]: this browser is allowed from now on
  *                      0x85 DATA [one WebUSB packet]    0x86 INPUT [live input report; newest wins, may drop]
+ *                      0x87 LINK [interval, latency, ATT MTU, LL tx octets: u16 LE each][tx PHY][rx PHY], once
+ *                           the app is allowed in and whenever they change (kept as linkInfo, for debugging)
  *
  * DATA is only accepted once the browser is allowed: a token it was given before (AUTH), or a code entered on
  * the controller (PAIR). Tokens are kept per browser in localStorage, keyed by BluetoothDevice.id.
  *
- * Plus and Minus pressed together make the controller visible for 10 seconds. A controller this site was
+ * BYE goes out whenever the app ends a session on purpose (close(), and the page going away): after the
+ * browser lets go, Windows often keeps the LE link open, so the controller would never see a disconnect
+ * and couldn't advertise again.
+ *
+ * The controller's Start and Select pressed together (Plus and Minus on some boards) make it visible for
+ * 10 seconds. A controller this site was
  * allowed on before (rememberedBluetoothControllers) can then be connected without the browser's chooser;
  * a new one comes from the chooser (requestBluetoothController), which has to be opened from a click.
  *
@@ -24,6 +32,7 @@
  *   'code'        { letters }       a code to enter on the controller (a new one after a wrong press)
  *   'code-state'  { entered, state } progress: state 'entering' | 'wrong' | 'timeout'
  *   'paired'      {}                the code was entered: the token is stored, DATA is accepted
+ *   'link-info'   linkInfo          the controller's connection parameters (0x87)
  *   'gone'        {}                the link dropped (out of range, controller off, or close())
  */
 
@@ -35,12 +44,14 @@ const FRAME = {
   AUTH: 0x01,
   PAIR: 0x02,
   DATA: 0x03,
+  BYE: 0x04,
   AUTH_RESULT: 0x81,
   CODE: 0x82,
   CODE_STATE: 0x83,
   PAIRED: 0x84,
   DATA_IN: 0x85,
   INPUT: 0x86,
+  LINK: 0x87,
 };
 
 const CODE_STATES = ['entering', 'wrong', 'timeout'];
@@ -53,6 +64,16 @@ const STEP_TIMEOUT_MS = 5000;
 const ANSWER_TIMEOUT_MS = 4000;
 /** A write the controller refused because its receive queue was full is tried again this often. */
 const WRITE_RETRIES = 3;
+/** close() waits this long for BYE to go out before it disconnects. */
+const BYE_WAIT_MS = 500;
+
+/** The newest link per BluetoothDevice: a late disconnect from an older one must not end it. */
+const newestLink = new WeakMap();
+/** Links that are open: told BYE when the page goes away. */
+const openLinks = new Set();
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => { for (const l of openLinks) l.sayBye(); });
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -123,6 +144,10 @@ export class BleLink extends EventTarget {
   }
 
   get name() { return this.#bt.name || ''; }
+  /** The browser's id for this controller (BluetoothDevice.id). */
+  get id() { return this.#bt.id; }
+  /** The last 0x87 LINK frame: { interval, latency, mtu, txOctets, txPhy, rxPhy } as sent, or null. */
+  linkInfo = null;
   get isOpen() { return !this.#closed && !!this.#bt.gatt?.connected; }
 
   #emit(type, detail = {}) {
@@ -134,6 +159,7 @@ export class BleLink extends EventTarget {
    * how long to try reaching it (short when looking for a remembered controller that may not be visible).
    */
   async open({ connectTimeout = CONNECT_TIMEOUT_MS } = {}) {
+    newestLink.set(this.#bt, this);
     this.#bt.addEventListener('gattserverdisconnected', this.#onGone);
     try {
       const gatt = await withTimeout(this.#bt.gatt.connect(), connectTimeout, 'Connecting over Bluetooth');
@@ -142,6 +168,7 @@ export class BleLink extends EventTarget {
       this.#toApp = await withTimeout(service.getCharacteristic(BLE_TO_APP), STEP_TIMEOUT_MS, 'Finding the config service');
       this.#toApp.addEventListener('characteristicvaluechanged', this.#onNotify);
       await withTimeout(this.#toApp.startNotifications(), STEP_TIMEOUT_MS, 'Starting notifications');
+      if (!this.#closed) openLinks.add(this);
     } catch (err) {
       this.close();
       throw err;
@@ -185,12 +212,41 @@ export class BleLink extends EventTarget {
     return this.#write(frame);
   }
 
-  /** Drop the link. 'gone' follows. */
+  /**
+   * End the session on purpose: BYE first, so the controller closes the link itself, then disconnect once
+   * it went out (or BYE_WAIT_MS passed). 'gone' follows at once.
+   */
   close() {
-    if (this.#bt.gatt?.connected) {
-      try { this.#bt.gatt.disconnect(); } catch { /* already gone */ }
-    }
+    const gatt = this.#bt.gatt;
+    const bye = this.#closed ? null : this.#bye();
     this.#onGone();
+    if (!gatt?.connected) return;
+    const disconnect = () => {
+      // A newer link to this controller may be up by now: leave it
+      if (newestLink.get(this.#bt) !== this || !gatt.connected) return;
+      try { gatt.disconnect(); } catch { /* already gone */ }
+    };
+    if (bye) withTimeout(bye, BYE_WAIT_MS, 'Saying goodbye').catch(() => {}).finally(disconnect);
+    else disconnect();
+  }
+
+  /** The page is going away: BYE now, best effort, nothing awaited (the browser drops the link itself). */
+  sayBye() {
+    try { this.#writeBye()?.catch(() => {}); } catch { /* best effort */ }
+  }
+
+  /** BYE after the writes already queued (one GATT operation at a time), or null without a link. */
+  #bye() {
+    if (!this.#toPad || !this.#bt.gatt?.connected) return null;
+    const write = () => this.#writeBye();
+    return this.#writes.then(write, write);
+  }
+
+  #writeBye() {
+    const c = this.#toPad;
+    if (!c || !this.#bt.gatt?.connected) return null;
+    const frame = new Uint8Array([FRAME.BYE]);
+    return c.writeValueWithResponse ? c.writeValueWithResponse(frame) : c.writeValue(frame);
   }
 
   /** The payload of the next frame of `type` (null if the link drops first). Ask before sending what it answers. */
@@ -251,6 +307,13 @@ export class BleLink extends EventTarget {
         if (payload.length >= TOKEN_LEN) saveToken(this.#bt.id, payload.subarray(0, TOKEN_LEN));
         this.#emit('paired', {});
         return;
+      case FRAME.LINK: {
+        if (payload.length < 10) return;
+        const v16 = (i) => payload[i] | (payload[i + 1] << 8);
+        this.linkInfo = { interval: v16(0), latency: v16(2), mtu: v16(4), txOctets: v16(6), txPhy: payload[8], rxPhy: payload[9] };
+        this.#emit('link-info', this.linkInfo);
+        return;
+      }
       default:
     }
   };
@@ -258,6 +321,7 @@ export class BleLink extends EventTarget {
   #onGone = () => {
     if (this.#closed) return;
     this.#closed = true;
+    openLinks.delete(this);
     this.#bt.removeEventListener('gattserverdisconnected', this.#onGone);
     this.#toApp?.removeEventListener('characteristicvaluechanged', this.#onNotify);
     for (const waiting of this.#waiters.values()) waiting.forEach((resolve) => resolve(null));
