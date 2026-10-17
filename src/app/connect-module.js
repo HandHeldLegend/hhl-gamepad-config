@@ -15,7 +15,9 @@
  *                  trying to connect, so after Plus + Minus the controller connects by itself. A click
  *                  tries that one now.
  *   - "Add USB controller…" / "Add Bluetooth controller…" for one this site hasn't used yet: the browser's
- *     chooser, only ever from these buttons (it needs the click).
+ *     chooser, only ever from these buttons (it needs the click). Where the browser can't list Bluetooth
+ *     controllers (Chrome and Edge without the new-permissions-backend flag), every Bluetooth connect goes
+ *     through the chooser: the button reads "Connect over Bluetooth…", and a tip names the flag.
  *   - Why Bluetooth can't be used, where it can't: Brave (off until enabled in brave://flags), browsers
  *     without Web Bluetooth (Firefox, Safari), Bluetooth off on the computer.
  * Once a Bluetooth controller is reached (ble-link.js), the token this browser got before lets it straight
@@ -86,6 +88,9 @@ export function openConnectModule({ cable = false } = {}) {
   return new Promise((resolve) => {
     const withBluetooth = !cable;
     const canBluetooth = withBluetooth && !!navigator.bluetooth; // the browser offers it (it may still fail: Brave)
+    // The browser lists controllers allowed before (getDevices), so they can be found by themselves. Chrome
+    // and Edge only do this with a flag; without it every Bluetooth connect goes through the chooser.
+    const remembers = canBluetooth && !!navigator.bluetooth.getDevices;
     let settled = false;
     let step = 'list';    // 'list' | 'busy' | 'code'
     let usbDevices = [];
@@ -93,6 +98,7 @@ export function openConnectModule({ cable = false } = {}) {
     let remembered = [];
     let brave = false;
     let btNote = null;    // why Bluetooth can't be used here (a callout), or null
+    let btTip = null;     // how Chrome / Edge could remember controllers (a line), or null
     let problem = null;   // what went wrong last (text), shown above the list
     let searchTimer = 0;
     let searchNext = 0;
@@ -122,6 +128,7 @@ export function openConnectModule({ cable = false } = {}) {
     // ---- The list ---------------------------------------------------------------------------------
     const listEl = h('div.cm-list', { role: 'list' });
     const notesEl = h('div.cm-notes');
+    const tipEl = h('div.cm-notes');
 
     const seenNow = (e) => e.seenAt > 0 && performance.now() - e.seenAt < SEEN_MS;
 
@@ -154,6 +161,7 @@ export function openConnectModule({ cable = false } = {}) {
         !navigator.usb && callout({ tone: 'yellow', text: t(NO_USB) }),
         btNote,
       ].filter(Boolean));
+      tipEl.replaceChildren(...(btTip ? [btTip] : []));
     }
 
     function showList() {
@@ -163,15 +171,18 @@ export function openConnectModule({ cable = false } = {}) {
         h('div.cm-ways',
           h('div.cm-way', h('span.cm-way-art', icon('usb')), h('p', t('Plug the controller in with a USB data cable.'))),
           canBluetooth && h('div.cm-way', h('span.cm-way-art', beaconCombo(30)),
-            h('p', fillNodes(t('Or, with it on and running wirelessly, press {buttons} together to connect over Bluetooth.'),
-              { buttons: h('strong', `${outputName('Plus')} + ${outputName('Minus')}`) })))),
+            h('p', fillNodes(remembers
+              ? t('Or, with it on and running wirelessly, press {buttons} together to connect over Bluetooth.')
+              : t('Or, for Bluetooth: with it on and running wirelessly, press {buttons} together, then choose it with Connect over Bluetooth.'),
+            { buttons: h('strong', `${outputName('Plus')} + ${outputName('Minus')}`) })))),
         notesEl,
         h('div.cm-list-head', t('Controllers')),
         listEl,
-        canBluetooth && h('p.small.muted', t('The first time over Bluetooth, you enter a short button code on the controller, once per browser.')));
+        canBluetooth && h('p.small.muted', t('The first time over Bluetooth, you enter a short button code on the controller. After that, this browser connects without it.')),
+        tipEl);
       dlg.setActions([
         navigator.usb && { label: t('Add USB controller…'), icon: 'usb', variant: 'tonal', onClick: () => { addUsb(); return false; } },
-        canBluetooth && { label: t('Add Bluetooth controller…'), icon: 'bluetooth', variant: 'tonal', onClick: () => { addBluetooth(); return false; } },
+        canBluetooth && { label: remembers ? t('Add Bluetooth controller…') : t('Connect over Bluetooth…'), icon: 'bluetooth', variant: 'tonal', onClick: () => { addBluetooth(); return false; } },
       ].filter(Boolean));
       renderNotes();
       startSearch();
@@ -377,6 +388,13 @@ export function openConnectModule({ cable = false } = {}) {
             : callout({ tone: 'blue', text: t('Bluetooth isn’t supported in this browser. Use Chrome or Edge to connect over Bluetooth.') });
         } else if ((await navigator.bluetooth.getAvailability?.().catch(() => true)) === false) {
           btNote = callout({ tone: 'yellow', text: t(BT_OFF) });
+        }
+        // A tip, not a warning: Chrome and Edge can remember controllers between visits behind a flag
+        const brand = (navigator.userAgentData?.brands || []).map((b) => b.brand).join(' ');
+        const scheme = /Edge/.test(brand) ? 'edge' : /Google Chrome|Chromium/.test(brand) ? 'chrome' : null;
+        if (canBluetooth && !remembers && !brave && scheme) {
+          btTip = h('p.small.muted.cm-tip', fillNodes(t('Tip: to have {browser} remember Bluetooth controllers between visits, turn on {flag}.'),
+            { browser: scheme === 'edge' ? 'Edge' : 'Chrome', flag: h('code.cm-flag', `${scheme}://flags/#enable-web-bluetooth-new-permissions-backend`) }));
         }
         const found = await rememberedBluetoothControllers();
         if (settled) return;
