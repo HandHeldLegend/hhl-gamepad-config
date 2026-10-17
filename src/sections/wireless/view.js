@@ -58,7 +58,7 @@ export function mount(root, ctx) {
   // ---- Module firmware (ESP32 baseband) -------------------------------------------------------
   let firmwareCard = null;
   // Without a USB cable the controller can't enter module update mode (the firmware refuses it).
-  const moduleUpdates = !caps.viaDongle;
+  const moduleUpdates = !caps.noCable;
   if (caps.externalBaseband) {
     const installed = reportedVersion(bt); // null: the module didn't report a valid version
     const status = h('span', badge(t('Checking…')));

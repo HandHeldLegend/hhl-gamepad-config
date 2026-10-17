@@ -770,15 +770,17 @@ function onBootloaderDisconnect() {
 }
 
 /**
- * Shown where an update would start for a controller connected through a dongle instead of a USB
- * cable (session.caps.viaDongle): it can't be updated that way.
+ * Shown where an update would start for a controller connected through a dongle or over Bluetooth
+ * instead of a USB cable (session.caps.noCable): it can't be updated that way.
  */
 export const CABLE_UPDATE_TEXT = N_('An update is available. Connect the controller with a USB cable to update it.');
 export const CABLE_ONLY_TEXT = N_('Connect the controller with a USB cable to update it.');
 
-/** Why updates aren't offered through the dongle, translated (for callouts). */
+/** Why updates aren't offered through the dongle or over Bluetooth, translated (for callouts). */
 export function cableOnlyNote() {
-  return t('Updates need a USB cable. They can’t be installed through the dongle.');
+  return session.caps.viaBluetooth
+    ? t('Updates need a USB cable. They can’t be installed over Bluetooth.')
+    : t('Updates need a USB cable. They can’t be installed through the dongle.');
 }
 
 async function onControllerConnect() {
@@ -792,7 +794,7 @@ async function onControllerConnect() {
     if (!latest) setStatus({ state: navigator.onLine === false ? 'offline' : 'unknown', latest: null });
     const available = latest && latest.version > (info.fwVersion >>> 0);
     if (latest) setStatus({ state: available ? 'available' : 'current', latest: latest.version, url: info.firmwareUrl, checksum: latest.checksum });
-    if (session.caps.viaDongle) {
+    if (session.caps.noCable) {
       // Without a USB cable the controller can't reach its bootloader: say so instead of offering it.
       if (available) toast(t(CABLE_UPDATE_TEXT), { tone: 'blue', icon: 'usb', timeout: 8000 });
     } else if ((available || debugForce) && info.firmwareUrl) {
@@ -844,7 +846,7 @@ export function initFirmware() {
  */
 export async function openUpdateWizard({ reinstall = false } = {}) {
   if (!session.connected) { toast(t('Connect your controller first.'), { tone: 'yellow' }); return; }
-  if (session.caps.viaDongle) { toast(t(CABLE_ONLY_TEXT), { tone: 'blue', icon: 'usb', timeout: 6000 }); return; }
+  if (session.caps.noCable) { toast(t(CABLE_ONLY_TEXT), { tone: 'blue', icon: 'usb', timeout: 6000 }); return; }
   const latest = await fetchManifest(session.info.manifestUrl);
   const url = session.info.firmwareUrl;
   if (!url) { toast(t('This controller doesn’t report a firmware download location.'), { tone: 'yellow' }); return; }
@@ -859,7 +861,7 @@ export async function openInstallWizard(buildId) {
 /** Reboot the connected controller into BOOTSEL without starting an update (Gamepad page). */
 export async function rebootToBootloaderOnly() {
   // Without a USB cable the firmware refuses this: a bootloader can't be reached wirelessly.
-  if (session.caps.viaDongle) throw new Error(CABLE_ONLY_TEXT);
+  if (session.caps.noCable) throw new Error(CABLE_ONLY_TEXT);
   // When the bootloader then appears, onBootloaderConnect() offers the installer (as in hoja2).
   await device.rebootToBootloader();
   return true;

@@ -48,11 +48,11 @@ function controllerCard(session) {
       s.latest && [t('Latest build'), formatFwVersion(s.latest)],
       session.info.manualUrl && [t('Manual'), h('a', { href: session.info.manualUrl, target: '_blank', rel: 'noopener' }, t('Open manual'), ' ', icon('external'))],
     ]),
-    // Through the dongle (no USB cable) the controller can't reach its bootloader.
-    session.caps.viaDongle && callout({ tone: 'blue', icon: 'usb',
+    // Through the dongle or over Bluetooth (no USB cable) the controller can't reach its bootloader.
+    session.caps.noCable && callout({ tone: 'blue', icon: 'usb',
       text: s.state === 'available' ? t(CABLE_UPDATE_TEXT) : cableOnlyNote() }),
     h('div.row',
-      !session.caps.viaDongle && (s.state === 'available'
+      !session.caps.noCable && (s.state === 'available'
         ? button({ label: t('Update now'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() })
         : button({ label: t('Reinstall firmware'), icon: 'download', variant: 'tonal', onClick: () => openUpdateWizard({ reinstall: true }) })),
       asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', busyLabel: t('Checking…'), okLabel: t('Checked'),
@@ -87,7 +87,7 @@ function rebootButton(session) {
   const btn = button({
     label: t('Reboot to bootloader'), icon: 'firmware', variant: 'tonal',
     // Without a USB cable the firmware refuses this: its bootloader can't be reached wirelessly.
-    disabled: !session.connected || session.caps.viaDongle,
+    disabled: !session.connected || session.caps.noCable,
     onClick: async () => {
       const ok = await confirmDialog({
         title: t('Reboot into update mode?'),
@@ -133,7 +133,7 @@ function recoveryCard(session) {
   const render = () => body.replaceChildren(
     h('div.fw-recovery-row',
       h('div', h('div.field-label', t('Install firmware by hand')),
-        h('div.field-desc', session.caps.viaDongle ? cableOnlyNote() : t('Restarts the connected controller in update mode, to install firmware by hand.'))),
+        h('div.field-desc', session.caps.noCable ? cableOnlyNote() : t('Restarts the connected controller in update mode, to install firmware by hand.'))),
       rebootButton(session)),
     h('div.fw-recovery-row',
       h('div', h('div.field-label', t('Stuck in the bootloader?')),

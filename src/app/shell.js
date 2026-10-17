@@ -28,6 +28,7 @@ import { pwa } from './pwa.js';
 import { isIOS, explainIOS } from './platform.js';
 import { isLinux, explainLinux } from './linux.js';
 import { modeSwitcher } from './mode-switcher.js';
+import { chooseBluetoothController, canBluetooth } from './bluetooth-connect.js';
 import { applyFromRoute } from '../settings/apply.js';
 import { t, N_, fmt, i18n, LANGUAGES, detectLanguage, setLanguage } from '../i18n/index.js';
 
@@ -104,8 +105,11 @@ function warnMissingBlocks() {
 const ADAPTER_IN_USE = N_('Dolphin has the dongle open. Close Dolphin, then connect again to change the mode.');
 session.on('adapter-in-use', () => toast(t(ADAPTER_IN_USE), { tone: 'yellow', timeout: 9000 }));
 
-/** Run one connect attempt and explain a failure. `run` resolves like session.connect(). */
-async function attempt(run) {
+/**
+ * Run one connect attempt and explain a failure. `run` resolves like session.connect(); `bluetooth`:
+ * the attempt is over Bluetooth, so the USB advice doesn't apply.
+ */
+async function attempt(run, { bluetooth = false } = {}) {
   try {
     // No "connected" toast: the app bar chip and Home already show the controller and its mode.
     const ok = await run();
@@ -113,6 +117,10 @@ async function attempt(run) {
     return ok;
   } catch (err) {
     console.error(err);
+    if (bluetooth) {
+      toast(t('Couldn’t read the settings over Bluetooth. Keep the controller close, then connect again.'), { tone: 'red', timeout: 7000 });
+      return false;
+    }
     // On Linux, "Access denied" almost always means the udev rule is missing (see linux.js).
     if (isLinux() && /Access denied|SecurityError/i.test(`${err?.name} ${err?.message}`)) {
       toast(t('Linux blocked access to the controller. A one-time udev rule fixes this.'),
@@ -140,10 +148,21 @@ export async function connectController() {
   return attempt(() => session.connect());
 }
 
+/**
+ * Shared Bluetooth connect flow, offered next to the USB one where the browser has Web Bluetooth: the
+ * steps to find and allow the controller (bluetooth-connect.js), then the session as over USB.
+ */
+export async function connectBluetooth() {
+  if (!canBluetooth()) return false;
+  const link = await chooseBluetoothController();
+  if (!link) return false;
+  return attempt(() => session.connectBluetooth(link), { bluetooth: true });
+}
+
 export function createShell(root) {
   // Frame elements; (re)created by build() so a language change can redraw every label.
   let chipDot; let chipName; let chipSub; let chip;
-  let saveBtn; let connectBtn; let installBtn; let modeBox;
+  let saveBtn; let connectBtn; let btConnectBtn; let installBtn; let modeBox;
   let page; let main; let frame;
   const navLinks = new Map();
 
@@ -162,6 +181,8 @@ export function createShell(root) {
     saveBtn.classList.add('save-btn');
     connectBtn = button({ label: t('Connect'), icon: 'usb', variant: 'primary', onClick: onConnectClick });
     connectBtn.classList.add('connect-btn');
+    btConnectBtn = button({ icon: 'bluetooth', variant: 'ghost', title: t('Connect over Bluetooth'), onClick: () => connectBluetooth() });
+    btConnectBtn.classList.add('bt-connect-btn');
     installBtn = button({ label: t('Install'), icon: 'install', variant: 'ghost', title: t('Install as an app'), onClick: () => pwa.promptInstall() });
     installBtn.classList.add('install-btn');
     installBtn.hidden = !pwa.canInstall;
@@ -169,7 +190,7 @@ export function createShell(root) {
     settingsBtn.classList.add('appbar-settings');
 
     modeBox = h('div.appbar-mode');
-    const appbar = h('header.appbar', brand, h('div.spacer'), chip, modeBox, installBtn, saveBtn, connectBtn, languagePicker(), settingsBtn);
+    const appbar = h('header.appbar', brand, h('div.spacer'), chip, modeBox, installBtn, saveBtn, btConnectBtn, connectBtn, languagePicker(), settingsBtn);
 
     // ---- Sidebar -------------------------------------------------------------------------
     const nav = h('nav.sidebar', { 'aria-label': t('Sections') });
@@ -203,7 +224,7 @@ export function createShell(root) {
     chipName.textContent = connected ? session.info.name : st === 'legacy' ? t('Legacy firmware') : dongle ? t('Dongle')
       : connecting ? (session.connecting?.name || t('Connecting…')) : t('No controller');
     const mode = currentModeLabel(); // e.g. "Switch mode": what the controller is running as right now
-    chipSub.textContent = connected ? (mode || t('Connected')) : connecting ? connectingText() : dongle ? t('No controller') : t('Not connected');
+    chipSub.textContent = connected ? (mode || (session.caps.viaBluetooth ? t('Bluetooth') : t('Connected'))) : connecting ? connectingText() : dongle ? t('No controller') : t('Not connected');
     chip.title = mode ? t('Running in {mode}', { mode }) : '';
     chip.classList.toggle('demo', isDemo());
 
@@ -218,6 +239,7 @@ export function createShell(root) {
     connectBtn.className = `btn connect-btn ${open ? 'btn-ghost' : 'btn-primary'}`;
     connectBtn.querySelector('use').setAttribute('href', connectBtn.querySelector('use').getAttribute('href').replace(/#i-.*/, open ? '#i-unplug' : '#i-usb'));
     connectBtn.disabled = connecting;
+    btConnectBtn.hidden = open || connecting || !canBluetooth();
     connectBtn.querySelector('.spinner')?.remove();
     if (connecting) connectBtn.prepend(h('span.spinner.motion-ok'));
 
@@ -343,6 +365,7 @@ export function createShell(root) {
         : emptyState({ icon: 'usb', tone: section.tone, title: t('Connect your controller'), text: t('Plug in your controller with a USB data cable, then press Connect.'),
           action: h('div.row', { style: { justifyContent: 'center' } },
             button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg', onClick: () => connectController() }),
+            canBluetooth() && button({ label: t('Connect over Bluetooth'), icon: 'bluetooth', variant: 'tonal', size: 'lg', onClick: () => connectBluetooth() }),
             button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() }),
             // Wireless: a controller in module update mode only shows its CH340, so it can't connect here.
             section.id === 'wireless' && button({ label: t('Already in update mode'), icon: 'wireless', variant: 'ghost',

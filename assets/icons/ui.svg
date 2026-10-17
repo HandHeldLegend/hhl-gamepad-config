@@ -67,6 +67,8 @@
 
 <symbol id="i-external" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></g></symbol>
 
+<symbol id="i-bluetooth" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></g></symbol>
+
 <symbol id="i-usb" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v4M15 2v4"/><path d="M6 6h12v4a6 6 0 0 1-12 0z"/><path d="M12 16v6"/></g></symbol>
 
 <symbol id="i-unplug" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v4M15 2v4"/><path d="M6 6h12v4a6 6 0 0 1-12 0z"/><path d="M12 16v6"/><path d="M3 3l18 18"/></g></symbol>

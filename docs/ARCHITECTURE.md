@@ -38,6 +38,12 @@ Without a USB cable the same packets travel through the dongle, a USB receiver t
 Bluetooth: with a controller on it the dongle takes the controller's USB identity and passes the protocol through,
 so the driver and session work unchanged. Firmware updates aren't offered then (`caps.viaDongle`).
 
+A controller running wirelessly also offers the protocol over Bluetooth LE: `device/ble-link.js` carries the same
+packets in GATT frames, and `device.openBluetooth(link)` reads the settings over it as over USB. Before that,
+`app/bluetooth-connect.js` walks the user through it: Plus + Minus on the controller, the browser's chooser, and
+once per browser a code of button presses entered on the controller (the browser keeps the token it gets).
+Nothing needing the cable is offered then either (`caps.viaBluetooth`; `caps.noCable` covers both).
+
 HOJA applies a written block immediately (RAM). `Save` sends `GAMEPAD_CMD_SAVE_ALL` to persist everything to flash.
 `session.commit(block)` debounces writes (sliders) and marks the block dirty; the Save button glows until saved.
 

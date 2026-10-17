@@ -6,7 +6,8 @@ import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
 import { button, card, callout, badge, face, kv } from '../../ui/controls.js';
 import { SECTIONS } from '../registry.js';
-import { connectController, unavailableReason, currentModeLabel, betaBadge } from '../../app/shell.js';
+import { connectController, connectBluetooth, unavailableReason, currentModeLabel, betaBadge } from '../../app/shell.js';
+import { canBluetooth } from '../../app/bluetooth-connect.js';
 import { startDemo, isDemo } from '../../device/mock.js';
 import { firmwareStatus, openUpdateWizard, formatFwVersion, CABLE_UPDATE_TEXT } from '../../firmware/updater.js';
 import { dongleCard } from '../wireless/dongle.js';
@@ -41,6 +42,7 @@ function hero(session) {
       h('p', t('Plug your HOJA controller in with a USB data cable, then connect. Everything you change applies instantly. Press Save to keep it.')),
       h('div.hero-actions',
         connectBtn,
+        canBluetooth() && button({ label: t('Connect over Bluetooth'), icon: 'bluetooth', variant: 'tonal', size: 'lg', disabled: connecting, onClick: () => connectBluetooth() }),
         button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', size: 'lg', onClick: () => startDemo() })),
       !webusb && h('div', { style: { marginTop: '16px' } }, isIOS()
         ? callout({ tone: 'yellow', title: t('iPhone and iPad can’t connect to controllers.'), text: t('Use a computer or an Android device to change settings. The demo works here.') },
@@ -64,8 +66,8 @@ function connectTips() {
 
 function deviceCard(session) {
   const fw = firmwareStatus();
-  const { viaDongle } = session.caps; // no updates without a USB cable
-  const updateBtn = fw.state === 'available' && !viaDongle
+  const { viaDongle, viaBluetooth, noCable } = session.caps; // no updates without a USB cable
+  const updateBtn = fw.state === 'available' && !noCable
     ? button({ label: t('Update firmware'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() })
     : button({ label: t('Firmware'), icon: 'firmware', variant: 'tonal', onClick: () => { location.hash = '#/firmware'; } });
   const atts = Object.entries(session.attention);
@@ -78,6 +80,7 @@ function deviceCard(session) {
           badge(isDemo() ? t('Demo controller') : t('Connected'), isDemo() ? 'lavender' : 'green'),
           // The output mode it is running as right now (Switch / Steam), from its USB IDs.
           !isDemo() && currentModeLabel() && h('span', { title: t('Running in {mode}', { mode: currentModeLabel() }) }, badge(currentModeLabel(), 'blue')),
+          viaBluetooth && badge(t('Bluetooth'), 'blue'),
           fw.state === 'available' && badge(t('Update available'), 'blue'),
           fw.state === 'current' && badge(t('Firmware up to date'), 'green'))),
       updateBtn),
@@ -87,7 +90,7 @@ function deviceCard(session) {
     ]),
     viaDongle && callout({ tone: 'blue', icon: 'link', text: `${t('Connected through the dongle.')} ` },
       h('a', { href: '#/wireless' }, t('Dongle details'), icon('chevron-right'))),
-    viaDongle && fw.state === 'available' && callout({ tone: 'blue', icon: 'usb', text: t(CABLE_UPDATE_TEXT) }),
+    noCable && fw.state === 'available' && callout({ tone: 'blue', icon: 'usb', text: t(CABLE_UPDATE_TEXT) }),
     atts.map(([id, a]) => callout({ tone: a.level === 'warn' ? 'yellow' : 'blue', text: `${t(a.text)} ` },
       h('a', { href: `#/${id}` }, t('Open'), icon('chevron-right')))));
 }

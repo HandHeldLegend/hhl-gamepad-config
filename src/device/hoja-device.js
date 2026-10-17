@@ -31,8 +31,12 @@
  * the dongle itself answers 0xD0/0xD1 (which is how we tell). Without a controller it is a generic
  * "HOJA Dongle" (2e8a:10c6) that answers nothing else, so it connects as dongle-only.
  *
+ * Bluetooth: a controller running wirelessly also offers this protocol over Bluetooth LE (ble-link.js), the
+ * same packets in GATT frames. openBluetooth() takes such a link once the browser is allowed on it; from then
+ * on everything works as over USB, except what needs the cable (usbDevice is null, transport 'ble').
+ *
  * Events (all CustomEvent; read `event.detail`):
- *   'opening'     { name }                           a device was chosen and is being opened (USB product name)
+ *   'opening'     { name }                           a device was chosen and is being opened (USB or Bluetooth name)
  *   'progress'    { done, total }                    settings blocks read so far while connecting
  *   'connect'     { device: this }                   blocks + statics loaded
  *   'disconnect'  { dongle, requested }              dongle: its status if it was a dongle; requested:
@@ -188,6 +192,8 @@ async function waitFor(predicate, timeout) {
 export class HojaDevice extends EventTarget {
   /** @type {USBDevice|null} */
   #usb = null;
+  /** @type {import('./ble-link.js').BleLink|null} the link while connected over Bluetooth */
+  #ble = null;
   #port = LEGACY_PORT; // the open device's config interface
   #switching = false;  // a live mode change was asked for: the device leaves and comes back
   #opening = null;
@@ -239,6 +245,8 @@ export class HojaDevice extends EventTarget {
 
   get isConnected() { return this.#connected; }
   get usbDevice() { return this.#usb; }
+  /** How the controller is connected: 'usb', 'ble' (Bluetooth), or null. */
+  get transport() { return this.#ble ? 'ble' : this.#usb ? 'usb' : null; }
 
   /** Block index for a config block name, e.g. blockIndex('analog') === 2. */
   blockIndex(key) {
@@ -309,6 +317,7 @@ export class HojaDevice extends EventTarget {
       return 'esp32-update';
     }
 
+    if (this.#ble) await this.disconnect();
     this.#emit('opening', { name: usb.productName || '' });
     let port;
     try {
@@ -347,12 +356,7 @@ export class HojaDevice extends EventTarget {
         this.#emit('dongle', { dongle: this.dongle });
         return 'dongle';
       }
-      // Through the dongle this takes a few seconds: report each block so the app can show how far it got.
-      const total = this.#configTable.length + this.#staticTable.length;
-      let done = 0;
-      const step = () => this.#emit('progress', { done: ++done, total });
-      await this.#exclusive(() => this.#readAll('config', this.#configTable, step));
-      await this.#exclusive(() => this.#readAll('static', this.#staticTable, step));
+      await this.#readSettings();
     } catch (err) {
       // Let go completely (read loops, interface, device), so the next attempt starts clean. A
       // controller that is still starting up, or changing USB mode, doesn't answer at first.
@@ -365,10 +369,72 @@ export class HojaDevice extends EventTarget {
     return true;
   }
 
+  /** Read every settings block. Through the dongle or over Bluetooth this takes a few seconds: report each
+   *  block so the app can show how far it got. */
+  async #readSettings() {
+    const total = this.#configTable.length + this.#staticTable.length;
+    let done = 0;
+    const step = () => this.#emit('progress', { done: ++done, total });
+    await this.#exclusive(() => this.#readAll('config', this.#configTable, step));
+    await this.#exclusive(() => this.#readAll('static', this.#staticTable, step));
+  }
+
+  /**
+   * Connect over Bluetooth: `link` is a BleLink (ble-link.js) that is open and allowed. A controller that
+   * offers Bluetooth runs current firmware and is no dongle, so there's nothing to probe: the settings are
+   * read straight away. Resolves true (connected) or throws, like open().
+   */
+  openBluetooth(link) {
+    if (this.#opening) return this.#opening;
+    this.#opening = this.#openBluetooth(link).finally(() => { this.#opening = null; });
+    return this.#opening;
+  }
+
+  async #openBluetooth(link) {
+    if (this.#connected) await this.disconnect();
+    if (!link.isOpen) throw new Error('The Bluetooth link dropped');
+    this.#emit('opening', { name: link.name });
+    this.#ble = link;
+    this.#usb = null;
+    this.#switching = false;
+    this.#connected = true;
+    this.#streaming = false;
+    this.#resetMemory();
+    this.dongle = null;
+    link.addEventListener('report', (e) => {
+      if (link !== this.#ble) return;
+      this.#lastReportAt = performance.now();
+      this.#parse(e.detail);
+    });
+    link.addEventListener('gone', () => this.#onBleGone(link));
+    this.#lastReportAt = performance.now();
+    this.#startWatchdog();
+
+    try {
+      await this.#readSettings();
+    } catch (err) {
+      clearInterval(this.#watchdog);
+      if (this.#ble === link) { this.#connected = false; this.#ble = null; }
+      link.close();
+      throw err;
+    }
+    this.#emit('connect', { device: this });
+    return true;
+  }
+
+  /** The Bluetooth link dropped without disconnect() (out of range, controller off): like an unplug. */
+  #onBleGone(link) {
+    if (link !== this.#ble) return;
+    clearInterval(this.#watchdog);
+    this.#connected = false;
+    this.#ble = null;
+    this.#emit('disconnect', { dongle: null, requested: false });
+  }
+
   #startWatchdog() {
     clearInterval(this.#watchdog);
     this.#watchdog = setInterval(() => {
-      if (!this.#connected || !this.#usb) { clearInterval(this.#watchdog); return; }
+      if (!this.#connected) { clearInterval(this.#watchdog); return; }
       if (!this.#streaming) return; // nothing requested yet (e.g. still reading blocks while connecting)
       const now = performance.now();
       if (now - this.#lastReportAt < STREAM_STALL_MS || now - this.#rearmAt < STREAM_STALL_MS) return;
@@ -379,6 +445,14 @@ export class HojaDevice extends EventTarget {
 
   async disconnect() {
     clearInterval(this.#watchdog);
+    if (this.#ble) {
+      const link = this.#ble;
+      this.#connected = false;
+      this.#ble = null;
+      link.close();
+      this.#emit('disconnect', { dongle: null, requested: true });
+      return true;
+    }
     if (!this.#usb) return true;
     const usb = this.#usb;
     this.#connected = false;
@@ -409,8 +483,11 @@ export class HojaDevice extends EventTarget {
   // ---------------------------------------------------------------------------------------
 
   async #out(bytes) {
+    const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    // Over Bluetooth the link queues writes and limits each one's time itself
+    if (this.#connected && this.#ble) return this.#ble.send(data);
     if (!this.#connected || !this.#usb) throw new Error('Device not connected');
-    return withTimeout(this.#usb.transferOut(this.#port.epOut, bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)), STEP_TIMEOUT_MS, 'Sending to the controller');
+    return withTimeout(this.#usb.transferOut(this.#port.epOut, data), STEP_TIMEOUT_MS, 'Sending to the controller');
   }
 
   /** Send a report: [reportId, ...data]. */

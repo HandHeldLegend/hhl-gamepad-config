@@ -7,10 +7,12 @@
  *                         'connecting': from the moment a device was chosen until its settings are read)
  *   session.connecting    while connecting: { name, done, total } (device name, settings blocks read), else null
  *   session.caps          capability flags derived from the static info blocks (what this build has);
- *                         caps.viaDongle: the controller is connected through a dongle, not its cable
+ *                         caps.viaDongle: the controller is connected through a dongle, not its cable;
+ *                         caps.viaBluetooth: over Bluetooth (ble-link.js); caps.noCable: either of them
  *                         (no firmware, bootloader or wireless-module updates without a USB cable)
  *   session.info          { name, maker, fwVersion, manifestUrl, firmwareUrl, manualUrl }
  *   session.dongle        the dongle's status (decodeDongleInfo in hoja-device.js), or null
+ *   session.connectBluetooth(link)  connect over an allowed Bluetooth link (app/bluetooth-connect.js does the rest)
  *   session.liveMode      the mode the app can switch away from live ('steam' | 'slippi' | 'switch'), or null
  *   session.switchMode(m) switch to another LIVE_MODES mode now (on the cable, or the dongle's on a computer)
  *   session.config.<blk>  live config structs (same objects as device.config)
@@ -88,7 +90,7 @@ export function computeCaps(s, c) {
 const NO_CAPS = Object.freeze(Object.fromEntries(
   ['analog', 'leftStick', 'rightStick', 'triggers', 'invertAllowed', 'rgb', 'imu', 'haptics', 'hapticHD',
     'battery', 'bluetooth', 'dongle', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'imuModes', 'imuModeWii', 'flicks', 'splitDefaults',
-    'viaDongle'].map((k) => [k, false]),
+    'viaDongle', 'viaBluetooth', 'noCable'].map((k) => [k, false]),
 ));
 
 class Session extends EventTarget {
@@ -149,6 +151,20 @@ class Session extends EventTarget {
       const result = await device.connect();
       if (result !== true && this.state === 'connecting') this.#setState('disconnected');
       return result;
+    } catch (err) {
+      this.#setState('disconnected');
+      throw err;
+    }
+  }
+
+  /**
+   * Connect over Bluetooth: `link` is an open BleLink this browser is allowed on (see
+   * app/bluetooth-connect.js for the steps before). Resolves true, or throws like connect().
+   */
+  async connectBluetooth(link) {
+    this.#follow?.stop();
+    try {
+      return await device.openBluetooth(link);
     } catch (err) {
       this.#setState('disconnected');
       throw err;
@@ -235,7 +251,9 @@ class Session extends EventTarget {
 
   #onConnect() {
     const s = device.static;
-    this.caps = { ...computeCaps(s, device.config), viaDongle: !!device.dongle };
+    const viaDongle = !!device.dongle;
+    const viaBluetooth = device.transport === 'ble';
+    this.caps = { ...computeCaps(s, device.config), viaDongle, viaBluetooth, noCable: viaDongle || viaBluetooth };
     this.info = {
       name: decodeText(s.device.name) || 'HOJA Controller',
       maker: decodeText(s.device.maker),
@@ -393,7 +411,7 @@ class Session extends EventTarget {
     if (this.caps.analog && !device.config.analog.analog_calibration_set) next.joysticks = { level: 'warn', text: N_('Joysticks need calibration') };
 
     // Without a USB cable the controller can't enter wireless-module update mode: no badge for it.
-    if (this.caps.externalBaseband && !this.caps.viaDongle) {
+    if (this.caps.externalBaseband && !this.caps.noCable) {
       const { resolveModuleUpdate } = await import('../sections/wireless/channels.js');
       const u = await resolveModuleUpdate(device.static.bluetooth);
       if (u.migrate) next.wireless = { level: 'info', text: N_('Recommended wireless module update') };

@@ -92,7 +92,7 @@
 }
 @media (max-width: 380px) {
   /* The chip keeps its second line: it shows the mode the controller is running in. */
-  .appbar .appbar-settings { display: none; }
+  .appbar .appbar-settings, .appbar .bt-connect-btn { display: none; }
   .appbar .device-chip { padding: 4px 10px; }
 }
 
