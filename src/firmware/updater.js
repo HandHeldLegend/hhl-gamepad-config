@@ -6,9 +6,11 @@
  *
  *   hidden               nothing in progress
  *   update-available     connected controller has newer firmware → [Enter update mode]
- *   awaiting-bootloader  we asked it to reboot into BOOTSEL; waiting for the RP2 bootloader
+ *   awaiting-bootloader  we asked it to reboot into its bootloader; waiting for it (the RP2 boot ROM,
+ *                        or the HOJA update mode on boards with the HOJA bootloader)
  *   bootloader-flash     bootloader present and we know which firmware to write → flashing
- *   bootloader-install   bare bootloader, nothing known → user picks a build to install
+ *   bootloader-install   a bootloader with nothing pending → user picks a build to install (the HOJA
+ *                        update mode names its build, so that one is chosen already)
  *   uf2-drive-select     PICOBOOT unavailable → user picks the RPI-RP2/RP2350 drive (or downloads)
  *   erase-flash          "Start fresh": writing the universal flash nuke (UF2 only → drive picker)
  *   awaiting-erase       nuke written; the wiped board reboots straight back into BOOTSEL → then
@@ -39,7 +41,7 @@ import { h, replace, fillNodes } from '../ui/dom.js';
 import { openDialog, toast } from '../ui/overlay.js';
 import { callout, progressBar, select } from '../ui/controls.js';
 import { session } from '../device/session.js';
-import { device, isPicoBootloader } from '../device/hoja-device.js';
+import { device, isPicoBootloader, updateModeBuildId } from '../device/hoja-device.js';
 import { isDemo } from '../device/mock.js';
 import { prefs } from '../app/prefs.js';
 import { isIOS } from '../app/platform.js';
@@ -57,6 +59,9 @@ const params = new URLSearchParams(location.search);
 export const DEBUG = params.has('debug') && !['0', 'false', 'off'].includes((params.get('debug') || '1').toLowerCase());
 let debugForce = DEBUG && (params.get('debug') === 'force-update' || params.get('forceUpdate') === '1' || params.get('force-update') === '1');
 export const debugForceUpdate = { get: () => debugForce, set: (v) => { debugForce = !!v; } };
+// ?debug&fw=<url>: update from this image instead of the one the controller reports (an unpublished
+// build). Its checksum is unknown, so the .bin is written unchecked.
+const DEBUG_FW_URL = DEBUG ? params.get('fw') : null;
 
 // Step bar. "Start fresh" inserts an Erase step between Restart and Write.
 const STEP_LABELS = { prepare: N_('Prepare'), restart: N_('Restart'), erase: N_('Erase'), write: N_('Write'), done: N_('Done') };
@@ -440,7 +445,7 @@ const NUDGE_MS = 3500;
 /** awaiting-bootloader, and nothing started on its own: make the next action unmistakable. */
 function showPressUpdate() {
   if (st.mode !== 'awaiting-bootloader') return;
-  paint(t('One more step: press Update'), t('Your controller is now in update mode. Press Update, then choose “RP2 Boot” (or “RP2350 Boot”) in the window your browser opens and press Connect.'), { icon: 'download' });
+  paint(t('One more step: press Update'), t('Your controller is now in update mode. Press Update, then choose it in the window your browser opens (its name ends in “Update”, or it shows as “RP2 Boot” or “RP2350 Boot”) and press Connect.'), { icon: 'download' });
   setUpdateStatus(t('Waiting for you to press Update'), 30, false);
   actions({ primary: { label: t('Update'), icon: 'download', run: () => flashNext({ allowRequestDevice: true }) }, drive: true });
   ui?.dlg.action('primary')?.classList.add('btn-attention');
@@ -502,7 +507,8 @@ function showUpdateComplete() {
   setStatus({ state: 'unknown' });
 }
 
-async function showBootloaderInstall(preselect) {
+/** preselect: a build id, as the HOJA update mode names it (updateModeBuildId) or the caller chose. */
+async function showBootloaderInstall(preselect, { updateMode = false } = {}) {
   ensureUi();
   resetFresh();
   st.pendingUrl = undefined;
@@ -512,7 +518,9 @@ async function showBootloaderInstall(preselect) {
   const u = ensureUi();
   panels({ picker: true, fresh: true });
   u.installConfirm.checked = false;
-  paint(t('Install HOJA firmware?'), t('A Raspberry Pi bootloader (BOOTSEL) was detected. Choose your controller below, then press Install.'), { icon: 'firmware' });
+  paint(t('Install HOJA firmware?'), updateMode
+    ? t('Your controller is in update mode. Check that it’s the one chosen below, then press Install.')
+    : t('A Raspberry Pi bootloader (BOOTSEL) was detected. Choose your controller below, then press Install.'), { icon: 'firmware' });
   setUpdateStatus(t('Choose a controller to continue'), 0, false);
   installActions();
 
@@ -748,11 +756,17 @@ function noteBootloader(usb) {
   if (st.mode === 'bootloader-install') fillBuildSelect(ui?.select?.value);
 }
 
+/** The installer for a bootloader that just appeared: the HOJA update mode names its build. */
+const installFor = (usb) => {
+  const buildId = updateModeBuildId(usb);
+  return showBootloaderInstall(buildId ?? undefined, { updateMode: !!buildId });
+};
+
 async function onBootloaderConnect(usb) {
   noteBootloader(usb);
   if (quiet) return;
   if (st.mode === 'uf2-drive-select' || st.mode === 'bootloader-flash' || st.mode === 'erase-flash') return;
-  if (st.mode === 'update-complete' && !st.pendingUrl) { await showBootloaderInstall(); return; }
+  if (st.mode === 'update-complete' && !st.pendingUrl) { await installFor(usb); return; }
   if (st.pendingUrl) {
     // awaiting-bootloader → nuke (start fresh) or firmware; awaiting-erase → the firmware.
     try { await flashNext({ allowRequestDevice: false }); } catch (err) {
@@ -761,7 +775,7 @@ async function onBootloaderConnect(usb) {
     }
     return;
   }
-  if (st.mode !== 'bootloader-install') await showBootloaderInstall();
+  if (st.mode !== 'bootloader-install') await installFor(usb);
 }
 
 function onBootloaderDisconnect() {
@@ -804,6 +818,9 @@ async function onControllerConnect() {
     if (session.caps.noCable) {
       // Without a USB cable the controller can't reach its bootloader: say so instead of offering it.
       if (available) toast(cableUpdateText(), { tone: 'blue', icon: 'usb', timeout: 8000 });
+    } else if (DEBUG_FW_URL) {
+      showUpdateAvailable(DEBUG_FW_URL, null, { debugForced: true });
+      shown = true;
     } else if ((available || debugForce) && info.firmwareUrl) {
       showUpdateAvailable(info.firmwareUrl, latest?.checksum ?? null, { debugForced: !available && debugForce });
       shown = true;
@@ -841,8 +858,9 @@ export function initFirmware() {
     navigator.usb.addEventListener('connect', (e) => { if (isPicoBootloader(e.device)) onBootloaderConnect(e.device); });
     navigator.usb.addEventListener('disconnect', (e) => { if (isPicoBootloader(e.device)) onBootloaderDisconnect(); });
     navigator.usb.getDevices().then(async (devs) => {
-      noteBootloader(devs.find(isPicoBootloader));
-      if (!quiet && devs.some(isPicoBootloader) && !st.pendingUrl) await showBootloaderInstall();
+      const boot = devs.find(isPicoBootloader);
+      noteBootloader(boot);
+      if (!quiet && boot && !st.pendingUrl) await installFor(boot);
     }).catch((err) => console.warn('[fw] getDevices failed', err));
   }
 }
@@ -854,8 +872,8 @@ export function initFirmware() {
 export async function openUpdateWizard({ reinstall = false } = {}) {
   if (!session.connected) { toast(t('Connect your controller first.'), { tone: 'yellow' }); return; }
   if (session.caps.noCable) { toast(t(CABLE_ONLY_TEXT), { tone: 'blue', icon: 'usb', timeout: 6000 }); return; }
-  const latest = await fetchManifest(session.info.manifestUrl);
-  const url = session.info.firmwareUrl;
+  const latest = DEBUG_FW_URL ? null : await fetchManifest(session.info.manifestUrl);
+  const url = DEBUG_FW_URL || session.info.firmwareUrl;
   if (!url) { toast(t('This controller doesn’t report a firmware download location.'), { tone: 'yellow' }); return; }
   showUpdateAvailable(url, latest?.checksum ?? null, { reinstall, debugForced: !reinstall && (!latest || !(latest.version > (session.info.fwVersion >>> 0))) ? debugForce : false });
 }

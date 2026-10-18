@@ -107,8 +107,24 @@ export function isCh340(device) {
   return device?.vendorId === 0x1a86 && device?.productId === 0x7522;
 }
 
+/**
+ * The HOJA bootloader's update mode (HOJA-LIB-RP2040 boot_layout.h): the HOJA Gamepad IDs with 0xB0 in
+ * the device version's high byte (the running firmware reports 0x02). It speaks the boot ROM's
+ * PICOBOOT commands, and Windows binds WinUSB to it without a driver install.
+ */
+export function isHojaUpdateMode(device) {
+  return device?.vendorId === 0x2e8a && device?.productId === 0x10c6 && device?.deviceVersionMajor === 0xb0;
+}
+
+/** The build a controller in the HOJA update mode belongs to: its serial is the build id. */
+export function updateModeBuildId(device) {
+  return isHojaUpdateMode(device) ? device.serialNumber || null : null;
+}
+
+/** A bootloader that takes firmware: the RP2040 / RP2350 boot ROM's, or the HOJA update mode. */
 export function isPicoBootloader(device) {
-  return device?.vendorId === 0x2e8a && (device?.productId === 0x0003 || device?.productId === 0x000f);
+  return (device?.vendorId === 0x2e8a && (device?.productId === 0x0003 || device?.productId === 0x000f))
+    || isHojaUpdateMode(device);
 }
 
 /** Where the config interface was before it was looked up by class. */
