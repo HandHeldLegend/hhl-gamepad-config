@@ -18,6 +18,16 @@
  *                      0x87 LINK [interval, latency, ATT MTU, LL tx octets: u16 LE each][tx PHY][rx PHY], once
  *                           the app is allowed in and whenever they change (kept as linkInfo, for debugging)
  *
+ * Firmware updates (boards with the HOJA bootloader; HOJA-LIB-RP2040 hal/rp2040/boot_update.h):
+ *   app → controller   0x06 UPDATE_INFO    0x07 UPDATE_BEGIN [count][parts, 18 bytes each]
+ *                      0x08 UPDATE_DATA [stream offset u32][data], without answers, within the window
+ *                      0x09 UPDATE_FINISH  0x0A UPDATE_ABORT
+ *   controller → app   0x88 UPDATE_INFO [version][flags: 1 supported, 2 battery ok][battery %][0][app offset,
+ *                           radio offset, radio size, stage header offset, firmware end, radio header CRC32: u32 LE]
+ *                           [window, data per write: u16 LE]
+ *                      0x89 UPDATE_STATE [status][bytes written u32 LE]: each written sector, repeated now and then,
+ *                           and the answer to BEGIN and FINISH (see UPDATE_STATUS)
+ *
  * DATA is only accepted once the browser is allowed: a token it was given before (AUTH), or a code entered on
  * the controller (PAIR). Tokens are kept per browser in localStorage, keyed by BluetoothDevice.id.
  *
@@ -47,6 +57,7 @@
  *   'code-state'  { entered, state } progress: state 'entering' | 'wrong' | 'timeout'
  *   'paired'      {}                the code was entered: the token is stored, DATA is accepted
  *   'link-info'   linkInfo          the controller's connection parameters (0x87)
+ *   'update-state' { status, written } a firmware update's progress (0x89)
  *   'gone'        {}                the link dropped (out of range, controller off, or close())
  */
 
@@ -67,6 +78,18 @@ const FRAME = {
   DATA_IN: 0x85,
   INPUT: 0x86,
   LINK: 0x87,
+  UPDATE_INFO: 0x06,
+  UPDATE_BEGIN: 0x07,
+  UPDATE_DATA: 0x08,
+  UPDATE_FINISH: 0x09,
+  UPDATE_ABORT: 0x0A,
+  UPDATE_INFO_IN: 0x88,
+  UPDATE_STATE: 0x89,
+};
+
+/** UPDATE_STATE status values (boot_update_status_t). */
+export const UPDATE_STATUS = {
+  OK: 0, UNSUPPORTED: 1, BAD_REQUEST: 2, NO_ROOM: 3, BATTERY_LOW: 4, OUT_OF_ORDER: 5, FAILED: 6, RESTARTING: 7,
 };
 
 const CODE_STATES = ['entering', 'wrong', 'timeout'];
@@ -151,6 +174,10 @@ export async function rememberedBluetoothControllers() {
   }
 }
 
+function parseUpdateState(p) {
+  return { status: p[0], written: (p[1] | (p[2] << 8) | (p[3] << 16) | (p[4] << 24)) >>> 0 };
+}
+
 export class BleLink extends EventTarget {
   /** @type {BluetoothDevice} */
   #bt;
@@ -169,6 +196,8 @@ export class BleLink extends EventTarget {
   }
 
   get name() { return this.#bt.name || ''; }
+  /** The browser's device for this controller: a later link to it (after its restart) starts from here. */
+  get bluetoothDevice() { return this.#bt; }
   /** The browser's id for this controller (BluetoothDevice.id). */
   get id() { return this.#bt.id; }
   /** The last 0x87 LINK frame: { interval, latency, mtu, txOctets, txPhy, rxPhy } as sent, or null. */
@@ -279,6 +308,74 @@ export class BleLink extends EventTarget {
   }
 
   /**
+   * Whether this controller takes firmware updates over Bluetooth, and how: the layout, its battery and the
+   * radio region's header CRC. Null from firmware without them (no answer).
+   */
+  async updateInfo() {
+    const answer = this.#next(FRAME.UPDATE_INFO_IN);
+    try {
+      await this.#write(new Uint8Array([FRAME.UPDATE_INFO]));
+    } catch {
+      return null; // Older firmware refuses the frame
+    }
+    const p = await withTimeout(answer, ANSWER_TIMEOUT_MS, 'Waiting for the controller').catch(() => null);
+    if (!p || p.length < 32 || !(p[1] & 1)) return null;
+    const v = new DataView(p.buffer, p.byteOffset, p.byteLength);
+    return {
+      batteryOk: !!(p[1] & 2),
+      batteryPercent: p[2] === 0xff ? null : p[2],
+      appOffset: v.getUint32(4, true),
+      radioOffset: v.getUint32(8, true),
+      radioSize: v.getUint32(12, true),
+      stageHeaderOffset: v.getUint32(16, true),
+      runningEnd: v.getUint32(20, true),
+      radioHeaderCrc: v.getUint32(24, true),
+      window: v.getUint16(28, true),
+      dataMax: v.getUint16(30, true),
+    };
+  }
+
+  /** Begin (or carry on with) an update: resolves { status, written }. `parts`: the BEGIN payload after its type. */
+  async updateBegin(parts) {
+    const answer = this.#next(FRAME.UPDATE_STATE);
+    const frame = new Uint8Array(1 + parts.length);
+    frame[0] = FRAME.UPDATE_BEGIN;
+    frame.set(parts, 1);
+    await this.#write(frame);
+    const p = await withTimeout(answer, ANSWER_TIMEOUT_MS, 'Waiting for the controller');
+    if (!p) throw new Error('The Bluetooth link dropped');
+    return parseUpdateState(p);
+  }
+
+  /** One piece of the update stream, without an answer (progress arrives as 'update-state'). */
+  updateData(offset, bytes) {
+    const frame = new Uint8Array(5 + bytes.length);
+    frame[0] = FRAME.UPDATE_DATA;
+    new DataView(frame.buffer).setUint32(1, offset, true);
+    frame.set(bytes, 5);
+    return this.#write(frame, { answer: false });
+  }
+
+  /** All sent and written: the controller checks it and restarts to install. Resolves { status, written }. */
+  async updateFinish() {
+    const done = new Promise((resolve) => {
+      const onState = (e) => {
+        if (e.detail.status === UPDATE_STATUS.OK) return; // a progress repeat, not the answer
+        this.removeEventListener('update-state', onState);
+        resolve(e.detail);
+      };
+      this.addEventListener('update-state', onState);
+    });
+    await this.#write(new Uint8Array([FRAME.UPDATE_FINISH]));
+    return withTimeout(done, ANSWER_TIMEOUT_MS * 3, 'Waiting for the controller');
+  }
+
+  /** Drop an update under way (nothing already installed changes). */
+  updateAbort() {
+    return this.#write(new Uint8Array([FRAME.UPDATE_ABORT])).catch(() => {});
+  }
+
+  /**
    * End the session on purpose: stop notifications (so the page keeps no session for the next connection),
    * BYE (so the controller closes the link itself), then disconnect, each with a short time limit. Always
    * disconnects, connected or not: that also cancels a connect still under way. 'gone' follows at once.
@@ -323,20 +420,22 @@ export class BleLink extends EventTarget {
     });
   }
 
-  #write(frame) {
+  /** answer: false writes without a response (update data: the controller answers with progress instead). */
+  #write(frame, { answer = true } = {}) {
     this.#inFlight++;
-    const run = this.#writes.then(() => this.#writeNow(frame)).finally(() => { this.#inFlight--; });
+    const run = this.#writes.then(() => this.#writeNow(frame, answer)).finally(() => { this.#inFlight--; });
     this.#writes = run.catch(() => {});
     return run;
   }
 
-  async #writeNow(frame) {
+  async #writeNow(frame, answer = true) {
     for (let attempt = 0; ; attempt++) {
       if (this.#closed || !this.#toPad) throw new Error('Not connected over Bluetooth');
       try {
         const c = this.#toPad;
-        return await withTimeout(c.writeValueWithResponse ? c.writeValueWithResponse(frame) : c.writeValue(frame),
-          STEP_TIMEOUT_MS, 'Sending over Bluetooth');
+        const write = !answer && c.writeValueWithoutResponse ? c.writeValueWithoutResponse(frame)
+          : c.writeValueWithResponse ? c.writeValueWithResponse(frame) : c.writeValue(frame);
+        return await withTimeout(write, STEP_TIMEOUT_MS, 'Sending over Bluetooth');
       } catch (err) {
         // Its receive queue full, the controller refuses a write until it caught up: try again shortly
         if (attempt >= WRITE_RETRIES || this.#closed) throw err;
@@ -374,6 +473,9 @@ export class BleLink extends EventTarget {
         if (payload.length >= TOKEN_LEN) saveToken(this.#bt.id, payload.subarray(0, TOKEN_LEN));
         this.#startPing();
         this.#emit('paired', {});
+        return;
+      case FRAME.UPDATE_STATE:
+        if (payload.length >= 5) this.#emit('update-state', parseUpdateState(payload));
         return;
       case FRAME.LINK: {
         if (payload.length < 10) return;

@@ -268,6 +268,24 @@ async function cachedDownload(url, label, cacheKey) {
     return (await firmwareCache.get(key)).slice(0);
 }
 
+/**
+ * A build's .bin (the whole board image), checked against the manifest's SHA-256 when there is one. For
+ * updates that don't go through a bootloader on USB (Bluetooth). Throws with a short reason.
+ */
+export async function pico_download_bin(url, checksum = null) {
+    const binUrl = convertUf2ToBinUrl(ensureUf2Url(url));
+    let data;
+    try {
+        data = await downloadFirmware(binUrl, t('Downloading firmware...'));
+    } catch (err) {
+        throw new Error(`${t('Failed to download firmware.')} (${downloadReason(err, fetchableUrl(binUrl))})`);
+    }
+    if (checksum && (await sha256Hex(data)).toLowerCase() !== checksum.toLowerCase()) {
+        throw new Error(t('The downloaded firmware didn’t match its checksum.'));
+    }
+    return data;
+}
+
 /** Download a build's .bin and .uf2 into the cache ahead of time. Resolves true when both are there. */
 export async function pico_prefetch_firmware(url, cacheKey) {
     const uf2Url = ensureUf2Url(url);

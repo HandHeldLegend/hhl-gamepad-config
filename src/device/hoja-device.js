@@ -294,6 +294,8 @@ export class HojaDevice extends EventTarget {
   get usbDevice() { return this.#usb; }
   /** How the controller is connected: 'usb', 'ble' (Bluetooth), or null. */
   get transport() { return this.#ble ? 'ble' : this.#usb ? 'usb' : null; }
+  /** Over Bluetooth: the open link (firmware updates speak on it too), else null. */
+  get bleLink() { return this.#ble; }
   /** Over Bluetooth: the controller's last connection report (BleLink.linkInfo), else null. */
   get bleLinkInfo() { return this.#ble?.linkInfo ?? null; }
   /** Which controller this is to the browser: 'ble:<BluetoothDevice.id>' or 'usb:<serial number>', or null. */
