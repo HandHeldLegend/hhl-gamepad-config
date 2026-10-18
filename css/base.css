@@ -4,6 +4,15 @@
 
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
+/* The page never moves sideways. iOS Safari lets the whole page be dragged left and right as soon as
+   anything pokes out, even for a moment (an animation, a long word), so the root clips. `clip` makes no
+   scroll container, so the sticky app bar keeps working; where it isn't supported (Safari before 16),
+   `hidden` on html only (it goes to the viewport, so body doesn't become a scroll container either).
+   Scrollers inside the app (tab strips, wide tables) keep their own overflow-x: auto. */
+html { overflow-x: hidden; }
+@supports (overflow-x: clip) { html, body { overflow-x: clip; } }
+html, body { overscroll-behavior-x: none; }
+
 body {
   margin: 0;
   min-height: 100dvh;
@@ -16,6 +25,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+  overflow-wrap: break-word; /* a long word or address wraps instead of widening its box */
   transition: background-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out);
 }
 

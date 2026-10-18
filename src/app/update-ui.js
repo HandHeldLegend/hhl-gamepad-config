@@ -80,7 +80,7 @@ export function initUpdateUi() {
   document.head.append(h('style', `
     .update-card {
       position: fixed; z-index: 1900; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom));
-      width: min(340px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 10px;
+      width: min(340px, calc(100% - 32px)); display: flex; flex-direction: column; gap: 10px;
       padding: 14px 16px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border);
       box-shadow: var(--shadow-3); animation: rise-in var(--dur-slow) var(--ease-out);
     }

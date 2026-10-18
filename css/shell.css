@@ -16,13 +16,14 @@
 /* ---- Frame --------------------------------------------------------------------------- */
 .app {
   display: grid;
-  grid-template-columns: 1fr;
+  /* minmax(0, …): content can't widen the frame past the screen (a plain 1fr grows to its widest content) */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto 1fr;
   grid-template-areas: "bar" "main";
   min-height: 100dvh;
 }
 .app.wide {
-  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
   grid-template-areas: "bar bar" "nav main";
 }
 
@@ -34,7 +35,7 @@
 /* ---- App bar ------------------------------------------------------------------------- */
 .appbar {
   grid-area: bar;
-  position: sticky; top: 0; z-index: 50;
+  position: sticky; top: 0; z-index: 50; min-width: 0;
   display: flex; align-items: center; gap: var(--space-2);
   min-height: var(--appbar-h);
   padding: max(env(safe-area-inset-top), 8px) max(var(--space-4), env(safe-area-inset-right)) 8px max(var(--space-4), env(safe-area-inset-left));

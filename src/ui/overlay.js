@@ -84,7 +84,7 @@ export function openDialog(o) {
   const body = h('div.dialog-body');
   const foot = h('div.dialog-foot');
   const closeBtn = dismissible ? button({ icon: 'close', variant: 'ghost', title: t('Close'), onClick: () => close(undefined) }) : null;
-  const el = h('dialog.dialog', { 'aria-labelledby': titleId, class: o.tone ? `tone-${o.tone}` : null, style: o.wide ? { width: 'min(760px, calc(100vw - 24px))' } : null },
+  const el = h('dialog.dialog', { 'aria-labelledby': titleId, class: o.tone ? `tone-${o.tone}` : null, style: o.wide ? { width: 'min(760px, calc(100% - 24px))' } : null },
     h('div.dialog-head', art, titleEl, closeBtn), body, foot);
 
   let resolve;
