@@ -11,10 +11,11 @@
  *   const plan = planRestore(backup, session, { calibration });
  *   await applyRestore(plan, session);                   // writes the changed blocks and saves
  *
- * Never copied: block version fields (the controller's own stay), the controller's MAC address, the
- * paired host addresses and the split-defaults migration marker (gamepad_defaults_split). Calibration
- * (stick centers and angle maps, hall trigger ranges, gyro and accelerometer offsets) belongs to one
- * physical controller: restoring it is opt-in.
+ * Never copied: block version fields (the controller's own stay). The controller's MAC address, the
+ * paired host addresses and the split-defaults migration marker (gamepad_defaults_split) are its
+ * identity: only kept and restored with { identity: true }, for the same controller across an update
+ * (./carry-over.js). Calibration (stick centers and angle maps, hall trigger ranges, gyro and
+ * accelerometer offsets) belongs to one physical controller: restoring it is opt-in.
  *
  * Self-contained on purpose: ./card.js is the only UI, hooked into the Firmware page and updater.
  */
@@ -28,8 +29,8 @@ import { OUTPUT_MODE } from '../input/mapping.js';
 export const BACKUP_FORMAT = 'hoja-config-backup';
 export const BACKUP_FORMAT_VERSION = 1;
 
-/** Fields that are never written from a backup (identity and pairing). */
-const NEVER = new Set(['gamepad_mac_address', 'host_mac_switch', 'host_mac_sinput', 'host_mac_wii', 'gamepad_defaults_split']);
+/** The controller's identity and pairings: left out of a backup unless asked for ({ identity }). */
+const IDENTITY = new Set(['gamepad_mac_address', 'host_mac_switch', 'host_mac_sinput', 'host_mac_wii', 'gamepad_defaults_split']);
 
 /** Per-unit calibration. `true` = the whole block. */
 const CALIBRATION = {
@@ -93,15 +94,15 @@ export async function unitId(config) {
   return Array.from(digest.subarray(0, 6), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** Build the backup object for the connected controller. */
-export async function createBackup(session) {
+/** Build the backup object for the connected controller; identity: keep its identity fields too. */
+export async function createBackup(session, { identity = false } = {}) {
   const blocks = {};
   for (const b of LAYOUT.blocks.config) {
     if (device.missing.config.includes(b.key)) continue; // never read from this controller
     const data = session.config[b.key].toJSON();
     const fields = {};
     for (const [name, value] of Object.entries(data)) {
-      if (NEVER.has(name) || isVersionField(name)) continue;
+      if ((!identity && IDENTITY.has(name)) || isVersionField(name)) continue;
       const outEnum = outputEnumOf(name);
       fields[name] = outEnum ? profileToNames(value, outEnum) : value;
     }
@@ -202,7 +203,7 @@ function profileFromNames(inst, field, named, skipped, label) {
  *   sameUnit: boolean|null, sameBuild: boolean|null, hasCalibration: boolean }}
  *   settings / calibration: names of fields whose value changes; skipped: what couldn't be restored
  */
-export async function planRestore(backup, session, { calibration = false } = {}) {
+export async function planRestore(backup, session, { calibration = false, identity = false } = {}) {
   const skipped = [];
   const out = [];
   let hasCalibration = false;
@@ -217,7 +218,7 @@ export async function planRestore(backup, session, { calibration = false } = {})
     for (const [name, value] of Object.entries(saved.fields)) {
       const field = byName.get(name);
       if (!field) { skipped.push(`${b.key}.${name}`); continue; }
-      if (NEVER.has(name) || isVersionField(name) || isReserved(name)) continue;
+      if ((!identity && IDENTITY.has(name)) || isVersionField(name) || isReserved(name)) continue;
       const cal = isCalibration(b.key, name);
       if (cal) hasCalibration = true;
       if (cal && !calibration) continue;
@@ -243,9 +244,11 @@ export async function planRestore(backup, session, { calibration = false } = {})
 export async function applyRestore(plan, session) {
   // Every write must land before saving: a failed one (cable pulled) rejects, so the restore reports
   // failure instead of "restored and saved".
+  // The bytes go with each write: a read of the block still queued (the attention check on connect)
+  // would otherwise put the controller's old contents back before they are sent
   await Promise.all(plan.blocks.map((b) => {
     session.config[b.key].buffer.set(b.next.buffer);
-    return session.commit(b.key, { immediate: true });
+    return session.commit(b.key, { immediate: true, bytes: b.next.buffer.slice() });
   }));
   const ok = await session.save();
   session.refreshAttention?.();

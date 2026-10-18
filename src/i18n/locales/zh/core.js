@@ -262,6 +262,8 @@ export default {
   "Firmware was written successfully. Give the controller a moment to restart, then press Connect.": "固件写入成功。请稍等片刻让手柄重启，然后点击“连接”。",
   "Done: connect when ready": "完成：准备好后即可连接",
   "Settings reset by the update? Restore your backup from the Firmware page once connected.": "更新后设置被重置了？连接后可在“固件”页面恢复备份。",
+  "Your settings and calibration came across from before the update.": "已沿用更新前的设置和校准。",
+  "The update reset the settings, and they could not be put back. Restore your backup from the Firmware page.": "更新重置了设置，且无法恢复。请在“固件”页面恢复备份。",
   "Install HOJA firmware?": "安装 HOJA 固件？",
   "A Raspberry Pi bootloader (BOOTSEL) was detected. Choose your controller below, then press Install.": "检测到 Raspberry Pi 引导程序（BOOTSEL）。请在下方选择你的手柄，然后点击“安装”。",
   "Choose a controller to continue": "选择手柄以继续",

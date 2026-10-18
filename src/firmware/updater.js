@@ -464,6 +464,9 @@ async function enterBootloader() {
   setUpdateStatus(t('Sending reboot to bootloader…'), 10, true);
   panels();
   actions({ primary: { label: t('Update'), icon: 'download', run: () => flashNext({ allowRequestDevice: true }) } });
+  // A controller this app can read keeps its settings for after the update, in case it comes back
+  // reset (a new flash layout): see onControllerConnect
+  if (!st.pendingLegacy && !st.dongle) await keepSettingsForUpdate();
   try {
     if (st.pendingLegacy) device.rebootToBootloaderLegacy().catch(() => {});
     else if (st.dongle) await device.rebootDongleToBootloader();
@@ -946,11 +949,32 @@ async function offersBleUpdate(info, available) {
   return bleUpdateSupported();
 }
 
+/** The settings carry-over (src/sections/backup/carry-over.js; loaded lazily, as the backup feature is). */
+const loadCarryOver = () => import('../sections/backup/carry-over.js').catch(() => ({}));
+
+async function keepSettingsForUpdate() {
+  const { keepForUpdate } = await loadCarryOver();
+  await keepForUpdate?.(session);
+}
+
+/** Back after a USB update: settings it reset are written back from before it. */
+async function carryOverSettings() {
+  const { carryOver } = await loadCarryOver();
+  const result = carryOver ? await carryOver(session) : null;
+  if (result === 'restored') {
+    toast(t('Your settings and calibration came across from before the update.'), { tone: 'green', icon: 'save', timeout: 8000 });
+  } else if (result === 'failed') {
+    toast(t('The update reset the settings, and they could not be put back. Restore your backup from the Firmware page.'),
+      { tone: 'red', icon: 'save', timeout: 12000 });
+  }
+}
+
 async function onControllerConnect() {
   if (quiet) return;
   // Back after a Bluetooth update: that flow reports the result itself
   if (st.mode === 'ble-restarting') return;
   if (isDemo()) { setStatus({ state: 'current', latest: null }); if (st.mode !== 'hidden') hide(); return; }
+  await carryOverSettings();
   const info = session.info;
   let shown = false;
   if (prefs.get('autoUpdateCheck') !== false || debugForce) {

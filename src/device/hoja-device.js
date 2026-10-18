@@ -783,6 +783,20 @@ export class HojaDevice extends EventTarget {
     return this.#exclusive(() => this.#readBlock('config', index));
   }
 
+  /**
+   * Read again the config blocks that didn't answer while connecting (a controller busy just after
+   * starting, say). One that answers now is no longer missing. Resolves the ones still missing.
+   */
+  async rereadMissing() {
+    for (const key of [...this.missing.config]) {
+      try {
+        await this.requestBlock(key);
+        this.missing.config = this.missing.config.filter((k) => k !== key);
+      } catch { /* still missing */ }
+    }
+    return [...this.missing.config];
+  }
+
   requestStatic(index) {
     return this.#exclusive(() => this.#readBlock('static', index));
   }
@@ -833,9 +847,10 @@ export class HojaDevice extends EventTarget {
 
   /**
    * Push a config block to the device's RAM (takes effect live; persists only after save()).
-   * Accepts a name ('haptic') or index.
+   * Accepts a name ('haptic') or index. bytes: the block's contents to send, put in place as the
+   * write starts, so a read of the block queued before it can't replace them on the way.
    */
-  sendBlock(block) {
+  sendBlock(block, bytes = null) {
     const index = typeof block === 'string' ? this.blockIndex(block) : block;
     const entry = this.#configTable.find((b) => b.index === index);
     if (this.missing.config.includes(entry.key)) {
@@ -844,6 +859,7 @@ export class HojaDevice extends EventTarget {
     }
     return this.#exclusive(async () => {
       const buf = this.config[entry.key].buffer;
+      if (bytes) buf.set(bytes);
       for (let idx = 0, pos = 0; pos < buf.length; idx++, pos += CHUNK_MAX) {
         const chunk = buf.subarray(pos, Math.min(pos + CHUNK_MAX, buf.length));
         const out = new Uint8Array(4 + chunk.length);

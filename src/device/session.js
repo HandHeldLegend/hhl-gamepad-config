@@ -333,10 +333,11 @@ class Session extends EventTarget {
   /**
    * Push a config block to the controller (debounced so sliders don't flood USB) and mark it unsaved.
    * @param {string} block config block name, e.g. 'haptic'
-   * @param {{ immediate?: boolean }} [opts]
+   * @param {{ immediate?: boolean, bytes?: Uint8Array }} [opts] bytes: the block's whole contents, put
+   *   in place as the write starts (a read of the block still queued can't replace them)
    * @returns {Promise<void>} resolves when the write has been sent
    */
-  commit(block, { immediate = false } = {}) {
+  commit(block, { immediate = false, bytes = null } = {}) {
     if (!this.connected) return Promise.resolve();
     this.dirty.add(block);
     this.#editedAt.set(block, ++this.#editSeq);
@@ -348,11 +349,12 @@ class Session extends EventTarget {
       entry.promise = new Promise((resolve, reject) => { entry.resolve = resolve; entry.reject = reject; });
       this.#pending.set(block, entry);
     }
+    if (bytes) entry.bytes = bytes;
     clearTimeout(this.#timers.get(block));
     const fire = () => {
       this.#timers.delete(block);
       this.#pending.delete(block);
-      device.sendBlock(block).then(entry.resolve, entry.reject);
+      device.sendBlock(block, entry.bytes ?? null).then(entry.resolve, entry.reject);
     };
     if (immediate) fire();
     else this.#timers.set(block, setTimeout(fire, WRITE_DEBOUNCE_MS));

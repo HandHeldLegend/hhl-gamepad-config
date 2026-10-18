@@ -335,6 +335,8 @@ export default {
   "After this update:": "Après cette mise à jour :",
   "Firmware changes, newest first. With a controller connected, shows what its update brings.": "Changements du firmware, du plus récent au plus ancien. Avec une manette connectée, montre ce qu’apporte sa mise à jour.",
   "Settings reset by the update? Restore your backup from the Firmware page once connected.": "Réglages réinitialisés par la mise à jour ? Restaurez votre sauvegarde depuis la page Firmware une fois connecté.",
+  "Your settings and calibration came across from before the update.": "Vos réglages et votre calibration ont été repris d’avant la mise à jour.",
+  "The update reset the settings, and they could not be put back. Restore your backup from the Firmware page.": "La mise à jour a réinitialisé les réglages et ils n’ont pas pu être rétablis. Restaurez votre sauvegarde depuis la page Firmware.",
   "Use the RPI-RP2 drive instead": "Utiliser le lecteur RPI-RP2",
   "The firmware is ready to copy onto the RPI-RP2 drive. Read the steps, then press the button. A folder dialog will open on top of this window.": "Le firmware est prêt à être copié sur le lecteur RPI-RP2. Lisez les étapes, puis appuyez sur le bouton. Une fenêtre de dossier s’ouvrira par-dessus celle-ci.",
   "No button": "Aucun bouton",
