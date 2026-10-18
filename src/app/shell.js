@@ -302,14 +302,15 @@ export function createShell(root) {
   let mounted = null; // { section, cleanup, update, key }
   let renderToken = 0;
 
-  // Home keeps its place: back from a page lands where you left it. Other pages open at the top.
-  // The document scrolls (not .main).
-  let homeScrollY = 0;
+  // A keepsScroll page (registry.js) opens where it was left: back from another page lands on the same
+  // spot. Other pages open at the top. The document scrolls (not .main).
+  const keptScrollY = new Map(); // section id → window.scrollY when it was left
   let stopScrollHold = null;
   const USER_SCROLL_EVENTS = ['wheel', 'touchstart', 'pointerdown', 'keydown'];
-  function placeScroll(sectionId) {
+  /** How long a kept spot is held while parts of the page fill in after it mounts. */
+  const SCROLL_HOLD_MS = 1500;
+  function placeScroll(y) {
     stopScrollHold?.();
-    const y = sectionId === 'home' ? homeScrollY : 0;
     window.scrollTo({ top: y });
     if (!y) return;
     // Parts of the page fill in after it mounts: keep the spot while they do, until the user scrolls
@@ -321,7 +322,7 @@ export function createShell(root) {
       for (const e of USER_SCROLL_EVENTS) window.removeEventListener(e, stop, true);
       stopScrollHold = null;
     };
-    const timer = setTimeout(stop, 1500);
+    const timer = setTimeout(stop, SCROLL_HOLD_MS);
     for (const e of USER_SCROLL_EVENTS) window.addEventListener(e, stop, { capture: true, passive: true });
     stopScrollHold = stop;
   }
@@ -369,7 +370,7 @@ export function createShell(root) {
     // remount it (that dropped its own connect/disconnect handling and restarted its connects).
     if (mounted && mounted.key === key && section.stable && mounted.params === params) return;
 
-    if (mounted?.section.id === 'home') homeScrollY = window.scrollY;
+    if (mounted?.section.keepsScroll) keptScrollY.set(mounted.section.id, window.scrollY);
     teardown();
     for (const [id, a] of navLinks) a.toggleAttribute('aria-current', id === section.id);
     frame.dataset.page = section.id;
@@ -378,7 +379,7 @@ export function createShell(root) {
     const content = h('div.page-body');
     replace(page, pageHeader(section), content);
     page.classList.remove('page-enter'); void page.offsetWidth; page.classList.add('page-enter');
-    placeScroll(section.id);
+    if (!section.keepsScroll) placeScroll(0); // a keepsScroll page is placed once mounted (below)
 
     if (reason) {
       const backHome = () => button({ label: t('Back to home'), variant: 'tonal', onClick: () => navigate('home') });
@@ -417,7 +418,7 @@ export function createShell(root) {
     let result;
     try {
       result = view.mount(content, ctx);
-      if (section.id === 'home') placeScroll('home'); // now that it has its height
+      if (section.keepsScroll) placeScroll(keptScrollY.get(section.id) ?? 0); // now that it has its height
     } catch (err) {
       console.error(`[shell] ${section.id} mount failed`, err);
       content.append(emptyState({ icon: 'warning', tone: 'red', title: t('Something went wrong'), text: String(err?.message || err) }));

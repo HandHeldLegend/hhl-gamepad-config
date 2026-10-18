@@ -18,6 +18,8 @@
  *   beta        optional: true shows a BETA badge next to the title (nav, page header, Home tile)
  *   hidden      optional: true keeps the page out of the menu, Home tiles and assistant tools (open by URL)
  *   stable      optional: true keeps the page mounted when a controller connects or disconnects
+ *   keepsScroll optional: true opens the page where it was left (back from another page lands on the same
+ *               spot); other pages open at the top
  *   load        lazy import of the view module (exports mount(root, ctx))
  */
 
@@ -37,6 +39,7 @@ export const ALIASES = { user: 'gamepad' };
 export const SECTIONS = [
   {
     id: 'home', title: 'Home', icon: 'home', tone: 'lavender', group: 'start', device: false, requires: null,
+    keepsScroll: true,
     summary: 'Connect a controller and see its status at a glance.',
     params: { connect: 'Set to 1 to open the controller picker immediately (needs a click in most browsers).' },
     load: () => import('./home/view.js'),
