@@ -100,7 +100,9 @@ const TOKENS_KEY = 'hhl-config:ble-tokens';
 const CONNECT_TIMEOUT_MS = 15000;
 const STEP_TIMEOUT_MS = 5000;
 const ANSWER_TIMEOUT_MS = 4000;
-/** A write the controller refused because its receive queue was full is tried again this often. */
+/** A write the controller refused because its receive queue was full is tried again this often. A write
+ *  that times out isn't: the browser's connection is stuck (seen in Bluefy), and every write queued after
+ *  it would wait its full time too, so the link closes instead (see #writeNow). */
 const WRITE_RETRIES = 3;
 /** close() waits this long for notifications to stop and BYE to go out before it disconnects. */
 const STOP_WAIT_MS = 300;
@@ -123,11 +125,12 @@ if (typeof window !== 'undefined') {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** Reject when `promise` hasn't settled within `ms`. */
+/** Reject when `promise` hasn't settled within `ms` (the error has timeout: true). */
 function withTimeout(promise, ms, what) {
   let timer;
-  return Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`${what} timed out`)), ms); })])
-    .finally(() => clearTimeout(timer));
+  return Promise.race([promise, new Promise((_, reject) => {
+    timer = setTimeout(() => reject(Object.assign(new Error(`${what} timed out`), { timeout: true })), ms);
+  })]).finally(() => clearTimeout(timer));
 }
 
 const toHex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -437,6 +440,13 @@ export class BleLink extends EventTarget {
           : c.writeValueWithResponse ? c.writeValueWithResponse(frame) : c.writeValue(frame);
         return await withTimeout(write, STEP_TIMEOUT_MS, 'Sending over Bluetooth');
       } catch (err) {
+        // No answer at all: the connection is stuck. Closing it frees the page (the controller shows as
+        // disconnected) and lets a fresh connection start.
+        if (err?.timeout && !this.#closed) {
+          console.warn('[ble] a write got no answer: closing the link');
+          this.close();
+          throw err;
+        }
         // Its receive queue full, the controller refuses a write until it caught up: try again shortly
         if (attempt >= WRITE_RETRIES || this.#closed) throw err;
         await sleep(30 * (attempt + 1));
