@@ -32,7 +32,7 @@
  */
 import { h, fillNodes, loadStyles } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
-import { openDialog } from '../ui/overlay.js';
+import { openDialog, toast } from '../ui/overlay.js';
 import { button, callout } from '../ui/controls.js';
 import { glyph, outputName, rawInputName } from '../sections/input/parts.js';
 import { device, isListedUsb, requestUsbController } from '../device/hoja-device.js';
@@ -136,6 +136,21 @@ function braveNote() {
   return callout({ tone: 'yellow', title: t('Bluetooth is off in Brave.'),
     text: fillNodes(t('To turn it on, open {flag}, set Web Bluetooth API to Enabled, then relaunch Brave.'),
       { flag: h('code.cm-flag', 'brave://flags/#brave-web-bluetooth-api') }) });
+}
+
+/** The tip for a browser that can remember Bluetooth controllers behind a flag: the steps, the flag's
+ *  address and a button that copies it. */
+function flagTip(browser, address) {
+  const copy = button({
+    label: t('Copy'), icon: 'copy', size: 'sm', variant: 'tonal',
+    onClick: async () => {
+      try { await navigator.clipboard.writeText(address); toast(t('Copied. Paste it into the address bar.'), { tone: 'green' }); }
+      catch { toast(t('Couldn’t copy. Select the text and copy it yourself.'), { tone: 'red' }); }
+    },
+  });
+  return h('div.cm-tip',
+    h('p.small.muted', fillNodes(t('Tip: {browser} can remember Bluetooth controllers, so they connect by themselves next time. Copy this address, paste it into the address bar, set it to Enabled, then relaunch {browser}.'), { browser })),
+    h('div.cm-flag-row', h('code.cm-flag', address), copy));
 }
 
 /**
@@ -469,8 +484,8 @@ export function openConnectModule({ cable = false } = {}) {
         const brand = (navigator.userAgentData?.brands || []).map((b) => b.brand).join(' ');
         const scheme = /Edge/.test(brand) ? 'edge' : /Google Chrome|Chromium/.test(brand) ? 'chrome' : null;
         if (canBluetooth && !remembers && !brave && scheme) {
-          btTip = h('p.small.muted.cm-tip', fillNodes(t('Tip: to have {browser} remember Bluetooth controllers between visits, turn on {flag}.'),
-            { browser: scheme === 'edge' ? 'Edge' : 'Chrome', flag: h('code.cm-flag', `${scheme}://flags/#enable-web-bluetooth-new-permissions-backend`) }));
+          // Pages can't open the browser's own flags page: the address is copied for the owner to paste
+          btTip = flagTip(scheme === 'edge' ? 'Edge' : 'Chrome', `${scheme}://flags/#enable-web-bluetooth-new-permissions-backend`);
         }
         const found = await rememberedBluetoothControllers();
         if (settled) return;
