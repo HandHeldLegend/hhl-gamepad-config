@@ -5,6 +5,9 @@
  *                  link interval, the dongle), the game's connection (mode and what carries it: USB,
  *                  Bluetooth, the dongle or a console cable), and reports a second to the game ("Not
  *                  polled" for a console mode nothing polls), refreshed about once a second (live-status.js)
+ * Order: profile and tournament lock first (what's reached for most), then the status strip and send
+ * inputs to game.
+ *
  *   Send inputs to game   off = HOLD_INPUTS 1: the game sees a controller at rest while the app tries
  *                  things; the controller lets go by itself when the app leaves. Off from the start over
  *                  USB (live-status.js): the game is on this computer then
@@ -187,8 +190,9 @@ export function quickHub(session, device) {
   }).catch(() => {});
 
   const el = card({ title: t('Quick settings'), icon: 'sliders', tone: 'lavender', class: 'hub-card' },
+    profileField, tourneyField,
     h('div.hub-stats', battery, connection, game, rate),
-    sendField, tourneyField, profileField);
+    sendField);
 
   function connectionText() {
     if (session.caps.viaDongle) return t('Dongle');

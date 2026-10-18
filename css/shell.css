@@ -89,11 +89,12 @@
   .appbar .save-btn .btn-label, .appbar .connect-btn .btn-label { display: none; }
   .appbar .save-btn, .appbar .connect-btn { width: 40px; min-width: 40px; padding: 0; }
   .appbar .device-chip { max-width: none; flex: 0 1 auto; min-width: 0; }
-  .appbar .install-btn .btn-label { display: none; }
+  /* Phones: Install and the language live on App settings (the gear), so the controller's name has
+     room. Before, an uninstalled app crowded the chip down to "Demo …". */
+  .appbar .install-btn, .appbar .lang-pick { display: none; }
 }
 @media (max-width: 380px) {
   /* The chip keeps its second line: it shows the mode the controller is running in. */
-  .appbar .appbar-settings { display: none; }
   .appbar .device-chip { padding: 4px 10px; }
 }
 
