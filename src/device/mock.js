@@ -20,6 +20,10 @@ let active = false;
 let timer = null;
 let streamKind = 'raw';
 let focused = 0;
+/** What the demo replaced on the device: stopDemo() removes exactly these. */
+const patched = new Set();
+/** Profile changes answer after this long, as a controller does, so the busy state shows. */
+const DEMO_PROFILE_ANSWER_MS = 150;
 
 export const isDemo = () => active;
 
@@ -137,6 +141,7 @@ function frame(t) {
 
 function patch(name, fn) {
   Object.defineProperty(device, name, { value: fn, configurable: true, writable: true });
+  patched.add(name);
 }
 
 /** Turn the demo controller on and fire the normal 'connect' event. */
@@ -144,6 +149,7 @@ export async function startDemo() {
   if (active) return;
   active = true;
   Object.defineProperty(device, 'isConnected', { get: () => active, configurable: true });
+  patched.add('isConnected');
   const ok = async () => true;
   patch('connect', async () => { startDemo(); return true; });
   patch('open', ok);
@@ -167,10 +173,10 @@ export async function startDemo() {
   });
   patch('rebootToBootloader', async () => { console.info('[demo] reboot to bootloader (ignored)'); return true; });
   const demoProfiles = { active: 0, names: ['', '', '', ''] };
-  const later = (v) => new Promise((r) => setTimeout(() => r(v), 150));
+  const later = (v) => new Promise((r) => setTimeout(() => r(v), DEMO_PROFILE_ANSWER_MS));
   patch('readProfiles', async () => later({ active: demoProfiles.active, names: [...demoProfiles.names] }));
   patch('switchProfile', async (n) => { demoProfiles.active = n; return later(true); });
-  patch('renameProfile', async (n, name) => { demoProfiles.names[n] = name; return later(true); });
+  patch('renameProfile', async (n, name) => { demoProfiles.names[n] = name; return later(name); });
   patch('copyProfile', async () => later(true));
   patch('setInputMode', async (joysticks) => { streamKind = joysticks ? 'joysticks' : 'raw'; });
   patch('setFocusedInput', async (code) => { focused = code; });
@@ -192,10 +198,7 @@ export function stopDemo() {
   if (!active) return;
   active = false;
   clearInterval(timer);
-  for (const k of ['isConnected', 'connect', 'open', 'requestBlock', 'requestStatic', 'readAllConfig', 'readAllStatic', 'sendBlock',
-    'sendReport', 'save', 'sendConfigCommand', 'rebootToBootloader', 'setInputMode', 'setFocusedInput', 'disconnect',
-    'readProfiles', 'switchProfile', 'renameProfile', 'copyProfile']) {
-    delete device[k];
-  }
+  for (const name of patched) delete device[name];
+  patched.clear();
   device.dispatchEvent(new CustomEvent('disconnect', { detail: {} }));
 }

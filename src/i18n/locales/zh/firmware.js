@@ -53,6 +53,7 @@ export default {
   "Update the dongle itself, not the controller.": "更新接收器本身，而不是手柄。",
   "Manual downloads: UF2 files to copy onto the RPI-RP2 drive yourself": "手动下载：自行复制到 RPI-RP2 驱动器的 UF2 文件",
   "Restarts the connected controller in update mode, to install firmware by hand.": "让已连接的手柄以更新模式重启，以便手动安装固件。",
+  "Needs a USB cable: the update mode works over USB only.": "需要 USB 数据线：更新模式只能通过 USB 使用。",
   "Only needed if something went wrong, or to install firmware by hand.": "仅在出现问题或需要手动安装固件时使用。",
   "This controller": "此手柄",
   "Other hardware": "其他硬件",

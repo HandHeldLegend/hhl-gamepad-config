@@ -51,6 +51,7 @@ export default {
   "Update the dongle itself, not the controller.": "コントローラーではなく、ドングル本体をアップデートします。",
   "Manual downloads: UF2 files to copy onto the RPI-RP2 drive yourself": "手動ダウンロード: RPI-RP2 ドライブに自分でコピーする UF2 ファイル",
   "Restarts the connected controller in update mode, to install firmware by hand.": "接続中のコントローラーをアップデートモードで再起動し、ファームウェアを手動でインストールできるようにします。",
+  "Needs a USB cable: the update mode works over USB only.": "USBケーブルが必要です。アップデートモードはUSB接続でのみ使えます。",
   "Only needed if something went wrong, or to install firmware by hand.": "問題が起きたときや、ファームウェアを手動でインストールするときだけ使います。",
   "This controller": "このコントローラー",
   "Other hardware": "その他のハードウェア",

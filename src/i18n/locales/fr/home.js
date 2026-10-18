@@ -23,7 +23,6 @@ export default {
   "Send inputs to game": "Envoyer les entrées au jeu",
   "The controller didn’t take the change. Try again.": "La manette n’a pas accepté le changement. Réessayez.",
   "Tournament lock": "Verrouillage tournoi",
-  "Off: the game sees a controller at rest while you try things here. It turns back on by itself when the app disconnects.": "Désactivé : le jeu voit une manette au repos pendant que vous faites des essais ici. Il se réactive tout seul quand l’app se déconnecte.",
   "Blocks the d-pad, Home, Start / Plus, Select / Minus and Share in the game.": "Bloque la croix directionnelle, Home, Start / Plus, Select / Minus et Share dans le jeu.",
   "Quick settings": "Réglages rapides",
   "Bluetooth · {ms} ms": "Bluetooth · {ms} ms",
@@ -50,4 +49,5 @@ export default {
   "Copy a profile into {name}": "Copier un profil dans {name}",
   "Its settings replace this profile’s, and go live now. The name stays.": "Ses réglages remplacent ceux de ce profil et s’appliquent tout de suite. Le nom est conservé.",
   "{name} has {from}’s settings now.": "{name} a maintenant les réglages de {from}.",
+  "An update is available. It installs over Bluetooth.": "Une mise à jour est disponible. Elle s’installe en Bluetooth.",
 };

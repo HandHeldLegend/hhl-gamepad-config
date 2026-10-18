@@ -51,6 +51,7 @@ export default {
   "Update the dongle itself, not the controller.": "Mettez à jour le dongle lui-même, pas la manette.",
   "Manual downloads: UF2 files to copy onto the RPI-RP2 drive yourself": "Téléchargements manuels : fichiers UF2 à copier vous-même sur le lecteur RPI-RP2",
   "Restarts the connected controller in update mode, to install firmware by hand.": "Redémarre la manette connectée en mode mise à jour, pour installer le firmware à la main.",
+  "Needs a USB cable: the update mode works over USB only.": "Nécessite un câble USB : le mode mise à jour ne fonctionne qu’en USB.",
   "Only needed if something went wrong, or to install firmware by hand.": "Seulement en cas de problème, ou pour installer le firmware à la main.",
   "This controller": "Cette manette",
   "Other hardware": "Autre matériel",

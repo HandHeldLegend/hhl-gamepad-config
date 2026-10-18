@@ -23,7 +23,6 @@ export default {
   "Send inputs to game": "ゲームに入力を送る",
   "The controller didn’t take the change. Try again.": "コントローラーが変更を受け付けませんでした。もう一度お試しください。",
   "Tournament lock": "トーナメントロック",
-  "Off: the game sees a controller at rest while you try things here. It turns back on by itself when the app disconnects.": "オフ：ここで操作を試している間、ゲームには何も押されていないコントローラーとして見えます。アプリが切断されると自動でオンに戻ります。",
   "Blocks the d-pad, Home, Start / Plus, Select / Minus and Share in the game.": "ゲーム中の十字キー、Home、Start / Plus、Select / Minus、Shareを無効にします。",
   "Quick settings": "クイック設定",
   "Bluetooth · {ms} ms": "Bluetooth · {ms} ms",
@@ -50,4 +49,5 @@ export default {
   "Copy a profile into {name}": "{name} にプロファイルをコピー",
   "Its settings replace this profile’s, and go live now. The name stays.": "コピー元の設定がこのプロファイルの設定に置き換わり、すぐに反映されます。名前はそのままです。",
   "{name} has {from}’s settings now.": "{name} に {from} の設定をコピーしました。",
+  "An update is available. It installs over Bluetooth.": "アップデートがあります。Bluetooth でインストールできます。",
 };

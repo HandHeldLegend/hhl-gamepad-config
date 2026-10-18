@@ -16,47 +16,41 @@
  * bleUpdate() resolves once the controller is restarting; reopenBluetooth() then connects to it again.
  */
 import { BleLink, UPDATE_STATUS } from '../device/ble-link.js';
+import { crc32 } from '../device/block-cache.js';
 import { t, N_ } from '../i18n/index.js';
+import { withTimeout } from '../util/async.js';
 import { pico_download_bin } from './picoboot.js';
 
-const SECTOR = 4096;
+/** Staged parts start on whole flash sectors. */
+const FLASH_SECTOR_LEN = 4096;
 const RADIO_HEADER_LEN = 72; // boot_radio_header_s
+/** The second stage boot code's length: a board image starts with it, and so does firmware built for the
+ *  HOJA bootloader's layout (see bleUpdate). */
+const BOOT2_LEN = 256;
 const DEST = { APP: 0, RADIO: 1 };
 const ENC = { STORED: 0, DEFLATE: 1 };
+/** One part in BEGIN's payload: [dest][enc][staged length, staged CRC32, image length, image CRC32: u32 LE]. */
 const PART_LEN = 18;
-/** No progress this long: resend from what is written. Twice that without any: the link is gone. */
+/** No acknowledgement this long: one went missing, so the stream goes again from what is written. */
 const ACK_WAIT_MS = 3000;
+/** No progress at all this long: the link is treated as lost (and connected again). */
 const STALL_MS = 15000;
-/** A dropped link is connected again this often, each try as long as the beacon the controller opens. */
+/** A dropped link is connected again at most this often in one update. */
 const RECONNECT_TRIES = 3;
+/** How long connecting again keeps trying: as long as the beacon the controller opens by itself. */
 export const BEACON_WAIT_MS = 30000;
+/** Each connect try gets at least this long, even near the end of the wait. */
+const MIN_CONNECT_TRY_MS = 1000;
 
 /** Why an update can't go over Bluetooth: shown as is (translated where shown). */
 export const NEEDS_CABLE = N_('This update can’t be installed over Bluetooth. Connect a USB cable to install it.');
-
-const CRC_TABLE = (() => {
-  const table = new Uint32Array(256);
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
-    table[n] = c >>> 0;
-  }
-  return table;
-})();
-
-/** Reflected CRC-32 (0xEDB88320), as the controller checks it. */
-export function crc32(bytes) {
-  let c = 0xffffffff;
-  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
-  return (c ^ 0xffffffff) >>> 0;
-}
 
 async function deflateRaw(bytes) {
   const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-const align = (n) => Math.ceil(n / SECTOR) * SECTOR;
+const align = (n) => Math.ceil(n / FLASH_SECTOR_LEN) * FLASH_SECTOR_LEN;
 
 /** The radio region without its unused (erased) tail. */
 function trimErased(bytes) {
@@ -169,20 +163,20 @@ function sendStream(link, stream, info, written, onProgress) {
       while (!done) {
         if (written >= stream.length) { finish(); return; }
         if (sent < stream.length && sent - written + info.dataMax <= info.window) {
-          const n = Math.min(info.dataMax, stream.length - sent);
+          const at = sent;
+          const n = Math.min(info.dataMax, stream.length - at);
           try {
-            await link.updateData(sent, stream.subarray(sent, sent + n));
+            await link.updateData(at, stream.subarray(at, at + n));
           } catch {
             finish(new LinkLost('The Bluetooth link dropped'));
             return;
           }
-          sent += n;
+          // An answer while this write was going may have sent the stream back to what is written
+          if (sent === at) sent = at + n;
           continue;
         }
-        const heard = await new Promise((r) => {
-          wake = () => r(true);
-          setTimeout(() => r(false), ACK_WAIT_MS);
-        });
+        const heard = await withTimeout(new Promise((r) => { wake = r; }), ACK_WAIT_MS, 'Waiting for progress')
+          .then(() => true, () => false);
         wake = null;
         if (heard) continue;
         // Nothing came back: an acknowledgement went missing, or the link stalled
@@ -203,9 +197,8 @@ export async function reopenBluetooth(bt, tryFor = BEACON_WAIT_MS) {
   while (performance.now() < until) {
     const link = new BleLink(bt);
     try {
-      await link.open({ connectTimeout: Math.max(1000, until - performance.now()) });
+      await link.open({ connectTimeout: Math.max(MIN_CONNECT_TRY_MS, until - performance.now()) });
       if (await link.authorize()) return link;
-      link.close();
       throw new NotAllowed(t('This browser isn’t allowed on the controller any more. Connect to it again from the app.'));
     } catch (err) {
       lastErr = err;
@@ -213,7 +206,8 @@ export async function reopenBluetooth(bt, tryFor = BEACON_WAIT_MS) {
       if (err instanceof NotAllowed) throw err;
     }
   }
-  throw lastErr || new Error(t('The controller didn’t come back over Bluetooth.'));
+  console.warn('[ble] the controller didn’t come back', lastErr);
+  throw new Error(t('The controller didn’t come back over Bluetooth.'));
 }
 
 /**
@@ -227,11 +221,10 @@ export function bleUpdateInfo(link) {
 /**
  * Send the build at `url` to the controller over `link` and have it install it. onStatus({ phase, percent }):
  * phase 'download' | 'prepare' | 'send' | 'reconnect' | 'finish'. Resolves once the controller restarts to
- * install the update; throws an Error to show (translated) when it can't.
+ * install the update (reopenBluetooth(link.bluetoothDevice) connects to it again); throws an Error to show
+ * (translated) when it can't.
  */
 export async function bleUpdate({ link, url, checksum, onStatus = () => {} }) {
-  const bt = link.bluetoothDevice;
-
   onStatus({ phase: 'download', percent: 0 });
   const image = new Uint8Array(await pico_download_bin(url, checksum));
 
@@ -242,33 +235,49 @@ export async function bleUpdate({ link, url, checksum, onStatus = () => {} }) {
 
   // A build for this layout starts its firmware with its own second stage, as the image's start does. An older
   // build (no bootloader) would land in the wrong place: that one goes over USB.
-  const boot2 = image.subarray(0, 256);
-  const firmwareStart = image.subarray(info.appOffset, info.appOffset + 256);
+  const boot2 = image.subarray(0, BOOT2_LEN);
+  const firmwareStart = image.subarray(info.appOffset, info.appOffset + BOOT2_LEN);
   if (image.length <= info.appOffset || firmwareStart.some((b, i) => b !== boot2[i])) throw new Error(t(NEEDS_CABLE));
 
   const parts = await planParts(image, info);
   if (!parts) throw new Error(t(NEEDS_CABLE));
   const { begin, stream } = framePlan(parts);
 
-  let current = link;
+  const use = { link }; // the link in use: a new one once a lost link was connected again
+  try {
+    await sendAll(use, begin, stream, info, onStatus);
+    onStatus({ phase: 'finish', percent: 100 });
+    // A link that drops once FINISH is out may be the controller restarting to install: the build it comes
+    // back with tells (the caller connects again either way)
+    const fin = await use.link.updateFinish();
+    if (fin && fin.status !== UPDATE_STATUS.RESTARTING) throw statusError(fin.status);
+  } catch (err) {
+    // A link this update connected again belongs to nothing else: let go of it
+    if (use.link !== link) use.link.close();
+    throw err;
+  }
+}
+
+/**
+ * BEGIN, then the stream, until the controller has all of it. A lost link is connected again (use.link
+ * then holds the new one) and the update carries on where it got to.
+ */
+async function sendAll(use, begin, stream, info, onStatus) {
   for (let tries = 0; ; tries++) {
     try {
-      const answer = await current.updateBegin(begin);
+      const answer = await use.link.updateBegin(begin);
       if (answer.status !== UPDATE_STATUS.OK) throw statusError(answer.status);
       onStatus({ phase: 'send', percent: (answer.written / stream.length) * 100 });
-      await sendStream(current, stream, info, answer.written, (f) => onStatus({ phase: 'send', percent: f * 100 }));
-      break;
+      await sendStream(use.link, stream, info, answer.written, (f) => onStatus({ phase: 'send', percent: f * 100 }));
+      return;
     } catch (err) {
-      if (!(err instanceof LinkLost) && !/dropped|Not connected/.test(err?.message || '')) throw err;
+      // The link is lost when it dropped, stalled, or closed itself after a write got no answer. Any other
+      // failure on an open link (a refusal, a missing answer) ends the update.
+      if (!(err instanceof LinkLost) && use.link.isOpen) throw err;
       if (tries >= RECONNECT_TRIES) throw new Error(t('The Bluetooth link kept dropping. Move closer to the controller and try again.'));
       onStatus({ phase: 'reconnect', percent: null });
-      current.close();
-      current = await reopenBluetooth(bt);
+      use.link.close();
+      use.link = await reopenBluetooth(use.link.bluetoothDevice);
     }
   }
-
-  onStatus({ phase: 'finish', percent: 100 });
-  const fin = await current.updateFinish();
-  if (fin.status !== UPDATE_STATUS.RESTARTING) throw statusError(fin.status);
-  return { link: current, bt };
 }

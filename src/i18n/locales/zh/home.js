@@ -28,7 +28,6 @@ export default {
   "Send inputs to game": "向游戏发送输入",
   "The controller didn’t take the change. Try again.": "手柄没有接受这个更改。请重试。",
   "Tournament lock": "比赛锁定",
-  "Off: the game sees a controller at rest while you try things here. It turns back on by itself when the app disconnects.": "关闭：你在这里尝试时，游戏看到的是一个静止的手柄。应用断开连接后会自动重新开启。",
   "Blocks the d-pad, Home, Start / Plus, Select / Minus and Share in the game.": "在游戏中屏蔽十字键、Home、Start / Plus、Select / Minus 和 Share。",
   "Quick settings": "快捷设置",
   "Bluetooth · {ms} ms": "蓝牙 · {ms} 毫秒",
@@ -55,4 +54,5 @@ export default {
   "Copy a profile into {name}": "将配置文件复制到 {name}",
   "Its settings replace this profile’s, and go live now. The name stays.": "其设置将替换此配置文件的设置，并立即生效。名称保持不变。",
   "{name} has {from}’s settings now.": "{name} 现在使用 {from} 的设置。",
+  "An update is available. It installs over Bluetooth.": "有可用更新。可通过蓝牙安装。",
 };

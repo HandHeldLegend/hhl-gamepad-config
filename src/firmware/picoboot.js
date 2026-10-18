@@ -24,11 +24,14 @@
  */
 import { t, N_ } from '../i18n/index.js';
 import { fetchableUrl } from './urls.js';
-import { isPicoBootloader, isHojaUpdateMode } from '../device/hoja-device.js';
+import {
+    isPicoBootloader, isHojaUpdateMode, RPI_VENDOR_ID, HOJA_GAMEPAD_PID, BOOT_ROM_PIDS,
+} from '../device/hoja-device.js';
+import { sleep, withTimeout } from '../util/async.js';
 
-const VID = 0x2e8a;
+const VID = RPI_VENDOR_ID;
 // The boot ROMs, and the HOJA update mode (the HOJA Gamepad PID; told apart by its device version)
-const BOOTLOADER_PIDS = [0x0003, 0x000f, 0x10c6];
+const BOOTLOADER_PIDS = [...BOOT_ROM_PIDS, HOJA_GAMEPAD_PID];
 const INTERFACE_CLASS = 255; // Vendor-specific interface class
 
 const FLASH_ERASE_CMD = 0x03;
@@ -40,11 +43,20 @@ const REBOOT2_CMD = 0x0a;
 const READ_CMD = 0x84;
 const MAGIC_NUM = 0x431fd10b;
 
-// The HOJA update mode (HOJA-LIB-RP2040 boot_layout.h)
 const FLASH_BASE = 0x10000000;
+/** Flash is erased and written a whole sector at a time, and read back at most a sector at a time. */
+const FLASH_SECTOR_LEN = 4096;
+/** A restart command: how long its OUT transfer and its acknowledgement may take. The device often
+ *  restarts before the acknowledgement arrives. */
+const RESTART_CMD_TIMEOUT_MS = 3000;
+const RESTART_ACK_TIMEOUT_MS = 2000;
+
+// The HOJA update mode (HOJA-LIB-RP2040 boot_layout.h)
 const HOJA_BOOT_SIZE = 0x8000;           // The bootloader's own sectors
 const HOJA_ROM_BOOTLOADER_CMD = 0x21;    // Restart into the boot ROM's bootloader
 const HOJA_ROM_WAIT_MS = 10000;
+/** While waiting for the boot ROM's device to appear: look this often. */
+const HOJA_ROM_POLL_MS = 250;
 
 let picoDevice;
 let interfaceNumber = null;
@@ -73,16 +85,6 @@ export function supportsDirectoryPicker() {
 function isWindowsHost() {
     const ua = navigator.userAgent.toLowerCase();
     return ua.includes('windows') || ua.includes('win32') || ua.includes('win64') || ua.includes('wow64');
-}
-
-function withTimeout(promise, ms, label = 'operation') {
-    let timer;
-    return Promise.race([
-        promise.finally(() => clearTimeout(timer)),
-        new Promise((_, reject) => {
-            timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
-        }),
-    ]);
 }
 
 function isRp2350Bootloader(device) {
@@ -224,6 +226,11 @@ async function sha256Hex(buffer) {
         .join('');
 }
 
+/** Whether `data` is the image whose SHA-256 (hex, as the build manifest gives it) is `checksum`. */
+async function matchesChecksum(data, checksum) {
+    return (await sha256Hex(data)).toLowerCase() === checksum.toLowerCase();
+}
+
 async function downloadFirmware(url, label = t('Downloading firmware...')) {
     url = fetchableUrl(url);
     updateProgress(10, false, label);
@@ -280,7 +287,7 @@ export async function pico_download_bin(url, checksum = null) {
     } catch (err) {
         throw new Error(`${t('Failed to download firmware.')} (${downloadReason(err, fetchableUrl(binUrl))})`);
     }
-    if (checksum && (await sha256Hex(data)).toLowerCase() !== checksum.toLowerCase()) {
+    if (checksum && !(await matchesChecksum(data, checksum))) {
         throw new Error(t('The downloaded firmware didn’t match its checksum.'));
     }
     return data;
@@ -558,8 +565,7 @@ export async function pico_update_attempt_flash(url, checksum = null, options = 
             binData = binResult.value;
             if (checksum) {
                 updateProgress(85, false, t('Verifying firmware...'));
-                const calculated = await sha256Hex(binData);
-                binVerified = calculated.toLowerCase() === checksum.toLowerCase();
+                binVerified = await matchesChecksum(binData, checksum);
                 if (!binVerified) {
                     console.error('BIN checksum failure');
                     binData = null;
@@ -610,23 +616,10 @@ export async function pico_update_attempt_flash(url, checksum = null, options = 
             let flashSucceeded = false;
             try {
                 await markExclusive(true);
-                let start = 0;
-                if (activeBootloaderIsHoja) {
-                    updateProgress(0, true, t('Checking the controller...'));
-                    if (!(await hojaImageKeepsBootloader(binData))) {
-                        // This image brings its own bootloader (or none): the boot ROM writes it whole
-                        updateProgress(0, true, t('Restarting into the Raspberry Pi bootloader...'));
-                        const rom = await hojaRestartIntoRom();
-                        if (!rom) {
-                            updateProgress(0, false, t('Click Update to authorize the bootloader device.'));
-                            return { needsUserAction: true, reason: 'permission' };
-                        }
-                        return pico_update_attempt_flash(url, checksum, { ...options, allowRequestDevice: false });
-                    }
-                    start = HOJA_BOOT_SIZE;
+                if (activeBootloaderIsHoja && !(await hojaImageKeepsBootloader(binData))) {
+                    return await hojaFlashThroughRom(url, checksum, options);
                 }
-                await writeFlashWithProgress(binData, binData.byteLength, start);
-                if (activeBootloaderIsHoja) await verifyFlashWithProgress(binData, start);
+                await writeImage(binData);
                 flashSucceeded = true;
             } catch (error) {
                 console.error('Picoboot flash failed:', error);
@@ -681,6 +674,29 @@ export async function pico_update_attempt_flash(url, checksum = null, options = 
 
     updateProgress(0, false, t('Update failed.'));
     return false;
+}
+
+/**
+ * Write the image over PICOBOOT: whole through the boot ROM; in the HOJA update mode from just past the
+ * bootloader's own sectors (it keeps them), then read back.
+ */
+async function writeImage(binData) {
+    const start = activeBootloaderIsHoja ? HOJA_BOOT_SIZE : 0;
+    await writeFlashWithProgress(binData, binData.byteLength, start);
+    if (activeBootloaderIsHoja) await verifyFlashWithProgress(binData, start);
+}
+
+/**
+ * An image the HOJA update mode can't take, as it brings its own bootloader (or none): restart into the
+ * boot ROM's bootloader and flash it there. Resolves what that attempt resolves.
+ */
+async function hojaFlashThroughRom(url, checksum, options) {
+    updateProgress(0, true, t('Restarting into the Raspberry Pi bootloader...'));
+    if (!(await hojaRestartIntoRom())) {
+        updateProgress(0, false, t('Click Update to authorize the bootloader device.'));
+        return { needsUserAction: true, reason: 'permission' };
+    }
+    return pico_update_attempt_flash(url, checksum, { ...options, allowRequestDevice: false });
 }
 
 export async function pico_exit_bootloader_attempt() {
@@ -775,7 +791,7 @@ const FLASH_TRANSFER_TIMEOUT_MS = 30000;
 async function writeFlashWithProgress(data, size, start = 0) {
     console.log('Attempt write data with progress tracking');
 
-    const pageSize = 4096;
+    const pageSize = FLASH_SECTOR_LEN;
     const totalPages = Math.ceil(size / pageSize);
     const firstPage = start / pageSize;
     var addr = FLASH_BASE + start;
@@ -825,8 +841,7 @@ async function writeFlashWithProgress(data, size, start = 0) {
         const finalProgressPercent = ((i + 1 - firstPage) / (totalPages - firstPage)) * 100;
         updateProgress(finalProgressPercent, true, t('Flashing firmware...'));
     }
-
-    updateProgress(100, true, t('Firmware update complete!'));
+    // "Complete" is shown by the caller, once anything that checks the write has passed
 }
 
 /** PICOBOOT READ of at most one sector, then the host's empty acknowledgement. */
@@ -839,30 +854,36 @@ async function readFlash(addr, size) {
     return new Uint8Array(result.data.buffer, result.data.byteOffset, result.data.byteLength);
 }
 
-/** Read the written range back and compare (the HOJA update mode; the boot ROM path never did). */
+/** The first index where `a` and `b` differ (where the shorter one ends, if that comes first), or -1. */
+function firstDifference(a, b) {
+    const len = Math.max(a.length, b.length);
+    for (let i = 0; i < len; i++) {
+        if (a[i] !== b[i]) return i;
+    }
+    return -1;
+}
+
+/** Read the written range back and compare (the HOJA update mode; the boot ROM path doesn't read back). */
 async function verifyFlashWithProgress(data, start) {
-    const pageSize = 4096;
     const image = new Uint8Array(data);
     const end = image.byteLength;
-    for (let at = start; at < end; at += pageSize) {
+    for (let at = start; at < end; at += FLASH_SECTOR_LEN) {
         updateProgress(((at - start) / (end - start)) * 100, true, t('Checking the written firmware...'));
-        const len = Math.min(pageSize, end - at);
+        const len = Math.min(FLASH_SECTOR_LEN, end - at);
         const back = await readFlash(FLASH_BASE + at, len);
-        for (let i = 0; i < len; i++) {
-            if (back[i] !== image[at + i]) throw new Error(`Read back differs at 0x${(FLASH_BASE + at + i).toString(16)}`);
-        }
+        const diff = firstDifference(back, image.subarray(at, at + len));
+        if (diff >= 0) throw new Error(`Read back differs at 0x${(FLASH_BASE + at + diff).toString(16)}`);
     }
 }
 
 /** The HOJA update mode keeps its bootloader: true when the image carries exactly that one. */
 async function hojaImageKeepsBootloader(data) {
+    updateProgress(0, true, t('Checking the controller...'));
     const image = new Uint8Array(data);
     if (image.byteLength <= HOJA_BOOT_SIZE) return false;
-    for (let at = 0; at < HOJA_BOOT_SIZE; at += 4096) {
-        const board = await readFlash(FLASH_BASE + at, 4096);
-        for (let i = 0; i < 4096; i++) {
-            if (board[i] !== image[at + i]) return false;
-        }
+    for (let at = 0; at < HOJA_BOOT_SIZE; at += FLASH_SECTOR_LEN) {
+        const board = await readFlash(FLASH_BASE + at, FLASH_SECTOR_LEN);
+        if (firstDifference(board, image.subarray(at, at + FLASH_SECTOR_LEN)) >= 0) return false;
     }
     return true;
 }
@@ -874,8 +895,8 @@ async function hojaImageKeepsBootloader(data) {
 async function hojaRestartIntoRom() {
     const cmd = new PicobootCmd(HOJA_ROM_BOOTLOADER_CMD, 0);
     try {
-        await usbTransferOut(endpointOut.endpointNumber, cmd.toUint8Array(), 3000, 'rom bootloader');
-        await usbTransferIn(endpointIn.endpointNumber, 1, 2000, 'rom bootloader ack');
+        await usbTransferOut(endpointOut.endpointNumber, cmd.toUint8Array(), RESTART_CMD_TIMEOUT_MS, 'rom bootloader');
+        await usbTransferIn(endpointIn.endpointNumber, 1, RESTART_ACK_TIMEOUT_MS, 'rom bootloader ack');
     } catch (error) {
         console.warn('ROM bootloader ack not received:', error);
     }
@@ -883,7 +904,7 @@ async function hojaRestartIntoRom() {
 
     const until = Date.now() + HOJA_ROM_WAIT_MS;
     while (Date.now() < until) {
-        await new Promise((resolve) => setTimeout(resolve, 250));
+        await sleep(HOJA_ROM_POLL_MS);
         const devs = await navigator.usb.getDevices();
         if (devs.some((d) => isPicoBootloader(d) && !isHojaUpdateMode(d))) return true;
     }
@@ -902,9 +923,9 @@ async function rebootDevice() {
     }
     var output = cmd.toUint8Array();
 
-    await usbTransferOut(endpointOut.endpointNumber, output, 3000, 'reboot');
+    await usbTransferOut(endpointOut.endpointNumber, output, RESTART_CMD_TIMEOUT_MS, 'reboot');
     try {
-        await usbTransferIn(endpointIn.endpointNumber, 1, 2000, 'reboot ack');
+        await usbTransferIn(endpointIn.endpointNumber, 1, RESTART_ACK_TIMEOUT_MS, 'reboot ack');
     } catch (error) {
         // Expected when the device reboots and disconnects before the ack is read.
         console.warn('Reboot ack not received:', error);

@@ -18,7 +18,7 @@
  *                            Each CRC32 covers exactly the bytes a read of that block sends; older firmware
  *                            doesn't answer. Connecting reads only blocks whose CRC32 differs from the copy
  *                            cached in this browser (block-cache.js) and uses the cached bytes for the rest.
- *   0x07 PROFILE             out: [7, op, profile, from (copy) | name 24 (rename)]
+ *   0x07 PROFILE             out: [7, op, profile, from (copy) | 0 (rename), name up to 24 bytes UTF-8 (rename)]
  *                            in: [7, op, done, count, active, profile, name 24]. op 0 info, 1 switch, 2 rename,
  *                            3 copy (from another profile into this one). Count 0, or no answer: no profiles
  *                            (HOJA-LIB-RP2040 utilities/profiles.h). Switching stores everything live first.
@@ -61,17 +61,26 @@
 import { LAYOUT, createStruct, decodeText } from './struct.js';
 import { legacyFirmwareUrl } from './legacy.js';
 import { cachedBlock, findCacheByBlock, loadCache, storeCacheBlocks } from './block-cache.js';
+import { sleep, withTimeout } from '../util/async.js';
+
+/** Raspberry Pi's USB vendor ID: HOJA controllers and dongles, and the RP2040 / RP2350 boot ROMs. */
+export const RPI_VENDOR_ID = 0x2e8a;
+/** The HOJA Gamepad (generic) product ID: the running firmware, and the HOJA bootloader's update mode. */
+export const HOJA_GAMEPAD_PID = 0x10c6;
+/** The RP2040 and RP2350 boot ROMs' product IDs (BOOTSEL). */
+export const BOOT_ROM_PIDS = [0x0003, 0x000f];
+/** The HOJA update mode's device version high byte (the running firmware reports 0x02 there). */
+const UPDATE_MODE_VERSION_MAJOR = 0xb0;
 
 /** USB filters offered in the browser's device picker. */
 export const USB_FILTERS = [
   { vendorId: 0x057e, productId: 0x2009 }, // Switch Pro Controller mode
   { vendorId: 0x057e, productId: 0x0337 }, // GameCube adapter: a dongle in Slippi mode on a computer
   ...(isWindowsHost() ? [] : [{ vendorId: 0x045e, productId: 0x028e }]), // XInput: a dongle in XInput mode
-  { vendorId: 0x2e8a, productId: 0x10c6 }, // HOJA Gamepad (generic)
-  { vendorId: 0x2e8a, productId: 0x10dd }, // GC Ultimate
-  { vendorId: 0x2e8a, productId: 0x10df }, // ProGCC
-  { vendorId: 0x2e8a, productId: 0x0003 }, // RP2040 bootloader
-  { vendorId: 0x2e8a, productId: 0x000f }, // RP2350 bootloader
+  { vendorId: RPI_VENDOR_ID, productId: HOJA_GAMEPAD_PID }, // HOJA Gamepad (generic), and the HOJA update mode
+  { vendorId: RPI_VENDOR_ID, productId: 0x10dd }, // GC Ultimate
+  { vendorId: RPI_VENDOR_ID, productId: 0x10df }, // ProGCC
+  ...BOOT_ROM_PIDS.map((productId) => ({ vendorId: RPI_VENDOR_ID, productId })), // RP2040 / RP2350 bootloader
   { vendorId: 0x1a86, productId: 0x7522 }, // CH340: controller in wireless-module (ESP32) update mode
 ];
 
@@ -117,7 +126,8 @@ export function isCh340(device) {
  * PICOBOOT commands, and Windows binds WinUSB to it without a driver install.
  */
 export function isHojaUpdateMode(device) {
-  return device?.vendorId === 0x2e8a && device?.productId === 0x10c6 && device?.deviceVersionMajor === 0xb0;
+  return device?.vendorId === RPI_VENDOR_ID && device?.productId === HOJA_GAMEPAD_PID
+    && device?.deviceVersionMajor === UPDATE_MODE_VERSION_MAJOR;
 }
 
 /** The build a controller in the HOJA update mode belongs to: its serial is the build id. */
@@ -127,8 +137,7 @@ export function updateModeBuildId(device) {
 
 /** A bootloader that takes firmware: the RP2040 / RP2350 boot ROM's, or the HOJA update mode. */
 export function isPicoBootloader(device) {
-  return (device?.vendorId === 0x2e8a && (device?.productId === 0x0003 || device?.productId === 0x000f))
-    || isHojaUpdateMode(device);
+  return (device?.vendorId === RPI_VENDOR_ID && BOOT_ROM_PIDS.includes(device?.productId)) || isHojaUpdateMode(device);
 }
 
 /** Where the config interface was before it was looked up by class. */
@@ -148,17 +157,15 @@ function findConfigPort(usb) {
   return null;
 }
 const CHUNK_MAX = 32;
-/** How long to wait for the block fingerprints: older firmware never answers, so this is what it costs. */
-const FINGERPRINT_WAIT_USB_MS = 300;
-const FINGERPRINT_WAIT_BLE_MS = 1000;
-/** Time limit for one USB step (open, claim, a single OUT transfer). */
+/**
+ * How long to wait for an answer older firmware never gives (the block fingerprints, the first profile
+ * request): that is what asking costs it.
+ */
+const FIRST_ANSWER_WAIT_USB_MS = 300;
+const FIRST_ANSWER_WAIT_BLE_MS = 1000;
+/** Time limit for one USB step (open, claim, a single OUT transfer). One that overruns is cancelled by
+ *  closing the device. */
 const STEP_TIMEOUT_MS = 5000;
-/** Reject when `promise` hasn't settled within `ms` (the USB call itself is cancelled by closing the device). */
-function withTimeout(promise, ms, what) {
-  let timer;
-  return Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`${what} timed out`)), ms); })])
-    .finally(() => clearTimeout(timer));
-}
 const IN_FLIGHT = 2; // concurrent IN transfers (see #pollLoop)
 /**
  * Stream watchdog. If the firmware can't deliver a stream report in time it drops out of WebUSB
@@ -184,6 +191,18 @@ const REPORT = {
   DONGLE_BOOTLOADER: 0xd1,
   DONGLE_PC_MODE: 0xd2,
 };
+
+/** PROFILE (0x07) operations (profiles_op_t). */
+const PROFILE_OP = { INFO: 0, SWITCH: 1, RENAME: 2, COPY: 3 };
+/** A profile name's room on the controller, in bytes of UTF-8. */
+export const PROFILE_NAME_LEN = 24;
+/** Where the name starts in a PROFILE reply, and the reply's length through the name. */
+const PROFILE_REPLY_NAME_AT = 6;
+const PROFILE_REPLY_LEN = PROFILE_REPLY_NAME_AT + PROFILE_NAME_LEN;
+/** A switch, rename or copy is answered once the controller stored it: this long at most. */
+const PROFILE_REPLY_WAIT_MS = 2000;
+/** The settings blocks that belong to a profile: what a switch or a copy into the live profile changes. */
+const PROFILE_BLOCKS = ['analog', 'imu', 'haptic', 'rgb', 'input'];
 
 /**
  * The modes the app can switch to live, until the controller (or dongle) is unplugged: the controller's
@@ -226,8 +245,6 @@ export function decodeDongleInfo(v) {
     } : null,
   };
 }
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Poll `predicate` every 20ms until true or timeout (ms). Resolves true/false. */
 async function waitFor(predicate, timeout) {
@@ -462,14 +479,18 @@ export class HojaDevice extends EventTarget {
     } catch {
       return null;
     }
-    const wait = this.#ble ? FINGERPRINT_WAIT_BLE_MS : FINGERPRINT_WAIT_USB_MS;
-    await waitFor(() => this.#fingerprints.config && this.#fingerprints.static, wait);
+    await waitFor(() => this.#fingerprints.config && this.#fingerprints.static, this.#firstAnswerWait());
     const fp = this.#fingerprints;
     this.#fingerprints = null;
     if (!fp.config || !fp.static) return null;
     const gamepad = this.#configTable.find((b) => b.key === 'gamepad')?.index ?? 0;
     const entry = await findCacheByBlock('config', gamepad, fp.config[gamepad]);
     return { fp, entry, key: entry?.key ?? null, reused: 0, fresh: [] };
+  }
+
+  /** FIRST_ANSWER_WAIT_*_MS for the transport in use. */
+  #firstAnswerWait() {
+    return this.#ble ? FIRST_ANSWER_WAIT_BLE_MS : FIRST_ANSWER_WAIT_USB_MS;
   }
 
   #onFingerprints(view) {
@@ -721,9 +742,10 @@ export class HojaDevice extends EventTarget {
 
   #onProfile(view) {
     const r = this.#profileReply;
-    if (!r || view.byteLength < 30 || view.getUint8(1) !== r.op) return;
+    if (!r || view.byteLength < PROFILE_REPLY_LEN) return;
     const bytes = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
-    const name = bytes.subarray(6, 30);
+    if (bytes[1] !== r.op || bytes[5] !== r.profile) return; // an answer to another request
+    const name = bytes.subarray(PROFILE_REPLY_NAME_AT, PROFILE_REPLY_LEN);
     const end = name.indexOf(0);
     r.reply = {
       done: !!bytes[2], count: bytes[3], active: bytes[4], profile: bytes[5],
@@ -863,14 +885,17 @@ export class HojaDevice extends EventTarget {
   // Settings profiles (0x07)
   // ---------------------------------------------------------------------------------------
 
-  /** One profile exchange. Resolves the reply, or null when nothing answered. */
-  #profileOp(op, profile, extra = [], timeout = 2000) {
+  /** One profile exchange about `profile`. Resolves the reply, or null when nothing answered. */
+  #profileOp(op, profile, extra = [], timeout = PROFILE_REPLY_WAIT_MS) {
     return this.#exclusive(async () => {
-      const r = { op, reply: null };
+      const r = { op, profile, reply: null };
       this.#profileReply = r;
-      await this.#out([REPORT.PROFILE, op, profile, ...extra]);
-      await waitFor(() => r.reply, timeout);
-      this.#profileReply = null;
+      try {
+        await this.#out([REPORT.PROFILE, op, profile, ...extra]);
+        await waitFor(() => r.reply, timeout);
+      } finally {
+        this.#profileReply = null;
+      }
       return r.reply;
     });
   }
@@ -880,48 +905,52 @@ export class HojaDevice extends EventTarget {
    * them never answers).
    */
   async readProfiles() {
-    const first = await this.#profileOp(0, 0, [], this.#ble ? FINGERPRINT_WAIT_BLE_MS : FINGERPRINT_WAIT_USB_MS);
+    const first = await this.#profileOp(PROFILE_OP.INFO, 0, [], this.#firstAnswerWait());
     if (!first?.count) return null;
     const names = [first.name];
     for (let n = 1; n < first.count; n++) {
-      const r = await this.#profileOp(0, n);
+      const r = await this.#profileOp(PROFILE_OP.INFO, n);
       if (!r) return null;
       names.push(r.name);
     }
     return { active: first.active, names };
   }
 
-  /** The profile settings blocks: what a switch or a copy into the live profile changes. */
-  static PROFILE_BLOCKS = ['analog', 'imu', 'haptic', 'rgb', 'input'];
-
   /** Re-read the profile's blocks after the live one changed (missing ones stay missing). */
   async #rereadProfileBlocks() {
-    for (const key of HojaDevice.PROFILE_BLOCKS) {
+    for (const key of PROFILE_BLOCKS) {
       if (!this.missing.config.includes(key)) await this.requestBlock(key);
     }
   }
 
   /** Switch profiles. The controller stores what's live as the old one first. Resolves true once it did. */
   async switchProfile(profile) {
-    const r = await this.#profileOp(1, profile);
+    const r = await this.#profileOp(PROFILE_OP.SWITCH, profile);
     if (!r?.done) return false;
     await this.#rereadProfileBlocks();
     return true;
   }
 
-  /** A profile's name, at most 24 bytes of UTF-8 (cut at a whole character); '' clears it. */
+  /**
+   * Rename a profile ('' clears it). The name is cut to PROFILE_NAME_LEN bytes of UTF-8, at a whole
+   * character. Resolves the name the controller stored, or null when it didn't take it.
+   */
   async renameProfile(profile, name) {
     const enc = new TextEncoder();
     let bytes = enc.encode(name);
-    while (bytes.length > 24) { name = [...name].slice(0, -1).join(''); bytes = enc.encode(name); }
-    return !!(await this.#profileOp(2, profile, [0, ...bytes]))?.done;
+    while (bytes.length > PROFILE_NAME_LEN) { name = [...name].slice(0, -1).join(''); bytes = enc.encode(name); }
+    const r = await this.#profileOp(PROFILE_OP.RENAME, profile, [0, ...bytes]); // 0: the copy source, unused here
+    return r?.done ? r.name : null;
   }
 
-  /** Copy another profile's settings into `profile` (it keeps its name). Into the live one: it takes over now. */
-  async copyProfile(from, profile, active) {
-    const r = await this.#profileOp(3, profile, [from]);
+  /**
+   * Copy another profile's settings into `profile` (it keeps its name). Into the live one (the reply
+   * says which is live): it takes over now. Resolves true once the controller stored it.
+   */
+  async copyProfile(from, profile) {
+    const r = await this.#profileOp(PROFILE_OP.COPY, profile, [from]);
     if (!r?.done) return false;
-    if (profile === active) await this.#rereadProfileBlocks();
+    if (r.profile === r.active) await this.#rereadProfileBlocks();
     return true;
   }
 

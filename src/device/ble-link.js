@@ -21,7 +21,7 @@
  * Firmware updates (boards with the HOJA bootloader; HOJA-LIB-RP2040 hal/rp2040/boot_update.h):
  *   app → controller   0x06 UPDATE_INFO    0x07 UPDATE_BEGIN [count][parts, 18 bytes each]
  *                      0x08 UPDATE_DATA [stream offset u32][data], without answers, within the window
- *                      0x09 UPDATE_FINISH  0x0A UPDATE_ABORT
+ *                      0x09 UPDATE_FINISH
  *   controller → app   0x88 UPDATE_INFO [version][flags: 1 supported, 2 battery ok][battery %][0][app offset,
  *                           radio offset, radio size, stage header offset, firmware end, radio header CRC32: u32 LE]
  *                           [window, data per write: u16 LE]
@@ -61,16 +61,24 @@
  *   'gone'        {}                the link dropped (out of range, controller off, or close())
  */
 
+import { sleep, withTimeout } from '../util/async.js';
+
 export const BLE_SERVICE = 'b4c1f0a0-3e6d-4c5a-9f2e-6d1a7c8b9e10';
 const BLE_TO_PAD = 'b4c1f0a0-3e6d-4c5a-9f2e-6d1a7c8b9e11';
 const BLE_TO_APP = 'b4c1f0a0-3e6d-4c5a-9f2e-6d1a7c8b9e12';
 
 const FRAME = {
+  // app → controller
   AUTH: 0x01,
   PAIR: 0x02,
   DATA: 0x03,
   BYE: 0x04,
   PING: 0x05,
+  UPDATE_INFO: 0x06,
+  UPDATE_BEGIN: 0x07,
+  UPDATE_DATA: 0x08,
+  UPDATE_FINISH: 0x09,
+  // controller → app
   AUTH_RESULT: 0x81,
   CODE: 0x82,
   CODE_STATE: 0x83,
@@ -78,11 +86,6 @@ const FRAME = {
   DATA_IN: 0x85,
   INPUT: 0x86,
   LINK: 0x87,
-  UPDATE_INFO: 0x06,
-  UPDATE_BEGIN: 0x07,
-  UPDATE_DATA: 0x08,
-  UPDATE_FINISH: 0x09,
-  UPDATE_ABORT: 0x0A,
   UPDATE_INFO_IN: 0x88,
   UPDATE_STATE: 0x89,
 };
@@ -92,6 +95,14 @@ export const UPDATE_STATUS = {
   OK: 0, UNSUPPORTED: 1, BAD_REQUEST: 2, NO_ROOM: 3, BATTERY_LOW: 4, OUT_OF_ORDER: 5, FAILED: 6, RESTARTING: 7,
 };
 
+/** UPDATE_INFO's payload: its length up to the last field, and the flag bits in its second byte. */
+const UPDATE_INFO_LEN = 32;
+const UPDATE_FLAG = { SUPPORTED: 0x01, BATTERY_OK: 0x02 };
+/** UPDATE_STATE's payload: [status][bytes written u32 LE]. */
+const UPDATE_STATE_LEN = 5;
+/** UPDATE_DATA's header: [type][stream offset u32 LE], then the data. */
+const UPDATE_DATA_HEADER_LEN = 5;
+
 const CODE_STATES = ['entering', 'wrong', 'timeout'];
 const TOKEN_LEN = 16;
 const TOKENS_KEY = 'hhl-config:ble-tokens';
@@ -100,8 +111,10 @@ const TOKENS_KEY = 'hhl-config:ble-tokens';
 const CONNECT_TIMEOUT_MS = 15000;
 const STEP_TIMEOUT_MS = 5000;
 const ANSWER_TIMEOUT_MS = 4000;
+/** UPDATE_FINISH is answered only after the controller checked every part it staged: a longer wait. */
+const FINISH_TIMEOUT_MS = ANSWER_TIMEOUT_MS * 3;
 /** A write the controller refused because its receive queue was full is tried again this often. A write
- *  that times out isn't: the browser's connection is stuck (seen in Bluefy), and every write queued after
+ *  that times out isn't: the connection is treated as stuck (seen in Bluefy), and every write queued after
  *  it would wait its full time too, so the link closes instead (see #writeNow). */
 const WRITE_RETRIES = 3;
 /** close() waits this long for notifications to stop and BYE to go out before it disconnects. */
@@ -121,16 +134,6 @@ const newestLink = new WeakMap();
 const openLinks = new Set();
 if (typeof window !== 'undefined') {
   window.addEventListener('pagehide', () => { for (const l of openLinks) l.sayBye(); });
-}
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-/** Reject when `promise` hasn't settled within `ms` (the error has timeout: true). */
-function withTimeout(promise, ms, what) {
-  let timer;
-  return Promise.race([promise, new Promise((_, reject) => {
-    timer = setTimeout(() => reject(Object.assign(new Error(`${what} timed out`), { timeout: true })), ms);
-  })]).finally(() => clearTimeout(timer));
 }
 
 const toHex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -322,11 +325,10 @@ export class BleLink extends EventTarget {
       return null; // Older firmware refuses the frame
     }
     const p = await withTimeout(answer, ANSWER_TIMEOUT_MS, 'Waiting for the controller').catch(() => null);
-    if (!p || p.length < 32 || !(p[1] & 1)) return null;
+    if (!p || p.length < UPDATE_INFO_LEN || !(p[1] & UPDATE_FLAG.SUPPORTED)) return null;
     const v = new DataView(p.buffer, p.byteOffset, p.byteLength);
     return {
-      batteryOk: !!(p[1] & 2),
-      batteryPercent: p[2] === 0xff ? null : p[2],
+      batteryOk: !!(p[1] & UPDATE_FLAG.BATTERY_OK),
       appOffset: v.getUint32(4, true),
       radioOffset: v.getUint32(8, true),
       radioSize: v.getUint32(12, true),
@@ -352,30 +354,38 @@ export class BleLink extends EventTarget {
 
   /** One piece of the update stream, without an answer (progress arrives as 'update-state'). */
   updateData(offset, bytes) {
-    const frame = new Uint8Array(5 + bytes.length);
+    const frame = new Uint8Array(UPDATE_DATA_HEADER_LEN + bytes.length);
     frame[0] = FRAME.UPDATE_DATA;
     new DataView(frame.buffer).setUint32(1, offset, true);
-    frame.set(bytes, 5);
+    frame.set(bytes, UPDATE_DATA_HEADER_LEN);
     return this.#write(frame, { answer: false });
   }
 
-  /** All sent and written: the controller checks it and restarts to install. Resolves { status, written }. */
+  /**
+   * All sent and written: the controller checks it and restarts to install. Resolves { status, written },
+   * or null when the link dropped once FINISH was out (the controller may be restarting); rejects when
+   * FINISH didn't go out or no answer comes within FINISH_TIMEOUT_MS.
+   */
   async updateFinish() {
-    const done = new Promise((resolve) => {
+    let stopListening;
+    const answer = new Promise((resolve) => {
       const onState = (e) => {
-        if (e.detail.status === UPDATE_STATUS.OK) return; // a progress repeat, not the answer
-        this.removeEventListener('update-state', onState);
-        resolve(e.detail);
+        if (e.detail.status !== UPDATE_STATUS.OK) resolve(e.detail); // OK: a progress repeat, not the answer
       };
+      const onGone = () => resolve(null);
       this.addEventListener('update-state', onState);
+      this.addEventListener('gone', onGone);
+      stopListening = () => {
+        this.removeEventListener('update-state', onState);
+        this.removeEventListener('gone', onGone);
+      };
     });
-    await this.#write(new Uint8Array([FRAME.UPDATE_FINISH]));
-    return withTimeout(done, ANSWER_TIMEOUT_MS * 3, 'Waiting for the controller');
-  }
-
-  /** Drop an update under way (nothing already installed changes). */
-  updateAbort() {
-    return this.#write(new Uint8Array([FRAME.UPDATE_ABORT])).catch(() => {});
+    try {
+      await this.#write(new Uint8Array([FRAME.UPDATE_FINISH]));
+      return await withTimeout(answer, FINISH_TIMEOUT_MS, 'Waiting for the controller');
+    } finally {
+      stopListening();
+    }
   }
 
   /**
@@ -440,8 +450,8 @@ export class BleLink extends EventTarget {
           : c.writeValueWithResponse ? c.writeValueWithResponse(frame) : c.writeValue(frame);
         return await withTimeout(write, STEP_TIMEOUT_MS, 'Sending over Bluetooth');
       } catch (err) {
-        // No answer at all: the connection is stuck. Closing it frees the page (the controller shows as
-        // disconnected) and lets a fresh connection start.
+        // No answer at all: the connection is treated as stuck (seen in Bluefy). Closing it frees the page
+        // (the controller shows as disconnected) and lets a fresh connection start.
         if (err?.timeout && !this.#closed) {
           console.warn('[ble] a write got no answer: closing the link');
           this.close();
@@ -485,7 +495,7 @@ export class BleLink extends EventTarget {
         this.#emit('paired', {});
         return;
       case FRAME.UPDATE_STATE:
-        if (payload.length >= 5) this.#emit('update-state', parseUpdateState(payload));
+        if (payload.length >= UPDATE_STATE_LEN) this.#emit('update-state', parseUpdateState(payload));
         return;
       case FRAME.LINK: {
         if (payload.length < 10) return;

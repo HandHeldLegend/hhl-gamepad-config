@@ -38,6 +38,7 @@
  *   openUpdateWizard({reinstall})  show the update flow for the connected controller (reinstall
  *                                  offers "Keep my settings" / "Start fresh")
  *   openInstallWizard(buildId?)    show the install flow (bare bootloader)
+ *   bleUpdateSupported()           whether the connected controller takes updates over Bluetooth
  *   checkDongleUpdate()            newest firmware for the connected dongle (null without one)
  *   openDongleUpdateWizard()       update the connected dongle
  *   formatFwVersion(n)             human-readable build stamp
@@ -71,6 +72,18 @@ const DEBUG_FW_URL = DEBUG ? params.get('fw') : null;
 
 // Step bar. "Start fresh" inserts an Erase step between Restart and Write.
 const STEP_LABELS = { prepare: N_('Prepare'), restart: N_('Restart'), erase: N_('Erase'), write: N_('Write'), done: N_('Done') };
+/** The progress line for each phase of a Bluetooth update (ble-update.js onStatus); translated where shown. */
+const BLE_PHASES = {
+  download: N_('Downloading firmware…'),
+  prepare: N_('Checking the controller…'),
+  send: N_('Sending the firmware…'),
+  reconnect: N_('The link dropped: reconnecting…'),
+  finish: N_('Checking the firmware it received…'),
+};
+/** UPDATE_INFO asks before a controller over Bluetooth counts as not taking updates that way (for now). */
+const BLE_INFO_TRIES = 2;
+/** After a Bluetooth update: the controller's beacon wait, and half again in case the install runs long. */
+const BLE_RESTART_WAIT_MS = BEACON_WAIT_MS * 1.5;
 const stepPlan = () => (st.ble ? ['prepare', 'write', 'restart', 'done']
   : st.fresh ? ['prepare', 'restart', 'erase', 'write', 'done'] : ['prepare', 'restart', 'write', 'done']);
 function currentStep() {
@@ -93,7 +106,7 @@ const st = {
   pendingLegacy: false,
   dongle: false,         // updating a dongle (reboots with 0xD1; dongle texts)
   ble: false,            // updating over Bluetooth (ble-update.js)
-  bleSupported: null,    // the controller connected over Bluetooth takes updates that way (null: not asked)
+  bleSupported: false,   // the controller connected over Bluetooth said it takes updates that way
   bootloaderChip: null,  // 'rp2040' | 'rp2350': the last bootloader seen (filters the installer's dongle builds)
   fresh: false,          // "Start fresh": erase with NUKE_BUILD before writing pendingUrl
   erased: false,         // the nuke has been written in this run
@@ -103,6 +116,7 @@ const st = {
 };
 
 let ui = null; // dialog + elements while visible
+let bleSupportAsk = null; // the UPDATE_INFO exchange under way: callers meanwhile share it
 
 // ---------------------------------------------------------------------------------------------
 // Helpers
@@ -375,13 +389,13 @@ function showUpdateAvailable(url, checksum, { legacy = false, debugForced = fals
   st.mode = 'update-available';
   const u = ensureUi();
   panels({ fresh: reinstall && !legacy && !dongle && !ble });
+  const title = updateTitle({ legacy, debugForced, reinstall });
   if (ble) {
-    paint(debugForced ? t('Update available (debug)') : reinstall ? t('Reinstall firmware') : t('Firmware update available'),
-      t('The firmware is sent over Bluetooth, then the controller restarts to install it and reconnects. Keep it nearby and switched on. Game input pauses until it’s done.'),
+    paint(title, t('The firmware is sent over Bluetooth, then the controller restarts to install it and reconnects. Keep it nearby and switched on. Game input pauses until it’s done.'),
       { icon: 'download' });
   } else if (dongle) {
     paint(t('Dongle update'), t('A newer dongle firmware is available. First the dongle restarts into update mode, then the new firmware is written. Keep it plugged in the whole time.'), { icon: 'download' });
-  } else paint(debugForced ? t('Update available (debug)') : legacy ? t('This controller needs new firmware') : reinstall ? t('Reinstall firmware') : t('Firmware update available'),
+  } else paint(title,
     legacy
       ? t('This controller is running older firmware that this app can’t configure. Update it to unlock every setting.')
       : debugForced
@@ -395,6 +409,13 @@ function showUpdateAvailable(url, checksum, { legacy = false, debugForced = fals
   updateAvailableActions();
   showUpdateNotes();
   showBackupPrompt();
+}
+
+/** The update dialog's title for a controller (a dongle has its own). */
+function updateTitle({ legacy, debugForced, reinstall }) {
+  if (debugForced) return t('Update available (debug)');
+  if (legacy) return t('This controller needs new firmware');
+  return reinstall ? t('Reinstall firmware') : t('Firmware update available');
 }
 
 /** Settings backup offer before updating (optional feature in src/sections/backup; loaded lazily). */
@@ -472,18 +493,10 @@ async function runBleUpdate() {
   paint(t('Updating over Bluetooth'), t('Sending the firmware. Keep the controller nearby and switched on.'), { icon: 'download' });
   actions({ primary: { label: t('Update over Bluetooth'), icon: 'download', enabled: false, run: () => {} }, dismiss: false });
 
-  const phases = {
-    download: t('Downloading firmware...'),
-    prepare: t('Checking the controller...'),
-    send: t('Sending the firmware...'),
-    reconnect: t('The link dropped: reconnecting...'),
-    finish: t('Checking the firmware it received...'),
-  };
-  let sent;
   try {
-    sent = await bleUpdate({
+    await bleUpdate({
       link, url: st.pendingUrl, checksum: st.pendingChecksum,
-      onStatus: ({ phase, percent }) => setUpdateStatus(phases[phase], percent ?? null, true),
+      onStatus: ({ phase, percent }) => setUpdateStatus(t(BLE_PHASES[phase]), percent ?? null, true),
     });
   } catch (err) {
     console.error('[fw] Bluetooth update failed', err);
@@ -496,15 +509,16 @@ async function runBleUpdate() {
 
   st.mode = 'ble-restarting';
   paint(t('Installing'), t('The controller restarts to install the update, then reconnects by itself. This takes a few seconds.'), { icon: 'refresh' });
-  setUpdateStatus(t('Installing...'), 100, true);
+  setUpdateStatus(t('Installing…'), 100, true);
+  let reconnectFailed = false;
   try {
-    // It opens its beacon once it's back; a little past that, in case the install ran long
-    await session.connectBluetooth(await reopenBluetooth(sent.bt, BEACON_WAIT_MS * 1.5));
+    // It opens its beacon once it's back
+    await session.connectBluetooth(await reopenBluetooth(link.bluetoothDevice, BLE_RESTART_WAIT_MS));
   } catch (err) {
     console.warn('[fw] reconnect after the update failed', err);
-    st.reconnectFailed = true;
+    reconnectFailed = true;
   }
-  showUpdateComplete();
+  showUpdateComplete({ reconnectFailed });
 }
 
 /** How long to wait for an automatic start before asking the user to press Update. */
@@ -549,12 +563,13 @@ function showManualUf2Step(uf2Url) {
   actions({ primary: { label: t('Download UF2'), icon: 'download', run: completeUf2Step } });
 }
 
-function showUpdateComplete() {
-  const dongle = st.dongle;
-  const ble = st.ble;
+/**
+ * The last step. reconnectFailed: after a Bluetooth update, the controller didn't come back over
+ * Bluetooth by itself (it restarted to install; the owner connects it again).
+ */
+function showUpdateComplete({ reconnectFailed = false } = {}) {
+  const { dongle, ble } = st;
   const latest = st.status.latest;
-  const reconnectFailed = st.reconnectFailed;
-  st.reconnectFailed = false;
   st.mode = 'update-complete';
   st.dongle = false;
   st.pendingUrl = undefined;
@@ -564,22 +579,28 @@ function showUpdateComplete() {
   st.manualUrl = undefined;
   const u = ensureUi();
   panels();
-  if (ble) {
-    // Back over Bluetooth: the build it reports says whether the install took
-    const fw = session.connected ? session.info?.fwVersion >>> 0 : null;
-    const stale = fw != null && latest != null && fw < latest;
-    paint(stale ? t('The update didn’t install') : t('Update complete'),
-      reconnectFailed ? t('The update was sent and the controller restarted to install it. Press Start + Select on it to connect again.')
-        : stale ? t('The controller came back with its previous firmware. Try again, or update it with a USB cable.')
-          : t('The update is installed and the controller is connected again.'),
-      { tone: stale ? 'red' : 'green', icon: stale ? 'download' : 'check' });
-    setUpdateStatus(t('Done'), 100, false);
-    u.progress.busy(false);
-    actions({ primary: { label: t('Done'), icon: 'check', run: () => hide() } });
-    setStatus({ state: 'unknown' });
-    if (session.connected) checkForFirmwareUpdate();
-    return;
-  }
+  if (ble) showBleComplete(latest, reconnectFailed);
+  else showCableComplete(u, dongle);
+  u.progress.busy(false);
+  setStatus({ state: 'unknown' });
+  if (ble && session.connected) checkForFirmwareUpdate();
+}
+
+/** Back over Bluetooth: the build it reports says whether the install took. */
+function showBleComplete(latest, reconnectFailed) {
+  const fw = session.connected ? session.info?.fwVersion >>> 0 : null;
+  const stale = fw != null && latest != null && fw < latest;
+  paint(stale ? t('The update didn’t install') : t('Update complete'),
+    reconnectFailed ? t('The update was sent and the controller restarted to install it. Press Start + Select on it to connect again.')
+      : stale ? t('The controller came back with its previous firmware. Try again, or update it with a USB cable.')
+        : t('The update is installed and the controller is connected again.'),
+    { tone: stale ? 'red' : 'green', icon: stale ? 'download' : 'check' });
+  setUpdateStatus(t('Done'), 100, false);
+  actions({ primary: { label: t('Done'), icon: 'check', run: () => hide() } });
+}
+
+/** Written over USB: the controller (or dongle) restarts with it, and the owner connects it again. */
+function showCableComplete(u, dongle) {
   const text = dongle
     ? t('The dongle firmware was written. Give the dongle a moment to restart, then press Connect.')
     : st.fresh
@@ -587,12 +608,10 @@ function showUpdateComplete() {
       : t('Firmware was written successfully. Give the controller a moment to restart, then press Connect.');
   paint(t('Update complete'), text, { tone: 'green', icon: 'check' });
   setUpdateStatus(t('Done: connect when ready'), 100, true);
-  u.progress.busy(false);
   import('../sections/backup/card.js').then(({ backedUpThisSession }) => {
     if (ui === u && !dongle && backedUpThisSession()) replace(u.backup, callout({ tone: 'blue', icon: 'save', text: t('Settings reset by the update? Restore your backup from the Firmware page once connected.') }));
   }).catch(() => {});
   actions({ primary: { label: t('Connect'), icon: 'usb', run: async () => { hide(); const { connectController } = await import('../app/shell.js'); connectController({ cable: true }); } } });
-  setStatus({ state: 'unknown' });
 }
 
 /** preselect: a build id, as the HOJA update mode names it (updateModeBuildId) or the caller chose. */
@@ -881,13 +900,11 @@ export const CABLE_ONLY_TEXT = N_('Connect the controller with a USB cable to up
 
 /** "An update is available…", translated: on iPhone / iPad, where USB needs a computer, it says so. */
 export function cableUpdateText() {
-  if (session.caps.viaBluetooth && st.bleSupported) return t('An update is available. It installs over Bluetooth.');
   return isIOS() ? t('An update is available. Install it from a computer with Chrome or Edge and a USB cable.') : t(CABLE_UPDATE_TEXT);
 }
 
 /** Why updates aren't offered through the dongle or over Bluetooth, translated (for callouts). */
 export function cableOnlyNote() {
-  if (session.caps.viaBluetooth && st.bleSupported) return t('Updates install over Bluetooth on this controller, or with a USB cable.');
   if (isIOS()) return t('Updates need a USB cable and a computer with Chrome or Edge.');
   return session.caps.viaBluetooth
     ? t('Updates need a USB cable. They can’t be installed over Bluetooth.')
@@ -895,29 +912,44 @@ export function cableOnlyNote() {
 }
 
 /**
- * Over Bluetooth: whether this controller takes updates that way. A yes holds for the connection; no
- * answer is asked again, now and next time (older firmware could drop its reply while the settings were
- * still being read).
+ * Whether the connected controller can be updated without a cable: over Bluetooth, when it says it takes
+ * updates that way. A yes holds for the connection; no answer is asked again, now and next time (older
+ * firmware could drop its reply while the settings were still being read). Callers while it asks share
+ * one exchange.
  */
-async function bleSupported() {
-  if (!session.caps.viaBluetooth) return false;
-  if (st.bleSupported) return true;
-  for (let attempt = 0; attempt < 2 && !st.bleSupported; attempt++) {
-    st.bleSupported = !!(await bleUpdateInfo(device.bleLink));
+export function bleUpdateSupported() {
+  if (!session.caps.viaBluetooth) return Promise.resolve(false);
+  if (st.bleSupported) return Promise.resolve(true);
+  if (!bleSupportAsk) {
+    const ask = askBleSupport(device.bleLink);
+    const settled = () => { if (bleSupportAsk === ask) bleSupportAsk = null; };
+    ask.then(settled, settled);
+    bleSupportAsk = ask;
   }
-  return st.bleSupported;
+  return bleSupportAsk;
 }
 
-/** For pages: whether the connected controller can be updated without a cable (over Bluetooth). */
-export async function wirelessUpdateSupported() {
-  return session.caps.noCable && await bleSupported();
+/** UPDATE_INFO over `link`, up to BLE_INFO_TRIES times. A yes is kept while `link` is still the connection. */
+async function askBleSupport(link) {
+  for (let attempt = 0; attempt < BLE_INFO_TRIES; attempt++) {
+    if (!(await bleUpdateInfo(link))) continue;
+    if (link === device.bleLink) st.bleSupported = true;
+    return true;
+  }
+  return false;
+}
+
+/** On connect: an update to offer over Bluetooth (one to install, on a controller that takes it that way). */
+async function offersBleUpdate(info, available) {
+  const something = available || debugForce || DEBUG_FW_URL;
+  if (!something || !(DEBUG_FW_URL || info.firmwareUrl)) return false;
+  return bleUpdateSupported();
 }
 
 async function onControllerConnect() {
   if (quiet) return;
   // Back after a Bluetooth update: that flow reports the result itself
   if (st.mode === 'ble-restarting') return;
-  st.bleSupported = null;
   if (isDemo()) { setStatus({ state: 'current', latest: null }); if (st.mode !== 'hidden') hide(); return; }
   const info = session.info;
   let shown = false;
@@ -927,8 +959,7 @@ async function onControllerConnect() {
     if (!latest) setStatus({ state: navigator.onLine === false ? 'offline' : 'unknown', latest: null });
     const available = latest && latest.version > (info.fwVersion >>> 0);
     if (latest) setStatus({ state: available ? 'available' : 'current', latest: latest.version, url: info.firmwareUrl, checksum: latest.checksum });
-    if (session.caps.noCable && (available || debugForce || DEBUG_FW_URL) && (DEBUG_FW_URL || info.firmwareUrl) &&
-        await bleSupported()) {
+    if (await offersBleUpdate(info, available)) {
       showUpdateAvailable(DEBUG_FW_URL || info.firmwareUrl, DEBUG_FW_URL ? null : latest?.checksum ?? null,
         { ble: true, debugForced: !available });
       shown = true;
@@ -948,6 +979,9 @@ async function onControllerConnect() {
 }
 
 function onControllerDisconnect() {
+  // Whether it takes updates over Bluetooth is asked again on the next connection
+  st.bleSupported = false;
+  bleSupportAsk = null;
   if (st.mode === 'update-available') hide();
   if (!ACTIVE.includes(st.mode)) setStatus({ state: 'unknown', latest: null });
 }
@@ -988,7 +1022,7 @@ export function initFirmware() {
  */
 export async function openUpdateWizard({ reinstall = false } = {}) {
   if (!session.connected) { toast(t('Connect your controller first.'), { tone: 'yellow' }); return; }
-  const ble = session.caps.noCable && await bleSupported();
+  const ble = await bleUpdateSupported();
   if (session.caps.noCable && !ble) { toast(t(CABLE_ONLY_TEXT), { tone: 'blue', icon: 'usb', timeout: 6000 }); return; }
   const latest = DEBUG_FW_URL ? null : await fetchManifest(session.info.manifestUrl);
   const url = DEBUG_FW_URL || session.info.firmwareUrl;

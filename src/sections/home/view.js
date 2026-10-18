@@ -8,7 +8,7 @@ import { button, card, callout, badge, face, kv } from '../../ui/controls.js';
 import { SECTIONS } from '../registry.js';
 import { connectController, unavailableReason, currentModeLabel, betaBadge } from '../../app/shell.js';
 import { startDemo, isDemo } from '../../device/mock.js';
-import { firmwareStatus, openUpdateWizard, formatFwVersion, cableUpdateText } from '../../firmware/updater.js';
+import { firmwareStatus, openUpdateWizard, formatFwVersion, cableUpdateText, bleUpdateSupported } from '../../firmware/updater.js';
 import { dongleCard } from '../wireless/dongle.js';
 import { quickHub } from './hub.js';
 import { t } from '../../i18n/index.js';
@@ -66,12 +66,29 @@ function connectTips() {
       h('li', fillNodes(t('Blank board or bricked? Hold BOOTSEL while plugging in, then open {firmware} to install HOJA.'), { firmware: h('a', { href: '#/firmware' }, t('Firmware')) }))));
 }
 
+const updateButton = () => button({ label: t('Update firmware'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() });
+
+/**
+ * Without a USB cable, where an update is available: Update firmware and a note that it goes over Bluetooth
+ * when the controller takes it that way, else the note that it needs the cable. Fills `note` once known.
+ */
+function wirelessUpdate(note, updateBtn) {
+  const cableNote = () => note.replaceChildren(callout({ tone: 'blue', icon: 'usb', text: cableUpdateText() }));
+  bleUpdateSupported().then((ok) => {
+    if (!ok) { cableNote(); return; }
+    updateBtn.replaceWith(updateButton());
+    note.replaceChildren(callout({ tone: 'blue', icon: 'download', text: t('An update is available. It installs over Bluetooth.') }));
+  }, cableNote);
+}
+
 function deviceCard(session) {
   const fw = firmwareStatus();
-  const { viaDongle, viaBluetooth, noCable } = session.caps; // no updates without a USB cable
+  const { viaDongle, viaBluetooth, noCable } = session.caps; // without a USB cable: over Bluetooth, or no update
   const updateBtn = fw.state === 'available' && !noCable
-    ? button({ label: t('Update firmware'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() })
+    ? updateButton()
     : button({ label: t('Firmware'), icon: 'firmware', variant: 'tonal', onClick: () => { location.hash = '#/firmware'; } });
+  const updateNote = noCable && fw.state === 'available' ? h('div') : null;
+  if (updateNote) wirelessUpdate(updateNote, updateBtn);
   const atts = Object.entries(session.attention);
   return card({ class: 'device-card' },
     h('div.device-head',
@@ -92,7 +109,7 @@ function deviceCard(session) {
     ]),
     viaDongle && callout({ tone: 'blue', icon: 'link', text: `${t('Connected through the dongle.')} ` },
       h('a', { href: '#/wireless' }, t('Dongle details'), icon('chevron-right'))),
-    noCable && fw.state === 'available' && callout({ tone: 'blue', icon: 'usb', text: cableUpdateText() }),
+    updateNote,
     atts.map(([id, a]) => callout({ tone: a.level === 'warn' ? 'yellow' : 'blue', text: `${t(a.text)} ` },
       h('a', { href: `#/${id}` }, t('Open'), icon('chevron-right')))));
 }

@@ -13,10 +13,11 @@ import { icon } from '../../ui/icons.js';
 import { card, button, asyncButton, callout, kv, badge } from '../../ui/controls.js';
 import { confirmDialog, toast } from '../../ui/overlay.js';
 import { connectController, connectWithUsbChooser } from '../../app/shell.js';
+import { isIOS } from '../../app/platform.js';
 import { listBuilds } from '../../firmware/builds.js';
 import {
   firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion, cableUpdateText, cableOnlyNote,
-  wirelessUpdateSupported,
+  bleUpdateSupported,
   rebootToBootloaderOnly,
 } from '../../firmware/updater.js';
 import { t, N_ } from '../../i18n/index.js';
@@ -49,10 +50,9 @@ function controllerCard(session) {
   // controller takes updates over Bluetooth: then the buttons are the same as on a cable.
   const cableNote = session.caps.noCable ? h('div') : null;
   if (cableNote) {
-    wirelessUpdateSupported().then((ok) => {
-      if (ok) actions.prepend(updateButton(s.state));
-      else cableNote.replaceChildren(callout({ tone: 'blue', icon: 'usb', text: s.state === 'available' ? cableUpdateText() : cableOnlyNote() }));
-    }).catch(() => {});
+    const showCableNote = () => cableNote.replaceChildren(callout({ tone: 'blue', icon: 'usb',
+      text: s.state === 'available' ? cableUpdateText() : cableOnlyNote() }));
+    bleUpdateSupported().then((ok) => (ok ? actions.prepend(updateButton(s.state)) : showCableNote()), showCableNote);
   }
   return card({ title: session.info.name, icon: 'firmware', tone: 'blue', subtitle: t('Firmware on this controller'), actions: badge(t(label), tone) },
     kv([
@@ -140,12 +140,17 @@ function downloadsList() {
   return el;
 }
 
+/** Without a cable: the update mode is reached over USB only, whatever the controller takes updates over. */
+function byHandCableNote() {
+  return isIOS() ? cableOnlyNote() : t('Needs a USB cable: the update mode works over USB only.');
+}
+
 function recoveryCard(session) {
   const body = h('div.stack');
   const render = () => body.replaceChildren(
     h('div.fw-recovery-row',
       h('div', h('div.field-label', t('Install firmware by hand')),
-        h('div.field-desc', session.caps.noCable ? cableOnlyNote() : t('Restarts the connected controller in update mode, to install firmware by hand.'))),
+        h('div.field-desc', session.caps.noCable ? byHandCableNote() : t('Restarts the connected controller in update mode, to install firmware by hand.'))),
       rebootButton(session)),
     h('div.fw-recovery-row',
       h('div', h('div.field-label', t('Stuck in the bootloader?')),

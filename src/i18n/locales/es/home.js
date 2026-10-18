@@ -23,7 +23,6 @@ export default {
   "Send inputs to game": "Enviar entradas al juego",
   "The controller didn’t take the change. Try again.": "El control no aceptó el cambio. Inténtalo de nuevo.",
   "Tournament lock": "Bloqueo de torneo",
-  "Off: the game sees a controller at rest while you try things here. It turns back on by itself when the app disconnects.": "Desactivado: el juego ve un control en reposo mientras pruebas cosas aquí. Se vuelve a activar solo cuando la app se desconecta.",
   "Blocks the d-pad, Home, Start / Plus, Select / Minus and Share in the game.": "Bloquea la cruceta, Home, Start / Plus, Select / Minus y Share en el juego.",
   "Quick settings": "Ajustes rápidos",
   "Bluetooth · {ms} ms": "Bluetooth · {ms} ms",
@@ -50,4 +49,5 @@ export default {
   "Copy a profile into {name}": "Copiar un perfil en {name}",
   "Its settings replace this profile’s, and go live now. The name stays.": "Sus ajustes reemplazan los de este perfil y se aplican ahora. El nombre se mantiene.",
   "{name} has {from}’s settings now.": "{name} ahora tiene los ajustes de {from}.",
+  "An update is available. It installs over Bluetooth.": "Hay una actualización disponible. Se instala por Bluetooth.",
 };
