@@ -20,6 +20,17 @@ const R = 2048;
 /** Minimum time between screen-reader position announcements (when the user turned them on). */
 const ANNOUNCE_MS = 1000;
 
+// Markers, px. The output is a dot (a share of the canvas's half size, at least DOT_MIN_PX); the input is a
+// ring around its position, RING_GAP_PX past the dot's radius and RING_STROKE_PX wide.
+const DOT_MIN_PX = 5;
+const DOT_SHARE = 0.035;
+const RING_GAP_PX = 3.5;
+const RING_STROKE_PX = 2.5;
+/** Room between full travel and the input ring at the rim, px, to show a little overshoot. */
+const OVERSHOOT_PX = 6;
+/** A marker pinned at the edge keeps this much clear of the canvas edge, px. */
+const EDGE_CLEAR_PX = 1;
+
 /** Output readout modes (hoja2 multi-position "output-visualizer-type"). Labels are format names (not translated). */
 const MODES = [
   { value: 'full', label: 'Full', tip: N_('HOJA’s internal range: −2048 to 2047') },
@@ -230,14 +241,15 @@ export function stickVisual(o = {}) {
     const half = Math.min(w, hgt) / 2;
     // The input ring (the biggest marker) must fit whole on the rim: the margin is its outer radius
     // plus room to show a little overshoot past full travel
-    const dotR = Math.max(5, half * 0.035);
-    const ringOuter = dotR + 3.5 + 1.25;
-    const rad = half - ringOuter - 6;
+    const dotR = Math.max(DOT_MIN_PX, half * DOT_SHARE);
+    const ringR = dotR + RING_GAP_PX;
+    const ringOuter = ringR + RING_STROKE_PX / 2;
+    const rad = half - ringOuter - OVERSHOOT_PX;
     if (rad < 8) return; // hidden (e.g. the inactive column of a left/right split on a narrow page)
     const toPx = (x, y) => [cx + (x / R) * rad, cy - (y / R) * rad];
     // Markers past full travel stay on the canvas (pinned at its edge, in the same direction); the
     // readout keeps the exact values
-    const reach = half - ringOuter - 1;
+    const reach = half - ringOuter - EDGE_CLEAR_PX;
     const pin = ([px, py]) => {
       const d = Math.hypot(px - cx, py - cy);
       return d > reach ? [cx + ((px - cx) * reach) / d, cy + ((py - cy) * reach) / d] : [px, py];
@@ -336,8 +348,8 @@ export function stickVisual(o = {}) {
 
     // Input: a ring, so it stays visible when the output dot sits on top of it.
     ctx.beginPath();
-    ctx.arc(ix, iy, dotR + 3.5, 0, Math.PI * 2);
-    ctx.lineWidth = 2.5;
+    ctx.arc(ix, iy, ringR, 0, Math.PI * 2);
+    ctx.lineWidth = RING_STROKE_PX;
     ctx.strokeStyle = withAlpha(c.red, 0.9);
     ctx.stroke();
     ctx.beginPath();
