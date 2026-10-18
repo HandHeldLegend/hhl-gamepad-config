@@ -93,22 +93,30 @@ export function quickHub(session, device) {
   // Profiles: null until the controller answered (and for good when its firmware has none)
   let profiles = null;
   const profileName = (n) => profiles?.names[n] || t('Profile {n}', { n: n + 1 });
-  const profilePick = h('span');
+  const profilePick = h('div', { role: 'group', 'aria-label': t('Profile'),
+    style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', width: '100%' } });
   const renameBtn = button({ label: t('Rename'), variant: 'ghost', size: 'sm', onClick: () => renameProfile() });
   const copyBtn = button({ label: t('Copy from…'), icon: 'copy', variant: 'ghost', size: 'sm', onClick: () => copyProfile() });
   const profileField = field({ label: t('Profile'), stacked: true,
-    control: h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' } },
-      profilePick, renameBtn, copyBtn),
+    control: h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start', width: '100%' } },
+      profilePick,
+      h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } }, renameBtn, copyBtn)),
     description: t('Stick notches and angles, deadzones and curves, remaps, RGB, motion and rumble strength belong to the profile. Calibration, pairings and your name stay the same in every profile.') });
   profileField.hidden = true;
 
   function paintProfiles(busy = false) {
     profileField.hidden = !profiles;
     if (!profiles) return;
-    const pick = select({ ariaLabel: t('Profile'), value: profiles.active, disabled: busy,
-      options: profiles.names.map((_, n) => ({ value: n, label: profileName(n) })),
-      onChange: (n) => switchProfile(n) });
-    profilePick.replaceChildren(pick);
+    // One button per profile, all in view (two to a row on a phone)
+    profilePick.replaceChildren(...profiles.names.map((_, n) => {
+      const b = button({ label: profileName(n), variant: n === profiles.active ? 'primary' : 'tonal', disabled: busy,
+        onClick: () => switchProfile(n) });
+      b.setAttribute('aria-pressed', String(n === profiles.active));
+      b.style.minWidth = '0';
+      b.querySelector('.btn-label')?.style.setProperty('overflow', 'hidden');
+      b.querySelector('.btn-label')?.style.setProperty('text-overflow', 'ellipsis');
+      return b;
+    }));
     renameBtn.disabled = copyBtn.disabled = busy;
   }
 
