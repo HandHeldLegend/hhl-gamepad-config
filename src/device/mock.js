@@ -166,6 +166,12 @@ export async function startDemo() {
     return { status: true, data: null };
   });
   patch('rebootToBootloader', async () => { console.info('[demo] reboot to bootloader (ignored)'); return true; });
+  const demoProfiles = { active: 0, names: ['', '', '', ''] };
+  const later = (v) => new Promise((r) => setTimeout(() => r(v), 150));
+  patch('readProfiles', async () => later({ active: demoProfiles.active, names: [...demoProfiles.names] }));
+  patch('switchProfile', async (n) => { demoProfiles.active = n; return later(true); });
+  patch('renameProfile', async (n, name) => { demoProfiles.names[n] = name; return later(true); });
+  patch('copyProfile', async () => later(true));
   patch('setInputMode', async (joysticks) => { streamKind = joysticks ? 'joysticks' : 'raw'; });
   patch('setFocusedInput', async (code) => { focused = code; });
   patch('disconnect', async () => { stopDemo(); return true; });
@@ -187,7 +193,8 @@ export function stopDemo() {
   active = false;
   clearInterval(timer);
   for (const k of ['isConnected', 'connect', 'open', 'requestBlock', 'requestStatic', 'readAllConfig', 'readAllStatic', 'sendBlock',
-    'sendReport', 'save', 'sendConfigCommand', 'rebootToBootloader', 'setInputMode', 'setFocusedInput', 'disconnect']) {
+    'sendReport', 'save', 'sendConfigCommand', 'rebootToBootloader', 'setInputMode', 'setFocusedInput', 'disconnect',
+    'readProfiles', 'switchProfile', 'renameProfile', 'copyProfile']) {
     delete device[k];
   }
   device.dispatchEvent(new CustomEvent('disconnect', { detail: {} }));

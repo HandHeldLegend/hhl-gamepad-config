@@ -10,12 +10,14 @@
  *                  USB (live-status.js): the game is on this computer then
  *   Tournament lock       TOURNEY, the same lock as the button combo on the controller; the buttons it
  *                  blocks are drawn with this controller's own glyphs
+ *   Profile        which of the controller's four settings profiles is live, renaming and copying them
+ *                  (hoja-device.js, 0x07). Only the app switches them. Hidden when the firmware has none
  *
  * What needs STATUS stays hidden until the controller answered it (older firmware never does).
  */
 import { h, fillNodes } from '../../ui/dom.js';
-import { card, field, toggle } from '../../ui/controls.js';
-import { toast } from '../../ui/overlay.js';
+import { button, card, field, select, textInput, toggle } from '../../ui/controls.js';
+import { openDialog, toast } from '../../ui/overlay.js';
 import { onInputReport } from '../../device/reports.js';
 import { liveStatus } from '../../device/live-status.js';
 import { t, fmt } from '../../i18n/index.js';
@@ -88,12 +90,87 @@ export function quickHub(session, device) {
   const tourneyField = field({ label: t('Tournament lock'), control: tourney,
     description: tourneyText(session) });
 
-  // Profiles: a quick profile switcher belongs here, under the two switches, once the firmware can
-  // change profiles live (no UI for it yet).
+  // Profiles: null until the controller answered (and for good when its firmware has none)
+  let profiles = null;
+  const profileName = (n) => profiles?.names[n] || t('Profile {n}', { n: n + 1 });
+  const profilePick = h('span');
+  const renameBtn = button({ label: t('Rename'), variant: 'ghost', size: 'sm', onClick: () => renameProfile() });
+  const copyBtn = button({ label: t('Copy from…'), icon: 'copy', variant: 'ghost', size: 'sm', onClick: () => copyProfile() });
+  const profileField = field({ label: t('Profile'), stacked: true,
+    control: h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' } },
+      profilePick, renameBtn, copyBtn),
+    description: t('Stick notches and angles, deadzones and curves, remaps, RGB, motion and rumble strength belong to the profile. Calibration, pairings and your name stay the same in every profile.') });
+  profileField.hidden = true;
+
+  function paintProfiles(busy = false) {
+    profileField.hidden = !profiles;
+    if (!profiles) return;
+    const pick = select({ ariaLabel: t('Profile'), value: profiles.active, disabled: busy,
+      options: profiles.names.map((_, n) => ({ value: n, label: profileName(n) })),
+      onChange: (n) => switchProfile(n) });
+    profilePick.replaceChildren(pick);
+    renameBtn.disabled = copyBtn.disabled = busy;
+  }
+
+  async function switchProfile(n) {
+    if (n === profiles.active) return;
+    paintProfiles(true);
+    // The controller stores what's live with the old profile as it switches: save it the usual way
+    // first, so nothing reads as unsaved afterwards
+    let ok = !session.dirty.size || await session.save().catch(() => false);
+    ok = ok && await device.switchProfile(n).catch(() => false);
+    if (ok) profiles.active = n;
+    paintProfiles();
+    if (ok) toast(t('{name} is live.', { name: profileName(n) }), { tone: 'green' });
+    else toast(t('The controller didn’t take the change. Try again.'), { tone: 'red' });
+  }
+
+  async function renameProfile() {
+    const n = profiles.active;
+    const input = textInput({ value: profiles.names[n], placeholder: t('Profile {n}', { n: n + 1 }),
+      maxLength: 24, ariaLabel: t('Profile name') });
+    const dlg = openDialog({ title: t('Rename profile'), icon: 'sliders', body: input,
+      actions: [
+        { label: t('Cancel'), variant: 'ghost', value: null },
+        { label: t('Rename'), variant: 'primary', onClick: () => input.value.trim() },
+      ] });
+    input.focus();
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') dlg.close(input.value.trim()); });
+    const name = await dlg.result;
+    if (name == null || name === profiles.names[n]) return;
+    paintProfiles(true);
+    const ok = await device.renameProfile(n, name).catch(() => false);
+    if (ok) profiles.names[n] = name;
+    paintProfiles();
+    if (!ok) toast(t('The controller didn’t take the change. Try again.'), { tone: 'red' });
+  }
+
+  async function copyProfile() {
+    const to = profiles.active;
+    const others = profiles.names.map((_, n) => n).filter((n) => n !== to);
+    const from = select({ ariaLabel: t('Copy from'), value: others[0],
+      options: others.map((n) => ({ value: n, label: profileName(n) })) });
+    const dlg = openDialog({ title: t('Copy a profile into {name}', { name: profileName(to) }), icon: 'copy',
+      body: [h('p.muted', t('Its settings replace this profile’s, and go live now. The name stays.')), from],
+      actions: [
+        { label: t('Cancel'), variant: 'ghost', value: null },
+        { label: t('Copy'), variant: 'primary', onClick: () => from.value },
+      ] });
+    const source = await dlg.result;
+    if (source == null) return;
+    paintProfiles(true);
+    let ok = !session.dirty.size || await session.save().catch(() => false);
+    ok = ok && await device.copyProfile(source, to, to).catch(() => false);
+    paintProfiles();
+    if (ok) toast(t('{name} has {from}’s settings now.', { name: profileName(to), from: profileName(source) }), { tone: 'green' });
+    else toast(t('The controller didn’t take the change. Try again.'), { tone: 'red' });
+  }
+
+  device.readProfiles?.().then((p) => { profiles = p; paintProfiles(); }).catch(() => {});
 
   const el = card({ title: t('Quick settings'), icon: 'sliders', tone: 'lavender', class: 'hub-card' },
     h('div.hub-stats', battery, connection, game, rate),
-    sendField, tourneyField);
+    sendField, tourneyField, profileField);
 
   function connectionText() {
     if (session.caps.viaDongle) return t('Dongle');

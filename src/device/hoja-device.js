@@ -18,6 +18,10 @@
  *                            Each CRC32 covers exactly the bytes a read of that block sends; older firmware
  *                            doesn't answer. Connecting reads only blocks whose CRC32 differs from the copy
  *                            cached in this browser (block-cache.js) and uses the cached bytes for the rest.
+ *   0x07 PROFILE             out: [7, op, profile, from (copy) | name 24 (rename)]
+ *                            in: [7, op, done, count, active, profile, name 24]. op 0 info, 1 switch, 2 rename,
+ *                            3 copy (from another profile into this one). Count 0, or no answer: no profiles
+ *                            (HOJA-LIB-RP2040 utilities/profiles.h). Switching stores everything live first.
  *   0xFE / 0xFF              in: live input reports (joystick / raw hover)
  *   0xFA                     in: analog (snapback) dump
  *   0xAF                     in/out: legacy firmware version probe
@@ -170,6 +174,7 @@ const REPORT = {
   COMMAND: 4,
   INPUT_MODE: 5,
   FINGERPRINTS: 6,
+  PROFILE: 7,
   SNAPBACK_DUMP: 250,
   INPUT_JOYSTICKS: 254,
   INPUT_RAW: 255,
@@ -256,6 +261,7 @@ export class HojaDevice extends EventTarget {
   #cmd = { block: -1, command: -1, done: false, ok: false, data: null };
   #legacy = { done: false, isLegacy: false };
   #dongleReply = null;
+  #profileReply = null;
   #fingerprints = null;    // { config: [crc…] | null, static: [crc…] | null } while asking
   #cacheKey = null;        // this controller's entry in the block cache, once known
 
@@ -629,6 +635,7 @@ export class HojaDevice extends EventTarget {
         case REPORT.WRITE_CONFIG: return; // write acks are not awaited (matches hoja2)
         case REPORT.COMMAND: return this.#onCommand(view);
         case REPORT.FINGERPRINTS: return this.#onFingerprints(view);
+        case REPORT.PROFILE: return this.#onProfile(view);
         case REPORT.INPUT_JOYSTICKS:
         case REPORT.INPUT_RAW: return this.#emit('input', view);
         case REPORT.SNAPBACK_DUMP: return this.#emit('snapback', view);
@@ -710,6 +717,18 @@ export class HojaDevice extends EventTarget {
     await this.#out([REPORT.DONGLE_INFO]);
     await waitFor(() => this.#dongleReply.done, timeout);
     return this.#dongleReply.info;
+  }
+
+  #onProfile(view) {
+    const r = this.#profileReply;
+    if (!r || view.byteLength < 30 || view.getUint8(1) !== r.op) return;
+    const bytes = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+    const name = bytes.subarray(6, 30);
+    const end = name.indexOf(0);
+    r.reply = {
+      done: !!bytes[2], count: bytes[3], active: bytes[4], profile: bytes[5],
+      name: new TextDecoder().decode(end < 0 ? name : name.subarray(0, end)),
+    };
   }
 
   #onDongleInfo(view) {
@@ -838,6 +857,72 @@ export class HojaDevice extends EventTarget {
   async save() {
     const { status } = await this.sendConfigCommand('gamepad', 'SAVE_ALL');
     return status;
+  }
+
+  // ---------------------------------------------------------------------------------------
+  // Settings profiles (0x07)
+  // ---------------------------------------------------------------------------------------
+
+  /** One profile exchange. Resolves the reply, or null when nothing answered. */
+  #profileOp(op, profile, extra = [], timeout = 2000) {
+    return this.#exclusive(async () => {
+      const r = { op, reply: null };
+      this.#profileReply = r;
+      await this.#out([REPORT.PROFILE, op, profile, ...extra]);
+      await waitFor(() => r.reply, timeout);
+      this.#profileReply = null;
+      return r.reply;
+    });
+  }
+
+  /**
+   * The controller's profiles: { active, names: [4 strings, '' unnamed] }, or null (firmware without
+   * them never answers).
+   */
+  async readProfiles() {
+    const first = await this.#profileOp(0, 0, [], this.#ble ? FINGERPRINT_WAIT_BLE_MS : FINGERPRINT_WAIT_USB_MS);
+    if (!first?.count) return null;
+    const names = [first.name];
+    for (let n = 1; n < first.count; n++) {
+      const r = await this.#profileOp(0, n);
+      if (!r) return null;
+      names.push(r.name);
+    }
+    return { active: first.active, names };
+  }
+
+  /** The profile settings blocks: what a switch or a copy into the live profile changes. */
+  static PROFILE_BLOCKS = ['analog', 'imu', 'haptic', 'rgb', 'input'];
+
+  /** Re-read the profile's blocks after the live one changed (missing ones stay missing). */
+  async #rereadProfileBlocks() {
+    for (const key of HojaDevice.PROFILE_BLOCKS) {
+      if (!this.missing.config.includes(key)) await this.requestBlock(key);
+    }
+  }
+
+  /** Switch profiles. The controller stores what's live as the old one first. Resolves true once it did. */
+  async switchProfile(profile) {
+    const r = await this.#profileOp(1, profile);
+    if (!r?.done) return false;
+    await this.#rereadProfileBlocks();
+    return true;
+  }
+
+  /** A profile's name, at most 24 bytes of UTF-8 (cut at a whole character); '' clears it. */
+  async renameProfile(profile, name) {
+    const enc = new TextEncoder();
+    let bytes = enc.encode(name);
+    while (bytes.length > 24) { name = [...name].slice(0, -1).join(''); bytes = enc.encode(name); }
+    return !!(await this.#profileOp(2, profile, [0, ...bytes]))?.done;
+  }
+
+  /** Copy another profile's settings into `profile` (it keeps its name). Into the live one: it takes over now. */
+  async copyProfile(from, profile, active) {
+    const r = await this.#profileOp(3, profile, [from]);
+    if (!r?.done) return false;
+    if (profile === active) await this.#rereadProfileBlocks();
+    return true;
   }
 
   /** Reboot into the RP2040/RP2350 bootloader. Does not wait for an ACK (the device drops off USB). */
