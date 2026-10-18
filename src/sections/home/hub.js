@@ -49,6 +49,10 @@ function gameLink(transport) {
   return { 3: 'USB', 4: t('Bluetooth'), 5: t('Dongle') }[transport] ?? '';
 }
 
+/** The last profile list each controller sent (by transport id): Home draws it at once, so the page
+ *  doesn't grow under a restored scroll position while the controller answers again. */
+const profilesSeen = new Map();
+
 /** One label + value in the strip; set(value) changes the value, hide(bool) the whole item. */
 function stat(label) {
   const value = h('span.hub-value', '–');
@@ -91,7 +95,8 @@ export function quickHub(session, device) {
     description: tourneyText(session) });
 
   // Profiles: null until the controller answered (and for good when its firmware has none)
-  let profiles = null;
+  const profilesKey = device.transportId ?? 'this';
+  let profiles = profilesSeen.get(profilesKey) ?? null;
   const profileName = (n) => profiles?.names[n] || t('Profile {n}', { n: n + 1 });
   const profilePick = h('div', { role: 'group', 'aria-label': t('Profile'),
     style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', width: '100%' } });
@@ -174,7 +179,12 @@ export function quickHub(session, device) {
     else toast(t('The controller didn’t take the change. Try again.'), { tone: 'red' });
   }
 
-  device.readProfiles?.().then((p) => { profiles = p; paintProfiles(); }).catch(() => {});
+  paintProfiles();
+  device.readProfiles?.().then((p) => {
+    profiles = p;
+    profilesSeen.set(profilesKey, p);
+    paintProfiles();
+  }).catch(() => {});
 
   const el = card({ title: t('Quick settings'), icon: 'sliders', tone: 'lavender', class: 'hub-card' },
     h('div.hub-stats', battery, connection, game, rate),

@@ -302,6 +302,30 @@ export function createShell(root) {
   let mounted = null; // { section, cleanup, update, key }
   let renderToken = 0;
 
+  // Home keeps its place: back from a page lands where you left it. Other pages open at the top.
+  // The document scrolls (not .main).
+  let homeScrollY = 0;
+  let stopScrollHold = null;
+  const USER_SCROLL_EVENTS = ['wheel', 'touchstart', 'pointerdown', 'keydown'];
+  function placeScroll(sectionId) {
+    stopScrollHold?.();
+    const y = sectionId === 'home' ? homeScrollY : 0;
+    window.scrollTo({ top: y });
+    if (!y) return;
+    // Parts of the page fill in after it mounts: keep the spot while they do, until the user scrolls
+    const ro = new ResizeObserver(() => window.scrollTo({ top: y }));
+    ro.observe(page);
+    const stop = () => {
+      ro.disconnect();
+      clearTimeout(timer);
+      for (const e of USER_SCROLL_EVENTS) window.removeEventListener(e, stop, true);
+      stopScrollHold = null;
+    };
+    const timer = setTimeout(stop, 1500);
+    for (const e of USER_SCROLL_EVENTS) window.addEventListener(e, stop, { capture: true, passive: true });
+    stopScrollHold = stop;
+  }
+
   function teardown() {
     if (!mounted) return;
     const { cleanup, section } = mounted;
@@ -345,6 +369,7 @@ export function createShell(root) {
     // remount it (that dropped its own connect/disconnect handling and restarted its connects).
     if (mounted && mounted.key === key && section.stable && mounted.params === params) return;
 
+    if (mounted?.section.id === 'home') homeScrollY = window.scrollY;
     teardown();
     for (const [id, a] of navLinks) a.toggleAttribute('aria-current', id === section.id);
     frame.dataset.page = section.id;
@@ -353,7 +378,7 @@ export function createShell(root) {
     const content = h('div.page-body');
     replace(page, pageHeader(section), content);
     page.classList.remove('page-enter'); void page.offsetWidth; page.classList.add('page-enter');
-    main.scrollTo({ top: 0 });
+    placeScroll(section.id);
 
     if (reason) {
       const backHome = () => button({ label: t('Back to home'), variant: 'tonal', onClick: () => navigate('home') });
@@ -392,6 +417,7 @@ export function createShell(root) {
     let result;
     try {
       result = view.mount(content, ctx);
+      if (section.id === 'home') placeScroll('home'); // now that it has its height
     } catch (err) {
       console.error(`[shell] ${section.id} mount failed`, err);
       content.append(emptyState({ icon: 'warning', tone: 'red', title: t('Something went wrong'), text: String(err?.message || err) }));
