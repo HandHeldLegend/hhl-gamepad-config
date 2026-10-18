@@ -34,6 +34,7 @@
  */
 import { device, USB_FILTERS, LIVE_MODES, isPicoBootloader, isCh340 } from './hoja-device.js';
 import { decodeText } from './struct.js';
+import { liveStatus } from './live-status.js';
 import { N_ } from '../i18n/index.js'; // attention texts are translated where displayed
 
 const WRITE_DEBOUNCE_MS = 120;
@@ -188,6 +189,7 @@ class Session extends EventTarget {
   async disconnect() {
     this.#follow?.stop();
     await this.flush().catch(() => {});
+    await liveStatus.release(); // the game gets its input back now (see live-status.js)
     return device.disconnect();
   }
 

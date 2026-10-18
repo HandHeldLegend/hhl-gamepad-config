@@ -1,6 +1,6 @@
 /**
- * Home: connect hero (disconnected), device overview (connected) or the dongle (only a dongle
- * connected, no controller on it yet), plus the section grid.
+ * Home: connect hero (disconnected), device overview and the live quick settings hub (connected, hub.js)
+ * or the dongle (only a dongle connected, no controller on it yet), plus the section grid.
  */
 import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
@@ -10,6 +10,7 @@ import { connectController, unavailableReason, currentModeLabel, betaBadge } fro
 import { startDemo, isDemo } from '../../device/mock.js';
 import { firmwareStatus, openUpdateWizard, formatFwVersion, CABLE_UPDATE_TEXT } from '../../firmware/updater.js';
 import { dongleCard } from '../wireless/dongle.js';
+import { quickHub } from './hub.js';
 import { t } from '../../i18n/index.js';
 import { isIOS, explainIOS } from '../../app/platform.js';
 import { isLinux, explainLinux } from '../../app/linux.js';
@@ -93,16 +94,20 @@ function deviceCard(session) {
       h('a', { href: `#/${id}` }, t('Open'), icon('chevron-right')))));
 }
 
-export function mount(root, { session }) {
+export function mount(root, { session, device }) {
+  let hub = null;
   const render = () => {
     const dongleOnly = session.state === 'dongle';
+    hub?.destroy();
+    hub = session.connected ? quickHub(session, device) : null;
     replace(root,
       session.connected ? deviceCard(session) : dongleOnly ? dongleCard(session) : hero(session),
+      hub,
       !session.connected && !dongleOnly && connectTips(),
       h('h2.section-heading', session.connected ? t('Configure') : t('Explore')),
       tiles(session));
   };
   render();
   const offs = [session.on('attention', render), session.on('firmware', render)];
-  return () => offs.forEach((f) => f());
+  return () => { offs.forEach((f) => f()); hub?.destroy(); };
 }

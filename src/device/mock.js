@@ -154,13 +154,13 @@ export async function startDemo() {
   patch('sendBlock', async (b) => { console.debug('[demo] write block', b); });
   patch('sendReport', async () => {});
   patch('save', async () => { console.debug('[demo] save'); await new Promise((r) => setTimeout(r, 300)); return true; });
-  patch('sendConfigCommand', async (block, cmd) => {
+  patch('sendConfigCommand', async (block, cmd, timeout, arg) => {
     console.debug('[demo] command', block, cmd);
     await new Promise((r) => setTimeout(r, 400));
     const blockKey = typeof block === 'string' ? block : LAYOUT.blocks.config.find((b) => b.index === block)?.key;
     const cmdName = typeof cmd === 'string' ? cmd : Object.entries(LAYOUT.commands[blockKey] || {}).find(([, v]) => v === cmd)?.[0];
     for (const hk of hooks) {
-      const r = await hk.command?.(blockKey, cmdName ?? cmd, device); // hooks may be async; raw id when unnamed
+      const r = await hk.command?.(blockKey, cmdName ?? cmd, device, arg); // hooks may be async; raw id when unnamed
       if (r) return r;
     }
     return { status: true, data: null };

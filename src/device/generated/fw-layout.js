@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@7f993b9)
+// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@74a7d55)
 // Validated 6 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "local",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "7f993b9"
+  "ref": "74a7d55"
  },
  "blocks": {
   "config": [
@@ -107,6 +107,9 @@ export default {
    "REBOOT_DONGLE": 3,
    "REBOOT_BLUETOOTH": 4,
    "USB_MODE": 5,
+   "HOLD_INPUTS": 6,
+   "TOURNEY": 7,
+   "STATUS": 8,
    "SAVE_ALL": 255
   },
   "input": {
@@ -2559,6 +2562,21 @@ export default {
     "name": "GAMEPAD_CMD_USB_MODE",
     "value": 5,
     "doc": "On USB, another mode now, until unplugged (no reboot); argument the mode"
+   },
+   {
+    "name": "GAMEPAD_CMD_HOLD_INPUTS",
+    "value": 6,
+    "doc": "The game's input held at rest (argument 1) or passed through (0); released when the app leaves"
+   },
+   {
+    "name": "GAMEPAD_CMD_TOURNEY",
+    "value": 7,
+    "doc": "Tournament lock on (argument 1) or off (0)"
+   },
+   {
+    "name": "GAMEPAD_CMD_STATUS",
+    "value": 8,
+    "doc": "Replies [transport][mode][inputs held][tournament lock][reports a second, u16 LE]"
    },
    {
     "name": "GAMEPAD_CMD_SAVE_ALL",
