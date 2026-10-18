@@ -89,8 +89,8 @@
   .appbar .save-btn .btn-label, .appbar .connect-btn .btn-label { display: none; }
   .appbar .save-btn, .appbar .connect-btn { width: 40px; min-width: 40px; padding: 0; }
   .appbar .device-chip { max-width: none; flex: 0 1 auto; min-width: 0; }
-  /* Phones: Install and the language live on App settings (the gear), so the controller's name has
-     room. Before, an uninstalled app crowded the chip down to "Demo …". */
+  /* Phones: Install and the language are on App settings (the gear), so the bar keeps room for the
+     controller's name. */
   .appbar .install-btn, .appbar .lang-pick { display: none; }
 }
 @media (max-width: 380px) {
@@ -255,3 +255,11 @@ h1 .beta-badge { font-size: 0.72rem; position: relative; top: -0.15em; }
 .hub-label { font-size: var(--text-xs); color: var(--text-muted); }
 .hub-value { font-weight: 700; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 380px) { .hub-stats { grid-template-columns: 1fr 1fr; } }
+/* Profiles: a button each, all in view (two to a row on a phone, four across when they fit); a long
+   name ends in an ellipsis. Rename and Copy from… sit below. */
+.hub-profile-control { --gap: var(--space-2); width: 100%; }
+.hub-profiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-2); }
+.hub-profiles .btn { min-width: 0; }
+.hub-profiles .btn-label { overflow: hidden; text-overflow: ellipsis; }
+/* The buttons the tournament lock blocks, in a line of text */
+.hub-glyphs { display: inline-flex; flex-wrap: wrap; gap: var(--space-1); vertical-align: middle; }

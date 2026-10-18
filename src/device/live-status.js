@@ -116,16 +116,19 @@ class LiveStatus extends EventTarget {
       this.#holdOnConnect = false;
       if (this.supported && !this.state?.held) {
         this.setHold(true).catch(() => {});
-        return; // setHold polls again, and schedules from there
+        return; // setHold polls again, even when the command fails, and schedules from there
       }
     }
     this.#next();
   }
 
   async #command(name, on) {
-    const { status } = await device.sendConfigCommand('gamepad', name, REPLY_MS, on ? 1 : 0);
-    await this.poll(); // the real state, whatever happened
-    return status;
+    try {
+      const { status } = await device.sendConfigCommand('gamepad', name, REPLY_MS, on ? 1 : 0);
+      return status;
+    } finally {
+      await this.poll(); // the real state, whatever happened (and polling carries on from there)
+    }
   }
 
   setHold(on) { return this.#command('HOLD_INPUTS', on); }

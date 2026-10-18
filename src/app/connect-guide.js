@@ -39,19 +39,11 @@
 import { h, fillNodes, loadStyles } from '../ui/dom.js';
 import { openDialog } from '../ui/overlay.js';
 import { decodeText } from '../device/struct.js';
-import { INPUT_CODES } from '../sections/input/mapping.js';
-import { outputName, glyph } from '../sections/input/parts.js';
+import { outputName, glyph, rawInputName } from '../sections/input/parts.js';
 import { t } from '../i18n/index.js';
 
 // Button glyphs (styles live with the Input section).
 loadStyles(new URL('../sections/input/input.css', import.meta.url));
-
-/** The controller's own (raw) name for an input code key ('EAST', 'START'…), or ''. */
-export function rawName(session, key) {
-  const code = INPUT_CODES.find((c) => c.key === key)?.code;
-  const info = code == null ? null : session?.static?.input?.input_info?.[code];
-  return info && info.input_type ? decodeText(info.input_name ?? new Uint8Array()).trim() : '';
-}
 
 /**
  * A button for the guide: { name: display text, glyph: glyph label }. With a controller connected
@@ -68,8 +60,8 @@ const FACE_KEYS = ['SOUTH', 'EAST', 'WEST', 'NORTH'];
  * button at `fallbackKey`'s position (controllers without ABXY labels).
  */
 function modeButton(session, label, fallbackKey) {
-  const key = FACE_KEYS.find((k) => rawName(session, k).toUpperCase() === label) || fallbackKey;
-  return key ? rawName(session, key) : '';
+  const key = FACE_KEYS.find((k) => rawInputName(session, k).toUpperCase() === label) || fallbackKey;
+  return key ? rawInputName(session, key) : '';
 }
 
 /**
@@ -80,7 +72,7 @@ function modeButton(session, label, fallbackKey) {
 export function connectProfile(session) {
   const known = !!session?.connected;
   // east/south keep their names for the call sites; they are the Switch and Steam boot buttons.
-  const raw = (key) => (known ? rawName(session, key) : '');
+  const raw = (key) => (known ? rawInputName(session, key) : '');
   const east = button(known && modeButton(session, 'A', 'EAST'), t('A'), 'A');
   const south = button(known && modeButton(session, 'B', 'SOUTH'), t('B'), 'B');
   const start = button(raw('START'), t('Start (+)'), 'Start');

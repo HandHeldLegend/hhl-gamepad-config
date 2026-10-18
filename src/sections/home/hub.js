@@ -18,27 +18,37 @@
  *
  * What needs STATUS stays hidden until the controller answered it (older firmware never does).
  */
-import { h, fillNodes } from '../../ui/dom.js';
+import { h, fillNodes, loadStyles } from '../../ui/dom.js';
 import { button, card, field, select, textInput, toggle } from '../../ui/controls.js';
 import { openDialog, toast } from '../../ui/overlay.js';
 import { onInputReport } from '../../device/reports.js';
 import { liveStatus } from '../../device/live-status.js';
+import { PROFILE_NAME_LEN } from '../../device/hoja-device.js';
 import { t, fmt } from '../../i18n/index.js';
-import { rawName } from '../../app/connect-guide.js';
-import { glyph } from '../input/parts.js';
+import { glyph, rawInputName } from '../input/parts.js';
+
+// Button glyphs (styles live with the Input section).
+loadStyles(new URL('../input/input.css', import.meta.url));
 
 /** What the tournament lock blocks (HOJA-LIB-RP2040 input/hover.c), as input code keys. */
 const TOURNEY_KEYS = ['UP', 'DOWN', 'LEFT', 'RIGHT', 'HOME', 'START', 'SELECT', 'SHARE'];
+/** The blocked buttons' glyphs, px. */
+const TOURNEY_GLYPH_PX = 22;
 
 /** "Blocks [glyphs] in the game": the blocked buttons this controller has, as it labels them. */
 function tourneyText(session) {
-  const names = TOURNEY_KEYS.map((key) => rawName(session, key)).filter(Boolean);
+  const names = TOURNEY_KEYS.map((key) => rawInputName(session, key)).filter(Boolean);
   if (!names.length) return t('Blocks the d-pad, Home, Start / Plus, Select / Minus and Share in the game.');
-  const buttons = h('span.hub-glyphs', { role: 'img', 'aria-label': names.join(', '),
-    style: { display: 'inline-flex', gap: '4px', verticalAlign: 'middle', flexWrap: 'wrap' } },
-  names.map((name) => glyph(name, { size: 22 })));
+  const buttons = h('span.hub-glyphs', { role: 'img', 'aria-label': names.join(', ') },
+    names.map((name) => glyph(name, { size: TOURNEY_GLYPH_PX })));
   return fillNodes(t('Blocks {buttons} in the game.'), { buttons });
 }
+
+/** The name a profile shows while it has none of its own. */
+const unnamedProfile = (n) => t('Profile {n}', { n: n + 1 });
+
+/** The controller refused a change, or didn't answer. */
+const notTaken = () => toast(t('The controller didn’t take the change. Try again.'), { tone: 'red' });
 
 /** core_reportformat_t: brand names stay as they are. */
 const MODES = ['Switch', 'XInput', 'Slippi', 'GameCube', 'N64', 'SNES', 'Steam', 'Wii'];
@@ -81,7 +91,7 @@ export function quickHub(session, device) {
       sendInputs.disabled = true;
       const ok = await liveStatus.setHold(!on).catch(() => false);
       sendInputs.disabled = false;
-      if (!ok) toast(t('The controller didn’t take the change. Try again.'), { tone: 'red' });
+      if (!ok) notTaken();
       paint();
     } });
   const tourney = toggle({ checked: false, label: t('Tournament lock'),
@@ -89,7 +99,7 @@ export function quickHub(session, device) {
       tourney.disabled = true;
       const ok = await liveStatus.setTourney(on).catch(() => false);
       tourney.disabled = false;
-      if (!ok) toast(t('The controller didn’t take the change. Try again.'), { tone: 'red' });
+      if (!ok) notTaken();
       paint();
     } });
   const sendField = field({ label: t('Send inputs to game'), control: sendInputs,
@@ -100,15 +110,12 @@ export function quickHub(session, device) {
   // Profiles: null until the controller answered (and for good when its firmware has none)
   const profilesKey = device.transportId ?? 'this';
   let profiles = profilesSeen.get(profilesKey) ?? null;
-  const profileName = (n) => profiles?.names[n] || t('Profile {n}', { n: n + 1 });
-  const profilePick = h('div', { role: 'group', 'aria-label': t('Profile'),
-    style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', width: '100%' } });
+  const profileName = (n) => profiles?.names[n] || unnamedProfile(n);
+  const profilePick = h('div.hub-profiles', { role: 'group', 'aria-label': t('Profile') });
   const renameBtn = button({ label: t('Rename'), variant: 'ghost', size: 'sm', onClick: () => renameProfile() });
   const copyBtn = button({ label: t('Copy from…'), icon: 'copy', variant: 'ghost', size: 'sm', onClick: () => copyProfile() });
   const profileField = field({ label: t('Profile'), stacked: true,
-    control: h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start', width: '100%' } },
-      profilePick,
-      h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } }, renameBtn, copyBtn)),
+    control: h('div.stack.hub-profile-control', profilePick, h('div.row', renameBtn, copyBtn)),
     description: t('Stick notches and angles, deadzones and curves, remaps, RGB, motion and rumble strength belong to the profile. Calibration, pairings and your name stay the same in every profile.') });
   profileField.hidden = true;
 
@@ -120,31 +127,38 @@ export function quickHub(session, device) {
       const b = button({ label: profileName(n), variant: n === profiles.active ? 'primary' : 'tonal', disabled: busy,
         onClick: () => switchProfile(n) });
       b.setAttribute('aria-pressed', String(n === profiles.active));
-      b.style.minWidth = '0';
-      b.querySelector('.btn-label')?.style.setProperty('overflow', 'hidden');
-      b.querySelector('.btn-label')?.style.setProperty('text-overflow', 'ellipsis');
       return b;
     }));
     renameBtn.disabled = copyBtn.disabled = busy;
   }
 
+  /**
+   * A change the controller stores together with what's live (a switch, a copy): busy meanwhile, and
+   * unsaved changes saved the usual way first, so nothing reads as unsaved afterwards. `change` resolves
+   * true once the controller took it; then `doneText()` is shown.
+   */
+  async function liveProfileChange(change, doneText) {
+    paintProfiles(true);
+    let ok = !session.dirty.size || await session.save().catch(() => false);
+    ok = ok && await change().catch(() => false);
+    paintProfiles();
+    if (ok) toast(doneText(), { tone: 'green' });
+    else notTaken();
+  }
+
   async function switchProfile(n) {
     if (n === profiles.active) return;
-    paintProfiles(true);
-    // The controller stores what's live with the old profile as it switches: save it the usual way
-    // first, so nothing reads as unsaved afterwards
-    let ok = !session.dirty.size || await session.save().catch(() => false);
-    ok = ok && await device.switchProfile(n).catch(() => false);
-    if (ok) profiles.active = n;
-    paintProfiles();
-    if (ok) toast(t('{name} is live.', { name: profileName(n) }), { tone: 'green' });
-    else toast(t('The controller didn’t take the change. Try again.'), { tone: 'red' });
+    await liveProfileChange(async () => {
+      const ok = await device.switchProfile(n);
+      if (ok) profiles.active = n;
+      return ok;
+    }, () => t('{name} is live.', { name: profileName(n) }));
   }
 
   async function renameProfile() {
     const n = profiles.active;
-    const input = textInput({ value: profiles.names[n], placeholder: t('Profile {n}', { n: n + 1 }),
-      maxLength: 24, ariaLabel: t('Profile name') });
+    const input = textInput({ value: profiles.names[n], placeholder: unnamedProfile(n),
+      maxLength: PROFILE_NAME_LEN, ariaLabel: t('Profile name') });
     const dlg = openDialog({ title: t('Rename profile'), icon: 'sliders', body: input,
       actions: [
         { label: t('Cancel'), variant: 'ghost', value: null },
@@ -155,10 +169,11 @@ export function quickHub(session, device) {
     const name = await dlg.result;
     if (name == null || name === profiles.names[n]) return;
     paintProfiles(true);
-    const ok = await device.renameProfile(n, name).catch(() => false);
-    if (ok) profiles.names[n] = name;
+    // The controller keeps PROFILE_NAME_LEN bytes of UTF-8, which can be fewer characters than were typed
+    const stored = await device.renameProfile(n, name).catch(() => null);
+    if (stored != null) profiles.names[n] = stored;
     paintProfiles();
-    if (!ok) toast(t('The controller didn’t take the change. Try again.'), { tone: 'red' });
+    if (stored == null) notTaken();
   }
 
   async function copyProfile() {
@@ -174,16 +189,12 @@ export function quickHub(session, device) {
       ] });
     const source = await dlg.result;
     if (source == null) return;
-    paintProfiles(true);
-    let ok = !session.dirty.size || await session.save().catch(() => false);
-    ok = ok && await device.copyProfile(source, to, to).catch(() => false);
-    paintProfiles();
-    if (ok) toast(t('{name} has {from}’s settings now.', { name: profileName(to), from: profileName(source) }), { tone: 'green' });
-    else toast(t('The controller didn’t take the change. Try again.'), { tone: 'red' });
+    await liveProfileChange(() => device.copyProfile(source, to),
+      () => t('{name} has {from}’s settings now.', { name: profileName(to), from: profileName(source) }));
   }
 
   paintProfiles();
-  device.readProfiles?.().then((p) => {
+  device.readProfiles().then((p) => {
     profiles = p;
     profilesSeen.set(profilesKey, p);
     paintProfiles();

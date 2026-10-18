@@ -1,9 +1,11 @@
 /**
- * parts.js (Small widgets used across the Input section): glyphs and live meters.
+ * parts.js (Small widgets used across the Input section, and by the app's guides and Home): button names,
+ * glyphs and live meters.
  */
 import { h, clamp } from '../../ui/dom.js';
 import { t } from '../../i18n/index.js';
-import { glyphUrl, TRANSLATED_LABELS } from './mapping.js';
+import { decodeText } from '../../device/struct.js';
+import { glyphUrl, TRANSLATED_LABELS, INPUT_CODES } from './mapping.js';
 
 /**
  * Display text for an output label or a build's input name. Labels double as glyph names, so the
@@ -24,6 +26,17 @@ export function rich(text, nodes) {
     const k = part.match(/^\{(\w+)\}$/)?.[1];
     return k && k in nodes ? nodes[k] : part;
   });
+}
+
+/**
+ * The controller's own (raw) name for an input code key ('EAST', 'START'…), as its static input info
+ * gives it (the name printed on the hardware), or '' when it has no such input. `controller`: the session
+ * or the device (anything with its `static` blocks).
+ */
+export function rawInputName(controller, key) {
+  const code = INPUT_CODES.find((c) => c.key === key)?.code;
+  const info = code == null ? null : controller?.static?.input?.input_info?.[code];
+  return info?.input_type ? decodeText(info.input_name ?? new Uint8Array()).trim() : '';
 }
 
 /**

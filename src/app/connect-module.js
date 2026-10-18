@@ -34,8 +34,7 @@ import { h, fillNodes, loadStyles } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
 import { openDialog } from '../ui/overlay.js';
 import { button, callout } from '../ui/controls.js';
-import { glyph, outputName } from '../sections/input/parts.js';
-import { INPUT_CODES } from '../sections/input/mapping.js';
+import { glyph, outputName, rawInputName } from '../sections/input/parts.js';
 import { device, isListedUsb, requestUsbController } from '../device/hoja-device.js';
 import { session } from '../device/session.js';
 import { decodeText } from '../device/struct.js';
@@ -82,13 +81,6 @@ function loadKnown() {
   } catch { return {}; } // private mode, storage blocked
 }
 
-/** The connected controller's name for an input (static input info), or ''. */
-function inputName(key) {
-  const code = INPUT_CODES.find((c) => c.key === key)?.code;
-  const info = code == null ? null : device.static?.input?.input_info?.[code];
-  return info?.input_type ? decodeText(info.input_name ?? new Uint8Array()).trim() : '';
-}
-
 /** Keep what the connected controller's card shows (not the demo's). */
 function rememberController() {
   const id = device.transportId;
@@ -98,8 +90,8 @@ function rememberController() {
   known[id] = { // newest last; the oldest make room
     model: session.info.name || '',
     user: decodeText(device.config.user?.user_name ?? new Uint8Array()).trim(),
-    start: inputName('START'),
-    select: inputName('SELECT'),
+    start: rawInputName(device, 'START'),
+    select: rawInputName(device, 'SELECT'),
   };
   const kept = Object.fromEntries(Object.entries(known).slice(-KNOWN_MAX));
   try { localStorage.setItem(KNOWN_KEY, JSON.stringify(kept)); } catch { /* storage blocked */ }
