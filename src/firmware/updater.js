@@ -42,6 +42,7 @@ import { session } from '../device/session.js';
 import { device, isPicoBootloader } from '../device/hoja-device.js';
 import { isDemo } from '../device/mock.js';
 import { prefs } from '../app/prefs.js';
+import { isIOS } from '../app/platform.js';
 import { listBuilds, getBuildManifest, dongleBuild, NUKE_BUILD } from './builds.js';
 import { loadChangelog, pendingActions, buildIdFromManifestUrl, inlineRuns } from './changelog.js';
 import {
@@ -776,8 +777,14 @@ function onBootloaderDisconnect() {
 export const CABLE_UPDATE_TEXT = N_('An update is available. Connect the controller with a USB cable to update it.');
 export const CABLE_ONLY_TEXT = N_('Connect the controller with a USB cable to update it.');
 
+/** "An update is available…", translated: on iPhone / iPad, where USB needs a computer, it says so. */
+export function cableUpdateText() {
+  return isIOS() ? t('An update is available. Install it from a computer with Chrome or Edge and a USB cable.') : t(CABLE_UPDATE_TEXT);
+}
+
 /** Why updates aren't offered through the dongle or over Bluetooth, translated (for callouts). */
 export function cableOnlyNote() {
+  if (isIOS()) return t('Updates need a USB cable and a computer with Chrome or Edge.');
   return session.caps.viaBluetooth
     ? t('Updates need a USB cable. They can’t be installed over Bluetooth.')
     : t('Updates need a USB cable. They can’t be installed through the dongle.');
@@ -796,7 +803,7 @@ async function onControllerConnect() {
     if (latest) setStatus({ state: available ? 'available' : 'current', latest: latest.version, url: info.firmwareUrl, checksum: latest.checksum });
     if (session.caps.noCable) {
       // Without a USB cable the controller can't reach its bootloader: say so instead of offering it.
-      if (available) toast(t(CABLE_UPDATE_TEXT), { tone: 'blue', icon: 'usb', timeout: 8000 });
+      if (available) toast(cableUpdateText(), { tone: 'blue', icon: 'usb', timeout: 8000 });
     } else if ((available || debugForce) && info.firmwareUrl) {
       showUpdateAvailable(info.firmwareUrl, latest?.checksum ?? null, { debugForced: !available && debugForce });
       shown = true;

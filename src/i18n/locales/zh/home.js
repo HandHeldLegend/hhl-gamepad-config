@@ -6,8 +6,6 @@ export default {
   "Needs attention": "需要注意",
   "Let’s set up your controller": "开始设置你的手柄",
   "Plug your HOJA controller in with a USB data cable, then connect. Everything you change applies instantly. Press Save to keep it.": "用 USB 数据线插入你的 HOJA 手柄，然后连接。所有更改都会立即生效。点击“保存”即可保留。",
-  "iPhone and iPad can’t connect to controllers.": "iPhone 和 iPad 无法连接手柄。",
-  "Use a computer or an Android device to change settings. The demo works here.": "请使用电脑或 Android 设备更改设置。演示可以在这里使用。",
   "USB isn’t available in this browser.": "此浏览器无法使用 USB。",
   "Use Chrome, Edge or another Chromium browser on desktop or Android.": "请在电脑或 Android 上使用 Chrome、Edge 或其他 Chromium 浏览器。",
   "On Linux?": "使用 Linux？",
@@ -39,4 +37,8 @@ export default {
   "Game connection": "游戏连接",
   "console cable": "主机线缆",
   "Not polled": "未轮询",
+  "Connect your HOJA controller over Bluetooth. Everything you change applies instantly. Press Save to keep it.": "通过蓝牙连接你的 HOJA 手柄。所做的更改会立即生效。按“保存”即可保留。",
+  "USB needs a computer.": "USB 需要一台电脑。",
+  "Firmware updates need a computer with Chrome or Edge.": "固件更新需要一台装有 Chrome 或 Edge 的电脑。",
+  "More": "更多",
 };

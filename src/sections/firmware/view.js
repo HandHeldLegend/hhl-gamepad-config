@@ -15,7 +15,7 @@ import { confirmDialog, toast } from '../../ui/overlay.js';
 import { connectController, connectWithUsbChooser } from '../../app/shell.js';
 import { listBuilds } from '../../firmware/builds.js';
 import {
-  firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion, CABLE_UPDATE_TEXT, cableOnlyNote,
+  firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion, cableUpdateText, cableOnlyNote,
   rebootToBootloaderOnly,
 } from '../../firmware/updater.js';
 import { t, N_ } from '../../i18n/index.js';
@@ -50,7 +50,7 @@ function controllerCard(session) {
     ]),
     // Through the dongle or over Bluetooth (no USB cable) the controller can't reach its bootloader.
     session.caps.noCable && callout({ tone: 'blue', icon: 'usb',
-      text: s.state === 'available' ? t(CABLE_UPDATE_TEXT) : cableOnlyNote() }),
+      text: s.state === 'available' ? cableUpdateText() : cableOnlyNote() }),
     h('div.row',
       !session.caps.noCable && (s.state === 'available'
         ? button({ label: t('Update now'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() })

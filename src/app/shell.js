@@ -145,7 +145,6 @@ async function attempt(run, { bluetooth = false } = {}) {
  */
 export async function connectController({ cable = false } = {}) {
   if (isDemo()) return attempt(() => session.connect());
-  if (isIOS() && !navigator.usb && !navigator.bluetooth) { explainIOS(); return false; }
   const pick = await openConnectModule({ cable });
   if (pick?.usb) return attempt(() => session.reconnect(pick.usb));
   if (pick?.link) return attempt(() => session.connectBluetooth(pick.link), { bluetooth: true });
@@ -362,7 +361,8 @@ export function createShell(root) {
       if (session.state === 'dongle') content.append(emptyState({ icon: 'link', tone: section.tone, title: t('Dongle connected'), text: reason, action: backHome() }));
       else content.append(session.connected
         ? emptyState({ icon: section.icon, tone: section.tone, title: t('Not available on this controller'), text: reason, action: backHome() })
-        : emptyState({ icon: 'usb', tone: section.tone, title: t('Connect your controller'), text: t('Plug in your controller with a USB data cable, then press Connect.'),
+        : emptyState({ icon: 'usb', tone: section.tone, title: t('Connect your controller'),
+          text: isIOS() ? t('Press Connect, then connect over Bluetooth.') : t('Plug in your controller with a USB data cable, then press Connect.'),
           action: h('div.row', { style: { justifyContent: 'center' } },
             button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', size: 'lg', onClick: () => connectController() }),
             button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() }),

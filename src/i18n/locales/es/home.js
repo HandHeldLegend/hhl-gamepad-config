@@ -32,4 +32,8 @@ export default {
   "Game connection": "Conexión del juego",
   "console cable": "cable de consola",
   "Not polled": "Sin sondeo",
+  "Connect your HOJA controller over Bluetooth. Everything you change applies instantly. Press Save to keep it.": "Conecta tu control HOJA por Bluetooth. Todo lo que cambies se aplica al instante. Presiona Guardar para conservarlo.",
+  "USB needs a computer.": "El USB necesita una computadora.",
+  "Firmware updates need a computer with Chrome or Edge.": "Las actualizaciones de firmware necesitan una computadora con Chrome o Edge.",
+  "More": "Más",
 };

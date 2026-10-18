@@ -33,7 +33,7 @@
 import { h, fillNodes, loadStyles } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
 import { openDialog } from '../ui/overlay.js';
-import { callout } from '../ui/controls.js';
+import { button, callout } from '../ui/controls.js';
 import { glyph, outputName } from '../sections/input/parts.js';
 import { INPUT_CODES } from '../sections/input/mapping.js';
 import { device, isListedUsb, requestUsbController } from '../device/hoja-device.js';
@@ -42,6 +42,7 @@ import { decodeText } from '../device/struct.js';
 import { isDemo } from '../device/mock.js';
 import { BleLink, requestBluetoothController, rememberedBluetoothControllers } from '../device/ble-link.js';
 import { t, N_ } from '../i18n/index.js';
+import { isIOS, openInBluefy, BLUEFY_STORE_URL } from './platform.js';
 
 // Button glyphs (styles live with the Input section).
 loadStyles(new URL('../sections/input/input.css', import.meta.url));
@@ -131,6 +132,14 @@ function codeRow(letters, entered) {
       glyph(DPAD[c] || c, { size: 56 }))));
 }
 
+/** iPhone / iPad without Web Bluetooth: Bluefy adds it (platform.js). */
+function bluefyNote() {
+  return callout({ tone: 'blue', icon: 'bluetooth', text: t('On iPhone and iPad, Bluetooth needs the free Bluefy browser.') },
+    h('div.row.cm-note-actions',
+      button({ label: t('Open in Bluefy'), icon: 'bluetooth', variant: 'tonal', size: 'sm', onClick: () => openInBluefy() }),
+      button({ label: t('Get Bluefy'), icon: 'external', variant: 'ghost', size: 'sm', onClick: () => { location.href = BLUEFY_STORE_URL; } })));
+}
+
 function braveNote() {
   return callout({ tone: 'yellow', title: t('Bluetooth is off in Brave.'),
     text: fillNodes(t('To turn it on, open {flag}, set Web Bluetooth API to Enabled, then relaunch Brave.'),
@@ -145,6 +154,7 @@ function braveNote() {
 export function openConnectModule({ cable = false } = {}) {
   return new Promise((resolve) => {
     const withBluetooth = !cable;
+    const ios = isIOS();
     const canBluetooth = withBluetooth && !!navigator.bluetooth; // the browser offers it (it may still fail: Brave)
     // The browser lists controllers allowed before (getDevices), so they can be found by themselves. Chrome
     // and Edge only do this with a flag; without it every Bluetooth connect goes through the chooser.
@@ -217,7 +227,7 @@ export function openConnectModule({ cable = false } = {}) {
         }),
       ];
       listEl.replaceChildren(...(rows.length ? rows
-        : [h('p.cm-empty', t('No controllers here yet. Plug one in, or add one below.'))]));
+        : [h('p.cm-empty', ios ? t('No controllers here yet. Add one below.') : t('No controllers here yet. Plug one in, or add one below.'))]));
       if (searchTimer) listEl.append(h('p.cm-search', h('span.spinner.motion-ok'), t('Looking for your Bluetooth controllers…')));
     }
 
@@ -225,7 +235,7 @@ export function openConnectModule({ cable = false } = {}) {
       if (step !== 'list') return;
       notesEl.replaceChildren(...[
         problem && callout({ tone: 'red', text: problem }),
-        !navigator.usb && callout({ tone: 'yellow', text: t(NO_USB) }),
+        !navigator.usb && !ios && callout({ tone: 'yellow', text: t(NO_USB) }),
         btNote,
       ].filter(Boolean));
       tipEl.replaceChildren(...(btTip ? [btTip] : []));
@@ -236,15 +246,20 @@ export function openConnectModule({ cable = false } = {}) {
       dlg.setTitle(t('Connect a controller'));
       dlg.setBody(
         h('div.cm-ways',
-          h('div.cm-way', h('span.cm-way-art', icon('usb')), h('p', t('Plug the controller in with a USB data cable.'))),
+          // No iPhone or iPad browser has WebUSB: say where USB works instead of offering it
+          h('div.cm-way', h('span.cm-way-art', icon('usb')), h('p', ios
+            ? t('USB setup needs a computer with Chrome or Edge.')
+            : t('Plug the controller in with a USB data cable.'))),
           canBluetooth && h('div.cm-way', h('span.cm-way-art', chordGlyphs('Plus', 'Minus', 28)),
             h('p', fillNodes(remembers
               ? t('Or, with it on and running wirelessly, press {buttons} together to connect over Bluetooth.')
+              : ios ? t('With the controller on and running wirelessly, press {buttons} together, then choose it with Connect over Bluetooth.')
               : t('Or, for Bluetooth: with it on and running wirelessly, press {buttons} together, then choose it with Connect over Bluetooth.'),
             { buttons: h('strong', chordText(null)) })))),
         notesEl,
-        h('div.cm-list-head', t('Controllers')),
-        listEl,
+        // Nothing can connect in this browser (iPhone / iPad without Bluefy): no list to fill
+        (navigator.usb || canBluetooth) && h('div.cm-list-head', t('Controllers')),
+        (navigator.usb || canBluetooth) && listEl,
         canBluetooth && h('p.small.muted', t('The first time over Bluetooth, you enter a short button code on the controller. After that, this browser connects without it.')),
         tipEl);
       dlg.setActions([
@@ -453,7 +468,7 @@ export function openConnectModule({ cable = false } = {}) {
       (async () => {
         brave = await isBraveBrowser();
         if (!navigator.bluetooth) {
-          btNote = brave ? braveNote()
+          btNote = brave ? braveNote() : ios ? bluefyNote()
             : callout({ tone: 'blue', text: t('Bluetooth isn’t supported in this browser. Use Chrome or Edge to connect over Bluetooth.') });
         } else if ((await navigator.bluetooth.getAvailability?.().catch(() => true)) === false) {
           btNote = callout({ tone: 'yellow', text: t(BT_OFF) });

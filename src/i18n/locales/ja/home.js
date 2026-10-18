@@ -32,4 +32,8 @@ export default {
   "Game connection": "ゲームの接続",
   "console cable": "本体ケーブル",
   "Not polled": "ポーリングなし",
+  "Connect your HOJA controller over Bluetooth. Everything you change applies instantly. Press Save to keep it.": "HOJAコントローラーをBluetoothで接続します。変更はすぐに反映されます。保存を押すと保持されます。",
+  "USB needs a computer.": "USBにはコンピューターが必要です。",
+  "Firmware updates need a computer with Chrome or Edge.": "ファームウェアのアップデートには、ChromeかEdgeを使えるコンピューターが必要です。",
+  "More": "詳しく",
 };

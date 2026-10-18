@@ -8,7 +8,7 @@ import { button, card, callout, badge, face, kv } from '../../ui/controls.js';
 import { SECTIONS } from '../registry.js';
 import { connectController, unavailableReason, currentModeLabel, betaBadge } from '../../app/shell.js';
 import { startDemo, isDemo } from '../../device/mock.js';
-import { firmwareStatus, openUpdateWizard, formatFwVersion, CABLE_UPDATE_TEXT } from '../../firmware/updater.js';
+import { firmwareStatus, openUpdateWizard, formatFwVersion, cableUpdateText } from '../../firmware/updater.js';
 import { dongleCard } from '../wireless/dongle.js';
 import { quickHub } from './hub.js';
 import { t } from '../../i18n/index.js';
@@ -39,13 +39,16 @@ function hero(session) {
   return h('section.hero',
     h('div',
       h('h1', t('Let’s set up your controller')),
-      h('p', t('Plug your HOJA controller in with a USB data cable, then connect. Everything you change applies instantly. Press Save to keep it.')),
+      h('p', isIOS()
+        ? t('Connect your HOJA controller over Bluetooth. Everything you change applies instantly. Press Save to keep it.')
+        : t('Plug your HOJA controller in with a USB data cable, then connect. Everything you change applies instantly. Press Save to keep it.')),
       h('div.hero-actions',
         connectBtn,
         button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', size: 'lg', onClick: () => startDemo() })),
       !webusb && h('div', { style: { marginTop: '16px' } }, isIOS()
-        ? callout({ tone: 'yellow', title: t('iPhone and iPad can’t connect to controllers.'), text: t('Use a computer or an Android device to change settings. The demo works here.') },
-          ' ', button({ label: t('Why?'), size: 'sm', variant: 'ghost', icon: 'info', onClick: () => explainIOS() }))
+        ? callout({ tone: 'blue', title: navigator.bluetooth ? t('USB needs a computer.') : t('On iPhone and iPad, Bluetooth needs the free Bluefy browser.'),
+          text: t('Firmware updates need a computer with Chrome or Edge.') },
+          ' ', button({ label: t('More'), size: 'sm', variant: 'ghost', icon: 'info', onClick: () => explainIOS() }))
         : callout({ tone: 'red', title: t('USB isn’t available in this browser.'), text: t('Use Chrome, Edge or another Chromium browser on desktop or Android.') })),
       webusb && isLinux() && h('div', { style: { marginTop: '16px' } },
         callout({ tone: 'blue', icon: 'info', title: t('On Linux?'), text: t('Add a udev rule once so your browser and games can use the controller.') },
@@ -89,7 +92,7 @@ function deviceCard(session) {
     ]),
     viaDongle && callout({ tone: 'blue', icon: 'link', text: `${t('Connected through the dongle.')} ` },
       h('a', { href: '#/wireless' }, t('Dongle details'), icon('chevron-right'))),
-    noCable && fw.state === 'available' && callout({ tone: 'blue', icon: 'usb', text: t(CABLE_UPDATE_TEXT) }),
+    noCable && fw.state === 'available' && callout({ tone: 'blue', icon: 'usb', text: cableUpdateText() }),
     atts.map(([id, a]) => callout({ tone: a.level === 'warn' ? 'yellow' : 'blue', text: `${t(a.text)} ` },
       h('a', { href: `#/${id}` }, t('Open'), icon('chevron-right')))));
 }
