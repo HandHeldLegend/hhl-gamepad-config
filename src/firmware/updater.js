@@ -465,8 +465,9 @@ async function enterBootloader() {
   panels();
   actions({ primary: { label: t('Update'), icon: 'download', run: () => flashNext({ allowRequestDevice: true }) } });
   // A controller this app can read keeps its settings for after the update, in case it comes back
-  // reset (a new flash layout): see onControllerConnect
-  if (!st.pendingLegacy && !st.dongle) await keepSettingsForUpdate();
+  // reset (a new flash layout): see onControllerConnect. Not when starting fresh: erasing them is
+  // the point.
+  if (!st.pendingLegacy && !st.dongle && !st.fresh) await keepSettingsForUpdate();
   try {
     if (st.pendingLegacy) device.rebootToBootloaderLegacy().catch(() => {});
     else if (st.dongle) await device.rebootDongleToBootloader();
