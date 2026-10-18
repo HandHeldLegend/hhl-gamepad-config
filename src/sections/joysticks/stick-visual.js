@@ -227,9 +227,21 @@ export function stickVisual(o = {}) {
     updateReadout(); // text follows the canvas frame rate, not the ~125 Hz report rate
     const cx = w / 2;
     const cy = hgt / 2;
-    const rad = Math.min(w, hgt) / 2 - 8;
+    const half = Math.min(w, hgt) / 2;
+    // The input ring (the biggest marker) must fit whole on the rim: the margin is its outer radius
+    // plus room to show a little overshoot past full travel
+    const dotR = Math.max(5, half * 0.035);
+    const ringOuter = dotR + 3.5 + 1.25;
+    const rad = half - ringOuter - 6;
     if (rad < 8) return; // hidden (e.g. the inactive column of a left/right split on a narrow page)
     const toPx = (x, y) => [cx + (x / R) * rad, cy - (y / R) * rad];
+    // Markers past full travel stay on the canvas (pinned at its edge, in the same direction); the
+    // readout keeps the exact values
+    const reach = half - ringOuter - 1;
+    const pin = ([px, py]) => {
+      const d = Math.hypot(px - cx, py - cy);
+      return d > reach ? [cx + ((px - cx) * reach) / d, cy + ((py - cy) * reach) / d] : [px, py];
+    };
 
     // Travel circle + guides
     ctx.beginPath();
@@ -293,7 +305,7 @@ export function stickVisual(o = {}) {
 
     // Trace polygon
     if (state.trace.size > 2) {
-      const pts = [...state.trace.entries()].sort((a, b) => a[0] - b[0]).map(([, p]) => toPx(p.x, p.y));
+      const pts = [...state.trace.entries()].sort((a, b) => a[0] - b[0]).map(([, p]) => pin(toPx(p.x, p.y)));
       ctx.beginPath();
       pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
       ctx.closePath();
@@ -313,8 +325,8 @@ export function stickVisual(o = {}) {
     ctx.stroke();
 
     // Output vector + dots
-    const [ox, oy] = toPx(state.outX, state.outY);
-    const [ix, iy] = toPx(state.inX, state.inY);
+    const [ox, oy] = pin(toPx(state.outX, state.outY));
+    const [ix, iy] = pin(toPx(state.inX, state.inY));
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.lineTo(ox, oy);
@@ -323,7 +335,6 @@ export function stickVisual(o = {}) {
     ctx.stroke();
 
     // Input: a ring, so it stays visible when the output dot sits on top of it.
-    const dotR = Math.max(5, rad * 0.035);
     ctx.beginPath();
     ctx.arc(ix, iy, dotR + 3.5, 0, Math.PI * 2);
     ctx.lineWidth = 2.5;
