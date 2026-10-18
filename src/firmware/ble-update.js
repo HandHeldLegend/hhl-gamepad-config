@@ -24,9 +24,12 @@ import { pico_download_bin } from './picoboot.js';
 /** Staged parts start on whole flash sectors. */
 const FLASH_SECTOR_LEN = 4096;
 const RADIO_HEADER_LEN = 72; // boot_radio_header_s
-/** The second stage boot code's length: a board image starts with it, and so does firmware built for the
- *  HOJA bootloader's layout (see bleUpdate). */
-const BOOT2_LEN = 256;
+/** Where a firmware's vector table sits in it: after the RP2040's second stage boot code, or first on an
+ *  RP2350 (see slotFirmwareAt). */
+const VECTOR_OFFSETS = [0x100, 0];
+const FLASH_BASE = 0x10000000;
+const SRAM_START = 0x20000000;
+const SRAM_END = 0x20082000; // The RP2350's; the RP2040's ends lower
 const DEST = { APP: 0, RADIO: 1 };
 const ENC = { STORED: 0, DEFLATE: 1 };
 /** One part in BEGIN's payload: [dest][enc][staged length, staged CRC32, image length, image CRC32: u32 LE]. */
@@ -51,6 +54,21 @@ async function deflateRaw(bytes) {
 }
 
 const align = (n) => Math.ceil(n / FLASH_SECTOR_LEN) * FLASH_SECTOR_LEN;
+
+/** Whether a board image holds, at the controller's application slot, a firmware linked for that slot: its
+ *  stack in RAM and its reset handler inside the slot (RP2040 and RP2350 alike). */
+function slotFirmwareAt(image, info) {
+  const slotStart = FLASH_BASE + info.appOffset;
+  const slotEnd = FLASH_BASE + info.stageHeaderOffset;
+  const view = new DataView(image.buffer, image.byteOffset, image.byteLength);
+  return VECTOR_OFFSETS.some((offset) => {
+    const at = info.appOffset + offset;
+    if (image.length < at + 8) return false;
+    const sp = view.getUint32(at, true);
+    const reset = view.getUint32(at + 4, true);
+    return sp >= SRAM_START && sp <= SRAM_END && reset >= slotStart && reset < slotEnd;
+  });
+}
 
 /** The radio region without its unused (erased) tail. */
 function trimErased(bytes) {
@@ -233,11 +251,9 @@ export async function bleUpdate({ link, url, checksum, onStatus = () => {} }) {
   if (!info) throw new Error(t(NEEDS_CABLE));
   if (!info.batteryOk) throw statusError(UPDATE_STATUS.BATTERY_LOW);
 
-  // A build for this layout starts its firmware with its own second stage, as the image's start does. An older
-  // build (no bootloader) would land in the wrong place: that one goes over USB.
-  const boot2 = image.subarray(0, BOOT2_LEN);
-  const firmwareStart = image.subarray(info.appOffset, info.appOffset + BOOT2_LEN);
-  if (image.length <= info.appOffset || firmwareStart.some((b, i) => b !== boot2[i])) throw new Error(t(NEEDS_CABLE));
+  // A build for this layout holds a firmware linked for the controller's application slot. An older build
+  // (no bootloader) would land in the wrong place: that one goes over USB.
+  if (!slotFirmwareAt(image, info)) throw new Error(t(NEEDS_CABLE));
 
   const parts = await planParts(image, info);
   if (!parts) throw new Error(t(NEEDS_CABLE));
