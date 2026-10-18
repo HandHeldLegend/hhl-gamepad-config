@@ -7,6 +7,9 @@
  *
  *   app → controller   0x01 AUTH [token 16]    0x02 PAIR (ask for a code)    0x03 DATA [one WebUSB packet]
  *                      0x04 BYE: the app is done, the controller closes the link itself
+ *                      0x05 PING: every 2 s while the session is open. Start + Select during a session starts
+ *                           afresh only when the app went quiet for 5 s (a link the computer kept open), so a
+ *                           live session survives the buttons being pressed
  *   controller → app   0x81 AUTH result [0 allowed, 1 refused]
  *                      0x82 CODE [six letters: A B X Y as printed on the face buttons, U D L R for the d-pad]
  *                      0x83 CODE_STATE [presses entered][0 entering, 1 wrong (a new code follows), 2 timed out]
@@ -56,6 +59,7 @@ const FRAME = {
   PAIR: 0x02,
   DATA: 0x03,
   BYE: 0x04,
+  PING: 0x05,
   AUTH_RESULT: 0x81,
   CODE: 0x82,
   CODE_STATE: 0x83,
@@ -78,6 +82,8 @@ const WRITE_RETRIES = 3;
 /** close() waits this long for notifications to stop and BYE to go out before it disconnects. */
 const STOP_WAIT_MS = 300;
 const BYE_WAIT_MS = 500;
+/** While allowed in: PING this often, so the controller knows the app is still there. */
+const PING_EVERY_MS = 2000;
 /** Connect tries: a failure right after a disconnect is common; wait a little longer each time. */
 const CONNECT_TRIES = 3;
 const CONNECT_RETRY_MS = 400;
@@ -153,6 +159,8 @@ export class BleLink extends EventTarget {
   #writes = Promise.resolve(); // Web Bluetooth runs one GATT operation at a time: writes queue here
   #waiters = new Map();        // frame type → [resolve] waiting for its next frame
   #closed = false;
+  #inFlight = 0;    // writes queued or under way
+  #pingTimer = 0;
 
   /** @param {BluetoothDevice} bt from requestBluetoothController() */
   constructor(bt) {
@@ -247,7 +255,7 @@ export class BleLink extends EventTarget {
     await this.#write(frame);
     const result = await withTimeout(answer, ANSWER_TIMEOUT_MS, 'Waiting for the controller');
     if (!result) throw new Error('The Bluetooth link dropped');
-    if (result[0] === 0) return true;
+    if (result[0] === 0) { this.#startPing(); return true; }
     saveToken(this.#bt.id, null);
     return false;
   }
@@ -316,7 +324,8 @@ export class BleLink extends EventTarget {
   }
 
   #write(frame) {
-    const run = this.#writes.then(() => this.#writeNow(frame));
+    this.#inFlight++;
+    const run = this.#writes.then(() => this.#writeNow(frame)).finally(() => { this.#inFlight--; });
     this.#writes = run.catch(() => {});
     return run;
   }
@@ -363,6 +372,7 @@ export class BleLink extends EventTarget {
         return;
       case FRAME.PAIRED:
         if (payload.length >= TOKEN_LEN) saveToken(this.#bt.id, payload.subarray(0, TOKEN_LEN));
+        this.#startPing();
         this.#emit('paired', {});
         return;
       case FRAME.LINK: {
@@ -383,9 +393,19 @@ export class BleLink extends EventTarget {
     this.#onGone();
   };
 
+  /** PING every PING_EVERY_MS until the link closes; a tick with a write still going is skipped. */
+  #startPing() {
+    if (this.#pingTimer || this.#closed) return;
+    this.#pingTimer = setInterval(() => {
+      if (this.#closed || this.#inFlight) return;
+      this.#write(new Uint8Array([FRAME.PING])).catch(() => {});
+    }, PING_EVERY_MS);
+  }
+
   #onGone = () => {
     if (this.#closed) return;
     this.#closed = true;
+    clearInterval(this.#pingTimer);
     openLinks.delete(this);
     this.#bt.removeEventListener('gattserverdisconnected', this.#onDisconnected);
     this.#toApp?.removeEventListener('characteristicvaluechanged', this.#onNotify);
