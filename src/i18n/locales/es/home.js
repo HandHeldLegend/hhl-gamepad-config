@@ -36,4 +36,6 @@ export default {
   "USB needs a computer.": "El USB necesita una computadora.",
   "Firmware updates need a computer with Chrome or Edge.": "Las actualizaciones de firmware necesitan una computadora con Chrome o Edge.",
   "More": "Más",
+  "Blocks {buttons} in the game.": "Bloquea {buttons} en el juego.",
+  "Off: the game sees a controller at rest while you try things here. Over USB it starts off, so presses don’t reach games on this computer; over Bluetooth it starts on. It turns back on by itself when the app disconnects.": "Desactivado: el juego ve el control en reposo mientras pruebas cosas aquí. Por USB empieza desactivado, para que lo que presiones no llegue a los juegos de esta computadora; por Bluetooth empieza activado. Se vuelve a activar solo cuando la app se desconecta.",
 };

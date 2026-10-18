@@ -36,4 +36,6 @@ export default {
   "USB needs a computer.": "USBにはコンピューターが必要です。",
   "Firmware updates need a computer with Chrome or Edge.": "ファームウェアのアップデートには、ChromeかEdgeを使えるコンピューターが必要です。",
   "More": "詳しく",
+  "Blocks {buttons} in the game.": "ゲームで {buttons} を無効にします。",
+  "Off: the game sees a controller at rest while you try things here. Over USB it starts off, so presses don’t reach games on this computer; over Bluetooth it starts on. It turns back on by itself when the app disconnects.": "オフ：ここで操作を試している間、ゲームからはコントローラーが静止しているように見えます。USB ではオフで始まるので、このコンピューターのゲームに入力が届きません。Bluetooth ではオンで始まります。アプリが切断されると自動でオンに戻ります。",
 };

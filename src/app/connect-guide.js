@@ -47,7 +47,7 @@ import { t } from '../i18n/index.js';
 loadStyles(new URL('../sections/input/input.css', import.meta.url));
 
 /** The controller's own (raw) name for an input code key ('EAST', 'START'…), or ''. */
-function rawName(session, key) {
+export function rawName(session, key) {
   const code = INPUT_CODES.find((c) => c.key === key)?.code;
   const info = code == null ? null : session?.static?.input?.input_info?.[code];
   return info && info.input_type ? decodeText(info.input_name ?? new Uint8Array()).trim() : '';

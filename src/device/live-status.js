@@ -10,6 +10,10 @@
  *   liveStatus.setTourney(on) the tournament lock
  *   liveStatus.release()     let the game have the input again (before a requested disconnect)
  *
+ * Over USB (and through the dongle) the game's input is held as soon as the app connects: the game is on this
+ * computer then, and presses while setting things up would land in it. Over Bluetooth the controller is usually
+ * playing on something else, so its input passes through until the owner turns it off.
+ *
  * STATUS replies [transport (gamepad_transport_t)][mode (core_reportformat_t)][inputs held][tournament lock]
  * [reports a second to the host, u16 LE], the rate measured since the previous STATUS. The hold is RAM only
  * and the firmware lets go by itself when the app's transport changes or after 5 s without hearing from the
@@ -28,10 +32,15 @@ class LiveStatus extends EventTarget {
   #watchers = 0;
   #timer = 0;
   #polling = false;
+  #holdOnConnect = false; // hold the game's input once this connection's first STATUS arrives
 
   constructor() {
     super();
-    device.addEventListener('connect', () => { this.#reset(); this.#schedule(0); });
+    device.addEventListener('connect', () => {
+      this.#reset();
+      this.#holdOnConnect = device.transport !== 'ble';
+      this.#schedule(0);
+    });
     device.addEventListener('disconnect', () => { this.#reset(); this.#emit(); });
     if (typeof window !== 'undefined') {
       // Best effort: the firmware also lets go after 5 s of silence or when the transport changes
@@ -102,6 +111,13 @@ class LiveStatus extends EventTarget {
       console.warn('[status] STATUS failed', err?.message || err);
     } finally {
       this.#polling = false;
+    }
+    if (this.#holdOnConnect && this.supported !== null) {
+      this.#holdOnConnect = false;
+      if (this.supported && !this.state?.held) {
+        this.setHold(true).catch(() => {});
+        return; // setHold polls again, and schedules from there
+      }
     }
     this.#next();
   }

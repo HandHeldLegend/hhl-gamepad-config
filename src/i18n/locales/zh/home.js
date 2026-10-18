@@ -41,4 +41,6 @@ export default {
   "USB needs a computer.": "USB 需要一台电脑。",
   "Firmware updates need a computer with Chrome or Edge.": "固件更新需要一台装有 Chrome 或 Edge 的电脑。",
   "More": "更多",
+  "Blocks {buttons} in the game.": "在游戏中屏蔽 {buttons}。",
+  "Off: the game sees a controller at rest while you try things here. Over USB it starts off, so presses don’t reach games on this computer; over Bluetooth it starts on. It turns back on by itself when the app disconnects.": "关闭：在此处尝试设置时，游戏会看到手柄处于静止状态。通过 USB 连接时默认关闭，按键不会传到这台电脑上的游戏；通过蓝牙连接时默认开启。应用断开连接后会自动重新开启。",
 };

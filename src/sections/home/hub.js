@@ -6,17 +6,34 @@
  *                  Bluetooth, the dongle or a console cable), and reports a second to the game ("Not
  *                  polled" for a console mode nothing polls), refreshed about once a second (live-status.js)
  *   Send inputs to game   off = HOLD_INPUTS 1: the game sees a controller at rest while the app tries
- *                  things; the controller lets go by itself when the app leaves
- *   Tournament lock       TOURNEY, the same lock as the button combo on the controller
+ *                  things; the controller lets go by itself when the app leaves. Off from the start over
+ *                  USB (live-status.js): the game is on this computer then
+ *   Tournament lock       TOURNEY, the same lock as the button combo on the controller; the buttons it
+ *                  blocks are drawn with this controller's own glyphs
  *
  * What needs STATUS stays hidden until the controller answered it (older firmware never does).
  */
-import { h } from '../../ui/dom.js';
+import { h, fillNodes } from '../../ui/dom.js';
 import { card, field, toggle } from '../../ui/controls.js';
 import { toast } from '../../ui/overlay.js';
 import { onInputReport } from '../../device/reports.js';
 import { liveStatus } from '../../device/live-status.js';
 import { t, fmt } from '../../i18n/index.js';
+import { rawName } from '../../app/connect-guide.js';
+import { glyph } from '../input/parts.js';
+
+/** What the tournament lock blocks (HOJA-LIB-RP2040 input/hover.c), as input code keys. */
+const TOURNEY_KEYS = ['UP', 'DOWN', 'LEFT', 'RIGHT', 'HOME', 'START', 'SELECT', 'SHARE'];
+
+/** "Blocks [glyphs] in the game": the blocked buttons this controller has, as it labels them. */
+function tourneyText(session) {
+  const names = TOURNEY_KEYS.map((key) => rawName(session, key)).filter(Boolean);
+  if (!names.length) return t('Blocks the d-pad, Home, Start / Plus, Select / Minus and Share in the game.');
+  const buttons = h('span.hub-glyphs', { role: 'img', 'aria-label': names.join(', '),
+    style: { display: 'inline-flex', gap: '4px', verticalAlign: 'middle', flexWrap: 'wrap' } },
+  names.map((name) => glyph(name, { size: 22 })));
+  return fillNodes(t('Blocks {buttons} in the game.'), { buttons });
+}
 
 /** core_reportformat_t: brand names stay as they are. */
 const MODES = ['Switch', 'XInput', 'Slippi', 'GameCube', 'N64', 'SNES', 'Steam', 'Wii'];
@@ -67,9 +84,9 @@ export function quickHub(session, device) {
       paint();
     } });
   const sendField = field({ label: t('Send inputs to game'), control: sendInputs,
-    description: t('Off: the game sees a controller at rest while you try things here. It turns back on by itself when the app disconnects.') });
+    description: t('Off: the game sees a controller at rest while you try things here. Over USB it starts off, so presses don’t reach games on this computer; over Bluetooth it starts on. It turns back on by itself when the app disconnects.') });
   const tourneyField = field({ label: t('Tournament lock'), control: tourney,
-    description: t('Blocks the d-pad, Home, Start / Plus, Select / Minus and Share in the game.') });
+    description: tourneyText(session) });
 
   // Profiles: a quick profile switcher belongs here, under the two switches, once the firmware can
   // change profiles live (no UI for it yet).
