@@ -1,9 +1,10 @@
 /**
  * hub.js: Home's live quick settings while a controller is connected (the "hub").
  *
- *   Status strip   battery (from every live input report), how the app is connected (USB, Bluetooth with
- *                  its link interval, the dongle), the mode and link the game sees, and reports a second
- *                  to the game, refreshed about once a second (live-status.js, GAMEPAD_CMD_STATUS)
+ *   Status strip   battery (from every live input report), the app's connection (USB, Bluetooth with its
+ *                  link interval, the dongle), the game's connection (mode and what carries it: USB,
+ *                  Bluetooth, the dongle or a console cable), and reports a second to the game ("Not
+ *                  polled" for a console mode nothing polls), refreshed about once a second (live-status.js)
  *   Send inputs to game   off = HOLD_INPUTS 1: the game sees a controller at rest while the app tries
  *                  things; the controller lets go by itself when the app leaves
  *   Tournament lock       TOURNEY, the same lock as the button combo on the controller
@@ -20,9 +21,13 @@ import { t, fmt } from '../../i18n/index.js';
 /** core_reportformat_t: brand names stay as they are. */
 const MODES = ['Switch', 'XInput', 'Slippi', 'GameCube', 'N64', 'SNES', 'Steam', 'Wii'];
 
-/** gamepad_transport_t: how the game is reached. */
+/** gamepad_transport_t values for the console ports (NES/SNES bus, N64 and GameCube joybus). */
+const CONSOLE_PORTS = [0, 1, 2];
+
+/** gamepad_transport_t: what the game is connected through (never the mode again: "GameCube · console cable"). */
 function gameLink(transport) {
-  return { 0: 'SNES', 1: 'N64', 2: 'GameCube', 3: 'USB', 4: t('Bluetooth'), 5: t('Dongle') }[transport] ?? '';
+  if (CONSOLE_PORTS.includes(transport)) return t('console cable');
+  return { 3: 'USB', 4: t('Bluetooth'), 5: t('Dongle') }[transport] ?? '';
 }
 
 /** One label + value in the strip; set(value) changes the value, hide(bool) the whole item. */
@@ -39,8 +44,9 @@ function stat(label) {
  */
 export function quickHub(session, device) {
   const battery = stat(t('Battery'));
-  const connection = stat(t('Connection'));
-  const game = stat(t('Game mode'));
+  // Two links, labelled so they can't read as one: the app's to the controller, the game's
+  const connection = stat(t('App connection'));
+  const game = stat(t('Game connection'));
   const rate = stat(t('Reports to the game'));
   battery.hidden = !session.caps.battery;
 
@@ -89,7 +95,8 @@ export function quickHub(session, device) {
     const link = gameLink(s.transport);
     const mode = MODES[s.mode] ?? '';
     game.set([mode, link].filter(Boolean).join(' · ') || '–');
-    rate.set(t('{count}/s', { count: fmt.number(s.rate) }));
+    // A console mode on USB power only: nothing polls it, so there is no rate to show
+    rate.set(!s.rate && CONSOLE_PORTS.includes(s.transport) ? t('Not polled') : t('{count}/s', { count: fmt.number(s.rate) }));
     if (!sendInputs.disabled) sendInputs.value = !s.held;
     if (!tourney.disabled) tourney.value = s.tourney;
   }

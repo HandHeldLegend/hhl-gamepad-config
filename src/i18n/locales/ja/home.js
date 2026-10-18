@@ -19,7 +19,6 @@ export default {
   "Explore": "見てみる",
   "Dongle details": "ドングルの詳細",
   "Connected through the dongle.": "ドングル経由で接続されています。",
-  "Game mode": "ゲームのモード",
   "Reports to the game": "ゲームへのレポート",
   "Send inputs to game": "ゲームに入力を送る",
   "The controller didn’t take the change. Try again.": "コントローラーが変更を受け付けませんでした。もう一度お試しください。",
@@ -29,4 +28,8 @@ export default {
   "Quick settings": "クイック設定",
   "Bluetooth · {ms} ms": "Bluetooth · {ms} ms",
   "{count}/s": "{count}/秒",
+  "App connection": "アプリの接続",
+  "Game connection": "ゲームの接続",
+  "console cable": "本体ケーブル",
+  "Not polled": "ポーリングなし",
 };

@@ -26,7 +26,6 @@ export default {
   "Explore": "探索",
   "Dongle details": "接收器详情",
   "Connected through the dongle.": "已通过接收器连接。",
-  "Game mode": "游戏模式",
   "Reports to the game": "发送到游戏的报告",
   "Send inputs to game": "向游戏发送输入",
   "The controller didn’t take the change. Try again.": "手柄没有接受这个更改。请重试。",
@@ -36,4 +35,8 @@ export default {
   "Quick settings": "快捷设置",
   "Bluetooth · {ms} ms": "蓝牙 · {ms} 毫秒",
   "{count}/s": "{count}/秒",
+  "App connection": "应用连接",
+  "Game connection": "游戏连接",
+  "console cable": "主机线缆",
+  "Not polled": "未轮询",
 };

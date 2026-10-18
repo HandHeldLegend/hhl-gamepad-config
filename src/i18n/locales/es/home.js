@@ -19,7 +19,6 @@ export default {
   "Explore": "Explorar",
   "Dongle details": "Detalles del dongle",
   "Connected through the dongle.": "Conectado a través del dongle.",
-  "Game mode": "Modo del juego",
   "Reports to the game": "Reportes al juego",
   "Send inputs to game": "Enviar entradas al juego",
   "The controller didn’t take the change. Try again.": "El control no aceptó el cambio. Inténtalo de nuevo.",
@@ -29,4 +28,8 @@ export default {
   "Quick settings": "Ajustes rápidos",
   "Bluetooth · {ms} ms": "Bluetooth · {ms} ms",
   "{count}/s": "{count}/s",
+  "App connection": "Conexión de la app",
+  "Game connection": "Conexión del juego",
+  "console cable": "cable de consola",
+  "Not polled": "Sin sondeo",
 };
