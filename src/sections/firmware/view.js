@@ -16,6 +16,7 @@ import { connectController, connectWithUsbChooser } from '../../app/shell.js';
 import { listBuilds } from '../../firmware/builds.js';
 import {
   firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion, cableUpdateText, cableOnlyNote,
+  wirelessUpdateSupported,
   rebootToBootloaderOnly,
 } from '../../firmware/updater.js';
 import { t, N_ } from '../../i18n/index.js';
@@ -41,6 +42,18 @@ function controllerCard(session) {
   }
   const s = firmwareStatus();
   const [label, tone] = STATUS_TEXT[s.state] || STATUS_TEXT.unknown;
+  const checkAgain = asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', busyLabel: t('Checking…'), okLabel: t('Checked'),
+    run: async () => { await checkForFirmwareUpdate(); return true; } });
+  const actions = h('div.row', !session.caps.noCable && updateButton(s.state), checkAgain);
+  // Through the dongle or over Bluetooth (no USB cable) the bootloader is out of reach, unless the
+  // controller takes updates over Bluetooth: then the buttons are the same as on a cable.
+  const cableNote = session.caps.noCable ? h('div') : null;
+  if (cableNote) {
+    wirelessUpdateSupported().then((ok) => {
+      if (ok) actions.prepend(updateButton(s.state));
+      else cableNote.replaceChildren(callout({ tone: 'blue', icon: 'usb', text: s.state === 'available' ? cableUpdateText() : cableOnlyNote() }));
+    }).catch(() => {});
+  }
   return card({ title: session.info.name, icon: 'firmware', tone: 'blue', subtitle: t('Firmware on this controller'), actions: badge(t(label), tone) },
     kv([
       session.info.maker && [t('Maker'), session.info.maker],
@@ -48,15 +61,14 @@ function controllerCard(session) {
       s.latest && [t('Latest build'), formatFwVersion(s.latest)],
       session.info.manualUrl && [t('Manual'), h('a', { href: session.info.manualUrl, target: '_blank', rel: 'noopener' }, t('Open manual'), ' ', icon('external'))],
     ]),
-    // Through the dongle or over Bluetooth (no USB cable) the controller can't reach its bootloader.
-    session.caps.noCable && callout({ tone: 'blue', icon: 'usb',
-      text: s.state === 'available' ? cableUpdateText() : cableOnlyNote() }),
-    h('div.row',
-      !session.caps.noCable && (s.state === 'available'
-        ? button({ label: t('Update now'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() })
-        : button({ label: t('Reinstall firmware'), icon: 'download', variant: 'tonal', onClick: () => openUpdateWizard({ reinstall: true }) })),
-      asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', busyLabel: t('Checking…'), okLabel: t('Checked'),
-        run: async () => { await checkForFirmwareUpdate(); return true; } })));
+    cableNote, actions);
+}
+
+/** Update / Reinstall: over USB, or over Bluetooth when the controller takes updates that way. */
+function updateButton(state) {
+  return state === 'available'
+    ? button({ label: t('Update now'), icon: 'download', variant: 'primary', onClick: () => openUpdateWizard() })
+    : button({ label: t('Reinstall firmware'), icon: 'download', variant: 'tonal', onClick: () => openUpdateWizard({ reinstall: true }) });
 }
 
 function installCard(params) {

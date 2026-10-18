@@ -894,11 +894,23 @@ export function cableOnlyNote() {
     : t('Updates need a USB cable. They can’t be installed through the dongle.');
 }
 
-/** Over Bluetooth: whether this controller takes updates that way (asked once per connection). */
+/**
+ * Over Bluetooth: whether this controller takes updates that way. A yes holds for the connection; no
+ * answer is asked again, now and next time (older firmware could drop its reply while the settings were
+ * still being read).
+ */
 async function bleSupported() {
   if (!session.caps.viaBluetooth) return false;
-  if (st.bleSupported == null) st.bleSupported = !!(await bleUpdateInfo(device.bleLink));
+  if (st.bleSupported) return true;
+  for (let attempt = 0; attempt < 2 && !st.bleSupported; attempt++) {
+    st.bleSupported = !!(await bleUpdateInfo(device.bleLink));
+  }
   return st.bleSupported;
+}
+
+/** For pages: whether the connected controller can be updated without a cable (over Bluetooth). */
+export async function wirelessUpdateSupported() {
+  return session.caps.noCable && await bleSupported();
 }
 
 async function onControllerConnect() {
