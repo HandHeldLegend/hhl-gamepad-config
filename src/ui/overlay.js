@@ -182,7 +182,8 @@ function showTip(target) {
   hideTip();
   owner = target;
   owner.setAttribute('aria-expanded', 'true');
-  bubble = h('div.tip-bubble', { role: 'tooltip', popover: 'manual' }, text);
+  // Rich tips (infoTip's content) are built fresh; the text stays their accessible name
+  bubble = h('div.tip-bubble', { role: 'tooltip', popover: 'manual' }, target.tipContent ? target.tipContent() : text);
   document.body.append(bubble);
   try { bubble.showPopover?.(); } catch { /* falls back to z-index */ } // top layer: above open dialogs too
   const r = target.getBoundingClientRect();

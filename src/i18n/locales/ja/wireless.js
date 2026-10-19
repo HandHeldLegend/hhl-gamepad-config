@@ -183,4 +183,6 @@ export default {
   "Forget {host}": "{host} の登録を解除",
   "The dongle saved by pairing mode. Without one, any free dongle connects for that session.": "ペアリングモードで保存されたドングル。保存がなければ、空いているドングルにその都度接続します。",
   "This controller stops preferring it. A free dongle still connects for a session, and pairing mode saves one again.": "このコントローラーはこのドングルを優先しなくなります。空いているドングルにはその都度接続でき、ペアリングモードで再び保存できます。",
+  "The Switch paired in Switch mode.": "Switch モードでペアリングした Switch。",
+  "To pair:": "ペアリング方法:",
 };

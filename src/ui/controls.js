@@ -380,8 +380,14 @@ export function dot(tone, live = false) {
 }
 
 /** A "?" bubble; text shows on hover, focus or tap (handled globally by overlay.js). */
-export function infoTip(text) {
-  return h('button.tip', { type: 'button', 'data-tip': text, 'aria-label': text }, '?');
+/**
+ * "?" button with a tooltip. `content`, if given, builds the bubble's nodes (e.g. button glyphs) each
+ * time it opens; `text` is then its accessible name and the fallback.
+ */
+export function infoTip(text, content = null) {
+  const el = h('button.tip', { type: 'button', 'data-tip': text, 'aria-label': text }, '?');
+  if (content) el.tipContent = content;
+  return el;
 }
 
 /** Progress bar. Returns an element with .set(pct, message) and .busy(bool). */

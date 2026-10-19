@@ -157,6 +157,35 @@ const section = (title, ...steps) => h('section.guide-section',
   h('h3', title),
   h('ol', steps.filter(Boolean).map((s) => h('li', s))));
 
+/** A combo drawn at `size` px (tooltips use smaller glyphs than the guide). */
+function smallCombo(size, ...buttons) {
+  const el = combo(...buttons);
+  el.querySelectorAll('.inp-glyph').forEach((gl) => gl.style.setProperty('--g', `${size}px`));
+  return el;
+}
+
+/**
+ * How to pair this controller with one kind of host, with its own button glyphs (Wireless page tips).
+ * `host`: 'switch' | 'steam' | 'wii' | 'dongle'. Returns { nodes, text }: the sentence with glyphs,
+ * and the same with the button names (accessible name, fallback).
+ */
+export function pairingHowTo(session, host) {
+  const p = connectProfile(session);
+  const steps = {
+    switch: [[p.east, p.start], t('Hold {buttons} while you turn it on, then open Controllers › Change Grip/Order on the Switch.')],
+    steam: [[p.south, p.start], t('Hold {buttons} while you turn it on, then add it in your PC’s Bluetooth settings (Windows offers Connect).')],
+    wii: [[p.up, p.start], t('Hold {buttons} while you turn it on, then press SYNC on the Wii.')],
+    dongle: [[p.start], t('Hold {buttons} while you turn it on near a free dongle: it connects and is saved.')],
+  };
+  const [buttons, sentence] = steps[host] || [];
+  if (!buttons) return null;
+  const extra = host === 'switch' && p.radio === 'rm2' ? ` ${t('Or plug it into the Switch with a USB cable once.')}` : '';
+  return {
+    nodes: [...fillNodes(sentence, { buttons: smallCombo(22, ...buttons) }), extra],
+    text: sentence.replace('{buttons}', buttons.map((b) => b.name).join(' + ')) + extra,
+  };
+}
+
 /**
  * One-line pairing tip for the Wireless page (null when the controller has no Bluetooth).
  * @returns {Node[]|null}

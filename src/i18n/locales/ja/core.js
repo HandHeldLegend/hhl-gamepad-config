@@ -464,4 +464,9 @@ export default {
   "The update was sent and the controller restarted to install it. Press Start + Select on it to connect again.": "アップデートを送信し、コントローラーはインストールのために再起動しました。コントローラーの Start + Select を押して再接続してください。",
   "The controller came back with its previous firmware. Try again, or update it with a USB cable.": "コントローラーは以前のファームウェアで戻ってきました。もう一度試すか、USB ケーブルでアップデートしてください。",
   "The update is installed and the controller is connected again.": "アップデートがインストールされ、コントローラーが再接続されました。",
+  "Hold {buttons} while you turn it on, then open Controllers › Change Grip/Order on the Switch.": "{buttons} を押したまま電源を入れ、Switch で「コントローラー › 持ちかた/順番を変える」を開きます。",
+  "Hold {buttons} while you turn it on, then add it in your PC’s Bluetooth settings (Windows offers Connect).": "{buttons} を押したまま電源を入れ、PC の Bluetooth 設定で追加します(Windows では「接続」が表示されます)。",
+  "Hold {buttons} while you turn it on, then press SYNC on the Wii.": "{buttons} を押したまま電源を入れ、Wii の SYNC ボタンを押します。",
+  "Hold {buttons} while you turn it on near a free dongle: it connects and is saved.": "空いているドングルの近くで {buttons} を押したまま電源を入れると、接続して保存されます。",
+  "Or plug it into the Switch with a USB cable once.": "または USB ケーブルで一度 Switch につなぎます。",
 };

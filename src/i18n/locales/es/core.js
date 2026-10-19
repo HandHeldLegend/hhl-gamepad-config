@@ -464,4 +464,9 @@ export default {
   "The update was sent and the controller restarted to install it. Press Start + Select on it to connect again.": "La actualización se envió y el control se reinició para instalarla. Presiona Start + Select en el control para volver a conectarlo.",
   "The controller came back with its previous firmware. Try again, or update it with a USB cable.": "El control volvió con su firmware anterior. Vuelve a intentarlo o actualízalo con un cable USB.",
   "The update is installed and the controller is connected again.": "La actualización está instalada y el control está conectado de nuevo.",
+  "Hold {buttons} while you turn it on, then open Controllers › Change Grip/Order on the Switch.": "Mantén {buttons} mientras lo enciendes y luego abre Controles › Cambiar modo de agarre/orden en la Switch.",
+  "Hold {buttons} while you turn it on, then add it in your PC’s Bluetooth settings (Windows offers Connect).": "Mantén {buttons} mientras lo enciendes y luego agrégalo en la configuración de Bluetooth de tu PC (Windows ofrece Conectar).",
+  "Hold {buttons} while you turn it on, then press SYNC on the Wii.": "Mantén {buttons} mientras lo enciendes y luego pulsa SYNC en la Wii.",
+  "Hold {buttons} while you turn it on near a free dongle: it connects and is saved.": "Mantén {buttons} mientras lo enciendes cerca de un dongle libre: se conecta y queda guardado.",
+  "Or plug it into the Switch with a USB cable once.": "O conéctalo a la Switch con un cable USB una vez.",
 };

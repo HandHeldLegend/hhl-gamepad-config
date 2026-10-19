@@ -180,4 +180,6 @@ export default {
   "Forget {host}": "Oublier {host}",
   "The dongle saved by pairing mode. Without one, any free dongle connects for that session.": "Le dongle enregistré par le mode d’association. Sans lui, n’importe quel dongle libre se connecte pour la session.",
   "This controller stops preferring it. A free dongle still connects for a session, and pairing mode saves one again.": "Cette manette ne le privilégie plus. Un dongle libre se connecte toujours pour une session, et le mode d’association en enregistre un de nouveau.",
+  "The Switch paired in Switch mode.": "La Switch associée en mode Switch.",
+  "To pair:": "Pour associer :",
 };

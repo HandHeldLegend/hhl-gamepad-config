@@ -24,7 +24,7 @@ import { card, badge, kv, infoTip, button, asyncButton, callout } from '../../ui
 import { confirmDialog, toast } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { LAYOUT } from '../../device/struct.js';
-import { openConnectGuide, pairingTipNodes } from '../../app/connect-guide.js';
+import { openConnectGuide, pairingTipNodes, pairingHowTo } from '../../app/connect-guide.js';
 import { resolveModuleUpdate, familyOf, reportedVersion, CHANNELS, clearManifestCache } from './channels.js';
 import { chipStatus, identityText, isPairedMac, formatMac, FCC_STATEMENT, UPDATE_GUIDE_URL } from './info.js';
 import { openModuleUpdater } from './module-updater.js';
@@ -150,15 +150,23 @@ export function mount(root, ctx) {
   const hosts = [
     // The saved dongle (firmware that reports it): pairing mode saves one
     session.caps.dongle && session.caps.forgetHosts && LAYOUT.defines?.FORGET_HOST_DONGLE != null && {
-      label: t('Dongle'), icon: 'usb', arg: LAYOUT.defines.FORGET_HOST_DONGLE,
+      label: t('Dongle'), icon: 'usb', arg: LAYOUT.defines.FORGET_HOST_DONGLE, pair: 'dongle',
       bytes: () => session.static.bluetooth.dongle_mac, refresh: () => session.refreshStatic('bluetooth'),
       tip: t('The dongle saved by pairing mode. Without one, any free dongle connects for that session.'),
       message: t('This controller stops preferring it. A free dongle still connects for a session, and pairing mode saves one again.'),
     },
-    { ...hostAt('host_mac_switch'), label: 'Nintendo Switch', arg: formatOf('SWPRO') },
-    { ...hostAt('host_mac_sinput'), label: t('Steam host'), arg: formatOf('SINPUT'), tip: t('The PC or device paired in Steam mode.') },
-    session.caps.wii && { ...hostAt('host_mac_wii'), label: 'Wii', arg: formatOf('WII'), tip: t('The Wii console paired in Wii mode.') },
+    { ...hostAt('host_mac_switch'), label: 'Nintendo Switch', arg: formatOf('SWPRO'), pair: 'switch', tip: t('The Switch paired in Switch mode.') },
+    { ...hostAt('host_mac_sinput'), label: t('Steam host'), arg: formatOf('SINPUT'), pair: 'steam', tip: t('The PC or device paired in Steam mode.') },
+    session.caps.wii && { ...hostAt('host_mac_wii'), label: 'Wii', arg: formatOf('WII'), pair: 'wii', tip: t('The Wii console paired in Wii mode.') },
   ].filter(Boolean);
+
+  // A host's tip: what it is, then how to pair it, with this controller's button glyphs
+  const hostTip = (host) => {
+    const how = host.pair && pairingHowTo(session, host.pair);
+    if (!how) return infoTip(host.tip);
+    return infoTip(`${host.tip} ${how.text}`, () => h('div.wl-tip',
+      h('p', host.tip), h('p.wl-tip-how', h('strong', t('To pair:')), ' ', ...how.nodes)));
+  };
 
   // One row per host: its name, its address (or "Not paired"), and Forget where the firmware can
   const hostRow = (host) => {
@@ -170,7 +178,7 @@ export function mount(root, ctx) {
       row.replaceChildren(...[
         h('span.wl-host-icon', icon(host.icon || 'bluetooth')),
         h('div.wl-host-text',
-          h('span.wl-host-name', ...[host.label, host.tip && infoTip(host.tip)].filter(Boolean)),
+          h('span.wl-host-name', ...[host.label, host.tip && hostTip(host)].filter(Boolean)),
           paired ? h('span.wl-host-detail.wl-mac', formatMac(bytes)) : h('span.wl-host-detail', t('Not paired'))),
         paired && session.caps.forgetHosts && button({
           label: t('Forget'), size: 'sm', variant: 'ghost', icon: 'trash', class: 'wl-host-forget',

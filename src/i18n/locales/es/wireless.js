@@ -180,4 +180,6 @@ export default {
   "Forget {host}": "Olvidar {host}",
   "The dongle saved by pairing mode. Without one, any free dongle connects for that session.": "El dongle guardado por el modo de emparejamiento. Sin uno, cualquier dongle libre se conecta para esa sesión.",
   "This controller stops preferring it. A free dongle still connects for a session, and pairing mode saves one again.": "Este control deja de preferirlo. Un dongle libre aún se conecta para una sesión, y el modo de emparejamiento vuelve a guardar uno.",
+  "The Switch paired in Switch mode.": "La Switch emparejada en modo Switch.",
+  "To pair:": "Para emparejar:",
 };

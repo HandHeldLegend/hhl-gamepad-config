@@ -451,4 +451,9 @@ export default {
   "The update was sent and the controller restarted to install it. Press Start + Select on it to connect again.": "更新已发送，手柄已重启进行安装。请按手柄上的 Start + Select 重新连接。",
   "The controller came back with its previous firmware. Try again, or update it with a USB cable.": "手柄重启后仍是之前的固件。请重试，或使用 USB 数据线更新。",
   "The update is installed and the controller is connected again.": "更新已安装，手柄已重新连接。",
+  "Hold {buttons} while you turn it on, then open Controllers › Change Grip/Order on the Switch.": "按住 {buttons} 开机，然后在 Switch 上打开“手柄 › 更改握法/顺序”。",
+  "Hold {buttons} while you turn it on, then add it in your PC’s Bluetooth settings (Windows offers Connect).": "按住 {buttons} 开机，然后在电脑的蓝牙设置中添加它（Windows 会提示“连接”）。",
+  "Hold {buttons} while you turn it on, then press SYNC on the Wii.": "按住 {buttons} 开机，然后按下 Wii 上的 SYNC 按钮。",
+  "Hold {buttons} while you turn it on near a free dongle: it connects and is saved.": "在空闲的接收器附近按住 {buttons} 开机：它会连接并被保存。",
+  "Or plug it into the Switch with a USB cable once.": "或者用 USB 线将它连接到 Switch 一次。",
 };
