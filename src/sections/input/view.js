@@ -28,6 +28,7 @@
  */
 import { h, loadStyles } from '../../ui/dom.js';
 import { frameGate } from '../../ui/frame-gate.js';
+import { liveStatus } from '../../device/live-status.js';
 import { card, button, segmented, select, tabView, callout, badge, infoTip } from '../../ui/controls.js';
 import { toast, confirmDialog } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
@@ -82,8 +83,16 @@ export function mount(root, ctx) {
   /** Modes this controller has (Wii modes only with Wii support), and a lookup limited to them. */
   const modes = modesFor(session.caps);
   const findMode = (id) => { const m = getMode(id); return m && modes.includes(m) ? m : null; };
+  // The mode the controller is in right now (live status: through a dongle, the dongle's), so the remap
+  // starts where it's playing. Until the first status arrives, the saved default mode stands in.
+  const liveModeId = () => {
+    const format = liveStatus.state?.mode;
+    return format != null && format >= 0 ? findMode(modeForReportFormat(format))?.id : null;
+  };
+  let modeChosen = !!findMode(ctx.params.mode) || !!liveModeId();
   const state = {
-    mode: findMode(ctx.params.mode)?.id || findMode(modeForReportFormat(session.config.gamepad.gamepad_default_mode))?.id || 'switch',
+    mode: findMode(ctx.params.mode)?.id || liveModeId()
+      || findMode(modeForReportFormat(session.config.gamepad.gamepad_default_mode))?.id || 'switch',
     selected: null, // input code being edited
   };
   const calib = createCalibration(session);
@@ -152,6 +161,7 @@ export function mount(root, ctx) {
 
   function setMode(id, { updateUrl = true } = {}) {
     const mode = findMode(id); // also resolves aliases (?mode=steam)
+    if (updateUrl) modeChosen = true; // picked here: the live mode no longer moves it
     if (!mode || mode.id === state.mode) return;
     state.mode = mode.id;
     if (updateUrl) ctx.setParams({ mode: id });
@@ -350,6 +360,18 @@ export function mount(root, ctx) {
     };
   }
 
+  // The live mode arriving after the page opened takes over, unless a mode was picked meanwhile
+  let stopWatch = null;
+  const stopLive = liveStatus.on(() => {
+    const id = liveModeId();
+    if (modeChosen || !id) return;
+    modeChosen = true;
+    stopWatch?.();
+    stopWatch = null;
+    setMode(id, { updateUrl: false });
+  });
+  if (!modeChosen) stopWatch = liveStatus.watch();
+
   // ---- Page ---------------------------------------------------------------------------------------
 
   const showCalibration = hoverInputs.length > 0 || !session.config.hover.hover_calibration_set;
@@ -402,6 +424,8 @@ export function mount(root, ctx) {
     },
     destroy() {
       cancelAnimationFrame(raf);
+      stopLive();
+      stopWatch?.();
       stopReports();
       offTabBadge();
       closeEditor({ updateUrl: false });
