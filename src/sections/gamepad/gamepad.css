@@ -136,8 +136,14 @@
 .bo-step-about { font-size: var(--text-sm); color: var(--text-muted); }
 .bo-step-usb .bo-node { background: var(--tone-soft); border-color: transparent; color: var(--tone); }
 .bo-usb { display: grid; gap: var(--space-2); margin-top: var(--space-2); }
-.bo-usb .seg { max-width: 100%; justify-self: start; }
-.bo-usb-label { font-size: var(--text-sm); color: var(--text-muted); }
+.bo-usb-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-1) var(--space-2); min-width: 0; }
+.bo-usb-row > .icon { width: 14px; height: 14px; color: var(--text-faint); flex: none; }
+.bo-usb-when { font-size: var(--text-sm); color: var(--text-muted); }
+.bo-usb-fixed {
+  font-size: var(--text-sm); font-weight: 600; padding: 2px var(--space-2); border-radius: 999px;
+  background: var(--surface-sunken); border: 1px solid var(--border);
+}
+.bo-usb-fallback .seg { max-width: 100%; }
 .bo-hint { margin: 0; font-size: var(--text-sm); color: var(--text-faint); }
 
 /* On battery: cards to drag, each with its rank and a switch */

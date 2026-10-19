@@ -2,8 +2,9 @@
  * boot-order.js: the Boot order card (Gamepad page). Where Auto mode looks, and in which order, on
  * firmware with gamepadConfig_s.auto_* (auto_order_version == AUTO_ORDER_VERSION).
  *
- *   Plugged in   the fixed order Auto checks (N64, SNES / NES, GameCube, then USB), and under USB what
- *                a computer gets: Steam, XInput, Slippi, or Switch (every USB host gets Switch mode)
+ *   Plugged in   the fixed order Auto checks (N64, SNES / NES, GameCube, then USB). On USB a Nintendo
+ *                Switch that's found gets Switch mode; the fallback, for anything else, is chosen here:
+ *                Steam, XInput, Slippi, or Switch (Switch mode every time)
  *   On battery   the dongle and the saved hosts, first to last: drag a row by its handle (or focus the
  *                handle and use the arrow keys) to reorder, and the switch leaves one out. Auto listens
  *                for a free dongle first either way, and takes it at its place in the list.
@@ -30,11 +31,11 @@ const HOSTS = [
   { id: D.AUTO_HOST_STEAM, label: 'Steam', icon: 'system', mac: 'host_mac_sinput', about: N_('Your PC or Steam Deck') },
 ];
 
-/** Plugged in: what Auto checks, in this order. */
+/** Plugged in: what Auto checks for, in this order (USB comes last). */
 const WIRED_STEPS = [
-  { label: 'N64', requires: 'joybus', about: N_('On battery: an N64 that starts polling') },
-  { label: 'SNES / NES', requires: 'snes', about: N_('A console on the SNES / NES port') },
-  { label: 'GameCube', requires: 'joybus', about: N_('A GameCube polling the controller') },
+  { label: 'N64', requires: 'joybus' },
+  { label: 'SNES / NES', requires: 'snes' },
+  { label: 'GameCube', requires: 'joybus' },
 ];
 
 /** What a computer gets over USB. Switch means every USB host gets Switch mode. */
@@ -57,29 +58,33 @@ export function bootOrderCard(session, { tone } = {}) {
   const computerHint = h('p.bo-hint');
   const showComputerHint = (v) => {
     computerHint.textContent = v === fmt('SWPRO')
-      ? t('Always Switch: a computer gets Switch mode too.')
-      : t('A Switch always gets Switch mode.');
+      ? t('Switch mode every time, whether a Switch is found or not.')
+      : t('Used when no Nintendo Switch is found, such as on a computer.');
   };
   const computerValue = computerOptions.some((o) => o.value === cfg().auto_usb_computer) ? cfg().auto_usb_computer : fmt('SINPUT');
   showComputerHint(computerValue);
 
   const wiredSteps = WIRED_STEPS.filter((s) => caps[s.requires]);
   const wired = h('div.bo-col',
-    h('div.bo-col-head', h('span.bo-col-title', icon('usb'), t('Plugged in')), h('span.bo-col-sub', t('Checked in this order.'))),
+    h('div.bo-col-head', h('span.bo-col-title', icon('usb'), t('Plugged in')),
+      h('span.bo-col-sub', t('In Auto mode, the controller checks for these in this order and uses the first it finds.'))),
     h('ol.bo-steps',
       wiredSteps.map((s, i) => h('li.bo-step',
         h('span.bo-node', String(i + 1)),
-        h('div.bo-step-text', h('span.bo-step-name', s.label), h('span.bo-step-about', t(s.about))))),
+        h('div.bo-step-text', h('span.bo-step-name', s.label)))),
       h('li.bo-step.bo-step-usb',
         h('span.bo-node', String(wiredSteps.length + 1)),
         h('div.bo-step-text',
           h('span.bo-step-name', 'USB'),
           h('div.bo-usb',
-            h('span.bo-usb-label', t('A computer gets')),
-            segmented({
-              options: computerOptions, value: computerValue, tone, ariaLabel: t('Mode for a computer on USB'),
-              onChange: (v) => { cfg().auto_usb_computer = v; showComputerHint(v); commit(); },
-            })),
+            h('div.bo-usb-row',
+              h('span.bo-usb-when', t('Nintendo Switch found')), icon('chevron-right'), h('span.bo-usb-fixed', 'Switch')),
+            h('div.bo-usb-row.bo-usb-fallback',
+              h('span.bo-usb-when', t('Otherwise (fallback)')), icon('chevron-right'),
+              segmented({
+                options: computerOptions, value: computerValue, tone, ariaLabel: t('Fallback mode on USB'),
+                onChange: (v) => { cfg().auto_usb_computer = v; showComputerHint(v); commit(); },
+              }))),
           computerHint))));
 
   // ---- On battery -------------------------------------------------------------------------------
@@ -160,7 +165,7 @@ export function bootOrderCard(session, { tone } = {}) {
   const wireless = caps.bluetooth && h('div.bo-col',
     h('div.bo-col-head',
       h('span.bo-col-title', icon('wireless'), t('On battery')),
-      h('span.bo-col-sub', t('Drag to change the order. The first that answers is used.'))),
+      h('span.bo-col-sub', t('In Auto mode, the controller tries these in this order and uses the first that answers. Drag to change it.'))),
     list, live);
 
   return card({
