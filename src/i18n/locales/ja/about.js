@@ -57,4 +57,5 @@ export default {
   "The wireless module update won’t connect": "ワイヤレスモジュールのアップデートが接続できない",
   "Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.": "コントローラーをアップデートモードにしてワイヤレス診断を実行します。接続の各ステップをテストし、サポートに送るレポートを作成します。",
   "Wireless diagnostics": "ワイヤレス診断",
+  "Taskbar shortcut icons (assets/icons/app/shortcut-*.png, drawn from tools/material-symbols/)": "タスクバーのショートカットアイコン（assets/icons/app/shortcut-*.png、tools/material-symbols/ から描画）",
 };

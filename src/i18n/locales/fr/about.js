@@ -57,4 +57,5 @@ export default {
   "The wireless module update won’t connect": "La mise à jour du module sans fil ne se connecte pas",
   "Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.": "Lancez le diagnostic sans fil avec la manette en mode mise à jour. Il teste chaque étape de la connexion et crée un rapport à envoyer au support.",
   "Wireless diagnostics": "Diagnostic sans fil",
+  "Taskbar shortcut icons (assets/icons/app/shortcut-*.png, drawn from tools/material-symbols/)": "Icônes des raccourcis de la barre des tâches (assets/icons/app/shortcut-*.png, dessinées à partir de tools/material-symbols/)",
 };

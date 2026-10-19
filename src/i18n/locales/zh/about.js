@@ -54,4 +54,5 @@ export default {
   "The wireless module update won’t connect": "无线模块更新无法连接",
   "Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.": "让手柄进入更新模式后运行无线诊断。它会测试连接的每个步骤，并生成发给客服的报告。",
   "Wireless diagnostics": "无线诊断",
+  "Taskbar shortcut icons (assets/icons/app/shortcut-*.png, drawn from tools/material-symbols/)": "任务栏快捷方式图标（assets/icons/app/shortcut-*.png，由 tools/material-symbols/ 绘制）",
 };

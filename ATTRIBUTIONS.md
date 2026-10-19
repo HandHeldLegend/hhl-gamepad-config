@@ -6,6 +6,7 @@ Third-party work used by HHL Gamepad Config. This list is mirrored in the app (*
 | Work | Author | License | Used for |
 |---|---|---|---|
 | [Input Prompts](https://kenney.nl/assets/input-prompts) | Kenney | CC0 1.0 | Button glyphs on the Input page (`assets/glyphs/`) |
+| [Material Symbols](https://fonts.google.com/icons) (Rounded, filled) | Google | Apache-2.0 | Taskbar shortcut icons (`assets/icons/app/shortcut-*.png`, drawn by `tools/make_icons.py` from `tools/material-symbols/`) |
 | ["Nintendo Gamepad" 3D model](https://skfb.ly/PyDP) | Nidal Ghonaim | [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) | Controller model on the Motion page (`assets/3d/supergamepad.stl`) |
 | [three.js](https://threejs.org) r128 + STLLoader | three.js authors | MIT (`vendor/three/LICENSE`) | 3D rendering on the Motion and 3D Platformer pages (`vendor/three/`) |
 | [esptool-js](https://github.com/espressif/esptool-js) 0.4.3 | Espressif Systems | Apache-2.0 (`vendor/esptool-js/LICENSE`) | ESP32 wireless module updates (`vendor/esptool-js/`) |

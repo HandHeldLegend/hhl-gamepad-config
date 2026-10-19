@@ -14,6 +14,13 @@ export const ATTRIBUTIONS = [
     usedFor: N_('Button glyphs on the Input page (assets/glyphs/)'),
   },
   {
+    name: 'Material Symbols (Rounded, filled)',
+    author: 'Google',
+    url: 'https://fonts.google.com/icons',
+    license: 'Apache-2.0',
+    usedFor: N_('Taskbar shortcut icons (assets/icons/app/shortcut-*.png, drawn from tools/material-symbols/)'),
+  },
+  {
     name: '“Nintendo Gamepad” 3D model',
     author: 'Nidal Ghonaim',
     url: 'https://skfb.ly/PyDP',

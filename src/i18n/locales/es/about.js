@@ -57,4 +57,5 @@ export default {
   "The wireless module update won’t connect": "La actualización del módulo inalámbrico no conecta",
   "Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.": "Ejecuta el diagnóstico inalámbrico con el mando en modo de actualización. Prueba cada paso de la conexión y crea un informe para enviar a soporte.",
   "Wireless diagnostics": "Diagnóstico inalámbrico",
+  "Taskbar shortcut icons (assets/icons/app/shortcut-*.png, drawn from tools/material-symbols/)": "Iconos de los accesos directos de la barra de tareas (assets/icons/app/shortcut-*.png, dibujados a partir de tools/material-symbols/)",
 };

@@ -12,12 +12,14 @@ drawn procedurally at 4x supersampling and downscaled with LANCZOS.
 """
 import math
 import os
+import re
 
 from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)  # .../hoja3
 APP_DIR = os.path.join(ROOT, "assets", "icons", "app")
+SYMBOLS_DIR = os.path.join(HERE, "material-symbols")  # Material Symbols Rounded, filled (Apache-2.0)
 SPLASH_DIR = os.path.join(ROOT, "assets", "icons", "splash")
 
 SS = 4          # supersampling factor
@@ -252,35 +254,96 @@ def flatten(img, bg):
 
 
 # ---------------------------------------------------------------------------
-# Shortcut glyphs (24-unit line art, same style as ui.svg)
+# Shortcut icons from Material Symbols: a coloured disc with the white glyph.
+# Their paths use only M L H V Q T Z (absolute and relative); curves are
+# flattened, and each subpath XORs into the mask (the glyphs' holes, e.g. the
+# digit in counter_1, are nested subpaths).
 # ---------------------------------------------------------------------------
-GLYPH_UPDATE = [  # download into tray (matches ui.svg #i-install)
-    [(12, 3), (12, 14)],
-    [(7, 9), (12, 14), (17, 9)],
-    [(3, 15), (3, 20.5), (21, 20.5), (21, 15)],
-]
-GLYPH_ARENA = [  # crossed swords (matches ui.svg #i-arena)
-    [(3.5, 3.5), (16.5, 16.5)], [(14.4, 18.6), (18.6, 14.4)], [(16.5, 16.5), (20, 20)],
-    [(20.5, 3.5), (7.5, 16.5)], [(9.6, 18.6), (5.4, 14.4)], [(7.5, 16.5), (4, 20)],
-]
+def _symbol_subpaths(svg_path, steps=12):
+    d = re.search(r' d="([^"]+)"', open(svg_path, encoding="utf-8").read()).group(1)
+    toks = re.findall(r"[MmLlHhVvQqTtZz]|-?(?:\d+\.?\d*|\.\d+)", d)
+    subs, cur = [], []
+    x = y = sx = sy = 0.0
+    qx = qy = None  # last quadratic control point, for T
+    i, cmd = 0, None
+    def num():
+        nonlocal i
+        i += 1
+        return float(toks[i - 1])
+    def quad(x0, y0, cx, cy, x1, y1):
+        for s in range(1, steps + 1):
+            t = s / steps
+            cur.append(((1 - t) ** 2 * x0 + 2 * (1 - t) * t * cx + t * t * x1,
+                        (1 - t) ** 2 * y0 + 2 * (1 - t) * t * cy + t * t * y1))
+    while i < len(toks):
+        if toks[i].isalpha():
+            cmd = toks[i]
+            i += 1
+        rel = cmd.islower()
+        c = cmd.upper()
+        if c == "Z":
+            if cur:
+                subs.append(cur)
+            cur, x, y, qx = [], sx, sy, None
+            continue
+        if c == "M":
+            if cur:
+                subs.append(cur)
+            x, y = (x + num(), y + num()) if rel else (num(), num())
+            sx, sy, cur, qx = x, y, [(x, y)], None
+            cmd = "l" if rel else "L"  # extra pairs after M are lines
+        elif c == "L":
+            x, y = (x + num(), y + num()) if rel else (num(), num())
+            cur.append((x, y)); qx = None
+        elif c == "H":
+            x = x + num() if rel else num()
+            cur.append((x, y)); qx = None
+        elif c == "V":
+            y = y + num() if rel else num()
+            cur.append((x, y)); qx = None
+        elif c == "Q":
+            cx, cy = (x + num(), y + num()) if rel else (num(), num())
+            nx, ny = (x + num(), y + num()) if rel else (num(), num())
+            quad(x, y, cx, cy, nx, ny)
+            x, y, qx, qy = nx, ny, cx, cy
+        elif c == "T":
+            cx, cy = (2 * x - qx, 2 * y - qy) if qx is not None else (x, y)
+            nx, ny = (x + num(), y + num()) if rel else (num(), num())
+            quad(x, y, cx, cy, nx, ny)
+            x, y, qx, qy = nx, ny, cx, cy
+    if cur:
+        subs.append(cur)
+    return subs
 
 
-def shortcut(glyph, color, px=96, ss=SS):
+def shortcut_symbol(name, color, px=96, ss=SS):
     n = px * ss
     img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    d.ellipse([0, 0, n - 1, n - 1], fill=_rgb(color) + (255,))
-    area = n * 0.56
-    k = area / 24
+    ImageDraw.Draw(img).ellipse([0, 0, n - 1, n - 1], fill=_rgb(color) + (255,))
+    # viewBox 0 -960 960 960, drawn over the middle 60% of the disc
+    area = n * 0.60
+    k = area / 960
     off = (n - area) / 2
-    w = 2.2 * k
-    white = (255, 255, 255, 255)
-    for pl in glyph:
-        pts = [(off + x * k, off + y * k) for x, y in pl]
-        d.line(pts, fill=white, width=round(w), joint="curve")
-        for x, y in pts:
-            d.ellipse([x - w / 2, y - w / 2, x + w / 2, y + w / 2], fill=white)
+    mask = Image.new("1", (n, n), 0)
+    for sub in _symbol_subpaths(os.path.join(SYMBOLS_DIR, name + ".svg")):
+        layer = Image.new("1", (n, n), 0)
+        ImageDraw.Draw(layer).polygon([(off + x * k, off + (y + 960) * k) for x, y in sub], fill=1)
+        mask = Image.frombytes("1", (n, n), bytes(a ^ b for a, b in zip(mask.tobytes(), layer.tobytes())))
+    white = Image.new("RGBA", (n, n), (255, 255, 255, 255))
+    img.paste(white, mask=mask.convert("L"))
     return img.resize((px, px), Image.LANCZOS)
+
+
+# Taskbar / jump-list shortcuts (manifest "shortcuts"): profiles in the accent, modes in their own colour
+SHORTCUTS = [
+    ("shortcut-profile-1.png", "counter_1", LAVENDER),
+    ("shortcut-profile-2.png", "counter_2", LAVENDER),
+    ("shortcut-profile-3.png", "counter_3", LAVENDER),
+    ("shortcut-profile-4.png", "counter_4", LAVENDER),
+    ("shortcut-steam.png", "desktop_windows", BLUE),
+    ("shortcut-switch.png", "sports_esports", RED),
+    ("shortcut-slippi.png", "videogame_asset", GREEN),
+]
 
 
 SPLASH_SIZES = [(1290, 2796), (1179, 2556), (1284, 2778), (1170, 2532),
@@ -325,8 +388,8 @@ def main():
                  append_images=[fav[16], fav[32]])
     print("wrote", os.path.relpath(ico, ROOT))
 
-    w_png("shortcut-update.png", shortcut(GLYPH_UPDATE, BLUE))
-    w_png("shortcut-arena.png", shortcut(GLYPH_ARENA, RED))
+    for fname, symbol, color in SHORTCUTS:
+        w_png(fname, shortcut_symbol(symbol, color))
 
     cache = {}
     for (sw, sh) in SPLASH_SIZES:
