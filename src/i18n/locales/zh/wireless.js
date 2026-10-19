@@ -160,4 +160,6 @@ export default {
   "{host} forgotten.": "已忘记 {host}。",
   "Couldn’t forget it. Try again with the controller connected.": "无法忘记。请在控制器已连接时重试。",
   "Forget {host}": "忘记 {host}",
+  "The dongle saved by pairing mode. Without one, any free dongle connects for that session.": "通过配对模式保存的接收器。没有保存时，任何空闲的接收器都会在本次使用中连接。",
+  "This controller stops preferring it. A free dongle still connects for a session, and pairing mode saves one again.": "此控制器将不再优先使用它。空闲的接收器仍可在单次使用中连接，配对模式会重新保存一个。",
 };

@@ -18,6 +18,7 @@ export function seed(device) {
   device.static.bluetooth.part_number = encodeText('ESP32 HCI', 24);
   device.static.bluetooth.external_version_number = 41000;
   device.static.bluetooth.host_forget_supported = 1;
+  device.static.bluetooth.dongle_mac = [0x28, 0xcd, 0xc1, 0x19, 0x5e, 0x19];
   const c = device.config.gamepad;
   c.host_mac_switch = [0x98, 0xb6, 0xe9, 0x4a, 0x2c, 0x11];
   c.host_mac_sinput = [0, 0, 0, 0, 0, 0];
@@ -29,6 +30,10 @@ const HOST_KEY = { SWPRO: 'host_mac_switch', SINPUT: 'host_mac_sinput', WII: 'ho
 
 export function command(block, cmd, device, arg) {
   if (block === 'gamepad' && cmd === 'FORGET_HOST') {
+    if (arg === LAYOUT.defines?.FORGET_HOST_DONGLE) {
+      device.static.bluetooth.dongle_mac = [0, 0, 0, 0, 0, 0];
+      return { status: true, data: null };
+    }
     const name = (LAYOUT.enums.core_reportformat_t || []).find((e) => e.value === arg)?.name.replace('CORE_REPORTFORMAT_', '');
     if (!HOST_KEY[name]) return { status: false, data: null };
     device.config.gamepad[HOST_KEY[name]] = [0, 0, 0, 0, 0, 0];

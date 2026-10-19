@@ -8,8 +8,9 @@
  *                       button + the separate hoja_baseband/ esptool page)
  *   Connected dongle    caps.viaDongle only: the dongle the controller is connected through and
  *                       its firmware update (dongle.js). The module update needs a USB cable then.
- *   Paired hosts        host_mac_switch / host_mac_sinput, plus host_mac_wii on Wii-capable builds; Forget on
- *                       firmware that can (caps.forgetHosts): the address and the keys go, saved at once
+ *   Paired hosts        the saved dongle (bluetooth.dongle_mac), host_mac_switch / host_mac_sinput, plus
+ *                       host_mac_wii on Wii-capable builds; Forget on firmware that can (caps.forgetHosts):
+ *                       the address and the keys go, saved at once
  *   Regulatory          FCC ID + Part 15 statement when the controller reports an FCC ID
  *
  * Deep links: #/wireless?update=1 opens the module update dialog (when supported);
@@ -141,23 +142,33 @@ export function mount(root, ctx) {
 
   // ---- Paired hosts --------------------------------------------------------------------------
   const cfg = session.config.gamepad;
-  // The firmware forgets a host by the mode it paired in (core_reportformat_t)
+  // The firmware forgets a host by the mode it paired in (core_reportformat_t), the dongle by its own
+  // argument; afterwards the block that held its address is read again
   const formatOf = (name) => (LAYOUT.enums.core_reportformat_t || []).find((e) => e.name === `CORE_REPORTFORMAT_${name}`)?.value;
+  const hostMessage = t('This controller stops reconnecting to it. To use it again, pair it again.');
+  const hostAt = (key) => ({ bytes: () => cfg[key], refresh: () => session.refresh('gamepad'), message: hostMessage });
   const hosts = [
-    { key: 'host_mac_switch', label: 'Nintendo Switch', format: formatOf('SWPRO') },
-    { key: 'host_mac_sinput', label: t('Steam host'), format: formatOf('SINPUT'), tip: t('The PC or device paired in Steam mode.') },
-    session.caps.wii && { key: 'host_mac_wii', label: 'Wii', format: formatOf('WII'), tip: t('The Wii console paired in Wii mode.') },
+    // The saved dongle (firmware that reports it): pairing mode saves one
+    session.caps.dongle && session.caps.forgetHosts && LAYOUT.defines?.FORGET_HOST_DONGLE != null && {
+      label: t('Dongle'), icon: 'usb', arg: LAYOUT.defines.FORGET_HOST_DONGLE,
+      bytes: () => session.static.bluetooth.dongle_mac, refresh: () => session.refreshStatic('bluetooth'),
+      tip: t('The dongle saved by pairing mode. Without one, any free dongle connects for that session.'),
+      message: t('This controller stops preferring it. A free dongle still connects for a session, and pairing mode saves one again.'),
+    },
+    { ...hostAt('host_mac_switch'), label: 'Nintendo Switch', arg: formatOf('SWPRO') },
+    { ...hostAt('host_mac_sinput'), label: t('Steam host'), arg: formatOf('SINPUT'), tip: t('The PC or device paired in Steam mode.') },
+    session.caps.wii && { ...hostAt('host_mac_wii'), label: 'Wii', arg: formatOf('WII'), tip: t('The Wii console paired in Wii mode.') },
   ].filter(Boolean);
 
   // One row per host: its name, its address (or "Not paired"), and Forget where the firmware can
   const hostRow = (host) => {
     const row = h('div.wl-host');
     const draw = () => {
-      const bytes = cfg[host.key];
+      const bytes = host.bytes();
       const paired = isPairedMac(bytes);
       row.dataset.paired = paired ? 'true' : 'false';
       row.replaceChildren(...[
-        h('span.wl-host-icon', icon('bluetooth')),
+        h('span.wl-host-icon', icon(host.icon || 'bluetooth')),
         h('div.wl-host-text',
           h('span.wl-host-name', ...[host.label, host.tip && infoTip(host.tip)].filter(Boolean)),
           paired ? h('span.wl-host-detail.wl-mac', formatMac(bytes)) : h('span.wl-host-detail', t('Not paired'))),
@@ -175,15 +186,15 @@ export function mount(root, ctx) {
   async function forget(host, draw) {
     const ok = await confirmDialog({
       title: t('Forget {host}?', { host: host.label }),
-      message: t('This controller stops reconnecting to it. To use it again, pair it again.'),
+      message: host.message,
       confirmLabel: t('Forget'),
       danger: true,
     });
     if (!ok || !alive) return;
     let done = false;
     try {
-      ({ status: done } = await session.command('gamepad', 'FORGET_HOST', { arg: host.format }));
-      if (done) await session.refresh('gamepad');
+      ({ status: done } = await session.command('gamepad', 'FORGET_HOST', { arg: host.arg }));
+      if (done) await host.refresh();
     } catch { done = false; }
     if (!alive) return;
     if (done) {

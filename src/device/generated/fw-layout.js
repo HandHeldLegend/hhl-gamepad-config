@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@37da5b7)
+// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@a1f30c8)
 // Validated 6 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "local",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "37da5b7"
+  "ref": "a1f30c8"
  },
  "blocks": {
   "config": [
@@ -1152,7 +1152,7 @@ export default {
    ]
   },
   "bluetoothInfoStatic_s": {
-   "size": 57,
+   "size": 63,
    "fields": [
     {
      "name": "part_number",
@@ -1208,6 +1208,13 @@ export default {
      "offset": 56,
      "type": "u8",
      "doc": "1 when GAMEPAD_CMD_FORGET_HOST works"
+    },
+    {
+     "name": "dongle_mac",
+     "offset": 57,
+     "type": "u8",
+     "count": 6,
+     "doc": "The dongle this controller remembers (pairing mode saved it), zeros for none"
     }
    ]
   },
@@ -2607,7 +2614,7 @@ export default {
    {
     "name": "GAMEPAD_CMD_FORGET_HOST",
     "value": 9,
-    "doc": "Forget a Bluetooth host; argument the mode it paired in (Switch, SInput or Wii)"
+    "doc": "Forget a Bluetooth host; argument the mode it paired in (Switch, SInput or Wii), or FORGET_HOST_DONGLE"
    },
    {
     "name": "GAMEPAD_CMD_SAVE_ALL",
@@ -2819,6 +2826,7 @@ export default {
   "AUTO_HOST_STEAM": 3,
   "AUTO_HOST_COUNT": 4,
   "AUTO_HOST_OFF": 128,
+  "FORGET_HOST_DONGLE": 255,
   "FIRMWARE_VERSION_TIMESTAMP": 0
  }
 };

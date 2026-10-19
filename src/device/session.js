@@ -33,9 +33,12 @@
  * new identity was never allowed, the owner presses Connect once.
  */
 import { device, USB_FILTERS, LIVE_MODES, isPicoBootloader, isCh340 } from './hoja-device.js';
-import { decodeText } from './struct.js';
+import { decodeText, LAYOUT } from './struct.js';
 import { liveStatus } from './live-status.js';
 import { N_ } from '../i18n/index.js'; // attention texts are translated where displayed
+
+/** Static block indexes by name, for refreshStatic */
+const STATIC_INDEX = Object.fromEntries((LAYOUT.blocks.static || []).map((b) => [b.key, b.index]));
 
 const WRITE_DEBOUNCE_MS = 120;
 /** The dongle's host kind (0xD0 byte 10) for a computer. */
@@ -387,6 +390,12 @@ class Session extends EventTarget {
       this.#emit('saved', {});
     }
     return ok;
+  }
+
+  /** Re-read a static info block by name (e.g. 'bluetooth' after forgetting the saved dongle). */
+  async refreshStatic(block) {
+    const index = device.static ? STATIC_INDEX[block] : undefined;
+    if (index != null) await device.requestStatic(index);
   }
 
   /** Re-read a config block from the controller (e.g. after a calibration command). */
