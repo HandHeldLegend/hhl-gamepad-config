@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@76939f8)
+// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@37da5b7)
 // Validated 6 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "local",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "76939f8"
+  "ref": "37da5b7"
  },
  "blocks": {
   "config": [
@@ -623,10 +623,29 @@ export default {
      "doc": "GAMEPAD_DEFAULTS_SPLIT once the default is split in two"
     },
     {
-     "name": "reserved",
+     "name": "auto_order_version",
      "offset": 47,
      "type": "u8",
-     "count": 17
+     "doc": "AUTO_ORDER_VERSION once the two below are set"
+    },
+    {
+     "name": "auto_wireless_order",
+     "offset": 48,
+     "type": "u8",
+     "count": 4,
+     "doc": "Auto on battery, first to last: AUTO_HOST_* ids, AUTO_HOST_OFF when skipped"
+    },
+    {
+     "name": "auto_usb_computer",
+     "offset": 52,
+     "type": "u8",
+     "doc": "Auto on USB with a computer: core_reportformat_t (SINPUT, XINPUT, SLIPPI, or SWPRO for always Switch)"
+    },
+    {
+     "name": "reserved",
+     "offset": 53,
+     "type": "u8",
+     "count": 11
     }
    ]
   },
@@ -2793,6 +2812,13 @@ export default {
   "ANALOG_EXP_SENSITIVITY_MAX": 300,
   "ANALOG_EXP_SENSITIVITY_DEFAULT": 100,
   "RGB_BRIGHTNESS_MAX": 4096,
+  "AUTO_ORDER_VERSION": 1,
+  "AUTO_HOST_DONGLE": 0,
+  "AUTO_HOST_SWITCH": 1,
+  "AUTO_HOST_WII": 2,
+  "AUTO_HOST_STEAM": 3,
+  "AUTO_HOST_COUNT": 4,
+  "AUTO_HOST_OFF": 128,
   "FIRMWARE_VERSION_TIMESTAMP": 0
  }
 };

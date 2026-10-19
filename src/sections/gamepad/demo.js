@@ -4,10 +4,20 @@
  *   command(block, cmd, device, arg)  return { status, data } to customize a config command's reply,
  *                           or undefined for the default success. May dispatch events on device.
  *
- * Nothing extra needed: the base mock seeds mode, MAC, Switch colors and the WebUSB popup, and
- * wireless/demo.js seeds the paired hosts.
+ * The base mock seeds mode, MAC, Switch colors and the WebUSB popup, and wireless/demo.js the paired
+ * hosts. Here: the boot order at the firmware's defaults (dongle, Switch, Wii, Steam; Steam on a
+ * computer), so the Boot order card shows.
  */
-export function seed(device) {}
+import { LAYOUT } from '../../device/struct.js';
+
+export function seed(device) {
+  const d = LAYOUT.defines || {};
+  if (d.AUTO_ORDER_VERSION == null) return;
+  const c = device.config.gamepad;
+  c.auto_order_version = d.AUTO_ORDER_VERSION;
+  c.auto_wireless_order = [d.AUTO_HOST_DONGLE, d.AUTO_HOST_SWITCH, d.AUTO_HOST_WII, d.AUTO_HOST_STEAM];
+  c.auto_usb_computer = (LAYOUT.enums.core_reportformat_t || []).find((e) => e.name === 'CORE_REPORTFORMAT_SINPUT')?.value ?? 6;
+}
 
 // The Home hub's quick settings (live-status.js): the demo controller keeps them in memory
 const live = { held: false, tourney: false };

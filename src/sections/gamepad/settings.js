@@ -77,7 +77,7 @@ export default [
   {
     key: 'gamepad.defaultWireless',
     label: 'Wireless default',
-    description: 'The mode the controller starts in on battery (firmware with separate defaults). It looks for your dongle first and takes the mode the dongle detects; with no dongle around it goes to Bluetooth. There, Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. Wii mode always goes straight to Bluetooth.',
+    description: 'The mode the controller starts in on battery (firmware with separate defaults). It listens for a free dongle first and takes the mode the dongle detects; with no dongle around it goes to Bluetooth. There, Auto connects to whichever saved console or PC answers first, in the boot order (Switch, then Wii, then PC unless changed). Wii mode always goes straight to Bluetooth.',
     block: 'gamepad',
     type: 'enum',
     requires: 'splitDefaults',

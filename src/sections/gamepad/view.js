@@ -6,10 +6,11 @@
  *                         firmware with split defaults (caps.splitDefaults): that byte is the wired
  *                         default (with Auto), plus gamepad_default_wireless for battery. The block
  *                         is always written whole, so the version byte and gamepad_defaults_split stay.
- *   2. Switch colors     body / buttons / grips (0x00RRGGBB) with a live controller preview
- *   3. Player             the player name (user.name; the User page before it moved here)
- *   4. Connection         WebUSB popup
- *   5. MAC address base   6 hex bytes; the first byte's LSB is forced even (hoja2's rule)
+ *   2. Boot order        where Auto looks, and in which order (boot-order.js; firmware with auto_*)
+ *   3. Switch colors     body / buttons / grips (0x00RRGGBB) with a live controller preview
+ *   4. Player             the player name (user.name; the User page before it moved here)
+ *   5. Connection         WebUSB popup
+ *   6. MAC address base   6 hex bytes; the first byte's LSB is forced even (hoja2's rule)
  * Device info and the bootloader reboot live on the Firmware & backup page; a line at the end links there.
  *
  * All writes go through session.commit('gamepad'): live on the controller, persisted by Save.
@@ -25,6 +26,7 @@ import { DEFAULT_MODES, WIRED_MODES, WIRELESS_MODES, AUTO_MODE } from './setting
 import { padPreview } from './pad-preview.js';
 import { openConnectGuide, modeCombo } from '../../app/connect-guide.js';
 import { macEditor, formatMac } from './mac-editor.js';
+import { bootOrderCard } from './boot-order.js';
 
 loadStyles(new URL('./gamepad.css', import.meta.url));
 
@@ -74,7 +76,7 @@ export function mount(root, { session }) {
   const wirelessValue = wirelessModes.some((m) => m.value === wirelessDef.get(session)) ? wirelessDef.get(session) : AUTO_MODE;
   const wirelessPicker = split && session.caps.bluetooth && h('div.gp-default-group',
     h('div.gp-default-head', h('span.field-label', t('Wireless')),
-      h('span.small.muted', t('Used on battery. Auto connects to whichever saved console or PC answers first: Switch, then Wii, then PC. Dongle connects through your dongle.'))),
+      h('span.small.muted', t('Used on battery. Auto connects to whichever saved console or PC answers first, in the boot order below.'))),
     segmented({
       options: wirelessModes.map((m) => ({ value: m.value, label: t(m.label) })),
       value: wirelessValue, tone: TONE, ariaLabel: t('Wireless default'),
@@ -174,7 +176,7 @@ export function mount(root, { session }) {
     page: h('a', { href: '#/firmware' }, t('Firmware & backup')),
   }));
 
-  root.append(modeCard, colorCard, h('div.card-grid', playerCard, connCard, macCard), firmwareLink);
+  root.append(...[modeCard, bootOrderCard(session, { tone: TONE }), colorCard, h('div.card-grid', playerCard, connCard, macCard), firmwareLink].filter(Boolean));
 
   // Re-read everything if the block is refreshed elsewhere (e.g. a deep link re-applied values).
   return {
