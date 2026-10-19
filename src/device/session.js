@@ -76,6 +76,8 @@ export function computeCaps(s, c) {
     joybus: !!s.device.joybus_supported,
     // Older firmware sends a 55-byte bluetooth block; the struct starts zeroed, so the byte reads 0.
     wii: bt.wii_supported === 1,
+    // Forgetting a paired host (GAMEPAD_CMD_FORGET_HOST): firmware before it sends 56 bytes, read as 0.
+    forgetHosts: bt.host_forget_supported === 1,
     // Per-mode motion switch: only read imu_mode_disable_mask when the IMU block is 0x13 or later.
     imuModes: !!s.imu.axis_gyro_a && (c?.imu?.imu_config_version ?? 0) >= IMU_MODE_MASK_VERSION,
     // Motion flick outputs arrived in the same firmware as the per-mode mask (IMU block 0x13). They
@@ -90,7 +92,7 @@ export function computeCaps(s, c) {
 
 const NO_CAPS = Object.freeze(Object.fromEntries(
   ['analog', 'leftStick', 'rightStick', 'triggers', 'invertAllowed', 'rgb', 'imu', 'haptics', 'hapticHD',
-    'battery', 'bluetooth', 'dongle', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'imuModes', 'imuModeWii', 'flicks', 'splitDefaults',
+    'battery', 'bluetooth', 'dongle', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'forgetHosts', 'imuModes', 'imuModeWii', 'flicks', 'splitDefaults',
     'viaDongle', 'viaBluetooth', 'noCable'].map((k) => [k, false]),
 ));
 
@@ -392,9 +394,9 @@ class Session extends EventTarget {
     await device.requestBlock(block);
   }
 
-  /** Run a firmware config command: session.command('haptic', 'TEST_STRENGTH', { timeout: 10000 }) */
-  command(block, name, { timeout } = {}) {
-    return device.sendConfigCommand(block, name, timeout);
+  /** Run a firmware config command: session.command('haptic', 'TEST_STRENGTH', { timeout: 10000 }), with an optional argument byte */
+  command(block, name, { timeout, arg = null } = {}) {
+    return device.sendConfigCommand(block, name, timeout, arg);
   }
 
   /**

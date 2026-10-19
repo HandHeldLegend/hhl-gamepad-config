@@ -8,7 +8,8 @@
  *                       button + the separate hoja_baseband/ esptool page)
  *   Connected dongle    caps.viaDongle only: the dongle the controller is connected through and
  *                       its firmware update (dongle.js). The module update needs a USB cable then.
- *   Paired hosts        host_mac_switch / host_mac_sinput, plus host_mac_wii on Wii-capable builds (read-only)
+ *   Paired hosts        host_mac_switch / host_mac_sinput, plus host_mac_wii on Wii-capable builds; Forget on
+ *                       firmware that can (caps.forgetHosts): the address and the keys go, saved at once
  *   Regulatory          FCC ID + Part 15 statement when the controller reports an FCC ID
  *
  * Deep links: #/wireless?update=1 opens the module update dialog (when supported);
@@ -19,6 +20,8 @@
  */
 import { h, loadStyles } from '../../ui/dom.js';
 import { card, badge, kv, infoTip, button, asyncButton, callout } from '../../ui/controls.js';
+import { confirmDialog, toast } from '../../ui/overlay.js';
+import { LAYOUT } from '../../device/struct.js';
 import { openConnectGuide, pairingTipNodes } from '../../app/connect-guide.js';
 import { resolveModuleUpdate, familyOf, reportedVersion, CHANNELS, clearManifestCache } from './channels.js';
 import { chipStatus, identityText, isPairedMac, formatMac, FCC_STATEMENT, UPDATE_GUIDE_URL } from './info.js';
@@ -137,18 +140,59 @@ export function mount(root, ctx) {
 
   // ---- Paired hosts --------------------------------------------------------------------------
   const cfg = session.config.gamepad;
-  const macCell = (bytes) => (isPairedMac(bytes)
-    ? h('span.wl-mac', formatMac(bytes))
-    : h('span.muted', t('Not paired')));
+  // The firmware forgets a host by the mode it paired in (core_reportformat_t)
+  const formatOf = (name) => (LAYOUT.enums.core_reportformat_t || []).find((e) => e.name === `CORE_REPORTFORMAT_${name}`)?.value;
+  const hosts = [
+    { key: 'host_mac_switch', label: 'Nintendo Switch', format: formatOf('SWPRO') },
+    { key: 'host_mac_sinput', label: t('Steam host'), format: formatOf('SINPUT'), tip: t('The PC or device paired in Steam mode.') },
+    session.caps.wii && { key: 'host_mac_wii', label: 'Wii', format: formatOf('WII'), tip: t('The Wii console paired in Wii mode.') },
+  ].filter(Boolean);
+
+  const hostCell = (host) => {
+    const cell = h('span.wl-inline');
+    const draw = () => {
+      const bytes = cfg[host.key];
+      const paired = isPairedMac(bytes);
+      cell.replaceChildren(...[
+        paired ? h('span.wl-mac', formatMac(bytes)) : h('span.muted', t('Not paired')),
+        host.tip && infoTip(host.tip),
+        paired && session.caps.forgetHosts && button({
+          label: t('Forget'), size: 'sm', variant: 'ghost', icon: 'trash',
+          onClick: () => forget(host, draw),
+        }),
+      ].filter(Boolean));
+    };
+    draw();
+    return cell;
+  };
+
+  async function forget(host, draw) {
+    const ok = await confirmDialog({
+      title: t('Forget {host}?', { host: host.label }),
+      message: t('This controller stops reconnecting to it. To use it again, pair it again.'),
+      confirmLabel: t('Forget'),
+      danger: true,
+    });
+    if (!ok || !alive) return;
+    let done = false;
+    try {
+      ({ status: done } = await session.command('gamepad', 'FORGET_HOST', { arg: host.format }));
+      if (done) await session.refresh('gamepad');
+    } catch { done = false; }
+    if (!alive) return;
+    if (done) {
+      draw();
+      toast(t('{host} forgotten.', { host: host.label }), { tone: 'green' });
+    } else {
+      toast(t('Couldn’t forget it. Try again with the controller connected.'), { tone: 'red' });
+    }
+  }
+
   const hostsCard = card({
     title: t('Paired hosts'), subtitle: t('What this controller reconnects to over Bluetooth. Pairing again replaces it.'),
     icon: 'gamepad', tone: TONE,
   },
-  kv([
-    ['Nintendo Switch', macCell(cfg.host_mac_switch)],
-    [t('Steam host'), h('span.wl-inline', macCell(cfg.host_mac_sinput), infoTip(t('The PC or device paired in Steam mode.')))],
-    session.caps.wii && ['Wii', h('span.wl-inline', macCell(cfg.host_mac_wii), infoTip(t('The Wii console paired in Wii mode.')))],
-  ]));
+  kv(hosts.map((host) => [host.label, hostCell(host)])));
 
   // ---- Regulatory ----------------------------------------------------------------------------
   const fccId = identityText(bt.fcc_id);

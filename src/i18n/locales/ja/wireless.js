@@ -175,4 +175,9 @@ export default {
   "PC mode": "PC モード",
   "What the dongle shows your PC, until you unplug it. Your controller switches with it.": "ドングルを抜くまで PC に見せるモードです。コントローラーも一緒に切り替わります。",
   "Your controller’s mode was chosen at power-up, so it keeps that mode.": "コントローラーのモードは電源投入時に選ばれたため、そのモードのままです。",
+  "Forget": "登録を解除",
+  "Forget {host}?": "{host} の登録を解除しますか?",
+  "This controller stops reconnecting to it. To use it again, pair it again.": "このコントローラーは再接続しなくなります。再び使うには、もう一度ペアリングしてください。",
+  "{host} forgotten.": "{host} の登録を解除しました。",
+  "Couldn’t forget it. Try again with the controller connected.": "登録を解除できませんでした。コントローラーを接続した状態でもう一度お試しください。",
 };

@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@74a7d55)
+// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@76939f8)
 // Validated 6 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "local",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "74a7d55"
+  "ref": "76939f8"
  },
  "blocks": {
   "config": [
@@ -110,6 +110,7 @@ export default {
    "HOLD_INPUTS": 6,
    "TOURNEY": 7,
    "STATUS": 8,
+   "FORGET_HOST": 9,
    "SAVE_ALL": 255
   },
   "input": {
@@ -1132,7 +1133,7 @@ export default {
    ]
   },
   "bluetoothInfoStatic_s": {
-   "size": 56,
+   "size": 57,
    "fields": [
     {
      "name": "part_number",
@@ -1182,6 +1183,12 @@ export default {
      "offset": 55,
      "type": "u8",
      "doc": "1 when Wii console mode is available (BTstack Bluetooth)"
+    },
+    {
+     "name": "host_forget_supported",
+     "offset": 56,
+     "type": "u8",
+     "doc": "1 when GAMEPAD_CMD_FORGET_HOST works"
     }
    ]
   },
@@ -2577,6 +2584,11 @@ export default {
     "name": "GAMEPAD_CMD_STATUS",
     "value": 8,
     "doc": "Replies [transport][mode][inputs held][tournament lock][reports a second, u16 LE]"
+   },
+   {
+    "name": "GAMEPAD_CMD_FORGET_HOST",
+    "value": 9,
+    "doc": "Forget a Bluetooth host; argument the mode it paired in (Switch, SInput or Wii)"
    },
    {
     "name": "GAMEPAD_CMD_SAVE_ALL",

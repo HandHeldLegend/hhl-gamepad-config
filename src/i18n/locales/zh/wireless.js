@@ -154,4 +154,9 @@ export default {
   "PC mode": "PC 模式",
   "What the dongle shows your PC, until you unplug it. Your controller switches with it.": "接收器向电脑呈现的模式，拔下前一直有效。你的手柄会随之切换。",
   "Your controller’s mode was chosen at power-up, so it keeps that mode.": "你的手柄模式是在开机时选择的，因此会保持该模式。",
+  "Forget": "忘记",
+  "Forget {host}?": "忘记 {host}?",
+  "This controller stops reconnecting to it. To use it again, pair it again.": "此控制器将不再重新连接它。要再次使用，请重新配对。",
+  "{host} forgotten.": "已忘记 {host}。",
+  "Couldn’t forget it. Try again with the controller connected.": "无法忘记。请在控制器已连接时重试。",
 };

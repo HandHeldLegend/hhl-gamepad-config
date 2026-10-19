@@ -172,4 +172,9 @@ export default {
   "PC mode": "Modo de PC",
   "What the dongle shows your PC, until you unplug it. Your controller switches with it.": "Lo que el dongle muestra a tu PC, hasta que lo desconectes. Tu control cambia con él.",
   "Your controller’s mode was chosen at power-up, so it keeps that mode.": "El modo de tu control se eligió al encenderlo, así que lo conserva.",
+  "Forget": "Olvidar",
+  "Forget {host}?": "¿Olvidar {host}?",
+  "This controller stops reconnecting to it. To use it again, pair it again.": "Este control deja de reconectarse a él. Para volver a usarlo, emparéjalo de nuevo.",
+  "{host} forgotten.": "{host} olvidado.",
+  "Couldn’t forget it. Try again with the controller connected.": "No se pudo olvidar. Inténtalo de nuevo con el control conectado.",
 };

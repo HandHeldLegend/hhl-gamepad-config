@@ -172,4 +172,9 @@ export default {
   "PC mode": "Mode PC",
   "What the dongle shows your PC, until you unplug it. Your controller switches with it.": "Ce que le dongle présente à votre PC, jusqu’à ce que vous le débranchiez. Votre manette change avec lui.",
   "Your controller’s mode was chosen at power-up, so it keeps that mode.": "Le mode de votre manette a été choisi à l’allumage, elle le garde donc.",
+  "Forget": "Oublier",
+  "Forget {host}?": "Oublier {host} ?",
+  "This controller stops reconnecting to it. To use it again, pair it again.": "Cette manette ne s’y reconnectera plus. Pour l’utiliser à nouveau, associez-la de nouveau.",
+  "{host} forgotten.": "{host} oublié.",
+  "Couldn’t forget it. Try again with the controller connected.": "Impossible de l’oublier. Réessayez avec la manette connectée.",
 };

@@ -7,23 +7,33 @@
  * mock.js already seeds an ESP32-C3 with external updates and the dongle supported. Here we:
  *   - report the part as "ESP32 HCI" (current controller firmware, which can drive the HCI bridge) with
  *     the older HOJA baseband installed, so the recommended bridge install shows when online;
- *   - give the controller a paired Switch and Wii (SInput left unpaired);
+ *   - give the controller a paired Switch and Wii (SInput left unpaired), which Forget clears;
  *   - make ENABLE_BLUETOOTH_UPLOAD behave like hardware: the controller drops off USB shortly after,
  *     so the update dialog's survive-the-unmount path can be seen. The flash itself is simulated
  *     by module-updater.js / esp-flasher.js when isDemo() was true at the start of the update.
  */
-import { encodeText } from '../../device/struct.js';
+import { encodeText, LAYOUT } from '../../device/struct.js';
 
 export function seed(device) {
   device.static.bluetooth.part_number = encodeText('ESP32 HCI', 24);
   device.static.bluetooth.external_version_number = 41000;
+  device.static.bluetooth.host_forget_supported = 1;
   const c = device.config.gamepad;
   c.host_mac_switch = [0x98, 0xb6, 0xe9, 0x4a, 0x2c, 0x11];
   c.host_mac_sinput = [0, 0, 0, 0, 0, 0];
   c.host_mac_wii = [0x00, 0x1f, 0x32, 0x8d, 0x5e, 0x07];
 }
 
-export function command(block, cmd, device) {
+// FORGET_HOST's argument is the mode the host paired in
+const HOST_KEY = { SWPRO: 'host_mac_switch', SINPUT: 'host_mac_sinput', WII: 'host_mac_wii' };
+
+export function command(block, cmd, device, arg) {
+  if (block === 'gamepad' && cmd === 'FORGET_HOST') {
+    const name = (LAYOUT.enums.core_reportformat_t || []).find((e) => e.value === arg)?.name.replace('CORE_REPORTFORMAT_', '');
+    if (!HOST_KEY[name]) return { status: false, data: null };
+    device.config.gamepad[HOST_KEY[name]] = [0, 0, 0, 0, 0, 0];
+    return { status: true, data: null };
+  }
   if (block === 'gamepad' && cmd === 'ENABLE_BLUETOOTH_UPLOAD') {
     // Real firmware reboots into ALTFLASH without replying; simulate the USB drop.
     setTimeout(() => device.disconnect(), 600);
