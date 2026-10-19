@@ -21,6 +21,7 @@
 import { h, loadStyles } from '../../ui/dom.js';
 import { card, badge, kv, infoTip, button, asyncButton, callout } from '../../ui/controls.js';
 import { confirmDialog, toast } from '../../ui/overlay.js';
+import { icon } from '../../ui/icons.js';
 import { LAYOUT } from '../../device/struct.js';
 import { openConnectGuide, pairingTipNodes } from '../../app/connect-guide.js';
 import { resolveModuleUpdate, familyOf, reportedVersion, CHANNELS, clearManifestCache } from './channels.js';
@@ -148,22 +149,27 @@ export function mount(root, ctx) {
     session.caps.wii && { key: 'host_mac_wii', label: 'Wii', format: formatOf('WII'), tip: t('The Wii console paired in Wii mode.') },
   ].filter(Boolean);
 
-  const hostCell = (host) => {
-    const cell = h('span.wl-inline');
+  // One row per host: its name, its address (or "Not paired"), and Forget where the firmware can
+  const hostRow = (host) => {
+    const row = h('div.wl-host');
     const draw = () => {
       const bytes = cfg[host.key];
       const paired = isPairedMac(bytes);
-      cell.replaceChildren(...[
-        paired ? h('span.wl-mac', formatMac(bytes)) : h('span.muted', t('Not paired')),
-        host.tip && infoTip(host.tip),
+      row.dataset.paired = paired ? 'true' : 'false';
+      row.replaceChildren(...[
+        h('span.wl-host-icon', icon('bluetooth')),
+        h('div.wl-host-text',
+          h('span.wl-host-name', ...[host.label, host.tip && infoTip(host.tip)].filter(Boolean)),
+          paired ? h('span.wl-host-detail.wl-mac', formatMac(bytes)) : h('span.wl-host-detail', t('Not paired'))),
         paired && session.caps.forgetHosts && button({
-          label: t('Forget'), size: 'sm', variant: 'ghost', icon: 'trash',
+          label: t('Forget'), size: 'sm', variant: 'ghost', icon: 'trash', class: 'wl-host-forget',
+          title: t('Forget {host}', { host: host.label }),
           onClick: () => forget(host, draw),
         }),
       ].filter(Boolean));
     };
     draw();
-    return cell;
+    return row;
   };
 
   async function forget(host, draw) {
@@ -192,7 +198,7 @@ export function mount(root, ctx) {
     title: t('Paired hosts'), subtitle: t('What this controller reconnects to over Bluetooth. Pairing again replaces it.'),
     icon: 'gamepad', tone: TONE,
   },
-  kv(hosts.map((host) => [host.label, hostCell(host)])));
+  h('div.wl-hosts', ...hosts.map(hostRow)));
 
   // ---- Regulatory ----------------------------------------------------------------------------
   const fccId = identityText(bt.fcc_id);

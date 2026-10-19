@@ -177,4 +177,5 @@ export default {
   "This controller stops reconnecting to it. To use it again, pair it again.": "Cette manette ne s’y reconnectera plus. Pour l’utiliser à nouveau, associez-la de nouveau.",
   "{host} forgotten.": "{host} oublié.",
   "Couldn’t forget it. Try again with the controller connected.": "Impossible de l’oublier. Réessayez avec la manette connectée.",
+  "Forget {host}": "Oublier {host}",
 };

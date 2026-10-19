@@ -180,4 +180,5 @@ export default {
   "This controller stops reconnecting to it. To use it again, pair it again.": "このコントローラーは再接続しなくなります。再び使うには、もう一度ペアリングしてください。",
   "{host} forgotten.": "{host} の登録を解除しました。",
   "Couldn’t forget it. Try again with the controller connected.": "登録を解除できませんでした。コントローラーを接続した状態でもう一度お試しください。",
+  "Forget {host}": "{host} の登録を解除",
 };

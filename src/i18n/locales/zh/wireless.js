@@ -159,4 +159,5 @@ export default {
   "This controller stops reconnecting to it. To use it again, pair it again.": "此控制器将不再重新连接它。要再次使用，请重新配对。",
   "{host} forgotten.": "已忘记 {host}。",
   "Couldn’t forget it. Try again with the controller connected.": "无法忘记。请在控制器已连接时重试。",
+  "Forget {host}": "忘记 {host}",
 };
