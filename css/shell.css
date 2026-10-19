@@ -254,6 +254,23 @@ h1 .beta-badge { font-size: 0.72rem; position: relative; top: -0.15em; }
 .hub-stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--surface-sunken); }
 .hub-label { font-size: var(--text-xs); color: var(--text-muted); }
 .hub-value { font-weight: 700; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Waiting for the controller's first answer: placeholders in place, so the card never jumps */
+.hub-skeleton {
+  color: transparent !important; border-color: transparent !important; pointer-events: none; user-select: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--surface-sunken) 0%, var(--border) 50%, var(--surface-sunken) 100%) 0 0 / 200% 100%;
+  animation: hub-shimmer 1.4s ease-in-out infinite;
+}
+.hub-value.hub-skeleton { width: 5.5em; max-width: 100%; }
+.hub-value:not(.hub-skeleton), .hub-profiles .btn:not(.hub-skeleton) { animation: hub-arrive var(--dur-med) var(--ease-out); }
+.hub-waiting .switch { opacity: 0.45; pointer-events: none; transition: opacity var(--dur-med); }
+.hub-waiting .switch .track { animation: hub-shimmer 1.4s ease-in-out infinite; }
+@keyframes hub-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@keyframes hub-arrive { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .hub-skeleton, .hub-waiting .switch .track { animation: none; }
+  .hub-value:not(.hub-skeleton), .hub-profiles .btn:not(.hub-skeleton) { animation: none; }
+}
 @media (max-width: 380px) { .hub-stats { grid-template-columns: 1fr 1fr; } }
 /* Profiles: a button each, all in view (two to a row on a phone, four across when they fit); a long
    name ends in an ellipsis. Rename and Copy from… sit below. */

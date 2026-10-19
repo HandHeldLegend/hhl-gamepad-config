@@ -71,7 +71,27 @@ function stat(label) {
   const value = h('span.hub-value', '–');
   const el = h('div.hub-stat', h('span.hub-label', label), value);
   el.set = (text) => { if (value.textContent !== text) value.textContent = text; };
+  /** Waiting for the controller: a placeholder where the value goes, so nothing moves when it comes. */
+  el.waiting = (on) => value.classList.toggle('hub-skeleton', on);
   return el;
+}
+
+/**
+ * Fold a field away (a feature this firmware turns out not to have), rather than have the card jump.
+ * Reduced motion: it just goes.
+ */
+function collapse(el) {
+  if (el.hidden || el.dataset.collapsing) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !el.animate) { el.hidden = true; return; }
+  el.dataset.collapsing = '1';
+  const height = el.offsetHeight;
+  el.style.overflow = 'hidden';
+  el.animate([{ height: `${height}px`, opacity: 1 }, { height: '0px', opacity: 0, marginTop: '0px', marginBottom: '0px' }],
+    { duration: 220, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }).onfinish = () => {
+    el.hidden = true;
+    el.style.overflow = '';
+    delete el.dataset.collapsing;
+  };
 }
 
 /**
@@ -107,8 +127,10 @@ export function quickHub(session, device) {
   const tourneyField = field({ label: t('Tournament lock'), control: tourney,
     description: tourneyText(session) });
 
-  // Profiles: null until the controller answered (and for good when its firmware has none)
+  // Profiles: null until the controller answered (and for good when its firmware has none). Until the
+  // first answer the field holds its place with placeholders.
   const profilesKey = device.transportId ?? 'this';
+  let profilesAsked = profilesSeen.has(profilesKey);
   let profiles = profilesSeen.get(profilesKey) ?? null;
   const profileName = (n) => profiles?.names[n] || unnamedProfile(n);
   const profilePick = h('div.hub-profiles', { role: 'group', 'aria-label': t('Profile') });
@@ -117,11 +139,16 @@ export function quickHub(session, device) {
   const profileField = field({ label: t('Profile'), stacked: true,
     control: h('div.stack.hub-profile-control', profilePick, h('div.row', renameBtn, copyBtn)),
     description: t('Stick notches and angles, deadzones and curves, remaps, RGB, motion and rumble strength belong to the profile. Calibration, pairings and your name stay the same in every profile.') });
-  profileField.hidden = true;
+  profileField.hidden = profilesAsked && !profiles;
 
   function paintProfiles(busy = false) {
-    profileField.hidden = !profiles;
-    if (!profiles) return;
+    if (!profilesAsked) {
+      // Waiting: four placeholders in the buttons' place
+      profilePick.replaceChildren(...[0, 1, 2, 3].map(() => h('span.btn.btn-tonal.hub-skeleton', { 'aria-hidden': 'true' }, '\u00a0')));
+      renameBtn.disabled = copyBtn.disabled = true;
+      return;
+    }
+    if (!profiles) { collapse(profileField); return; }
     // One button per profile, all in view (two to a row on a phone)
     profilePick.replaceChildren(...profiles.names.map((_, n) => {
       const b = button({ label: profileName(n), variant: n === profiles.active ? 'primary' : 'tonal', disabled: busy,
@@ -194,11 +221,12 @@ export function quickHub(session, device) {
   }
 
   paintProfiles();
-  device.readProfiles().then((p) => {
+  device.readProfiles().catch(() => null).then((p) => {
     profiles = p;
+    profilesAsked = true;
     profilesSeen.set(profilesKey, p);
     paintProfiles();
-  }).catch(() => {});
+  });
 
   const el = card({ title: t('Quick settings'), icon: 'sliders', tone: 'lavender', class: 'hub-card' },
     profileField, tourneyField,
@@ -215,10 +243,18 @@ export function quickHub(session, device) {
 
   function paint() {
     connection.set(connectionText());
-    const ok = liveStatus.supported === true;
+    // Until the first status the fields hold their place; firmware without it folds them away
+    if (liveStatus.supported === false) {
+      for (const node of [game, rate, sendField, tourneyField]) collapse(node);
+      return;
+    }
     const s = liveStatus.state;
-    for (const node of [game, rate, sendField, tourneyField]) node.hidden = !ok;
-    if (!ok || !s) return;
+    const waiting = !s;
+    game.waiting(waiting);
+    rate.waiting(waiting);
+    sendField.classList.toggle('hub-waiting', waiting);
+    tourneyField.classList.toggle('hub-waiting', waiting);
+    if (waiting) return;
     const link = gameLink(s.transport);
     const mode = MODES[s.mode] ?? '';
     game.set([mode, link].filter(Boolean).join(' · ') || '–');
