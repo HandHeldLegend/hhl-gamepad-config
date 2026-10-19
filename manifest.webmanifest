@@ -22,20 +22,47 @@
   ],
   "shortcuts": [
     {
-      "name": "Update firmware",
-      "short_name": "Firmware",
-      "url": "./#/firmware",
-      "icons": [{ "src": "assets/icons/app/shortcut-update.png", "sizes": "96x96", "type": "image/png" }]
+      "name": "Switch to profile 1",
+      "short_name": "Profile 1",
+      "description": "Make settings profile 1 live on the connected controller",
+      "url": "./?profile=1"
     },
     {
-      "name": "Gameplay arena",
-      "short_name": "Arena",
-      "url": "./#/arena",
-      "icons": [{ "src": "assets/icons/app/shortcut-arena.png", "sizes": "96x96", "type": "image/png" }]
+      "name": "Switch to profile 2",
+      "short_name": "Profile 2",
+      "description": "Make settings profile 2 live on the connected controller",
+      "url": "./?profile=2"
     },
-    { "name": "Steam mode", "short_name": "Steam", "url": "./?mode=steam" },
-    { "name": "Slippi mode", "short_name": "Slippi", "url": "./?mode=slippi" },
-    { "name": "Switch mode", "short_name": "Switch", "url": "./?mode=switch" }
+    {
+      "name": "Switch to profile 3",
+      "short_name": "Profile 3",
+      "description": "Make settings profile 3 live on the connected controller",
+      "url": "./?profile=3"
+    },
+    {
+      "name": "Switch to profile 4",
+      "short_name": "Profile 4",
+      "description": "Make settings profile 4 live on the connected controller",
+      "url": "./?profile=4"
+    },
+    {
+      "name": "Steam mode",
+      "short_name": "Steam",
+      "description": "Steam mode on the connected controller or dongle, until unplugged",
+      "url": "./?mode=steam"
+    },
+    {
+      "name": "Switch mode",
+      "short_name": "Switch",
+      "description": "Switch mode on the connected controller or dongle, until unplugged",
+      "url": "./?mode=switch"
+    },
+    {
+      "name": "Slippi mode",
+      "short_name": "Slippi",
+      "description": "Slippi mode on the connected controller or dongle, until unplugged",
+      "url": "./?mode=slippi"
+    }
   ],
   "launch_handler": { "client_mode": ["focus-existing", "auto"] }
 }

@@ -456,4 +456,8 @@ export default {
   "Hold {buttons} while you turn it on, then press SYNC on the Wii.": "按住 {buttons} 开机，然后按下 Wii 上的 SYNC 按钮。",
   "Hold {buttons} while you turn it on near a free dongle: it connects and is saved.": "在空闲的接收器附近按住 {buttons} 开机：它会连接并被保存。",
   "Or plug it into the Switch with a USB cable once.": "或者用 USB 线将它连接到 Switch 一次。",
+  "Connect your controller first, then use the shortcut again.": "请先连接控制器，然后再次使用快捷方式。",
+  "This controller’s firmware has no profiles. Update it to use them.": "此控制器的固件没有配置文件。请更新固件后使用。",
+  "{name} is already live.": "{name} 已在使用中。",
+  "Couldn’t switch profiles. Try again.": "无法切换配置文件。请重试。",
 };

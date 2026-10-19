@@ -469,4 +469,8 @@ export default {
   "Hold {buttons} while you turn it on, then press SYNC on the Wii.": "{buttons} を押したまま電源を入れ、Wii の SYNC ボタンを押します。",
   "Hold {buttons} while you turn it on near a free dongle: it connects and is saved.": "空いているドングルの近くで {buttons} を押したまま電源を入れると、接続して保存されます。",
   "Or plug it into the Switch with a USB cable once.": "または USB ケーブルで一度 Switch につなぎます。",
+  "Connect your controller first, then use the shortcut again.": "先にコントローラーを接続してから、もう一度ショートカットを使ってください。",
+  "This controller’s firmware has no profiles. Update it to use them.": "このコントローラーのファームウェアにはプロファイルがありません。使うにはアップデートしてください。",
+  "{name} is already live.": "{name} はすでに有効です。",
+  "Couldn’t switch profiles. Try again.": "プロファイルを切り替えられませんでした。もう一度お試しください。",
 };

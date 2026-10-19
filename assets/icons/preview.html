@@ -88,7 +88,6 @@
     ['app/maskable-512.png', 'maskable-512', 96], ['app/icon-maskable.svg', 'icon-maskable.svg', 96],
     ['app/monochrome-512.png', 'monochrome-512', 96, 'mono'], ['app/icon-monochrome.svg', 'icon-monochrome.svg', 96, 'mono'],
     ['app/apple-touch-icon.png', 'apple-touch-icon', 90], ['app/mstile-150.png', 'mstile-150', 75],
-    ['app/shortcut-update.png', 'shortcut-update', 48], ['app/shortcut-arena.png', 'shortcut-arena', 48],
   ];
   const appHtml = apps.map(([src, name, size, cls]) =>
     `<figure><img src="${src}" width="${size}" height="${size}" alt="HHL Gamepad Config ${name}" class="${cls || ''}"><figcaption>${name}</figcaption></figure>`).join('');

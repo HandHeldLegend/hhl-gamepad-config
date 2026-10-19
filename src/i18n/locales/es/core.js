@@ -469,4 +469,8 @@ export default {
   "Hold {buttons} while you turn it on, then press SYNC on the Wii.": "Mantén {buttons} mientras lo enciendes y luego pulsa SYNC en la Wii.",
   "Hold {buttons} while you turn it on near a free dongle: it connects and is saved.": "Mantén {buttons} mientras lo enciendes cerca de un dongle libre: se conecta y queda guardado.",
   "Or plug it into the Switch with a USB cable once.": "O conéctalo a la Switch con un cable USB una vez.",
+  "Connect your controller first, then use the shortcut again.": "Conecta primero tu control y luego usa el acceso directo de nuevo.",
+  "This controller’s firmware has no profiles. Update it to use them.": "El firmware de este control no tiene perfiles. Actualízalo para usarlos.",
+  "{name} is already live.": "{name} ya está activo.",
+  "Couldn’t switch profiles. Try again.": "No se pudo cambiar de perfil. Inténtalo de nuevo.",
 };
