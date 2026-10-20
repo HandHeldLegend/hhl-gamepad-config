@@ -198,6 +198,8 @@ const IN_FLIGHT = 2; // concurrent IN transfers (see #pollLoop)
  * arrived for STREAM_STALL_MS we re-send the current input mode, which re-arms it.
  */
 const STREAM_STALL_MS = 600;
+/** How often to ask a dongle whether its controller is still there (0xD0, answered by the dongle). */
+const DONGLE_WATCH_MS = 3000;
 
 const REPORT = {
   READ_CONFIG: 1,
@@ -331,6 +333,7 @@ export class HojaDevice extends EventTarget {
 
   #configTable;
   #staticTable;
+  #dongleWatch = 0;
 
   #resetMemory() {
     for (const b of this.#configTable) this.config[b.key] = createStruct(b.struct);
@@ -463,7 +466,35 @@ export class HojaDevice extends EventTarget {
       throw err;
     }
     this.#emit('connect', { device: this });
+    if (this.dongle?.gamepad) this.#watchDongle(usb);
     return true;
+  }
+
+  /**
+   * Through a dongle: when the controller leaves, a dongle usually drops off USB and comes back as
+   * itself (the session follows it). One that stays on USB would leave the app showing the controller,
+   * so ask the dongle every few seconds, and when it has no controller any more, become the dongle.
+   */
+  #watchDongle(usb) {
+    clearInterval(this.#dongleWatch);
+    let asking = false;
+    const stop = () => { clearInterval(this.#dongleWatch); this.#dongleWatch = 0; };
+    this.#dongleWatch = setInterval(async () => {
+      if (this.#usb !== usb || !this.#connected || !this.dongle?.gamepad) { stop(); return; }
+      if (asking) return;
+      asking = true;
+      try {
+        const info = await this.#exclusive(() => this.#probeDongle(400));
+        if (info && !info.gamepad && this.#usb === usb) {
+          stop();
+          console.info('[device] the controller left the dongle');
+          this.dongle = info;
+          this.#emit('dongle', { dongle: info });
+        }
+      } catch { /* the next round asks again */ } finally {
+        asking = false;
+      }
+    }, DONGLE_WATCH_MS);
   }
 
   /**
