@@ -237,6 +237,8 @@ export function openConnectGuide(o = {}) {
   const notes = h('ul.guide-notes',
     bt && h('li', p.wii ? t('Bluetooth works in Switch, Steam and Wii modes.') : t('Bluetooth works in Switch and Steam modes.')),
     p.dongle && h('li', t('XInput, GameCube, N64 and Slippi modes go wireless through the dongle instead.')),
+    // NS2-LIB-HID (newest firmware): Slippi mode on a Switch 2 presents as its NSO GameCube controller (057E:2073), no WebUSB.
+    h('li', t('Slippi mode on a Switch 2 (newest firmware): the controller is the Switch 2’s own GameCube controller and takes no pairing slot. This app can’t connect to it in that mode.')),
     bt && h('li', p.wii
       ? t('The controller remembers one Switch, one Steam host and one Wii. Pairing again replaces it. The Wireless page shows all three.')
       : t('The controller remembers one Switch and one Steam host. Pairing again replaces it. The Wireless page shows both.')),

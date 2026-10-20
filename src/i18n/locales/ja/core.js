@@ -473,4 +473,6 @@ export default {
   "This controller’s firmware has no profiles. Update it to use them.": "このコントローラーのファームウェアにはプロファイルがありません。使うにはアップデートしてください。",
   "{name} is already live.": "{name} はすでに有効です。",
   "Couldn’t switch profiles. Try again.": "プロファイルを切り替えられませんでした。もう一度お試しください。",
+  "Slippi mode on a Switch 2 (newest firmware): the controller is the Switch 2’s own GameCube controller and takes no pairing slot. This app can’t connect to it in that mode.": "Switch 2 での Slippi モード（最新ファームウェア）: コントローラーは Switch 2 純正の GameCube コントローラーとして動作し、ペアリング枠を使いません。このモードではこのアプリから接続できません。",
+  "Couldn’t switch to the chip’s own bootloader. Unplug the controller, then hold BOOTSEL (or bridge the boot pads) while plugging it in.": "チップ自身のブートローダーに切り替えられませんでした。コントローラーを抜き、BOOTSEL を押したまま（またはブートパッドをショートして）接続してください。",
 };

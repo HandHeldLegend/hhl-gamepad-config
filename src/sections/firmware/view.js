@@ -15,10 +15,11 @@ import { confirmDialog, toast } from '../../ui/overlay.js';
 import { connectController, connectWithUsbChooser } from '../../app/shell.js';
 import { isIOS } from '../../app/platform.js';
 import { listBuilds } from '../../firmware/builds.js';
+import { hojaDriveLabel } from '../../firmware/drives.js';
 import {
   firmwareStatus, openUpdateWizard, openInstallWizard, checkForFirmwareUpdate, exitBootloader, formatFwVersion, cableUpdateText, cableOnlyNote,
   bleUpdateSupported,
-  rebootToBootloaderOnly,
+  rebootToBootloaderOnly, rebootToRomBootloaderOnly,
 } from '../../firmware/updater.js';
 import { t, N_ } from '../../i18n/index.js';
 import { openModuleUpdaterInUpdateMode } from '../wireless/module-updater.js';
@@ -94,24 +95,23 @@ function dongleInstallCard() {
     h('div.row', button({ label: t('Open installer'), icon: 'firmware', variant: 'tonal', onClick: () => openInstallWizard() })));
 }
 
-/** Reboot the connected controller into its bootloader (update mode), after a confirmation. */
-function rebootButton(session) {
+/**
+ * Reboot the connected controller into a bootloader, after a confirmation.
+ * @param {{label: string, title: string, message: string, run: () => Promise<boolean>}} o
+ */
+function rebootButton(session, o) {
   const btn = button({
-    label: t('Reboot to bootloader'), icon: 'firmware', variant: 'tonal',
+    label: o.label, icon: 'firmware', variant: 'tonal',
     // Without a USB cable the firmware refuses this: its bootloader can't be reached wirelessly.
     disabled: !session.connected || session.caps.noCable,
     onClick: async () => {
-      const ok = await confirmDialog({
-        title: t('Reboot into update mode?'),
-        message: t('The controller will disconnect and restart in its bootloader so new firmware can be installed. This app offers to install it when the controller reappears. Unsaved changes will be lost. Only do this if you are updating the firmware.'),
-        confirmLabel: t('Reboot'), danger: true,
-      });
+      const ok = await confirmDialog({ title: o.title, message: o.message, confirmLabel: t('Reboot'), danger: true });
       if (!ok) return;
-      const reset = () => { if (btn.isConnected) { btn.disabled = false; btn.setLabel(t('Reboot to bootloader')); } };
+      const reset = () => { if (btn.isConnected) { btn.disabled = false; btn.setLabel(o.label); } };
       btn.disabled = true;
       btn.setLabel(t('Rebooting…'));
       try {
-        await rebootToBootloaderOnly();
+        await o.run();
         // Normally the controller drops off and the page re-renders; re-arm the button if it didn't.
         setTimeout(reset, 8000);
       } catch (err) {
@@ -145,13 +145,41 @@ function byHandCableNote() {
   return isIOS() ? cableOnlyNote() : t('Needs a USB cable: the update mode works over USB only.');
 }
 
+/**
+ * The two ways into a bootloader. Update mode (safe) is the HOJA bootloader where the board has one:
+ * it shows a drive named after the controller and only takes this board's firmware. The boot ROM
+ * (advanced) is the chip's own RPI-RP2 / RP2350 drive, past the HOJA bootloader's board checks.
+ */
+function bootloaderRows(session) {
+  const name = session.connected ? hojaDriveLabel(session.info?.name) : '';
+  const safe = h('div.fw-recovery-row',
+    h('div', h('div.field-label', t('Update mode (safe)')),
+      h('div.field-desc', session.caps.noCable ? byHandCableNote() : name
+        ? t('Restarts the controller in its update mode, to install firmware by hand. It shows a drive named {drive} (on controllers without the HOJA bootloader: RPI-RP2 or RP2350).', { drive: name })
+        : t('Restarts the controller in its update mode, to install firmware by hand. It shows a drive named after the controller (on controllers without the HOJA bootloader: RPI-RP2 or RP2350).'))),
+    rebootButton(session, {
+      label: t('Restart in update mode'),
+      title: t('Reboot into update mode?'),
+      message: t('The controller will disconnect and restart in its bootloader so new firmware can be installed. This app offers to install it when the controller reappears. Unsaved changes will be lost. Only do this if you are updating the firmware.'),
+      run: rebootToBootloaderOnly,
+    }));
+  const rom = h('div.fw-recovery-row',
+    h('div', h('div.field-label', t('Boot ROM (advanced)')),
+      h('div.field-desc', session.caps.noCable ? byHandCableNote()
+        : t('Restarts in the chip’s own bootloader, the RPI-RP2 or RP2350 drive. It skips the HOJA bootloader’s board checks, so use it only to recover a controller.'))),
+    rebootButton(session, {
+      label: t('Restart in boot ROM'),
+      title: t('Restart in the chip’s own bootloader?'),
+      message: t('The controller restarts in its chip’s boot ROM and shows the RPI-RP2 or RP2350 drive. This skips the HOJA bootloader’s board checks: firmware made for another board can be written there and stop the controller working. Only do this to recover a controller. Unsaved changes will be lost.'),
+      run: rebootToRomBootloaderOnly,
+    }));
+  return [safe, rom];
+}
+
 function recoveryCard(session) {
   const body = h('div.stack');
   const render = () => body.replaceChildren(
-    h('div.fw-recovery-row',
-      h('div', h('div.field-label', t('Install firmware by hand')),
-        h('div.field-desc', session.caps.noCable ? byHandCableNote() : t('Restarts the connected controller in update mode, to install firmware by hand.'))),
-      rebootButton(session)),
+    ...bootloaderRows(session),
     h('div.fw-recovery-row',
       h('div', h('div.field-label', t('Stuck in the bootloader?')),
         h('div.field-desc', t('After an interrupted update, restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.', { fresh: t('Start fresh: erase everything first') }))),

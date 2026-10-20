@@ -35,7 +35,7 @@ export const DEFAULTS_SPLIT = 0x01;
 export const DEFAULT_MODES = [
   { value: fmt('SWPRO'), label: 'Switch', aliases: ['switch', 'swpro', 'pro', 'nintendo switch', 'switch pro'], about: N_('Nintendo Switch Pro Controller. Works with this app.') },
   { value: fmt('XINPUT'), label: 'XInput', aliases: ['xinput', 'xbox', 'x-input', 'pc'], about: N_('Xbox-style controller for Windows PCs.') },
-  { value: fmt('SLIPPI'), label: 'Slippi', aliases: ['slippi', 'dolphin', 'melee'], about: N_('GameCube adapter mode for Slippi / Dolphin.') },
+  { value: fmt('SLIPPI'), label: 'Slippi', aliases: ['slippi', 'dolphin', 'melee'], about: N_('GameCube adapter for Slippi / Dolphin on a PC. On a Switch 2 (newest firmware) it’s the Switch 2’s own GameCube controller.') },
   { value: fmt('GAMECUBE'), label: 'GameCube', aliases: ['gamecube', 'gc', 'gcube', 'ngc'], about: N_('Native GameCube (Joybus) output.') },
   { value: fmt('N64'), label: 'N64', aliases: ['n64', 'nintendo 64'], about: N_('Native Nintendo 64 (Joybus) output.') },
   { value: fmt('SNES'), label: 'SNES', aliases: ['snes', 'sfc', 'super famicom', 'super nintendo', 'nes'], about: N_('Native SNES / Super Famicom output.') },

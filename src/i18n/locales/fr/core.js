@@ -473,4 +473,6 @@ export default {
   "This controller’s firmware has no profiles. Update it to use them.": "Le firmware de cette manette n’a pas de profils. Mettez-le à jour pour les utiliser.",
   "{name} is already live.": "{name} est déjà actif.",
   "Couldn’t switch profiles. Try again.": "Impossible de changer de profil. Réessayez.",
+  "Slippi mode on a Switch 2 (newest firmware): the controller is the Switch 2’s own GameCube controller and takes no pairing slot. This app can’t connect to it in that mode.": "Mode Slippi sur une Switch 2 (firmware le plus récent) : la manette devient la manette GameCube propre à la Switch 2 et n’occupe aucun emplacement d’appairage. Cette app ne peut pas s’y connecter dans ce mode.",
+  "Couldn’t switch to the chip’s own bootloader. Unplug the controller, then hold BOOTSEL (or bridge the boot pads) while plugging it in.": "Impossible de passer au bootloader de la puce. Débranchez la manette, puis maintenez BOOTSEL (ou pontez les pastilles de boot) en la branchant.",
 };

@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@a1f30c8)
+// Regenerate with: node tools/sync-firmware.mjs   (source: github HandHeldLegend/HOJA-LIB-RP2040@ns2-gc)
 // Validated 6 size assertion(s) from the firmware headers.
 export default {
  "source": {
-  "kind": "local",
+  "kind": "github",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "a1f30c8"
+  "ref": "ns2-gc"
  },
  "blocks": {
   "config": [
@@ -111,6 +111,7 @@ export default {
    "TOURNEY": 7,
    "STATUS": 8,
    "FORGET_HOST": 9,
+   "RESET_TO_ROM_BOOTLOADER": 10,
    "SAVE_ALL": 255
   },
   "input": {
@@ -2615,6 +2616,11 @@ export default {
     "name": "GAMEPAD_CMD_FORGET_HOST",
     "value": 9,
     "doc": "Forget a Bluetooth host; argument the mode it paired in (Switch, SInput or Wii), or FORGET_HOST_DONGLE"
+   },
+   {
+    "name": "GAMEPAD_CMD_RESET_TO_ROM_BOOTLOADER",
+    "value": 10,
+    "doc": "The chip's own USB bootloader (RPI-RP2 or RP2350 drive), past the HOJA bootloader; cable only"
    },
    {
     "name": "GAMEPAD_CMD_SAVE_ALL",

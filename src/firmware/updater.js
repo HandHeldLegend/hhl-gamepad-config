@@ -47,7 +47,7 @@ import { h, replace, fillNodes } from '../ui/dom.js';
 import { openDialog, toast } from '../ui/overlay.js';
 import { callout, progressBar, select } from '../ui/controls.js';
 import { session } from '../device/session.js';
-import { device, isPicoBootloader, updateModeBuildId } from '../device/hoja-device.js';
+import { device, isPicoBootloader, updateModeBuildId, isHojaUpdateMode } from '../device/hoja-device.js';
 import { isDemo } from '../device/mock.js';
 import { prefs } from '../app/prefs.js';
 import { isIOS } from '../app/platform.js';
@@ -56,6 +56,7 @@ import { loadChangelog, pendingActions, buildIdFromManifestUrl, inlineRuns } fro
 import {
   pico_update_attempt_flash, pico_exit_bootloader_attempt, pico_complete_uf2_picker_flash,
   pico_has_cached_uf2, pico_get_cached_uf2, pico_clear_cached_uf2, supportsDirectoryPicker, setUpdateStatus, onFlashProgress,
+  pico_enter_rom_bootloader,
 } from './picoboot.js';
 import { t, N_, fmt } from '../i18n/index.js';
 import { fetchableUrl } from './urls.js';
@@ -112,6 +113,7 @@ const st = {
   erased: false,         // the nuke has been written in this run
   stagedImage: null,     // 'nuke' | 'firmware': which image picoboot.js staged for the drive picker
   manualUrl: undefined,  // UF2 offered as a manual download in uf2-drive-select
+  wantRom: false,        // "Boot ROM" recovery reboot asked: hand the HOJA update mode on to the boot ROM
   status: { state: 'unknown', latest: null, url: null },
 };
 
@@ -875,6 +877,16 @@ const installFor = (usb) => {
 
 async function onBootloaderConnect(usb) {
   noteBootloader(usb);
+  // "Boot ROM" recovery reboot on firmware without the ROM command: it came up in the HOJA update
+  // mode, so hand it on to the boot ROM (PICOBOOT 0x21). The boot ROM then connects as usual.
+  if (st.wantRom && isHojaUpdateMode(usb)) {
+    st.wantRom = false;
+    if (!(await pico_enter_rom_bootloader())) {
+      toast(t('Couldn’t switch to the chip’s own bootloader. Unplug the controller, then hold BOOTSEL (or bridge the boot pads) while plugging it in.'), { tone: 'red', timeout: 9000 });
+    }
+    return;
+  }
+  st.wantRom = false;
   if (quiet) return;
   if (st.mode === 'uf2-drive-select' || st.mode === 'bootloader-flash' || st.mode === 'erase-flash') return;
   if (st.mode === 'update-complete' && !st.pendingUrl) { await installFor(usb); return; }
@@ -1060,7 +1072,29 @@ export async function openInstallWizard(buildId) {
   await showBootloaderInstall(buildId);
 }
 
-/** Reboot the connected controller into BOOTSEL without starting an update (Gamepad page). */
+/** How long a controller gets to leave USB after the boot ROM command before the fallback. */
+const ROM_COMMAND_WAIT_MS = 2500;
+
+/**
+ * Reboot the connected controller into the chip's own boot ROM bootloader (RPI-RP2 / RP2350), past
+ * the HOJA bootloader's board checks: the "Boot ROM" recovery button. Firmware with
+ * GAMEPAD_CMD_RESET_TO_ROM_BOOTLOADER goes there directly. Older firmware ignores it and stays
+ * connected, so then it restarts into the update mode as usual and onBootloaderConnect() hands the
+ * HOJA update mode on to the boot ROM (boards without the HOJA bootloader are already there).
+ */
+export async function rebootToRomBootloaderOnly() {
+  if (session.caps.noCable) throw new Error(CABLE_ONLY_TEXT);
+  st.wantRom = true;
+  const left = new Promise((resolve) => {
+    const off = session.on('state', ({ state }) => { if (state !== 'connected') { off(); resolve(true); } });
+    setTimeout(() => { off(); resolve(false); }, ROM_COMMAND_WAIT_MS);
+  });
+  try { await device.rebootToRomBootloader(); } catch (err) { console.warn('[fw] boot ROM command', err); }
+  if (!(await left) && session.connected) await device.rebootToBootloader();
+  return true;
+}
+
+/** Reboot the connected controller into the update mode without starting an update (Firmware page). */
 export async function rebootToBootloaderOnly() {
   // Without a USB cable the firmware refuses this: a bootloader can't be reached wirelessly.
   if (session.caps.noCable) throw new Error(CABLE_ONLY_TEXT);
