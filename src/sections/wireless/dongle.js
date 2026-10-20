@@ -7,8 +7,7 @@
  * The values come from the dongle's 0xD0 reply (decodeDongleInfo in src/device/hoja-device.js).
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { card, kv, badge, button, asyncButton, callout, field } from '../../ui/controls.js';
-import { modeSwitcher } from '../../app/mode-switcher.js';
+import { card, kv, badge, button, asyncButton, callout } from '../../ui/controls.js';
 import { checkDongleUpdate, openDongleUpdateWizard, formatFwVersion } from '../../firmware/updater.js';
 import { t, N_ } from '../../i18n/index.js';
 
@@ -22,22 +21,6 @@ const HOSTS = { 1: N_('PC'), 2: 'Switch', 3: 'N64', 4: 'GameCube', 5: 'NES/SNES'
 const MODES = { 0: 'Switch', 1: 'Steam', 2: 'XInput', 3: 'Slippi', 4: 'SNES', 5: 'N64', 6: 'GameCube' };
 
 const name = (table, value) => (table[value] ? t(table[value]) : t('Unknown'));
-
-/** Host kind (byte 10) for a computer. */
-const HOST_PC = 1;
-
-/**
- * The dongle's mode on a computer, changed live: the controller follows and the dongle comes back on
- * USB in the new mode (about half a second), where the app reconnects to it. Not when the
- * controller's mode was chosen at power-up: it keeps that one. Not XInput: Windows' Xbox 360 driver
- * takes the whole device, so the app couldn't reach the dongle to change it back (it refuses it too).
- */
-function pcModePicker(session) {
-  const pinned = !!session.dongle.gamepad?.modeAtPowerUp;
-  return h('div',
-    !pinned && field({ label: t('PC mode'), description: t('What the dongle shows your PC, until you unplug it. Your controller switches with it.'), control: modeSwitcher() }),
-    pinned && callout({ tone: 'blue', icon: 'info', text: t('Your controller’s mode was chosen at power-up, so it keeps that mode.') }));
-}
 
 function rows(d) {
   const pad = d.gamepad;
@@ -62,12 +45,10 @@ export function dongleCard(session, { title = t('Dongle') } = {}) {
   const updateBtn = button({ label: t('Update dongle'), icon: 'download', variant: 'primary', onClick: () => openDongleUpdateWizard() });
   updateBtn.hidden = true;
 
-  const modes = h('div');
   const paint = () => {
     const d = session.dongle;
     if (!d) return;
     details.replaceChildren(kv([...rows(d), [t('Latest build'), latestCell]]));
-    modes.replaceChildren(...(d.host === HOST_PC ? [pcModePicker(session)] : []));
   };
 
   // Newest firmware for this board. No manifest yet (or offline): nothing to offer.
@@ -90,7 +71,6 @@ export function dongleCard(session, { title = t('Dongle') } = {}) {
     subtitle: session.dongle?.gamepad ? t('Your controller is connected through this dongle.') : t('No controller is connected to it yet.'),
   },
   details,
-  modes,
   !session.dongle?.gamepad && callout({ tone: 'blue', icon: 'gamepad', text: t('Turn on your controller to set it up through the dongle.') }),
   h('div.wl-actions', updateBtn,
     asyncButton({ label: t('Check again'), icon: 'refresh', variant: 'ghost', size: 'sm', busyLabel: t('Checking…'), okLabel: t('Checked'),

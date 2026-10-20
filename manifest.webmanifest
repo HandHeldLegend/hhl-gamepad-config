@@ -7,18 +7,54 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
   "orientation": "any",
   "background_color": "#121117",
   "theme_color": "#121117",
-  "categories": ["utilities", "games"],
+  "categories": [
+    "utilities",
+    "games"
+  ],
   "icons": [
-    { "src": "assets/icons/app/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icons/app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icons/app/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "assets/icons/app/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "assets/icons/app/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "assets/icons/app/monochrome-512.png", "sizes": "512x512", "type": "image/png", "purpose": "monochrome" }
+    {
+      "src": "assets/icons/app/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/app/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/app/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/app/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icons/app/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icons/app/monochrome-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "monochrome"
+    }
   ],
   "shortcuts": [
     {
@@ -26,50 +62,58 @@
       "short_name": "Profile 1",
       "description": "Make settings profile 1 live on the connected controller",
       "url": "./?profile=1",
-      "icons": [{ "src": "assets/icons/app/shortcut-profile-1.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "assets/icons/app/shortcut-profile-1.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Switch to profile 2",
       "short_name": "Profile 2",
       "description": "Make settings profile 2 live on the connected controller",
       "url": "./?profile=2",
-      "icons": [{ "src": "assets/icons/app/shortcut-profile-2.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "assets/icons/app/shortcut-profile-2.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Switch to profile 3",
       "short_name": "Profile 3",
       "description": "Make settings profile 3 live on the connected controller",
       "url": "./?profile=3",
-      "icons": [{ "src": "assets/icons/app/shortcut-profile-3.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "assets/icons/app/shortcut-profile-3.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Switch to profile 4",
       "short_name": "Profile 4",
       "description": "Make settings profile 4 live on the connected controller",
       "url": "./?profile=4",
-      "icons": [{ "src": "assets/icons/app/shortcut-profile-4.png", "sizes": "96x96", "type": "image/png" }]
-    },
-    {
-      "name": "Steam mode",
-      "short_name": "Steam",
-      "description": "Steam mode on the connected controller or dongle, until unplugged",
-      "url": "./?mode=steam",
-      "icons": [{ "src": "assets/icons/app/shortcut-steam.png", "sizes": "96x96", "type": "image/png" }]
-    },
-    {
-      "name": "Switch mode",
-      "short_name": "Switch",
-      "description": "Switch mode on the connected controller or dongle, until unplugged",
-      "url": "./?mode=switch",
-      "icons": [{ "src": "assets/icons/app/shortcut-switch.png", "sizes": "96x96", "type": "image/png" }]
-    },
-    {
-      "name": "Slippi mode",
-      "short_name": "Slippi",
-      "description": "Slippi mode on the connected controller or dongle, until unplugged",
-      "url": "./?mode=slippi",
-      "icons": [{ "src": "assets/icons/app/shortcut-slippi.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "assets/icons/app/shortcut-profile-4.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     }
   ],
-  "launch_handler": { "client_mode": ["focus-existing", "auto"] }
+  "launch_handler": {
+    "client_mode": [
+      "focus-existing",
+      "auto"
+    ]
+  }
 }

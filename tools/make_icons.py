@@ -334,15 +334,12 @@ def shortcut_symbol(name, color, px=96, ss=SS):
     return img.resize((px, px), Image.LANCZOS)
 
 
-# Taskbar / jump-list shortcuts (manifest "shortcuts"): profiles in the accent, modes in their own colour
+# Taskbar / jump-list shortcuts (manifest "shortcuts"): the four profiles, in the accent
 SHORTCUTS = [
     ("shortcut-profile-1.png", "counter_1", LAVENDER),
     ("shortcut-profile-2.png", "counter_2", LAVENDER),
     ("shortcut-profile-3.png", "counter_3", LAVENDER),
     ("shortcut-profile-4.png", "counter_4", LAVENDER),
-    ("shortcut-steam.png", "desktop_windows", BLUE),
-    ("shortcut-switch.png", "sports_esports", RED),
-    ("shortcut-slippi.png", "videogame_asset", GREEN),
 ]
 
 
