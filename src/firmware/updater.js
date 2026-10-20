@@ -828,8 +828,8 @@ function refreshInstallState() {
     return;
   }
   const value = ui.select?.value;
-  // How to put the chosen dongle in its bootloader
-  const how = ui.builds?.find((b) => b.id === value)?.howTo;
+  // How to put the chosen dongle in its bootloader (not needed once one has appeared)
+  const how = !st.installDetected && ui.builds?.find((b) => b.id === value)?.howTo;
   replace(ui.howTo, how && callout({ tone: 'blue', icon: 'usb', title: t('Put it in its bootloader'), text: t(how) }));
   // The nuke on its own already erases everything, so "Start fresh" doesn't apply to it.
   const nukeOnly = value === NUKE_BUILD.id;
