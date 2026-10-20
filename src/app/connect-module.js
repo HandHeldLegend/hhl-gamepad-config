@@ -81,10 +81,21 @@ function loadKnown() {
   } catch { return {}; } // private mode, storage blocked
 }
 
-/** Keep what the connected controller's card shows (not the demo's). */
+/**
+ * Keep what the connected controller's card shows (not the demo's). Not through a dongle: the dongle's
+ * USB serial would then carry this controller's name, and the dongle's card would keep showing it after
+ * the controller leaves (or another joins). A name filed that way before is dropped.
+ */
+function forgetKnown(id) {
+  const known = loadKnown();
+  if (!id || !(id in known)) return;
+  delete known[id];
+  try { localStorage.setItem(KNOWN_KEY, JSON.stringify(known)); } catch { /* storage blocked */ }
+}
 function rememberController() {
   const id = device.transportId;
   if (isDemo() || !id || !session.connected) return;
+  if (session.caps.viaDongle) { forgetKnown(id); return; }
   const known = loadKnown();
   delete known[id];
   known[id] = { // newest last; the oldest make room
@@ -96,7 +107,10 @@ function rememberController() {
   const kept = Object.fromEntries(Object.entries(known).slice(-KNOWN_MAX));
   try { localStorage.setItem(KNOWN_KEY, JSON.stringify(kept)); } catch { /* storage blocked */ }
 }
-session.on('state', ({ state }) => { if (state === 'connected') rememberController(); });
+session.on('state', ({ state }) => {
+  if (state === 'connected') rememberController();
+  else if (state === 'dongle' && !isDemo()) forgetKnown(device.transportId);
+});
 session.on('saved', rememberController); // the owner's name may have changed
 
 /** A card's title: "GCU 2 · Mitch", the model alone without an owner's name, else `fallback`. */
@@ -218,24 +232,44 @@ export function openConnectModule({ cable = false } = {}) {
         icon('chevron-right'));
     }
 
+    // Rows by device, kept while they look the same: the list redraws every few seconds while it
+    // searches, and new elements would make every icon blink.
+    const rowCache = new Map(); // USBDevice or BluetoothDevice -> { sig, el }
+    const row = (key, sig, make) => {
+      const kept = rowCache.get(key);
+      if (kept?.sig === sig) return kept.el;
+      const el = make();
+      rowCache.set(key, { sig, el });
+      return el;
+    };
+    let emptyEl = null;
+    let searchEl = null;
+
     function renderList() {
       if (step !== 'list') return;
       const rows = [
-        ...usbDevices.map((usb) => item({ kind: 'usb', live: true, status: t('Plugged in now'),
-          name: cardTitle(usb.serialNumber && known[`usb:${usb.serialNumber}`], usb.productName || t('USB device')),
-          onClick: () => finish({ usb }) })),
+        ...usbDevices.map((usb) => {
+          const name = cardTitle(usb.serialNumber && known[`usb:${usb.serialNumber}`], usb.productName || t('USB device'));
+          return row(usb, name, () => item({ kind: 'usb', live: true, status: t('Plugged in now'), name, onClick: () => finish({ usb }) }));
+        }),
         ...remembered.map((e) => {
           const info = knownBt(e.bt);
-          // Its own buttons where it connected before
-          const buttons = info?.start && info?.select ? chordGlyphs(info.start, info.select, 18) : h('strong', chordText(null));
-          return item({ kind: 'bluetooth', name: btTitle(e.bt), live: seenNow(e),
-            status: seenNow(e) ? t('Visible now') : fillNodes(t('Press {buttons} on it to connect'), { buttons }),
-            onClick: () => { cancelAttempt(); reach(e.bt, { manual: true }); } });
+          const seen = seenNow(e);
+          return row(e.bt, [btTitle(e.bt), seen, info?.start, info?.select].join('|'), () => {
+            // Its own buttons where it connected before
+            const buttons = info?.start && info?.select ? chordGlyphs(info.start, info.select, 18) : h('strong', chordText(null));
+            return item({ kind: 'bluetooth', name: btTitle(e.bt), live: seen,
+              status: seen ? t('Visible now') : fillNodes(t('Press {buttons} on it to connect'), { buttons }),
+              onClick: () => { cancelAttempt(); reach(e.bt, { manual: true }); } });
+          });
         }),
       ];
-      listEl.replaceChildren(...(rows.length ? rows
-        : [h('p.cm-empty', ios ? t('No controllers here yet. Add one below.') : t('No controllers here yet. Plug one in, or add one below.'))]));
-      if (searchTimer) listEl.append(h('p.cm-search', h('span.spinner.motion-ok'), t('Looking for your Bluetooth controllers…')));
+      const next = rows.length ? rows
+        : [emptyEl ||= h('p.cm-empty', ios ? t('No controllers here yet. Add one below.') : t('No controllers here yet. Plug one in, or add one below.'))];
+      if (searchTimer) next.push(searchEl ||= h('p.cm-search', h('span.spinner.motion-ok'), t('Looking for your Bluetooth controllers…')));
+      // Touch the DOM only when the rows themselves changed
+      const now = [...listEl.children];
+      if (now.length !== next.length || now.some((el, i) => el !== next[i])) listEl.replaceChildren(...next);
     }
 
     function renderNotes() {

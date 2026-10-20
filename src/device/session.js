@@ -277,8 +277,15 @@ class Session extends EventTarget {
     this.refreshAttention();
   }
 
-  /** A dongle with no controller: nothing to configure, but it can be shown and updated. */
+  /**
+   * A dongle with no controller: nothing to configure, but it can be shown and updated. Also when the
+   * controller leaves a dongle that stays on USB (hoja-device.js #watchDongle): its writes are dropped.
+   */
   #onDongle() {
+    for (const t of this.#timers.values()) clearTimeout(t);
+    this.#timers.clear();
+    this.#pending.clear();
+    this.#emit('dirty', { dirty: false });
     this.caps = NO_CAPS;
     this.info = {};
     this.attention = {};
