@@ -505,4 +505,6 @@ export default {
   "Download the UF2, then copy it to {drive}": "UF2 をダウンロードし、{drive} にコピーしてください",
   "Download the UF2, then copy it to the controller’s drive": "UF2 をダウンロードし、コントローラーのドライブにコピーしてください",
   "Automatic download blocked ({reason}). Download the UF2, then copy it to the controller’s drive": "自動ダウンロードがブロックされました（{reason}）。UF2 をダウンロードし、コントローラーのドライブにコピーしてください",
+  "Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens and press Connect.": "コントローラーがアップデートモードになりました。「アップデート」を押し、ブラウザーが開くウィンドウで「{device}」を選んで「接続」を押してください。",
+  "Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens (on controllers without the HOJA bootloader: “RP2 Boot” or “RP2350 Boot”) and press Connect.": "コントローラーがアップデートモードになりました。「アップデート」を押し、ブラウザーが開くウィンドウで「{device}」（HOJA ブートローダーのないコントローラーでは「RP2 Boot」または「RP2350 Boot」）を選んで「接続」を押してください。",
 };

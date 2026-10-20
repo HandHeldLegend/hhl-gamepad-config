@@ -134,4 +134,5 @@ export default {
   "The firmware wasn’t written. Try again, or copy it onto the controller’s drive instead.": "固件没有写入。请重试，或改为复制到手柄的驱动器。",
   "Press Select the drive and pick the controller’s drive in the folder window.": "点击“选择驱动器”，然后在文件夹窗口中选择手柄的驱动器。",
   "Use the drive instead": "改用驱动器",
+  "Press Allow the bootloader and pick the controller in update mode (“… Update”), or “RP2 Boot” / “RP2350 Boot” on a blank board.": "点击“允许引导程序”，然后选择处于更新模式的手柄（“… Update”），空白电路板则选择“RP2 Boot”/“RP2350 Boot”。",
 };

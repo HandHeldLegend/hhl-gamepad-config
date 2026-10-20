@@ -505,4 +505,6 @@ export default {
   "Download the UF2, then copy it to {drive}": "Descarga el UF2 y cópialo en {drive}",
   "Download the UF2, then copy it to the controller’s drive": "Descarga el UF2 y cópialo en la unidad del mando",
   "Automatic download blocked ({reason}). Download the UF2, then copy it to the controller’s drive": "Descarga automática bloqueada ({reason}). Descarga el UF2 y cópialo en la unidad del mando",
+  "Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens and press Connect.": "Tu mando ya está en modo de actualización. Pulsa Actualizar, elige «{device}» en la ventana que abre el navegador y pulsa Conectar.",
+  "Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens (on controllers without the HOJA bootloader: “RP2 Boot” or “RP2350 Boot”) and press Connect.": "Tu mando ya está en modo de actualización. Pulsa Actualizar, elige «{device}» en la ventana que abre el navegador (en mandos sin el bootloader HOJA: «RP2 Boot» o «RP2350 Boot») y pulsa Conectar.",
 };

@@ -268,6 +268,23 @@ function bootDrive() {
 }
 
 /**
+ * The bootloader's name in the browser's USB device window. The HOJA bootloader calls itself
+ * "<controller name> Update" (bootloader/boot_usb.c); the boot ROM "RP2 Boot" or "RP2350 Boot".
+ *   { name, sure }  sure: this bootloader has appeared; else the controller is expected to show
+ *                   `name` if it has the HOJA bootloader
+ *   null            nothing known (no bootloader seen, no controller name)
+ */
+function bootDeviceName() {
+  const usb = st.bootUsb;
+  if (usb && isHojaUpdateMode(usb)) {
+    const name = usb.productName || (st.lastName ? `${st.lastName} Update` : '');
+    return name ? { name, sure: true } : null;
+  }
+  if (usb) return { name: usb.productId === 0x000f ? 'RP2350 Boot' : 'RP2 Boot', sure: true };
+  return st.lastName ? { name: `${st.lastName} Update`, sure: false } : null;
+}
+
+/**
  * Where to find the boot drive in the browser's folder window, for this system. The window is a
  * folder chooser, so it only lists folders: the drive looks empty (its INFO_UF2.TXT isn't shown),
  * which the steps call out. Browsers give pages no option to show files there.
@@ -488,6 +505,7 @@ function updateAvailableActions() {
 
 async function enterBootloader() {
   st.mode = 'awaiting-bootloader';
+  st.bootUsb = null; // a new bootloader is on its way: don't name the drive or device of an earlier one
   if (ui) replace(ui.backup);
   paint(t('Entering update mode'), t('Restarting into update mode. This takes a few seconds.'));
   setUpdateStatus(t('Sending reboot to bootloader…'), 10, true);
@@ -560,7 +578,13 @@ const NUDGE_MS = 3500;
 /** awaiting-bootloader, and nothing started on its own: make the next action unmistakable. */
 function showPressUpdate() {
   if (st.mode !== 'awaiting-bootloader') return;
-  paint(t('One more step: press Update'), t('Your controller is now in update mode. Press Update, then choose it in the window your browser opens (its name ends in “Update”, or it shows as “RP2 Boot” or “RP2350 Boot”) and press Connect.'), { icon: 'download' });
+  const dev = bootDeviceName();
+  paint(t('One more step: press Update'), !dev
+    ? t('Your controller is now in update mode. Press Update, then choose it in the window your browser opens (its name ends in “Update”, or it shows as “RP2 Boot” or “RP2350 Boot”) and press Connect.')
+    : dev.sure
+      ? t('Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens and press Connect.', { device: dev.name })
+      : t('Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens (on controllers without the HOJA bootloader: “RP2 Boot” or “RP2350 Boot”) and press Connect.', { device: dev.name }),
+  { icon: 'download' });
   setUpdateStatus(t('Waiting for you to press Update'), 30, false);
   actions({ primary: { label: t('Update'), icon: 'download', run: () => flashNext({ allowRequestDevice: true }) }, drive: true });
   ui?.dlg.action('primary')?.classList.add('btn-attention');

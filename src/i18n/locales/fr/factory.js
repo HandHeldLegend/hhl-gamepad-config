@@ -126,4 +126,5 @@ export default {
   "The firmware wasn’t written. Try again, or copy it onto the controller’s drive instead.": "Le firmware n’a pas été écrit. Réessayez, ou copiez-le plutôt sur le lecteur de la manette.",
   "Press Select the drive and pick the controller’s drive in the folder window.": "Appuyez sur Choisir le lecteur et sélectionnez le lecteur de la manette dans la fenêtre de dossiers.",
   "Use the drive instead": "Utiliser plutôt le lecteur",
+  "Press Allow the bootloader and pick the controller in update mode (“… Update”), or “RP2 Boot” / “RP2350 Boot” on a blank board.": "Appuyez sur Autoriser le bootloader et choisissez la manette en mode mise à jour (« … Update »), ou « RP2 Boot » / « RP2350 Boot » sur une carte vierge.",
 };

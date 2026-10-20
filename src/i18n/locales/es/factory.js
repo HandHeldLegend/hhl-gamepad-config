@@ -126,4 +126,5 @@ export default {
   "The firmware wasn’t written. Try again, or copy it onto the controller’s drive instead.": "El firmware no se escribió. Inténtalo de nuevo o cópialo en la unidad del mando.",
   "Press Select the drive and pick the controller’s drive in the folder window.": "Pulsa Elegir la unidad y elige la unidad del mando en la ventana de carpetas.",
   "Use the drive instead": "Usar la unidad",
+  "Press Allow the bootloader and pick the controller in update mode (“… Update”), or “RP2 Boot” / “RP2350 Boot” on a blank board.": "Pulsa Permitir el bootloader y elige el mando en modo de actualización («… Update»), o «RP2 Boot» / «RP2350 Boot» en una placa vacía.",
 };

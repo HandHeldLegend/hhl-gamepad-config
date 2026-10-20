@@ -126,4 +126,5 @@ export default {
   "The firmware wasn’t written. Try again, or copy it onto the controller’s drive instead.": "ファームウェアは書き込まれませんでした。もう一度試すか、コントローラーのドライブにコピーしてください。",
   "Press Select the drive and pick the controller’s drive in the folder window.": "「ドライブを選択」を押し、フォルダーのウィンドウでコントローラーのドライブを選んでください。",
   "Use the drive instead": "代わりにドライブを使う",
+  "Press Allow the bootloader and pick the controller in update mode (“… Update”), or “RP2 Boot” / “RP2350 Boot” on a blank board.": "「ブートローダーを許可」を押し、アップデートモードのコントローラー（「… Update」）、または空の基板なら「RP2 Boot」/「RP2350 Boot」を選んでください。",
 };
