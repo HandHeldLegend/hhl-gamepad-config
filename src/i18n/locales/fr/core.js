@@ -511,4 +511,8 @@ export default {
   "Erased": "Effacé",
   "The erase didn’t finish. Press Erase to try again.": "L’effacement n’a pas abouti. Appuyez sur Effacer pour réessayer.",
   "Wiping settings, calibration and pairings. Don’t unplug the controller. The firmware is written right after.": "Effacement des réglages, calibrages et appairages. Ne débranchez pas la manette. Le firmware est écrit juste après.",
+  "Install {build} firmware?": "Installer le firmware {build} ?",
+  "Your controller is in update mode. Press Install to write the latest {build} firmware.": "Votre manette est en mode mise à jour. Appuyez sur Installer pour écrire le dernier firmware {build}.",
+  "Showing firmware for RP2350 controllers (the bootloader is an RP2350).": "Firmwares affichés pour les manettes RP2350 (le bootloader est un RP2350).",
+  "Showing firmware for RP2040 controllers (the bootloader is an RP2040).": "Firmwares affichés pour les manettes RP2040 (le bootloader est un RP2040).",
 };

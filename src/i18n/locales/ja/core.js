@@ -511,4 +511,8 @@ export default {
   "Erased": "消去しました",
   "The erase didn’t finish. Press Erase to try again.": "消去が完了しませんでした。「消去」を押してもう一度試してください。",
   "Wiping settings, calibration and pairings. Don’t unplug the controller. The firmware is written right after.": "設定、キャリブレーション、ペアリングを消去しています。コントローラーを抜かないでください。続けてファームウェアを書き込みます。",
+  "Install {build} firmware?": "{build} のファームウェアをインストールしますか？",
+  "Your controller is in update mode. Press Install to write the latest {build} firmware.": "コントローラーはアップデートモードです。「インストール」を押すと、最新の {build} ファームウェアを書き込みます。",
+  "Showing firmware for RP2350 controllers (the bootloader is an RP2350).": "RP2350 コントローラー用のファームウェアを表示しています（ブートローダーは RP2350 です）。",
+  "Showing firmware for RP2040 controllers (the bootloader is an RP2040).": "RP2040 コントローラー用のファームウェアを表示しています（ブートローダーは RP2040 です）。",
 };

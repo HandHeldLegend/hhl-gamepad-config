@@ -498,4 +498,8 @@ export default {
   "Erased": "已清除",
   "The erase didn’t finish. Press Erase to try again.": "清除没有完成。请点击“清除”重试。",
   "Wiping settings, calibration and pairings. Don’t unplug the controller. The firmware is written right after.": "正在清除设置、校准和配对。请不要拔下手柄。随后会立即写入固件。",
+  "Install {build} firmware?": "安装 {build} 固件？",
+  "Your controller is in update mode. Press Install to write the latest {build} firmware.": "手柄已处于更新模式。按“安装”写入最新的 {build} 固件。",
+  "Showing firmware for RP2350 controllers (the bootloader is an RP2350).": "正在显示 RP2350 手柄的固件（引导程序为 RP2350）。",
+  "Showing firmware for RP2040 controllers (the bootloader is an RP2040).": "正在显示 RP2040 手柄的固件（引导程序为 RP2040）。",
 };

@@ -51,7 +51,7 @@ import { device, isPicoBootloader, updateModeBuildId, isHojaUpdateMode } from '.
 import { isDemo } from '../device/mock.js';
 import { prefs } from '../app/prefs.js';
 import { isIOS } from '../app/platform.js';
-import { listBuilds, getBuildManifest, dongleBuild, NUKE_BUILD } from './builds.js';
+import { listBuilds, buildById, getBuildManifest, dongleBuild, NUKE_BUILD } from './builds.js';
 import { hojaDriveLabel, hasHojaDrive, romDriveName } from './drives.js';
 import { loadChangelog, pendingActions, buildIdFromManifestUrl, inlineRuns } from './changelog.js';
 import {
@@ -109,7 +109,8 @@ const st = {
   dongle: false,         // updating a dongle (reboots with 0xD1; dongle texts)
   ble: false,            // updating over Bluetooth (ble-update.js)
   bleSupported: false,   // the controller connected over Bluetooth said it takes updates that way
-  bootloaderChip: null,  // 'rp2040' | 'rp2350': the last bootloader seen (filters the installer's dongle builds)
+  bootloaderChip: null,  // 'rp2040' | 'rp2350': the last boot ROM seen (filters the installer's builds); null for the HOJA update mode
+  knownBuild: null,      // the installer's build when the HOJA update mode named it: no picker then
   fresh: false,          // "Start fresh": erase with NUKE_BUILD before writing pendingUrl
   erased: false,         // the nuke has been written in this run
   stagedImage: null,     // 'nuke' | 'firmware': which image picoboot.js staged for the drive picker
@@ -414,6 +415,7 @@ function hide() {
   st.pendingChecksum = undefined;
   st.pendingLegacy = false;
   st.dongle = false;
+  st.knownBuild = null;
   resetFresh();
   pico_clear_cached_uf2(); // a later run must download its own image
   ui?.dlg.close();
@@ -679,20 +681,34 @@ function showCableComplete(u, dongle) {
   actions({ primary: { label: t('Connect'), icon: 'usb', run: async () => { hide(); const { connectController } = await import('../app/shell.js'); connectController({ cable: true }); } } });
 }
 
-/** preselect: a build id, as the HOJA update mode names it (updateModeBuildId) or the caller chose. */
-async function showBootloaderInstall(preselect, { updateMode = false } = {}) {
+/**
+ * The installer. preselect: a build id the caller chose. updateModeBuild: the build the HOJA update
+ * mode names (its serial, updateModeBuildId): the controller says what it is, so there's no picker,
+ * just that build. The picker is for the boot ROM (RPI-RP2 / RP2350), which can't say.
+ */
+async function showBootloaderInstall(preselect, { updateModeBuild = null } = {}) {
   ensureUi();
   resetFresh();
   st.pendingUrl = undefined;
   st.pendingChecksum = undefined;
   st.pendingLegacy = false;
   st.mode = 'bootloader-install';
+  st.knownBuild = null;
   const u = ensureUi();
+  const known = await buildById(updateModeBuild);
+  if (st.mode !== 'bootloader-install' || ui !== u) return;
+  if (known) {
+    st.knownBuild = known;
+    panels({ fresh: true });
+    paint(t('Install {build} firmware?', { build: known.label }),
+      t('Your controller is in update mode. Press Install to write the latest {build} firmware.', { build: known.label }), { icon: 'firmware' });
+    setUpdateStatus(t('Ready'), 0, false);
+    installActions();
+    return;
+  }
   panels({ picker: true, fresh: true });
   u.installConfirm.checked = false;
-  paint(t('Install HOJA firmware?'), updateMode
-    ? t('Your controller is in update mode. Check that it’s the one chosen below, then press Install.')
-    : t('A Raspberry Pi bootloader (BOOTSEL) was detected. Choose your controller below, then press Install.'), { icon: 'firmware' });
+  paint(t('Install HOJA firmware?'), t('A Raspberry Pi bootloader (BOOTSEL) was detected. Choose your controller below, then press Install.'), { icon: 'firmware' });
   setUpdateStatus(t('Choose a controller to continue'), 0, false);
   installActions();
 
@@ -701,24 +717,31 @@ async function showBootloaderInstall(preselect, { updateMode = false } = {}) {
 }
 
 /**
- * The installer's build list: controllers, then dongles (only those for the bootloader's chip,
- * once one has been seen), then the flash nuke. Runs again when a bootloader of the other chip appears.
+ * The installer's build list: controllers, then dongles, then the flash nuke. Once a boot ROM has been
+ * seen, only the builds for its chip (RP2040 or RP2350) are offered; a build of unknown chip always is.
+ * Runs again when a bootloader of the other chip appears.
  */
 async function fillBuildSelect(preselect) {
   const { builds, dongles, offline } = await listBuilds();
   const u = ui;
-  if (!u || st.mode !== 'bootloader-install') return;
-  const forChip = dongles.filter((b) => !st.bootloaderChip || !b.chip || b.chip === st.bootloaderChip);
+  if (!u || st.mode !== 'bootloader-install' || st.knownBuild) return;
+  const chip = st.bootloaderChip;
+  const fits = (b) => !chip || !b.chip || b.chip === chip;
+  const pads = builds.filter(fits);
+  const forChip = dongles.filter(fits);
   const dongleGroup = t('Dongle');
   const options = [{ value: '', label: t('Choose a controller…') },
-    ...builds.map((b) => ({ value: b.id, label: b.label })),
+    ...pads.map((b) => ({ value: b.id, label: b.label })),
     ...forChip.map((b) => ({ value: b.id, label: t(b.label), group: dongleGroup })),
     { value: NUKE_BUILD.id, label: t(NUKE_BUILD.label) }];
   const value = options.some((o) => o.value === preselect) ? preselect : '';
   u.select = select({ options, value, ariaLabel: t('Controller build'), onChange: refreshInstallState });
   u.select.style.width = '100%';
-  replace(u.buildSelect, u.select, offline && h('p.small.muted', { style: { marginTop: '6px' } }, t('Offline: showing the last known list. Installing needs an internet connection.')));
-  u.builds = [...builds, ...forChip, NUKE_BUILD];
+  const note = (text) => h('p.small.muted', { style: { marginTop: '6px' } }, text);
+  replace(u.buildSelect, u.select,
+    chip && note(chip === 'rp2350' ? t('Showing firmware for RP2350 controllers (the bootloader is an RP2350).') : t('Showing firmware for RP2040 controllers (the bootloader is an RP2040).')),
+    offline && note(t('Offline: showing the last known list. Installing needs an internet connection.')));
+  u.builds = [...pads, ...forChip, NUKE_BUILD];
   refreshInstallState();
 }
 
@@ -731,6 +754,12 @@ function installActions() {
 
 function refreshInstallState() {
   if (st.mode !== 'bootloader-install' || !ui) return;
+  if (st.knownBuild) {
+    // The controller named its build: nothing to pick or confirm, except erasing for Start fresh.
+    const btn = ui.dlg.action('primary');
+    if (btn) btn.disabled = st.fresh && !ui.eraseConfirm.checked;
+    return;
+  }
   const value = ui.select?.value;
   // The nuke on its own already erases everything, so "Start fresh" doesn't apply to it.
   const nukeOnly = value === NUKE_BUILD.id;
@@ -743,7 +772,7 @@ function refreshInstallState() {
 
 async function resolveInstallSelection() {
   const id = ui?.select?.value;
-  const build = ui?.builds?.find((b) => b.id === id);
+  const build = st.knownBuild || ui?.builds?.find((b) => b.id === id);
   if (!build) return null;
   const manifest = await getBuildManifest(build.manifestUrl);
   return { url: build.uf2Url, checksum: manifest?.checksum || null };
@@ -941,20 +970,23 @@ const ACTIVE = ['ble-sending', 'ble-restarting', 'awaiting-bootloader', 'bootloa
 let quiet = false;
 export function setUpdaterQuiet(on) { quiet = !!on; }
 
-/** Remember which chip the bootloader is (RP2350 enumerates as PID 0x000f, RP2040 as 0x0003). */
+/**
+ * Remember which chip the boot ROM is (RP2350 enumerates as PID 0x000f, RP2040 as 0x0003). The HOJA
+ * update mode doesn't say (it names its build instead): null.
+ */
 function noteBootloader(usb) {
   if (!usb) return;
   st.bootUsb = usb;
-  const chip = usb.productId === 0x000f ? 'rp2350' : 'rp2040';
+  const chip = isHojaUpdateMode(usb) ? null : usb.productId === 0x000f ? 'rp2350' : 'rp2040';
   if (chip === st.bootloaderChip) return;
   st.bootloaderChip = chip;
   if (st.mode === 'bootloader-install') fillBuildSelect(ui?.select?.value);
 }
 
 /** The installer for a bootloader that just appeared: the HOJA update mode names its build. */
-const installFor = (usb) => {
-  const buildId = updateModeBuildId(usb);
-  return showBootloaderInstall(buildId ?? undefined, { updateMode: !!buildId });
+const installFor = async (usb) => {
+  const buildId = await updateModeBuildId(usb);
+  return showBootloaderInstall(buildId ?? undefined, { updateModeBuild: buildId });
 };
 
 async function onBootloaderConnect(usb) {
@@ -1232,4 +1264,7 @@ export const debugDialogSteps = DEBUG ? {
   manual: () => { st.pendingUrl = DOCS_URL; showManualUf2Step(DOCS_URL); },
   complete: () => { st.pendingUrl = DOCS_URL; showUpdateComplete(); },
   install: () => showBootloaderInstall(),
+  // A GC Ultimate 1 in the HOJA update mode (it names its build), and an RP2350 boot ROM (picker, RP2350 builds).
+  'install-hoja': () => { const usb = { vendorId: 0x2e8a, productId: 0x10c6, deviceVersionMajor: 0xb0, deviceVersionMinor: 0, deviceVersionSubminor: 2, serialNumber: 'gcu_1', productName: 'GCU 1 Update' }; noteBootloader(usb); return installFor(usb); },
+  'install-rp2350': () => { const usb = { vendorId: 0x2e8a, productId: 0x000f }; noteBootloader(usb); return installFor(usb); },
 } : null;
