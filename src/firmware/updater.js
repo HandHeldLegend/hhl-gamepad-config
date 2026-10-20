@@ -244,8 +244,8 @@ function ensureUi() {
   const kindChoice = h('fieldset.fw-kind',
     h('legend.field-label', t('What are you installing?')),
     h('div.fw-kind-tiles',
-      kindTile(kindPad, 'pad', 'gamepad', t('Gamepad firmware'), t('For a controller: GC Ultimate, ProGCC, Phob, Hoverboard and the others.')),
-      kindTile(kindDongle, 'dongle', 'dongle', t('Dongle firmware'), t('For the USB wireless receiver: the HOJA Dongle, or a Pico W, Pico 2 W or RP2350B-Plus-W used as one.'))));
+      kindTile(kindPad, 'pad', 'gamepad', t('Gamepad firmware'), t('For GC Ultimate, ProGCC, Padbox and more.')),
+      kindTile(kindDongle, 'dongle', 'dongle', t('Dongle firmware'), t('For the HOJA Dongle, Pico W / 2 W and more.'))));
   kindChoice.hidden = true;
   const stepCaption = h('p.small.muted.fw-step-caption');
   const style = h('style', `
