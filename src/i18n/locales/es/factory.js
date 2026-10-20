@@ -122,4 +122,8 @@ export default {
   "Custom": "Personalizado",
   "Last connection attempt: {error}": "Último intento de conexión: {error}",
   "The controller is back but doesn’t answer yet. The station keeps trying; press Connect to try now.": "El mando ha vuelto pero aún no responde. La estación sigue intentándolo; pulsa Conectar para probar ahora.",
+  "Direct USB flashing isn’t available here. Press Select the drive and pick the controller’s drive in the folder window.": "La escritura directa por USB no está disponible aquí. Pulsa Elegir la unidad y elige la unidad del mando en la ventana de carpetas.",
+  "The firmware wasn’t written. Try again, or copy it onto the controller’s drive instead.": "El firmware no se escribió. Inténtalo de nuevo o cópialo en la unidad del mando.",
+  "Press Select the drive and pick the controller’s drive in the folder window.": "Pulsa Elegir la unidad y elige la unidad del mando en la ventana de carpetas.",
+  "Use the drive instead": "Usar la unidad",
 };

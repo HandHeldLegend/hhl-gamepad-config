@@ -450,10 +450,10 @@ export async function pico_write_uf2_via_picker(uf2Data) {
     try {
         await dirHandle.getFileHandle('INFO_UF2.TXT');
     } catch (_) {
-        throw new Error(N_('That isn’t the controller’s drive. Choose the drive named RPI-RP2 (or RP2350) itself, not a folder on your computer.'));
+        throw new Error(N_('That isn’t the controller’s drive. Choose the controller’s drive itself (named after the controller, or RPI-RP2 / RP2350), not a folder on your computer.'));
     }
 
-    updateProgress(30, true, t('Writing UF2 to RPI-RP2...'));
+    updateProgress(30, true, t('Writing the UF2 to the drive...'));
 
     const fileHandle = await dirHandle.getFileHandle('firmware.uf2', { create: true });
     const writable = await fileHandle.createWritable();
@@ -514,7 +514,7 @@ export function pico_get_cached_uf2_url() {
 function stageUf2Picker(uf2Data, uf2Url) {
     cachedUf2ForPicker = uf2Data;
     cachedUf2Url = uf2Url;
-    updateProgress(100, false, t('Firmware ready - select the RPI-RP2 or RP2350 drive next.'));
+    updateProgress(100, false, t('Firmware ready: select the controller’s drive next.'));
     return { needsUserAction: true, reason: 'directory-picker' };
 }
 
@@ -650,9 +650,9 @@ export async function pico_update_attempt_flash(url, checksum = null, options = 
                 updateProgress(0, false, t('Click Update to authorize the bootloader device.'));
                 return { needsUserAction: true, reason: 'permission' };
             }
-            setUpdateStatus(t('Direct update unavailable. Use RPI-RP2 next...'));
+            setUpdateStatus(t('Direct update unavailable. Copy to the drive next...'));
         } else if (!claim.canceled) {
-            setUpdateStatus(t('Direct update unavailable. Use RPI-RP2 next...'));
+            setUpdateStatus(t('Direct update unavailable. Copy to the drive next...'));
         } else {
             updateProgress(0, false, t('Device selection canceled.'));
             return false;
@@ -668,7 +668,7 @@ export async function pico_update_attempt_flash(url, checksum = null, options = 
     if (uf2Url) {
         // Keep the bytes so the step saves this file instead of fetching it again.
         if (uf2Data) { cachedUf2ForPicker = uf2Data; cachedUf2Url = uf2Url; }
-        updateProgress(0, false, t('Download the UF2 and copy it to the RPI-RP2 drive.'));
+        updateProgress(0, false, t('Download the UF2 and copy it to the controller’s drive.'));
         return { needsUserAction: true, reason: 'manual-download', uf2Url };
     }
 

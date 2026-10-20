@@ -122,4 +122,8 @@ export default {
   "Custom": "Personnalisé",
   "Last connection attempt: {error}": "Dernière tentative de connexion : {error}",
   "The controller is back but doesn’t answer yet. The station keeps trying; press Connect to try now.": "La manette est revenue mais ne répond pas encore. Le poste continue d’essayer ; appuyez sur Connecter pour réessayer maintenant.",
+  "Direct USB flashing isn’t available here. Press Select the drive and pick the controller’s drive in the folder window.": "L’écriture USB directe n’est pas disponible ici. Appuyez sur Choisir le lecteur et sélectionnez le lecteur de la manette dans la fenêtre de dossiers.",
+  "The firmware wasn’t written. Try again, or copy it onto the controller’s drive instead.": "Le firmware n’a pas été écrit. Réessayez, ou copiez-le plutôt sur le lecteur de la manette.",
+  "Press Select the drive and pick the controller’s drive in the folder window.": "Appuyez sur Choisir le lecteur et sélectionnez le lecteur de la manette dans la fenêtre de dossiers.",
+  "Use the drive instead": "Utiliser plutôt le lecteur",
 };

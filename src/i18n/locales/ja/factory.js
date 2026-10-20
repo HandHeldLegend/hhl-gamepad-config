@@ -122,4 +122,8 @@ export default {
   "Custom": "カスタム",
   "Last connection attempt: {error}": "前回の接続試行：{error}",
   "The controller is back but doesn’t answer yet. The station keeps trying; press Connect to try now.": "コントローラーは戻りましたが、まだ応答しません。ステーションは再試行を続けます。今すぐ試すには「接続」を押してください。",
+  "Direct USB flashing isn’t available here. Press Select the drive and pick the controller’s drive in the folder window.": "ここでは USB での直接書き込みができません。「ドライブを選択」を押し、フォルダーのウィンドウでコントローラーのドライブを選んでください。",
+  "The firmware wasn’t written. Try again, or copy it onto the controller’s drive instead.": "ファームウェアは書き込まれませんでした。もう一度試すか、コントローラーのドライブにコピーしてください。",
+  "Press Select the drive and pick the controller’s drive in the folder window.": "「ドライブを選択」を押し、フォルダーのウィンドウでコントローラーのドライブを選んでください。",
+  "Use the drive instead": "代わりにドライブを使う",
 };
