@@ -507,4 +507,8 @@ export default {
   "Automatic download blocked ({reason}). Download the UF2, then copy it to the controller’s drive": "自動ダウンロードがブロックされました（{reason}）。UF2 をダウンロードし、コントローラーのドライブにコピーしてください",
   "Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens and press Connect.": "コントローラーがアップデートモードになりました。「アップデート」を押し、ブラウザーが開くウィンドウで「{device}」を選んで「接続」を押してください。",
   "Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens (on controllers without the HOJA bootloader: “RP2 Boot” or “RP2350 Boot”) and press Connect.": "コントローラーがアップデートモードになりました。「アップデート」を押し、ブラウザーが開くウィンドウで「{device}」（HOJA ブートローダーのないコントローラーでは「RP2 Boot」または「RP2350 Boot」）を選んで「接続」を押してください。",
+  "Erasing settings, calibration and pairings…": "設定、キャリブレーション、ペアリングを消去しています…",
+  "Erased": "消去しました",
+  "The erase didn’t finish. Press Erase to try again.": "消去が完了しませんでした。「消去」を押してもう一度試してください。",
+  "Wiping settings, calibration and pairings. Don’t unplug the controller. The firmware is written right after.": "設定、キャリブレーション、ペアリングを消去しています。コントローラーを抜かないでください。続けてファームウェアを書き込みます。",
 };

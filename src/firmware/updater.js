@@ -57,7 +57,7 @@ import { loadChangelog, pendingActions, buildIdFromManifestUrl, inlineRuns } fro
 import {
   pico_update_attempt_flash, pico_exit_bootloader_attempt, pico_complete_uf2_picker_flash,
   pico_has_cached_uf2, pico_get_cached_uf2, pico_clear_cached_uf2, supportsDirectoryPicker, setUpdateStatus, onFlashProgress,
-  pico_enter_rom_bootloader,
+  pico_enter_rom_bootloader, pico_wipe_user_data,
 } from './picoboot.js';
 import { t, N_, fmt } from '../i18n/index.js';
 import { fetchableUrl } from './urls.js';
@@ -820,16 +820,38 @@ function showFlashRetry(run) {
 function showEraseFlash() {
   st.mode = 'erase-flash';
   panels();
-  paint(t('Erasing the controller'), t('Wiping settings, calibration and pairings. Don’t unplug the controller. When the erase finishes, it restarts into the bootloader on its own.'), { tone: 'red', icon: 'trash' });
+  paint(t('Erasing the controller'), t('Wiping settings, calibration and pairings. Don’t unplug the controller. The firmware is written right after.'), { tone: 'red', icon: 'trash' });
   setUpdateStatus(t('Preparing the erase…'), 0, true);
   actions({ primary: { label: t('Erase'), icon: 'trash', variant: 'danger', enabled: false, run: () => {} }, dismiss: false });
 }
 
-/** Write the universal flash nuke. It has no .bin, so it always goes through the UF2 path. */
+/**
+ * "Start fresh": wipe, then write the firmware. In the HOJA update mode the app erases the settings
+ * area itself over USB (pico_wipe_user_data) and writes the firmware straight after: no drive copy.
+ * The boot ROM's bootloader (boards without the HOJA bootloader, or a HOJA update mode from before its
+ * layout report, handed on to the boot ROM) is wiped by the universal flash nuke, copied onto its
+ * RPI-RP2 / RP2350 drive (the boot ROM can't say how big its flash is). The nuke has no .bin.
+ */
 async function startEraseFlash({ allowRequestDevice = true } = {}) {
   if (st.flashing) return false;
   st.stagedImage = null;
   showEraseFlash();
+  let wipe = false;
+  st.flashing = true;
+  try {
+    wipe = await pico_wipe_user_data({ allowRequestDevice });
+  } finally {
+    st.flashing = false;
+  }
+  if (wipe === 'wiped') {
+    st.erased = true;
+    return startBootloaderFlash({ allowRequestDevice: false });
+  }
+  if (wipe !== 'rom') {
+    if (applyFlashResult(wipe)) return true;
+    actions({ primary: { label: t('Erase'), icon: 'trash', variant: 'danger', run: () => startEraseFlash({ allowRequestDevice: true }) }, restart: true });
+    return false;
+  }
   let result = false;
   st.flashing = true;
   try {
@@ -847,7 +869,7 @@ function showEraseWait() {
   st.stagedImage = null;
   st.manualUrl = undefined;
   panels();
-  paint(t('Erasing: waiting for the bootloader'), t('The controller is wiping itself and comes back as {drive} in a few seconds. Writing the firmware then starts automatically. If nothing happens, press Continue.', { drive: 'RPI-RP2' }));
+  paint(t('Erasing: waiting for the bootloader'), t('The controller is wiping itself and comes back as {drive} in a few seconds. Writing the firmware then starts automatically. If nothing happens, press Continue.', { drive: bootDrive().name || 'RPI-RP2' }));
   setUpdateStatus(t('Waiting for the bootloader…'), null, true);
   actions({ primary: { label: t('Continue'), icon: 'download', run: () => startBootloaderFlash({ allowRequestDevice: true }) } });
 }

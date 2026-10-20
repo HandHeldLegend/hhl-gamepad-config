@@ -507,4 +507,8 @@ export default {
   "Automatic download blocked ({reason}). Download the UF2, then copy it to the controller’s drive": "Téléchargement automatique bloqué ({reason}). Téléchargez l’UF2, puis copiez-le sur le lecteur de la manette",
   "Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens and press Connect.": "Votre manette est maintenant en mode mise à jour. Appuyez sur Mettre à jour, choisissez « {device} » dans la fenêtre ouverte par le navigateur, puis appuyez sur Connecter.",
   "Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens (on controllers without the HOJA bootloader: “RP2 Boot” or “RP2350 Boot”) and press Connect.": "Votre manette est maintenant en mode mise à jour. Appuyez sur Mettre à jour, choisissez « {device} » dans la fenêtre ouverte par le navigateur (sur les manettes sans le bootloader HOJA : « RP2 Boot » ou « RP2350 Boot »), puis appuyez sur Connecter.",
+  "Erasing settings, calibration and pairings…": "Effacement des réglages, calibrages et appairages…",
+  "Erased": "Effacé",
+  "The erase didn’t finish. Press Erase to try again.": "L’effacement n’a pas abouti. Appuyez sur Effacer pour réessayer.",
+  "Wiping settings, calibration and pairings. Don’t unplug the controller. The firmware is written right after.": "Effacement des réglages, calibrages et appairages. Ne débranchez pas la manette. Le firmware est écrit juste après.",
 };
