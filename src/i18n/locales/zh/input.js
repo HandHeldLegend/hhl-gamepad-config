@@ -233,4 +233,6 @@ export default {
   "Press each trigger down to the membrane and release 3–4 times. Don’t click.": "将每个扳机按到薄膜处再松开，重复 3–4 次。不要按出咔哒声。",
   "Fully press and release the other analog inputs 3–4 times.": "将其他模拟输入完全按下再松开，重复 3–4 次。",
   "Press Calibrate, press it down to the membrane and release 3–4 times. Don’t click. Then press Finish.": "点击“校准”，按到薄膜处再松开，重复 3–4 次。不要按出咔哒声。然后点击“完成”。",
+  "Switch 2 only": "仅限 Switch 2",
+  "Only a Switch 2 sees these, with the controller started in GameCube mode. GameCube consoles and Slippi ignore them.": "仅 Switch 2 能识别这些按键，且需以 GameCube 模式启动手柄。GameCube 主机和 Slippi 会忽略它们。",
 };

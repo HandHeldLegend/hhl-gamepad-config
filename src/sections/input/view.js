@@ -281,12 +281,14 @@ export function mount(root, ctx) {
           !out ? h('span.inp-tile-off', t('Disabled'))
             : md === OUTPUT_MODE.THRESHOLD ? h('span.inp-tile-pill', t('Threshold {value}', { value: pct }))
               : md === OUTPUT_MODE.RAPID ? h('span.inp-tile-pill', t('Rapid'))
-                : md === OUTPUT_MODE.PASSTHROUGH ? h('span.inp-tile-pill', t('Analog')) : '');
+                : md === OUTPUT_MODE.PASSTHROUGH ? h('span.inp-tile-pill', t('Analog'))
+                  : out.group === 'switch2' ? h('span.inp-tile-pill', t('Switch 2 only')) : '');
         const sentence = out
           ? t('{input} sends {output} in {mode} mode.', { input: input.label, output: outputName(out.label), mode: modeLabel })
           : t('{input} is off in {mode} mode.', { input: input.label, mode: modeLabel });
         const detail = md === OUTPUT_MODE.THRESHOLD ? t('Threshold mode, activation point {value}.', { value: pct })
-          : md === OUTPUT_MODE.RAPID ? t('Rapid trigger mode.') : md === OUTPUT_MODE.PASSTHROUGH ? t('Full analog mode.') : '';
+          : md === OUTPUT_MODE.RAPID ? t('Rapid trigger mode.') : md === OUTPUT_MODE.PASSTHROUGH ? t('Full analog mode.')
+            : out?.group === 'switch2' ? t('Switch 2 only') : '';
         const text = detail ? `${sentence} ${detail}` : sentence;
         el.title = text;
         el.setAttribute('aria-label', text);

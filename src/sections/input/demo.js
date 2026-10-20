@@ -45,7 +45,7 @@ const DEFAULTS = {
   },
   gamecube: {
     EAST: 'A', SOUTH: 'B', NORTH: 'X', WEST: 'Y', ...DPAD, RB: 'Z', LT: 'L', LT_ANALOG: 'L_ANALOG', RT: 'R', RT_ANALOG: 'R_ANALOG',
-    START: 'START', ...STICKS,
+    START: 'START', ...STICKS, LB: 'ZL', SELECT: 'MINUS', HOME: 'HOME', SHARE: 'CAPTURE', LS: 'LS', RS: 'RS',
   },
   sinput: {
     SOUTH: 'SOUTH', EAST: 'EAST', WEST: 'WEST', NORTH: 'NORTH', ...DPAD, LB: 'LB', RB: 'RB', LT: 'LT', LT_ANALOG: 'LT_ANALOG',
@@ -95,6 +95,7 @@ export function seed(device) {
 
   device.config.input.input_config_version = fwDefine('CFG_BLOCK_INPUT_VERSION', 0);
   device.config.input.wii_profile_version = fwDefine('CFG_INPUT_WII_PROFILE_VERSION', 0);
+  device.config.input.gamecube_ns2_version = fwDefine('CFG_INPUT_GAMECUBE_NS2_VERSION', 0);
   for (const mode of MODES) resetProfile(device, mode);
 
   // A typical customer tweak: hall-effect triggers press ZL/ZR at 40% travel instead of rapid trigger.

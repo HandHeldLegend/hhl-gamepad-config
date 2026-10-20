@@ -812,10 +812,16 @@ export default {
      "doc": "CFG_INPUT_WII_PROFILE_VERSION once the Wii profiles hold defaults"
     },
     {
-     "name": "reserved",
+     "name": "gamecube_ns2_version",
      "offset": 1622,
      "type": "u8",
-     "count": 426
+     "doc": "CFG_INPUT_GAMECUBE_NS2_VERSION once the GameCube profile has its Switch 2 buttons"
+    },
+    {
+     "name": "reserved",
+     "offset": 1623,
+     "type": "u8",
+     "count": 425
     }
    ]
   },
@@ -1932,8 +1938,36 @@ export default {
     "value": 21
    },
    {
-    "name": "GAMECUBE_CODE_MAX",
+    "name": "GAMECUBE_CODE_ZL",
     "value": 22
+   },
+   {
+    "name": "GAMECUBE_CODE_MINUS",
+    "value": 23
+   },
+   {
+    "name": "GAMECUBE_CODE_HOME",
+    "value": 24
+   },
+   {
+    "name": "GAMECUBE_CODE_CAPTURE",
+    "value": 25
+   },
+   {
+    "name": "GAMECUBE_CODE_C",
+    "value": 26
+   },
+   {
+    "name": "GAMECUBE_CODE_LS",
+    "value": 27
+   },
+   {
+    "name": "GAMECUBE_CODE_RS",
+    "value": 28
+   },
+   {
+    "name": "GAMECUBE_CODE_MAX",
+    "value": 29
    }
   ],
   "mapper_override_slots_t": [
@@ -2811,6 +2845,7 @@ export default {
   "CFG_BLOCK_USER_VERSION": 17,
   "CFG_BLOCK_INPUT_VERSION": 20,
   "CFG_INPUT_WII_PROFILE_VERSION": 3,
+  "CFG_INPUT_GAMECUBE_NS2_VERSION": 1,
   "CFG_BLOCK_SWITCHPAIR_VERSION": 16,
   "IMU_SENSITIVITY_MIN": 50,
   "IMU_SENSITIVITY_MAX": 200,
