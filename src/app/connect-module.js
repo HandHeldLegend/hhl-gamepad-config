@@ -173,19 +173,19 @@ function bluetoothOffCard(title, text, addresses) {
 
 function braveNote() {
   // On Linux, Brave also needs Chromium's experimental features flag (linuxBluetoothNote)
-  if (isLinux()) return linuxBluetoothNote('brave');
+  if (isLinux()) return linuxBluetoothNote({ scheme: 'brave', name: 'Brave' });
   return bluetoothOffCard(t('Bluetooth is off in Brave.'),
     t('To turn it on, open this address, set Web Bluetooth API to Enabled, then relaunch Brave.'),
     ['brave://flags/#brave-web-bluetooth-api']);
 }
 
 /**
- * Chrome, Chromium, Edge and Brave on Linux keep Web Bluetooth for websites behind the experimental web
- * platform features flag (navigator.bluetooth is missing until it's on). Brave also has its own switch.
- * scheme: 'chrome' (also Chromium, Vivaldi, Opera and other Chromium browsers), 'edge' or 'brave'.
+ * Chrome, Chromium, Edge, Opera and Brave on Linux keep Web Bluetooth for websites behind the
+ * experimental web platform features flag (navigator.bluetooth is missing until it's on). Brave also
+ * has its own switch. `b` is chromiumBrowser()'s answer.
  */
-function linuxBluetoothNote(scheme) {
-  const browser = { chrome: t('your browser'), edge: 'Edge', brave: 'Brave' }[scheme] || t('your browser');
+function linuxBluetoothNote({ scheme, name }) {
+  const browser = name || t('your browser');
   return bluetoothOffCard(t('Bluetooth is turned off in this browser on Linux.'),
     fillNodes(scheme === 'brave'
       ? t('On Linux, {browser} needs two settings for Bluetooth. Open each address below, set it to Enabled, then relaunch {browser}.')
@@ -193,12 +193,21 @@ function linuxBluetoothNote(scheme) {
     [...(scheme === 'brave' ? ['brave://flags/#brave-web-bluetooth-api'] : []), `${scheme}://flags/#enable-experimental-web-platform-features`]);
 }
 
-/** Chromium-based browsers, by the address scheme of their flags page; null for others (Firefox, Safari). */
-function chromiumScheme(brave) {
-  if (brave) return 'brave';
-  const brands = (navigator.userAgentData?.brands || []).map((b) => b.brand).join(' ');
-  if (/Edge/.test(brands)) return 'edge';
-  if (/Chromium|Google Chrome/.test(brands) || /Chrome\//.test(navigator.userAgent || '')) return 'chrome';
+/**
+ * Which Chromium-based browser this is: { scheme, name }, where scheme is the address scheme of its
+ * flags page (brave://, edge://, opera://, chrome://) and name what to call it (null when unsure, e.g.
+ * Vivaldi, which reports itself as Chrome; chrome://flags works there too). Null for other browsers
+ * (Firefox, Safari). Brave is told by navigator.brave, the others by their user-agent brands.
+ */
+function chromiumBrowser(brave) {
+  if (brave) return { scheme: 'brave', name: 'Brave' };
+  const ua = navigator.userAgent || '';
+  const brands = (navigator.userAgentData?.brands || []).map((b) => b.brand);
+  const has = (re) => brands.some((b) => re.test(b));
+  if (has(/Edge/) || /Edg\//.test(ua)) return { scheme: 'edge', name: 'Edge' };
+  if (has(/^Opera/) || /OPR\//.test(ua)) return { scheme: 'opera', name: 'Opera' };
+  if (has(/Google Chrome/)) return { scheme: 'chrome', name: 'Chrome' };
+  if (has(/Chromium/) || /Chrome\//.test(ua)) return { scheme: 'chrome', name: has(/Chromium/) && brands.filter((b) => !/Not.?A.?Brand/i.test(b)).length === 1 ? 'Chromium' : null };
   return null;
 }
 
@@ -552,18 +561,17 @@ export function openConnectModule({ cable = false } = {}) {
       (async () => {
         brave = await isBraveBrowser();
         if (!navigator.bluetooth) {
-          const linuxScheme = isLinux() ? chromiumScheme(brave) : null;
-          btNote = linuxScheme ? linuxBluetoothNote(linuxScheme) : brave ? braveNote() : ios ? bluefyNote()
+          const linuxBrowser = isLinux() ? chromiumBrowser(brave) : null;
+          btNote = linuxBrowser ? linuxBluetoothNote(linuxBrowser) : brave ? braveNote() : ios ? bluefyNote()
             : callout({ tone: 'blue', text: t('Bluetooth isn’t supported in this browser. Use Chrome or Edge to connect over Bluetooth.') });
         } else if ((await navigator.bluetooth.getAvailability?.().catch(() => true)) === false) {
           btNote = callout({ tone: 'yellow', text: t(BT_OFF) });
         }
         // A tip, not a warning: Chrome and Edge can remember controllers between visits behind a flag
-        const brand = (navigator.userAgentData?.brands || []).map((b) => b.brand).join(' ');
-        const scheme = /Edge/.test(brand) ? 'edge' : /Google Chrome|Chromium/.test(brand) ? 'chrome' : null;
-        if (canBluetooth && !remembers && !brave && scheme) {
+        const browser = chromiumBrowser(brave);
+        if (canBluetooth && !remembers && !brave && browser) {
           // Pages can't open the browser's own flags page: the address is copied for the owner to paste
-          btTip = flagTip(scheme === 'edge' ? 'Edge' : 'Chrome', `${scheme}://flags/#enable-web-bluetooth-new-permissions-backend`);
+          btTip = flagTip(browser.name || t('your browser'), `${browser.scheme}://flags/#enable-web-bluetooth-new-permissions-backend`);
         }
         const found = await rememberedBluetoothControllers();
         if (settled) return;
