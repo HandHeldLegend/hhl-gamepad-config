@@ -130,9 +130,34 @@ export function isHojaUpdateMode(device) {
     && device?.deviceVersionMajor === UPDATE_MODE_VERSION_MAJOR;
 }
 
-/** The build a controller in the HOJA update mode belongs to: its serial is the build id. */
-export function updateModeBuildId(device) {
-  return isHojaUpdateMode(device) ? device.serialNumber || null : null;
+/**
+ * The build a controller in the HOJA update mode belongs to: its USB serial is the build id
+ * (bootloader/boot_usb.c). Brave hands pages a random serialNumber instead (fingerprinting
+ * protection), so the serial string descriptor is read from the device itself; the API's value is
+ * the fallback.
+ * @returns {Promise<string|null>}
+ */
+export async function updateModeBuildId(usb) {
+  if (!isHojaUpdateMode(usb)) return null;
+  const wasOpen = !!usb.opened;
+  try {
+    if (!wasOpen) await usb.open();
+    const get = (value, index, length) => usb.controlTransferIn({ requestType: 'standard', recipient: 'device', request: 0x06, value, index }, length);
+    const dev = await get(0x0100, 0, 18); // the device descriptor: iSerialNumber is byte 16
+    const index = dev.status === 'ok' && dev.data?.byteLength >= 17 ? dev.data.getUint8(16) : 0;
+    if (index) {
+      const r = await get(0x0300 | index, 0x0409, 255);
+      const v = r.status === 'ok' ? r.data : null;
+      let text = '';
+      if (v) for (let i = 2; i + 1 < Math.min(v.getUint8(0), v.byteLength); i += 2) text += String.fromCharCode(v.getUint16(i, true));
+      if (text) return text;
+    }
+  } catch (err) {
+    console.warn('[usb] update mode serial', err);
+  } finally {
+    if (!wasOpen && usb.opened) await usb.close().catch(() => {});
+  }
+  return usb.serialNumber || null;
 }
 
 /** A bootloader that takes firmware: the RP2040 / RP2350 boot ROM's, or the HOJA update mode. */

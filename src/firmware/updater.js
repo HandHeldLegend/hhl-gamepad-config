@@ -984,8 +984,8 @@ function noteBootloader(usb) {
 }
 
 /** The installer for a bootloader that just appeared: the HOJA update mode names its build. */
-const installFor = (usb) => {
-  const buildId = updateModeBuildId(usb);
+const installFor = async (usb) => {
+  const buildId = await updateModeBuildId(usb);
   return showBootloaderInstall(buildId ?? undefined, { updateModeBuild: buildId });
 };
 
