@@ -27,7 +27,7 @@ import { prefs } from './prefs.js';
 import { pwa } from './pwa.js';
 import { isIOS, explainIOS } from './platform.js';
 import { isLinux, explainLinux } from './linux.js';
-import { modeSwitcher } from './mode-switcher.js';
+import './shortcuts.js'; // the taskbar shortcuts' launch handler
 import { openConnectModule } from './connect-module.js';
 import { applyFromRoute } from '../settings/apply.js';
 import { t, N_, fmt, i18n, LANGUAGES, detectLanguage, setLanguage } from '../i18n/index.js';
@@ -164,7 +164,7 @@ export async function connectWithUsbChooser() {
 export function createShell(root) {
   // Frame elements; (re)created by build() so a language change can redraw every label.
   let chipDot; let chipName; let chipSub; let chip;
-  let saveBtn; let connectBtn; let installBtn; let modeBox;
+  let saveBtn; let connectBtn; let installBtn;
   let page; let main; let frame;
   const navLinks = new Map();
 
@@ -189,8 +189,7 @@ export function createShell(root) {
     const settingsBtn = button({ icon: 'settings', variant: 'ghost', title: t('App settings'), onClick: () => navigate('settings') });
     settingsBtn.classList.add('appbar-settings');
 
-    modeBox = h('div.appbar-mode');
-    const appbar = h('header.appbar', brand, h('div.spacer'), chip, modeBox, installBtn, saveBtn, connectBtn, languagePicker(), settingsBtn);
+    const appbar = h('header.appbar', brand, h('div.spacer'), chip, installBtn, saveBtn, connectBtn, languagePicker(), settingsBtn);
 
     // ---- Sidebar -------------------------------------------------------------------------
     const nav = h('nav.sidebar', { 'aria-label': t('Sections') });
@@ -228,11 +227,6 @@ export function createShell(root) {
     chip.title = mode ? t('Running in {mode}', { mode }) : '';
     chip.classList.toggle('demo', isDemo());
 
-    // The live mode switcher, while the app can switch this controller or dongle
-    const live = session.liveMode;
-    if (!live) modeBox.replaceChildren();
-    else if (modeBox.dataset.mode !== live || !modeBox.firstChild) modeBox.replaceChildren(modeSwitcher({ compact: true }));
-    modeBox.dataset.mode = live || '';
 
     const open = connected || st === 'legacy' || dongle; // something is connected: the button disconnects it
     connectBtn.setLabel(open ? t('Disconnect') : st === 'connecting' ? t('Connecting…') : t('Connect'));
@@ -439,7 +433,7 @@ export function createShell(root) {
   session.on('connecting', renderChrome);
   session.on('dirty', renderChrome);
   session.on('attention', renderChrome);
-  session.on('dongle', renderChrome); // the dongle's mode (the title bar switcher)
+  session.on('dongle', renderChrome);
   pwa.on('installable', (can) => { installBtn.hidden = !can; });
   onRoute((route) => render(route));
 
