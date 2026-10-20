@@ -507,4 +507,8 @@ export default {
   "Automatic download blocked ({reason}). Download the UF2, then copy it to the controller’s drive": "Descarga automática bloqueada ({reason}). Descarga el UF2 y cópialo en la unidad del mando",
   "Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens and press Connect.": "Tu mando ya está en modo de actualización. Pulsa Actualizar, elige «{device}» en la ventana que abre el navegador y pulsa Conectar.",
   "Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens (on controllers without the HOJA bootloader: “RP2 Boot” or “RP2350 Boot”) and press Connect.": "Tu mando ya está en modo de actualización. Pulsa Actualizar, elige «{device}» en la ventana que abre el navegador (en mandos sin el bootloader HOJA: «RP2 Boot» o «RP2350 Boot») y pulsa Conectar.",
+  "Erasing settings, calibration and pairings…": "Borrando ajustes, calibración y emparejamientos…",
+  "Erased": "Borrado",
+  "The erase didn’t finish. Press Erase to try again.": "El borrado no terminó. Pulsa Borrar para intentarlo de nuevo.",
+  "Wiping settings, calibration and pairings. Don’t unplug the controller. The firmware is written right after.": "Borrando ajustes, calibración y emparejamientos. No desconectes el mando. El firmware se escribe justo después.",
 };

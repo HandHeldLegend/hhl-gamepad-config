@@ -888,6 +888,81 @@ async function hojaImageKeepsBootloader(data) {
     return true;
 }
 
+/** HOJA bootloader vendor request: its flash layout (boot_usb_layout_report_s, 28 bytes, little endian). */
+const HOJA_REQ_LAYOUT = 0x49;
+
+/**
+ * The HOJA update mode's flash layout, or null from a bootloader before the request (Oct 2026).
+ * @returns {Promise<{version: number, flashSize: number, appOffset: number, stageHeaderOffset: number, topOffset: number}|null>}
+ */
+async function hojaLayout() {
+    try {
+        const r = await picoDevice.controlTransferIn({
+            requestType: 'vendor', recipient: 'interface', request: HOJA_REQ_LAYOUT, value: 0, index: interfaceNumber,
+        }, 28);
+        if (r.status !== 'ok' || !r.data || r.data.byteLength < 28) return null;
+        const v = r.data;
+        const u32 = (o) => v.getUint32(o, true);
+        return { version: v.getUint8(0), flashSize: u32(4), appOffset: u32(16), stageHeaderOffset: u32(20), topOffset: u32(24) };
+    } catch (error) {
+        console.warn('HOJA layout request failed:', error);
+        return null;
+    }
+}
+
+/**
+ * "Start fresh" without a drive. In the HOJA update mode, erase the stage header and the top area
+ * (settings, profiles, the Mii page and the Bluetooth pairings: HOJA-LIB-RP2040 boot_layout.h), sector
+ * by sector over PICOBOOT; the firmware written next replaces the rest. The bootloader stays.
+ * @returns {Promise<'wiped'|'rom'|false|{needsUserAction: true, reason: string}>}
+ *   'wiped'  done: write the firmware next, in the same update mode
+ *   'rom'    the boot ROM's bootloader is (now) there: erase with the flash nuke (the drive copy).
+ *            The HOJA update mode from before the layout request is handed on to it (0x21).
+ */
+export async function pico_wipe_user_data({ allowRequestDevice = true } = {}) {
+    const claim = await pico_try_claim_bootloader({ allowRequestDevice, uf2Only: true, claimTimeoutMs: isWindowsHost() ? 1000 : 5000 });
+    if (!claim.ok) {
+        if (claim.canceled) { updateProgress(0, false, t('Device selection canceled.')); return false; }
+        updateProgress(0, false, t('Click Update to authorize the bootloader device.'));
+        return { needsUserAction: true, reason: 'permission' };
+    }
+    if (!activeBootloaderIsHoja) {
+        await closePicoDevice();
+        return 'rom';
+    }
+    const layout = await hojaLayout();
+    const sane = layout && layout.flashSize > HOJA_BOOT_SIZE && layout.flashSize <= 0x1000000
+        && layout.stageHeaderOffset >= HOJA_BOOT_SIZE && layout.stageHeaderOffset < layout.flashSize
+        && !(layout.stageHeaderOffset % FLASH_SECTOR_LEN) && !(layout.flashSize % FLASH_SECTOR_LEN);
+    if (!sane) {
+        // An update mode without the layout report: the boot ROM's erase tool wipes it instead
+        updateProgress(0, true, t('Restarting into the Raspberry Pi bootloader...'));
+        if (await hojaRestartIntoRom()) return 'rom';
+        updateProgress(0, false, t('Click Update to authorize the bootloader device.'));
+        return { needsUserAction: true, reason: 'permission' };
+    }
+    const start = layout.stageHeaderOffset;
+    const end = layout.flashSize;
+    try {
+        await markExclusive(true);
+        for (let at = start; at < end; at += FLASH_SECTOR_LEN) {
+            updateProgress(((at - start) / (end - start)) * 100, true, t('Erasing settings, calibration and pairings…'));
+            const ecmd = new PicobootCmd(FLASH_ERASE_CMD, 0);
+            ecmd.setRangeCmd(FLASH_BASE + at, FLASH_SECTOR_LEN);
+            await usbTransferOut(endpointOut.endpointNumber, ecmd.toUint8Array(), FLASH_TRANSFER_TIMEOUT_MS, `wipe ${at.toString(16)}`);
+            await usbTransferIn(endpointIn.endpointNumber, 1, FLASH_TRANSFER_TIMEOUT_MS, `wipe ${at.toString(16)} ack`);
+        }
+        updateProgress(100, true, t('Erased'));
+        return 'wiped';
+    } catch (error) {
+        console.error('Wipe failed:', error);
+        updateProgress(0, false, t('The erase didn’t finish. Press Erase to try again.'));
+        return false;
+    } finally {
+        await closePicoDevice();
+    }
+}
+
 /**
  * From the HOJA update mode, restart into the chip's boot ROM bootloader (PICOBOOT 0x21), for the
  * "boot ROM" recovery reboot on firmware without GAMEPAD_CMD_RESET_TO_ROM_BOOTLOADER. A bootloader

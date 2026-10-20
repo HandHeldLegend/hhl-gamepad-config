@@ -494,4 +494,8 @@ export default {
   "Automatic download blocked ({reason}). Download the UF2, then copy it to the controller’s drive": "自动下载被阻止（{reason}）。请下载 UF2，然后复制到手柄的驱动器",
   "Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens and press Connect.": "手柄现已进入更新模式。点击“更新”，在浏览器打开的窗口中选择“{device}”，然后点击“连接”。",
   "Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens (on controllers without the HOJA bootloader: “RP2 Boot” or “RP2350 Boot”) and press Connect.": "手柄现已进入更新模式。点击“更新”，在浏览器打开的窗口中选择“{device}”（没有 HOJA 引导程序的手柄则为“RP2 Boot”或“RP2350 Boot”），然后点击“连接”。",
+  "Erasing settings, calibration and pairings…": "正在清除设置、校准和配对…",
+  "Erased": "已清除",
+  "The erase didn’t finish. Press Erase to try again.": "清除没有完成。请点击“清除”重试。",
+  "Wiping settings, calibration and pairings. Don’t unplug the controller. The firmware is written right after.": "正在清除设置、校准和配对。请不要拔下手柄。随后会立即写入固件。",
 };
