@@ -45,12 +45,16 @@ const visible = (ids) => ids.filter((id) => !HIDDEN_BUILDS.has(id));
 
 /**
  * Dongle builds, keyed by the board the dongle reports (0xD0 reply byte 2). `chip` is the
- * bootloader that runs it: RP2040 (USB PID 0x0003) or RP2350 (0x000f). Labels: t() them where shown.
+ * bootloader that runs it: RP2040 (USB PID 0x0003) or RP2350 (0x000f). `howTo`: how to put that
+ * dongle in its bootloader, for the installer. Labels and howTo: t() them where shown.
  */
 export const DONGLE_BUILDS = {
-  1: { id: 'dongle_hoja', label: N_('HOJA Dongle'), chip: 'rp2350' },
-  2: { id: 'dongle_pico_w', label: N_('Dongle (Pico W)'), chip: 'rp2040' },
-  3: { id: 'dongle_pico2_w', label: N_('Dongle (Pico 2 W)'), chip: 'rp2350' },
+  1: { id: 'dongle_hoja', label: N_('HOJA Dongle'), chip: 'rp2350',
+    howTo: N_('Unplug the dongle, then hold both of its buttons while you plug it back in. The browser lists it as “RP2350 Boot”.') },
+  2: { id: 'dongle_pico_w', label: N_('Dongle (Pico W)'), chip: 'rp2040',
+    howTo: N_('Unplug the Pico W, then hold its BOOTSEL button while you plug it back in. The browser lists it as “RP2 Boot”.') },
+  3: { id: 'dongle_pico2_w', label: N_('Dongle (Pico 2 W)'), chip: 'rp2350',
+    howTo: N_('Unplug the Pico 2 W, then hold its BOOTSEL button while you plug it back in. The browser lists it as “RP2350 Boot”.') },
 };
 
 /**
@@ -89,6 +93,7 @@ function toBuild(id) {
     id,
     label: humanizeBuildId(id),
     chip: buildChip(id),
+    howTo: dongleInfo(id)?.howTo ?? null,
     uf2Url: `${RAW_BASE}/${id}/${id}.uf2`,
     binUrl: `${RAW_BASE}/${id}/${id}.bin`,
     manifestUrl: `${RAW_BASE}/${id}/manifest.json`,

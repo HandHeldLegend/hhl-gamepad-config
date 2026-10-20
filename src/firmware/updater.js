@@ -51,7 +51,7 @@ import { device, isPicoBootloader, updateModeBuildId, isHojaUpdateMode } from '.
 import { isDemo } from '../device/mock.js';
 import { prefs } from '../app/prefs.js';
 import { isIOS } from '../app/platform.js';
-import { listBuilds, buildById, getBuildManifest, dongleBuild, NUKE_BUILD } from './builds.js';
+import { listBuilds, buildById, getBuildManifest, dongleBuild, isDongleBuild, NUKE_BUILD } from './builds.js';
 import { hojaDriveLabel, hasHojaDrive, romDriveName } from './drives.js';
 import { loadChangelog, pendingActions, buildIdFromManifestUrl, inlineRuns } from './changelog.js';
 import {
@@ -111,6 +111,7 @@ const st = {
   bleSupported: false,   // the controller connected over Bluetooth said it takes updates that way
   bootloaderChip: null,  // 'rp2040' | 'rp2350': the last boot ROM seen (filters the installer's builds); null for the HOJA update mode
   knownBuild: null,      // the installer's build when the HOJA update mode named it: no picker then
+  installKind: null,     // the installer's list: 'controller', 'dongle', or null for both (a bootloader appeared)
   fresh: false,          // "Start fresh": erase with NUKE_BUILD before writing pendingUrl
   erased: false,         // the nuke has been written in this run
   stagedImage: null,     // 'nuke' | 'firmware': which image picoboot.js staged for the drive picker
@@ -176,10 +177,12 @@ function ensureUi() {
 
   const installConfirm = h('input', { type: 'checkbox' });
   const buildSelect = h('div');
+  const pickerLabel = h('label.field-label');
+  const installConfirmText = h('span');
+  const howTo = h('div'); // how to put the chosen dongle in its bootloader
   const picker = h('div.stack', { style: { '--gap': '12px' } },
-    h('label.field-label', t('Choose your controller')), buildSelect,
-    h('label.row.small', { style: { flexWrap: 'nowrap', alignItems: 'flex-start', '--gap': '10px' } }, installConfirm,
-      h('span', t('I understand that installing the wrong firmware can brick this controller, and recovery may require opening it up to reach BOOTSEL again.'))));
+    pickerLabel, buildSelect, howTo,
+    h('label.row.small', { style: { flexWrap: 'nowrap', alignItems: 'flex-start', '--gap': '10px' } }, installConfirm, installConfirmText));
   picker.hidden = true;
 
   const tips = callout({ tone: 'blue', title: t('In the folder window:') },
@@ -226,7 +229,7 @@ function ensureUi() {
     body: [style, steps, stepCaption, guide, notes, backup, picker, freshChoice, folderHint, tips, progress],
   });
 
-  ui = { dlg, steps, stepCaption, guide, notes, backup, progress, picker, buildSelect, installConfirm, tips, folderHint, select: null,
+  ui = { dlg, steps, stepCaption, guide, notes, backup, progress, picker, pickerLabel, buildSelect, howTo, installConfirm, installConfirmText, tips, folderHint, select: null,
     freshChoice, keepRadio, freshRadio, eraseConfirm, eraseWarn };
   installConfirm.addEventListener('change', refreshInstallState);
   const onFreshChange = () => {
@@ -371,7 +374,7 @@ function actions({ primary, restart = false, dismiss = true, drive = false }) {
   const u = ensureUi();
   const list = [];
   if (dismiss) list.push({ label: st.mode === 'update-complete' ? t('Close') : t('Dismiss'), variant: 'ghost', keepOpen: true, onClick: () => { hide(); return false; } });
-  if (restart) list.push({ label: t('Restart controller'), icon: 'refresh', variant: 'tonal', keepOpen: true, onClick: restartFromBootloader });
+  if (restart) list.push({ label: st.dongle || st.installKind === 'dongle' ? t('Restart dongle') : t('Restart controller'), icon: 'refresh', variant: 'tonal', keepOpen: true, onClick: restartFromBootloader });
   // Way around WebUSB (e.g. the controller isn't listed in the browser's device window): the drive copy,
   // named as the controller shows it. A HOJA update mode from before the drive has nothing to copy to.
   const bd = bootDrive();
@@ -416,6 +419,7 @@ function hide() {
   st.pendingLegacy = false;
   st.dongle = false;
   st.knownBuild = null;
+  st.installKind = null;
   resetFresh();
   pico_clear_cached_uf2(); // a later run must download its own image
   ui?.dlg.close();
@@ -685,8 +689,10 @@ function showCableComplete(u, dongle) {
  * The installer. preselect: a build id the caller chose. updateModeBuild: the build the HOJA update
  * mode names (its serial, updateModeBuildId): the controller says what it is, so there's no picker,
  * just that build. The picker is for the boot ROM (RPI-RP2 / RP2350), which can't say.
+ * kind: 'controller' or 'dongle' when opened from that card (the list and the text are for those
+ * only); null when a bootloader appeared, which could be either.
  */
-async function showBootloaderInstall(preselect, { updateModeBuild = null } = {}) {
+async function showBootloaderInstall(preselect, { updateModeBuild = null, kind = null } = {}) {
   ensureUi();
   resetFresh();
   st.pendingUrl = undefined;
@@ -706,10 +712,22 @@ async function showBootloaderInstall(preselect, { updateModeBuild = null } = {})
     installActions();
     return;
   }
-  panels({ picker: true, fresh: true });
+  st.installKind = kind;
+  const dongle = kind === 'dongle';
+  panels({ picker: true, fresh: !dongle }); // a dongle has no settings worth a Start fresh
   u.installConfirm.checked = false;
-  paint(t('Install HOJA firmware?'), t('A Raspberry Pi bootloader (BOOTSEL) was detected. Choose your controller below, then press Install.'), { icon: 'firmware' });
-  setUpdateStatus(t('Choose a controller to continue'), 0, false);
+  u.pickerLabel.textContent = dongle ? t('Choose your dongle') : t('Choose your controller');
+  u.installConfirmText.textContent = dongle
+    ? t('I understand that installing the wrong firmware can stop this dongle working until it’s put in its bootloader and installed again.')
+    : t('I understand that installing the wrong firmware can brick this controller, and recovery may require opening it up to reach BOOTSEL again.');
+  if (dongle) {
+    paint(t('Install dongle firmware?'), t('Choose your dongle below and put it in its bootloader as shown, then press Install and pick it in the window your browser opens.'), { icon: 'firmware' });
+  } else if (kind === 'controller') {
+    paint(t('Install HOJA firmware?'), t('Choose your controller below, then press Install and pick its bootloader (“RP2 Boot” or “RP2350 Boot”) in the window your browser opens.'), { icon: 'firmware' });
+  } else {
+    paint(t('Install HOJA firmware?'), t('A Raspberry Pi bootloader (BOOTSEL) was detected. Choose your controller below, then press Install.'), { icon: 'firmware' });
+  }
+  setUpdateStatus(dongle ? t('Choose a dongle to continue') : t('Choose a controller to continue'), 0, false);
   installActions();
 
   u.buildSelect.replaceChildren(h('span.muted.small', t('Loading builds…')));
@@ -717,9 +735,10 @@ async function showBootloaderInstall(preselect, { updateModeBuild = null } = {})
 }
 
 /**
- * The installer's build list: controllers, then dongles, then the flash nuke. Once a boot ROM has been
- * seen, only the builds for its chip (RP2040 or RP2350) are offered; a build of unknown chip always is.
- * Runs again when a bootloader of the other chip appears.
+ * The installer's build list: controllers, then dongles, then the flash nuke; from the dongle card
+ * only the dongles, from the controller card only the controllers and the nuke. Once a boot ROM has
+ * been seen, only the builds for its chip (RP2040 or RP2350) are offered; a build of unknown chip
+ * always is. Runs again when a bootloader of the other chip appears.
  */
 async function fillBuildSelect(preselect) {
   const { builds, dongles, offline } = await listBuilds();
@@ -727,21 +746,23 @@ async function fillBuildSelect(preselect) {
   if (!u || st.mode !== 'bootloader-install' || st.knownBuild) return;
   const chip = st.bootloaderChip;
   const fits = (b) => !chip || !b.chip || b.chip === chip;
-  const pads = builds.filter(fits);
-  const forChip = dongles.filter(fits);
-  const dongleGroup = t('Dongle');
-  const options = [{ value: '', label: t('Choose a controller…') },
+  const kind = st.installKind;
+  const pads = kind === 'dongle' ? [] : builds.filter(fits);
+  const forChip = kind === 'controller' ? [] : dongles.filter(fits);
+  const nuke = kind === 'dongle' ? [] : [NUKE_BUILD];
+  const dongleGroup = kind === 'dongle' ? undefined : t('Dongle');
+  const options = [{ value: '', label: kind === 'dongle' ? t('Choose a dongle…') : t('Choose a controller…') },
     ...pads.map((b) => ({ value: b.id, label: b.label })),
     ...forChip.map((b) => ({ value: b.id, label: t(b.label), group: dongleGroup })),
-    { value: NUKE_BUILD.id, label: t(NUKE_BUILD.label) }];
+    ...nuke.map((b) => ({ value: b.id, label: t(b.label) }))];
   const value = options.some((o) => o.value === preselect) ? preselect : '';
   u.select = select({ options, value, ariaLabel: t('Controller build'), onChange: refreshInstallState });
   u.select.style.width = '100%';
   const note = (text) => h('p.small.muted', { style: { marginTop: '6px' } }, text);
   replace(u.buildSelect, u.select,
-    chip && note(chip === 'rp2350' ? t('Showing firmware for RP2350 controllers (the bootloader is an RP2350).') : t('Showing firmware for RP2040 controllers (the bootloader is an RP2040).')),
+    chip && kind !== 'dongle' && note(chip === 'rp2350' ? t('Showing firmware for RP2350 controllers (the bootloader is an RP2350).') : t('Showing firmware for RP2040 controllers (the bootloader is an RP2040).')),
     offline && note(t('Offline: showing the last known list. Installing needs an internet connection.')));
-  u.builds = [...pads, ...forChip, NUKE_BUILD];
+  u.builds = [...pads, ...forChip, ...nuke];
   refreshInstallState();
 }
 
@@ -761,9 +782,12 @@ function refreshInstallState() {
     return;
   }
   const value = ui.select?.value;
+  // How to put the chosen dongle in its bootloader
+  const how = ui.builds?.find((b) => b.id === value)?.howTo;
+  replace(ui.howTo, how && callout({ tone: 'blue', icon: 'usb', title: t('Put it in its bootloader'), text: t(how) }));
   // The nuke on its own already erases everything, so "Start fresh" doesn't apply to it.
   const nukeOnly = value === NUKE_BUILD.id;
-  ui.freshChoice.hidden = nukeOnly;
+  ui.freshChoice.hidden = nukeOnly || st.installKind === 'dongle';
   if (nukeOnly && st.fresh) { ui.keepRadio.checked = true; ui.keepRadio.dispatchEvent(new Event('change')); return; }
   const ok = !!value && ui.installConfirm.checked && (!st.fresh || ui.eraseConfirm.checked);
   const btn = ui.dlg.action('primary');
@@ -1183,9 +1207,12 @@ export async function openUpdateWizard({ reinstall = false } = {}) {
   showUpdateAvailable(url, latest?.checksum ?? null, { reinstall, ble, debugForced: !reinstall && (!latest || !(latest.version > (session.info.fwVersion >>> 0))) ? debugForce : false });
 }
 
-/** Open the install flow manually (e.g. Firmware page → "Install on a blank board"). */
-export async function openInstallWizard(buildId) {
-  await showBootloaderInstall(buildId);
+/**
+ * Open the install flow manually: kind 'controller' (Firmware page, "Install on a blank board") or
+ * 'dongle' (its Dongle card) lists only those builds. buildId preselects one.
+ */
+export async function openInstallWizard(buildId, { kind = buildId && isDongleBuild(buildId) ? 'dongle' : 'controller' } = {}) {
+  await showBootloaderInstall(buildId, { kind });
 }
 
 /** How long a controller gets to leave USB after the boot ROM command before the fallback. */
