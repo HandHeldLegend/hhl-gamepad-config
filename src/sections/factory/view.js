@@ -247,7 +247,7 @@ async function onBootloader(allowRequestDevice = false) {
   if (result === true) { flashed(); return; }
   if (result?.needsUserAction && result.reason === 'permission') {
     // The browser hasn't allowed this unit's bootloader yet: the operator picks it once.
-    u.flash = { percent: 0, status: t('Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).'), needsPermission: true };
+    u.flash = { percent: 0, status: t('Press Allow the bootloader and pick the controller in update mode (“… Update”), or “RP2 Boot” / “RP2350 Boot” on a blank board.'), needsPermission: true };
     go('flashing');
   } else if (result?.needsUserAction && result.reason === 'directory-picker') {
     // Direct USB flashing isn't available: copy the (already downloaded) firmware onto the RPI-RP2 drive.
@@ -421,7 +421,7 @@ function waitForBootloader(u) {
   clearTimeout(u.waitTimer);
   u.waitTimer = setTimeout(() => {
     if (station.unit !== u || u.stage !== 'flashing' || u.flashing) return;
-    u.flash = { percent: 0, status: t('Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).'), needsPermission: true };
+    u.flash = { percent: 0, status: t('Press Allow the bootloader and pick the controller in update mode (“… Update”), or “RP2 Boot” / “RP2350 Boot” on a blank board.'), needsPermission: true };
     redraw();
   }, BOOTLOADER_WAIT_MS);
 }
