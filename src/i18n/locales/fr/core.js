@@ -540,4 +540,9 @@ export default {
   "To update a dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W, Pico 2 W or RP2350B-Plus-W, hold BOOTSEL or BOOT), then choose its firmware here.": "Pour mettre à jour un dongle à la main, maintenez ses deux boutons enfoncés en le branchant (sur une Pico W, Pico 2 W ou RP2350B-Plus-W, maintenez BOOTSEL ou BOOT), puis choisissez son firmware ici.",
   "Dongle (RP2350B-Plus-W)": "Dongle (RP2350B-Plus-W)",
   "Unplug the RP2350B-Plus-W, then hold its BOOT button while you plug it back in (or, still plugged in, hold BOOT and press RESET). The browser lists it as “RP2350 Boot”.": "Débranchez la RP2350B-Plus-W, puis maintenez son bouton BOOT enfoncé en la rebranchant (ou, sans la débrancher, maintenez BOOT et appuyez sur RESET). Le navigateur l’affiche comme « RP2350 Boot ».",
+  "To turn it on, open this address, set Web Bluetooth API to Enabled, then relaunch Brave.": "Pour l’activer, ouvrez cette adresse, réglez Web Bluetooth API sur Enabled, puis relancez Brave.",
+  "your browser": "votre navigateur",
+  "Bluetooth is turned off in this browser on Linux.": "Le Bluetooth est désactivé dans ce navigateur sous Linux.",
+  "On Linux, {browser} needs two settings for Bluetooth. Open each address below, set it to Enabled, then relaunch {browser}.": "Sous Linux, {browser} a besoin de deux réglages pour le Bluetooth. Ouvrez chaque adresse ci-dessous, réglez-la sur Enabled, puis relancez {browser}.",
+  "On Linux, {browser} keeps Bluetooth behind a setting. Open this address, set it to Enabled, then relaunch {browser}.": "Sous Linux, {browser} garde le Bluetooth derrière un réglage. Ouvrez cette adresse, réglez-la sur Enabled, puis relancez {browser}.",
 };

@@ -540,4 +540,9 @@ export default {
   "To update a dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W, Pico 2 W or RP2350B-Plus-W, hold BOOTSEL or BOOT), then choose its firmware here.": "ドングルを手動でアップデートするには、両方のボタンを押したまま差し込み（Pico W、Pico 2 W、RP2350B-Plus-W では BOOTSEL または BOOT を押したまま）、ここでファームウェアを選んでください。",
   "Dongle (RP2350B-Plus-W)": "ドングル（RP2350B-Plus-W）",
   "Unplug the RP2350B-Plus-W, then hold its BOOT button while you plug it back in (or, still plugged in, hold BOOT and press RESET). The browser lists it as “RP2350 Boot”.": "RP2350B-Plus-W を抜き、BOOT ボタンを押したまま差し直してください（差したままなら、BOOT を押しながら RESET を押します）。ブラウザには「RP2350 Boot」と表示されます。",
+  "To turn it on, open this address, set Web Bluetooth API to Enabled, then relaunch Brave.": "有効にするには、このアドレスを開いて Web Bluetooth API を Enabled にし、Brave を再起動してください。",
+  "your browser": "お使いのブラウザー",
+  "Bluetooth is turned off in this browser on Linux.": "Linux のこのブラウザーでは Bluetooth がオフになっています。",
+  "On Linux, {browser} needs two settings for Bluetooth. Open each address below, set it to Enabled, then relaunch {browser}.": "Linux では、{browser} の Bluetooth に 2 つの設定が必要です。下の各アドレスを開いて Enabled にし、{browser} を再起動してください。",
+  "On Linux, {browser} keeps Bluetooth behind a setting. Open this address, set it to Enabled, then relaunch {browser}.": "Linux では、{browser} の Bluetooth は設定でオフになっています。このアドレスを開いて Enabled にし、{browser} を再起動してください。",
 };

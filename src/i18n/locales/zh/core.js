@@ -527,4 +527,9 @@ export default {
   "To update a dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W, Pico 2 W or RP2350B-Plus-W, hold BOOTSEL or BOOT), then choose its firmware here.": "要手动更新接收器，请按住其两个按钮插入（Pico W、Pico 2 W 或 RP2350B-Plus-W 请按住 BOOTSEL 或 BOOT），然后在此选择其固件。",
   "Dongle (RP2350B-Plus-W)": "接收器（RP2350B-Plus-W）",
   "Unplug the RP2350B-Plus-W, then hold its BOOT button while you plug it back in (or, still plugged in, hold BOOT and press RESET). The browser lists it as “RP2350 Boot”.": "拔下 RP2350B-Plus-W，然后按住其 BOOT 按钮重新插入（或者保持插入，按住 BOOT 再按一下 RESET）。浏览器中显示为“RP2350 Boot”。",
+  "To turn it on, open this address, set Web Bluetooth API to Enabled, then relaunch Brave.": "要开启它，请打开此地址，将 Web Bluetooth API 设为 Enabled，然后重新启动 Brave。",
+  "your browser": "你的浏览器",
+  "Bluetooth is turned off in this browser on Linux.": "在 Linux 上，此浏览器的蓝牙已关闭。",
+  "On Linux, {browser} needs two settings for Bluetooth. Open each address below, set it to Enabled, then relaunch {browser}.": "在 Linux 上，{browser} 的蓝牙需要两项设置。打开下面的每个地址，设为 Enabled，然后重新启动 {browser}。",
+  "On Linux, {browser} keeps Bluetooth behind a setting. Open this address, set it to Enabled, then relaunch {browser}.": "在 Linux 上，{browser} 的蓝牙需要在设置中开启。打开此地址，设为 Enabled，然后重新启动 {browser}。",
 };
