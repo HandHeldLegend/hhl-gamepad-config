@@ -20,8 +20,9 @@
  *     chooser, only ever from these buttons (it needs the click). Where the browser can't list Bluetooth
  *     controllers (Chrome and Edge without the new-permissions-backend flag), every Bluetooth connect goes
  *     through the chooser: the button reads "Connect over Bluetooth…", and a tip names the flag.
- *   - Why Bluetooth can't be used, where it can't: Brave (off until enabled in brave://flags), browsers
- *     without Web Bluetooth (Firefox, Safari), Bluetooth off on the computer.
+ *   - Why Bluetooth can't be used, where it can't: Brave (off until enabled in brave://flags), Chrome,
+ *     Chromium, Edge and Brave on Linux (off until the experimental web platform features flag is on),
+ *     browsers without Web Bluetooth (Firefox, Safari), Bluetooth off on the computer.
  * Once a Bluetooth controller is reached (ble-link.js), the token this browser got before lets it straight
  * in; without one (or one the controller forgot) a code of six presses is entered on the controller, a step
  * in this popup: three face buttons as printed and three d-pad directions, a new code after a wrong press,
@@ -42,6 +43,7 @@ import { isDemo } from '../device/mock.js';
 import { BleLink, requestBluetoothController, rememberedBluetoothControllers } from '../device/ble-link.js';
 import { t, N_ } from '../i18n/index.js';
 import { isIOS, openInBluefy, BLUEFY_STORE_URL } from './platform.js';
+import { isLinux } from './linux.js';
 
 // Button glyphs (styles live with the Input section).
 loadStyles(new URL('../sections/input/input.css', import.meta.url));
@@ -146,15 +148,8 @@ function bluefyNote() {
       button({ label: t('Get Bluefy'), icon: 'external', variant: 'ghost', size: 'sm', onClick: () => { location.href = BLUEFY_STORE_URL; } })));
 }
 
-function braveNote() {
-  return callout({ tone: 'yellow', title: t('Bluetooth is off in Brave.'),
-    text: fillNodes(t('To turn it on, open {flag}, set Web Bluetooth API to Enabled, then relaunch Brave.'),
-      { flag: h('code.cm-flag', 'brave://flags/#brave-web-bluetooth-api') }) });
-}
-
-/** The tip for a browser that can remember Bluetooth controllers behind a flag: the steps, the flag's
- *  address and a button that copies it. */
-function flagTip(browser, address) {
+/** A browser flag's address with a button that copies it (pages can't open the flags page). */
+function flagRow(address) {
   const copy = button({
     label: t('Copy'), icon: 'copy', size: 'sm', variant: 'tonal',
     onClick: async () => {
@@ -162,9 +157,57 @@ function flagTip(browser, address) {
       catch { toast(t('Couldn’t copy. Select the text and copy it yourself.'), { tone: 'red' }); }
     },
   });
+  return h('div.cm-flag-row', h('code.cm-flag', address), copy);
+}
+
+/**
+ * Bluetooth that's switched off in the browser: one small line, with the steps and flag addresses
+ * behind "How to turn it on" (USB still works, so it shouldn't crowd the popup).
+ */
+function bluetoothOffCard(title, text, addresses) {
+  return h('details.cm-bt-off',
+    h('summary', icon('bluetooth'), h('span.cm-bt-off-title', title),
+      h('span.cm-bt-off-more', t('How to turn it on')), icon('chevron-down', 'cm-bt-off-chev')),
+    h('div.cm-bt-off-body', h('p', text), addresses.map(flagRow)));
+}
+
+function braveNote() {
+  // On Linux, Brave also needs Chromium's experimental features flag (linuxBluetoothNote)
+  if (isLinux()) return linuxBluetoothNote('brave');
+  return bluetoothOffCard(t('Bluetooth is off in Brave.'),
+    t('To turn it on, open this address, set Web Bluetooth API to Enabled, then relaunch Brave.'),
+    ['brave://flags/#brave-web-bluetooth-api']);
+}
+
+/**
+ * Chrome, Chromium, Edge and Brave on Linux keep Web Bluetooth for websites behind the experimental web
+ * platform features flag (navigator.bluetooth is missing until it's on). Brave also has its own switch.
+ * scheme: 'chrome' (also Chromium, Vivaldi, Opera and other Chromium browsers), 'edge' or 'brave'.
+ */
+function linuxBluetoothNote(scheme) {
+  const browser = { chrome: t('your browser'), edge: 'Edge', brave: 'Brave' }[scheme] || t('your browser');
+  return bluetoothOffCard(t('Bluetooth is turned off in this browser on Linux.'),
+    fillNodes(scheme === 'brave'
+      ? t('On Linux, {browser} needs two settings for Bluetooth. Open each address below, set it to Enabled, then relaunch {browser}.')
+      : t('On Linux, {browser} keeps Bluetooth behind a setting. Open this address, set it to Enabled, then relaunch {browser}.'), { browser }),
+    [...(scheme === 'brave' ? ['brave://flags/#brave-web-bluetooth-api'] : []), `${scheme}://flags/#enable-experimental-web-platform-features`]);
+}
+
+/** Chromium-based browsers, by the address scheme of their flags page; null for others (Firefox, Safari). */
+function chromiumScheme(brave) {
+  if (brave) return 'brave';
+  const brands = (navigator.userAgentData?.brands || []).map((b) => b.brand).join(' ');
+  if (/Edge/.test(brands)) return 'edge';
+  if (/Chromium|Google Chrome/.test(brands) || /Chrome\//.test(navigator.userAgent || '')) return 'chrome';
+  return null;
+}
+
+/** The tip for a browser that can remember Bluetooth controllers behind a flag: the steps, the flag's
+ *  address and a button that copies it. */
+function flagTip(browser, address) {
   return h('div.cm-tip',
     h('p.small.muted', fillNodes(t('Tip: {browser} can remember Bluetooth controllers, so they connect by themselves next time. Copy this address, paste it into the address bar, set it to Enabled, then relaunch {browser}.'), { browser })),
-    h('div.cm-flag-row', h('code.cm-flag', address), copy));
+    flagRow(address));
 }
 
 /**
@@ -509,7 +552,8 @@ export function openConnectModule({ cable = false } = {}) {
       (async () => {
         brave = await isBraveBrowser();
         if (!navigator.bluetooth) {
-          btNote = brave ? braveNote() : ios ? bluefyNote()
+          const linuxScheme = isLinux() ? chromiumScheme(brave) : null;
+          btNote = linuxScheme ? linuxBluetoothNote(linuxScheme) : brave ? braveNote() : ios ? bluefyNote()
             : callout({ tone: 'blue', text: t('Bluetooth isn’t supported in this browser. Use Chrome or Edge to connect over Bluetooth.') });
         } else if ((await navigator.bluetooth.getAvailability?.().catch(() => true)) === false) {
           btNote = callout({ tone: 'yellow', text: t(BT_OFF) });

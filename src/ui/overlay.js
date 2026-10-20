@@ -112,6 +112,26 @@ export function openDialog(o) {
   });
   el.addEventListener('click', (e) => { if (dismissible && e.target === el) close(undefined); }); // backdrop
 
+  // Pressing in a dialog pins its top where it is, so whatever the press opens or closes grows or
+  // shrinks the dialog downward and nothing moves under the pointer (a centred dialog would re-centre
+  // and slide everything up). Not on phones, where the dialog is a sheet along the bottom edge. A new
+  // window size lets it centre again.
+  const sheet = matchMedia('(max-width: 560px)');
+  const pin = () => {
+    if (el.dataset.pinned || sheet.matches || !el.open) return;
+    const top = Math.max(16, Math.round(el.getBoundingClientRect().top));
+    Object.assign(el.style, { marginTop: `${top}px`, marginBottom: 'auto', maxHeight: `calc(100dvh - ${top + 16}px)` });
+    el.dataset.pinned = '1';
+  };
+  const unpin = () => {
+    delete el.dataset.pinned;
+    Object.assign(el.style, { marginTop: '', marginBottom: '', maxHeight: '' });
+  };
+  el.addEventListener('pointerdown', (e) => { if (e.target !== el) pin(); });
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') pin(); });
+  window.addEventListener('resize', unpin);
+  result.finally(() => window.removeEventListener('resize', unpin));
+
   const api = {
     el, body, close, result,
     setTitle: (t) => { titleEl.textContent = t; },
