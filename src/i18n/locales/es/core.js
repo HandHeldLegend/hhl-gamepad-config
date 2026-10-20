@@ -511,4 +511,8 @@ export default {
   "Erased": "Borrado",
   "The erase didn’t finish. Press Erase to try again.": "El borrado no terminó. Pulsa Borrar para intentarlo de nuevo.",
   "Wiping settings, calibration and pairings. Don’t unplug the controller. The firmware is written right after.": "Borrando ajustes, calibración y emparejamientos. No desconectes el mando. El firmware se escribe justo después.",
+  "Install {build} firmware?": "¿Instalar el firmware de {build}?",
+  "Your controller is in update mode. Press Install to write the latest {build} firmware.": "Tu control está en modo de actualización. Pulsa Instalar para escribir el firmware más reciente de {build}.",
+  "Showing firmware for RP2350 controllers (the bootloader is an RP2350).": "Se muestra el firmware para controles RP2350 (el bootloader es un RP2350).",
+  "Showing firmware for RP2040 controllers (the bootloader is an RP2040).": "Se muestra el firmware para controles RP2040 (el bootloader es un RP2040).",
 };

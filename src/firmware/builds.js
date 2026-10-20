@@ -53,6 +53,15 @@ export const DONGLE_BUILDS = {
   3: { id: 'dongle_pico2_w', label: N_('Dongle (Pico 2 W)'), chip: 'rp2350' },
 };
 
+/**
+ * Controller builds for the RP2350, from the UF2 family IDs on hoja-device-fw main (Oct 2026). Every
+ * other controller build is for the RP2040. A new build missing here counts as unknown and is offered
+ * for both chips until it's added.
+ */
+const RP2350_BUILDS = new Set(['hoverboard', 'latte_pro', 'progcc_3s']);
+const RP2040_BUILDS = new Set(['gcu_1', 'gcu_2', 'gcu_2s', 'gcu_proto', 'gcu_r4k', 'gcu_r5', 'gcu_s1', 'padbox_gs_c', 'phob_2', 'pico_w',
+  'progcc_3', 'progcc_3p', 'progcc_3.1', 'progcc_3.2', 'super_gamepad']);
+
 export const isDongleBuild = (id) => id.startsWith('dongle_');
 const dongleInfo = (id) => Object.values(DONGLE_BUILDS).find((d) => d.id === id);
 
@@ -69,10 +78,17 @@ export function humanizeBuildId(id) {
   return DISPLAY_NAMES[id] || dongleInfo(id)?.label || id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/** The chip a build is for: 'rp2040', 'rp2350', or null when not known. */
+export function buildChip(id) {
+  if (isDongleBuild(id)) return dongleInfo(id)?.chip ?? null;
+  return RP2350_BUILDS.has(id) ? 'rp2350' : RP2040_BUILDS.has(id) ? 'rp2040' : null;
+}
+
 function toBuild(id) {
   return {
     id,
     label: humanizeBuildId(id),
+    chip: buildChip(id),
     uf2Url: `${RAW_BASE}/${id}/${id}.uf2`,
     binUrl: `${RAW_BASE}/${id}/${id}.bin`,
     manifestUrl: `${RAW_BASE}/${id}/manifest.json`,
@@ -90,9 +106,20 @@ function catalog(ids, offline) {
   const byLabel = (a, b) => a.label.localeCompare(b.label);
   return {
     builds: ids.filter((id) => !isDongleBuild(id)).map(toBuild).sort(byLabel),
-    dongles: ids.filter(isDongleBuild).map((id) => ({ ...toBuild(id), chip: dongleInfo(id)?.chip ?? null })).sort(byLabel),
+    dongles: ids.filter(isDongleBuild).map(toBuild).sort(byLabel),
     offline,
   };
+}
+
+/**
+ * The build a controller names itself (the HOJA update mode's serial number), or null when it isn't
+ * one. A renamed folder that's hidden from the picker (HIDDEN_BUILDS) still counts: it's kept so
+ * controllers on it still get updates.
+ */
+export async function buildById(id) {
+  if (!id) return null;
+  const { builds, dongles } = await listBuilds();
+  return [...builds, ...dongles].find((b) => b.id === id) || (HIDDEN_BUILDS.has(id) ? toBuild(id) : null);
 }
 
 let memo = null;
