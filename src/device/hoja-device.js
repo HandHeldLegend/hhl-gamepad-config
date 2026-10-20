@@ -970,9 +970,22 @@ export class HojaDevice extends EventTarget {
     return true;
   }
 
-  /** Reboot into the RP2040/RP2350 bootloader. Does not wait for an ACK (the device drops off USB). */
+  /**
+   * Reboot into the update mode: the HOJA bootloader where the board has one, else the chip's boot
+   * ROM (RPI-RP2 / RP2350). Does not wait for an ACK (the device drops off USB).
+   */
   async rebootToBootloader() {
     await this.#out([REPORT.COMMAND, this.blockIndex('gamepad'), this.commandId('gamepad', 'RESET_TO_BOOTLOADER')]);
+    return true;
+  }
+
+  /**
+   * Reboot into the chip's own boot ROM bootloader, past the HOJA bootloader
+   * (GAMEPAD_CMD_RESET_TO_ROM_BOOTLOADER). Firmware before it ignores the command and stays
+   * connected: the caller watches for that (see rebootToRomBootloaderOnly in firmware/updater.js).
+   */
+  async rebootToRomBootloader() {
+    await this.#out([REPORT.COMMAND, this.blockIndex('gamepad'), this.commandId('gamepad', 'RESET_TO_ROM_BOOTLOADER')]);
     return true;
   }
 

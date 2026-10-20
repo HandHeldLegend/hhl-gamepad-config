@@ -124,4 +124,5 @@ export default {
   "Otherwise (fallback)": "Sinon (repli)",
   "Fallback mode on USB": "Mode de repli en USB",
   "In Auto mode, the controller tries these in this order and uses the first that answers. Drag to change it.": "En mode Auto, la manette les essaie dans cet ordre et utilise le premier qui répond. Faites glisser pour le changer.",
+  "GameCube adapter for Slippi / Dolphin on a PC. On a Switch 2 (newest firmware) it’s the Switch 2’s own GameCube controller.": "Adaptateur GameCube pour Slippi / Dolphin sur PC. Sur une Switch 2 (firmware le plus récent), c’est la manette GameCube propre à la Switch 2.",
 };

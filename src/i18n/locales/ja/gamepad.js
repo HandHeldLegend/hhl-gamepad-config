@@ -123,4 +123,5 @@ export default {
   "Otherwise (fallback)": "それ以外(フォールバック)",
   "Fallback mode on USB": "USB のフォールバックモード",
   "In Auto mode, the controller tries these in this order and uses the first that answers. Drag to change it.": "Auto モードでは、この順番で試し、最初に応答したものを使います。ドラッグで順番を変更できます。",
+  "GameCube adapter for Slippi / Dolphin on a PC. On a Switch 2 (newest firmware) it’s the Switch 2’s own GameCube controller.": "PC では Slippi / Dolphin 用の GameCube アダプター。Switch 2（最新ファームウェア）では Switch 2 純正の GameCube コントローラーになります。",
 };

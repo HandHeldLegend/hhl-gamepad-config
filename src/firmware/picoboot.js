@@ -889,6 +889,22 @@ async function hojaImageKeepsBootloader(data) {
 }
 
 /**
+ * From the HOJA update mode, restart into the chip's boot ROM bootloader (PICOBOOT 0x21), for the
+ * "boot ROM" recovery reboot on firmware without GAMEPAD_CMD_RESET_TO_ROM_BOOTLOADER. A bootloader
+ * that is already the boot ROM is left as it is. Never asks for a device (no user gesture here).
+ * @returns {Promise<boolean>} true once the boot ROM bootloader is there
+ */
+export async function pico_enter_rom_bootloader() {
+    const claim = await pico_try_claim_bootloader({ allowRequestDevice: false, uf2Only: true });
+    if (!claim.ok) return false;
+    if (!activeBootloaderIsHoja) {
+        await closePicoDevice();
+        return true;
+    }
+    return hojaRestartIntoRom();
+}
+
+/**
  * Leave the HOJA update mode for the boot ROM's bootloader (an image with another bootloader, or
  * none). Resolves true once the boot ROM's device is there and this page may use it.
  */

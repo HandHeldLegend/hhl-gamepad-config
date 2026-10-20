@@ -61,4 +61,13 @@ export default {
   "Stuck in the bootloader?": "卡在引导程序中？",
   "After an interrupted update, restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.": "更新中断后，请重启它，或从安装程序重新安装。如果重新安装后电路板仍然异常，请再次安装并选择“{fresh}”，先清除所有设置、校准和配对。",
   "To update a dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W or Pico 2 W, hold BOOTSEL), then choose its firmware here.": "要手动更新接收器，请按住接收器上的两个按钮再插入（Pico W 或 Pico 2 W 请按住 BOOTSEL），然后在此选择其固件。",
+  "Update mode (safe)": "更新模式（安全）",
+  "Restarts the controller in its update mode, to install firmware by hand. It shows a drive named {drive} (on controllers without the HOJA bootloader: RPI-RP2 or RP2350).": "让手柄以更新模式重启，以便手动安装固件。会出现名为 {drive} 的驱动器（没有 HOJA 引导程序的手柄则为 RPI-RP2 或 RP2350）。",
+  "Restarts the controller in its update mode, to install firmware by hand. It shows a drive named after the controller (on controllers without the HOJA bootloader: RPI-RP2 or RP2350).": "让手柄以更新模式重启，以便手动安装固件。会出现以手柄命名的驱动器（没有 HOJA 引导程序的手柄则为 RPI-RP2 或 RP2350）。",
+  "Restart in update mode": "以更新模式重启",
+  "Boot ROM (advanced)": "Boot ROM（高级）",
+  "Restarts in the chip’s own bootloader, the RPI-RP2 or RP2350 drive. It skips the HOJA bootloader’s board checks, so use it only to recover a controller.": "以芯片自带的引导程序（RPI-RP2 或 RP2350 驱动器）重启。它会跳过 HOJA 引导程序的电路板检查，因此只用于恢复手柄。",
+  "Restart in boot ROM": "以 Boot ROM 重启",
+  "Restart in the chip’s own bootloader?": "以芯片自带的引导程序重启？",
+  "The controller restarts in its chip’s boot ROM and shows the RPI-RP2 or RP2350 drive. This skips the HOJA bootloader’s board checks: firmware made for another board can be written there and stop the controller working. Only do this to recover a controller. Unsaved changes will be lost.": "手柄会以芯片的 Boot ROM 重启，并显示 RPI-RP2 或 RP2350 驱动器。这会跳过 HOJA 引导程序的电路板检查：其他电路板的固件也能写入，可能导致手柄无法工作。只在恢复手柄时使用。未保存的更改将会丢失。",
 };

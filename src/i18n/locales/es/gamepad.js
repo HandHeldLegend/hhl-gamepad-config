@@ -124,4 +124,5 @@ export default {
   "Otherwise (fallback)": "Si no (respaldo)",
   "Fallback mode on USB": "Modo de respaldo por USB",
   "In Auto mode, the controller tries these in this order and uses the first that answers. Drag to change it.": "En modo Auto, el control prueba estos en este orden y usa el primero que responde. Arrastra para cambiarlo.",
+  "GameCube adapter for Slippi / Dolphin on a PC. On a Switch 2 (newest firmware) it’s the Switch 2’s own GameCube controller.": "Adaptador de GameCube para Slippi / Dolphin en un PC. En una Switch 2 (firmware más reciente) es el propio mando de GameCube de Switch 2.",
 };

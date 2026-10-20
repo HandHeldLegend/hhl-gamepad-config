@@ -460,4 +460,6 @@ export default {
   "This controller’s firmware has no profiles. Update it to use them.": "此控制器的固件没有配置文件。请更新固件后使用。",
   "{name} is already live.": "{name} 已在使用中。",
   "Couldn’t switch profiles. Try again.": "无法切换配置文件。请重试。",
+  "Slippi mode on a Switch 2 (newest firmware): the controller is the Switch 2’s own GameCube controller and takes no pairing slot. This app can’t connect to it in that mode.": "在 Switch 2 上使用 Slippi 模式（最新固件）：手柄会作为 Switch 2 自己的 GameCube 手柄，不占用配对位。此模式下本应用无法连接手柄。",
+  "Couldn’t switch to the chip’s own bootloader. Unplug the controller, then hold BOOTSEL (or bridge the boot pads) while plugging it in.": "无法切换到芯片自带的引导程序。请拔下手柄，然后按住 BOOTSEL（或短接启动焊盘）再插上。",
 };

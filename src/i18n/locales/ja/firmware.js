@@ -59,4 +59,13 @@ export default {
   "Stuck in the bootloader?": "ブートローダーから抜けられない場合",
   "After an interrupted update, restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.": "アップデートが中断された場合は、再起動するかインストーラーから再インストールしてください。再インストール後も基板の動作がおかしい場合は、もう一度再インストールし、「{fresh}」を選んで設定・キャリブレーション・ペアリングをすべて消去してください。",
   "To update a dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W or Pico 2 W, hold BOOTSEL), then choose its firmware here.": "ドングルを手動でアップデートするには、ドングルの両方のボタンを押したまま接続し（Pico W / Pico 2 W では BOOTSEL を押したまま）、ここでファームウェアを選んでください。",
+  "Update mode (safe)": "アップデートモード（安全）",
+  "Restarts the controller in its update mode, to install firmware by hand. It shows a drive named {drive} (on controllers without the HOJA bootloader: RPI-RP2 or RP2350).": "コントローラーをアップデートモードで再起動し、ファームウェアを手動でインストールできるようにします。{drive} という名前のドライブが表示されます（HOJA ブートローダーのないコントローラーでは RPI-RP2 または RP2350）。",
+  "Restarts the controller in its update mode, to install firmware by hand. It shows a drive named after the controller (on controllers without the HOJA bootloader: RPI-RP2 or RP2350).": "コントローラーをアップデートモードで再起動し、ファームウェアを手動でインストールできるようにします。コントローラー名のドライブが表示されます（HOJA ブートローダーのないコントローラーでは RPI-RP2 または RP2350）。",
+  "Restart in update mode": "アップデートモードで再起動",
+  "Boot ROM (advanced)": "ブート ROM（上級者向け）",
+  "Restarts in the chip’s own bootloader, the RPI-RP2 or RP2350 drive. It skips the HOJA bootloader’s board checks, so use it only to recover a controller.": "チップ自身のブートローダー（RPI-RP2 または RP2350 ドライブ）で再起動します。HOJA ブートローダーの基板チェックを通らないため、コントローラーの復旧にだけ使ってください。",
+  "Restart in boot ROM": "ブート ROM で再起動",
+  "Restart in the chip’s own bootloader?": "チップ自身のブートローダーで再起動しますか？",
+  "The controller restarts in its chip’s boot ROM and shows the RPI-RP2 or RP2350 drive. This skips the HOJA bootloader’s board checks: firmware made for another board can be written there and stop the controller working. Only do this to recover a controller. Unsaved changes will be lost.": "コントローラーはチップのブート ROM で再起動し、RPI-RP2 または RP2350 ドライブが表示されます。HOJA ブートローダーの基板チェックを通らないため、別の基板用のファームウェアも書き込めてしまい、コントローラーが動かなくなることがあります。コントローラーを復旧するときだけ使ってください。保存していない変更は失われます。",
 };

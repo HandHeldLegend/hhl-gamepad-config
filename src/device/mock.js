@@ -172,6 +172,7 @@ export async function startDemo() {
     return { status: true, data: null };
   });
   patch('rebootToBootloader', async () => { console.info('[demo] reboot to bootloader (ignored)'); return true; });
+  patch('rebootToRomBootloader', async () => { console.info('[demo] reboot to boot ROM bootloader (ignored)'); return true; });
   const demoProfiles = { active: 0, names: ['', '', '', ''] };
   const later = (v) => new Promise((r) => setTimeout(() => r(v), DEMO_PROFILE_ANSWER_MS));
   patch('readProfiles', async () => later({ active: demoProfiles.active, names: [...demoProfiles.names] }));

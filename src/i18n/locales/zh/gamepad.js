@@ -96,4 +96,5 @@ export default {
   "Otherwise (fallback)": "否则（备用）",
   "Fallback mode on USB": "USB 备用模式",
   "In Auto mode, the controller tries these in this order and uses the first that answers. Drag to change it.": "在自动模式下，控制器按此顺序尝试，并使用最先响应的。拖动可更改顺序。",
+  "GameCube adapter for Slippi / Dolphin on a PC. On a Switch 2 (newest firmware) it’s the Switch 2’s own GameCube controller.": "在电脑上是用于 Slippi / Dolphin 的 GameCube 适配器。在 Switch 2 上（最新固件）则是 Switch 2 自己的 GameCube 手柄。",
 };
