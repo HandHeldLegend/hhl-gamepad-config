@@ -56,7 +56,7 @@ export const DONGLE_BUILDS = {
   3: { id: 'dongle_pico2_w', label: N_('Dongle (Pico 2 W)'), chip: 'rp2350',
     howTo: N_('Unplug the Pico 2 W, then hold its BOOTSEL button while you plug it back in. The browser lists it as “RP2350 Boot”.') },
   4: { id: 'dongle_rp2350b_plus_w', label: N_('Dongle (RP2350B-Plus-W)'), chip: 'rp2350',
-    howTo: N_('Unplug the RP2350B-Plus-W, then hold its BOOT button while you plug it back in. The browser lists it as “RP2350 Boot”.') },
+    howTo: N_('Unplug the RP2350B-Plus-W, then hold its BOOT button while you plug it back in (or, still plugged in, hold BOOT and press RESET). The browser lists it as “RP2350 Boot”.') },
 };
 
 /**

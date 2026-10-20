@@ -526,5 +526,5 @@ export default {
   "For the USB wireless receiver: the HOJA Dongle, or a Pico W, Pico 2 W or RP2350B-Plus-W used as one.": "用于 USB 无线接收器：HOJA 接收器，或用作接收器的 Pico W、Pico 2 W 或 RP2350B-Plus-W。",
   "To update a dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W, Pico 2 W or RP2350B-Plus-W, hold BOOTSEL or BOOT), then choose its firmware here.": "要手动更新接收器，请按住其两个按钮插入（Pico W、Pico 2 W 或 RP2350B-Plus-W 请按住 BOOTSEL 或 BOOT），然后在此选择其固件。",
   "Dongle (RP2350B-Plus-W)": "接收器（RP2350B-Plus-W）",
-  "Unplug the RP2350B-Plus-W, then hold its BOOT button while you plug it back in. The browser lists it as “RP2350 Boot”.": "拔下 RP2350B-Plus-W，然后按住其 BOOT 按钮重新插入。浏览器中显示为“RP2350 Boot”。",
+  "Unplug the RP2350B-Plus-W, then hold its BOOT button while you plug it back in (or, still plugged in, hold BOOT and press RESET). The browser lists it as “RP2350 Boot”.": "拔下 RP2350B-Plus-W，然后按住其 BOOT 按钮重新插入（或者保持插入，按住 BOOT 再按一下 RESET）。浏览器中显示为“RP2350 Boot”。",
 };
