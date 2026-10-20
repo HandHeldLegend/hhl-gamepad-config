@@ -188,6 +188,9 @@ const FLICK_HINT = N_('Plays one quick motion gesture per press');
 /** One-line tips shown under the picker groups that offer flicks (Switch Motion, Wii Pointer & Motion). */
 export const FLICK_TIP = N_('Most games take any direction; in Super Mario Odyssey, Flick Up and Down throw the cap upward and downward.');
 const WII_FLICK_TIP = N_('Flicks stand in for shaking the controller; most games take any direction.');
+const SWITCH2_HINT = N_('Switch 2 only');
+/** Tip under the GameCube picker's Switch 2 group. */
+export const SWITCH2_TIP = N_('Only a Switch 2 sees these, with the controller started in GameCube mode. GameCube consoles and Slippi ignore them.');
 
 /**
  * Non-Wii outputs that get their own picker group instead of the by-type groups, keyed by mode id and
@@ -198,6 +201,13 @@ const GROUPED_OUTPUTS = {
   switch: {
     FLICK_UP: ['motion', N_('Flick Up'), 'FLU', FLICK_HINT], FLICK_DOWN: ['motion', N_('Flick Down'), 'FLD', FLICK_HINT],
     FLICK_LEFT: ['motion', N_('Flick Left'), 'FLL', FLICK_HINT], FLICK_RIGHT: ['motion', N_('Flick Right'), 'FLR', FLICK_HINT],
+  },
+  // The Switch 2's own GameCube controller (NSO) has buttons a GameCube doesn't. Only that mode reports
+  // them; GameCube consoles and Slippi ignore them (mapper_gamecube_code_t 22 to 28).
+  gamecube: {
+    ZL: ['switch2', 'ZL', 'ZL', SWITCH2_HINT], MINUS: ['switch2', N_('Minus'), 'Minus', SWITCH2_HINT],
+    HOME: ['switch2', 'Home', 'Home', SWITCH2_HINT], CAPTURE: ['switch2', N_('Capture'), 'Capture', SWITCH2_HINT],
+    C: ['switch2', 'C', 'C', SWITCH2_HINT], LS: ['switch2', 'LS', 'LS', SWITCH2_HINT], RS: ['switch2', 'RS', 'RS', SWITCH2_HINT],
   },
 };
 

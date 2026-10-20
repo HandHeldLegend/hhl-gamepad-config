@@ -283,4 +283,6 @@ export default {
   "Press each trigger down to the membrane and release 3–4 times. Don’t click.": "Enfoncez chaque gâchette jusqu’à la membrane et relâchez 3 à 4 fois. Sans clic.",
   "Fully press and release the other analog inputs 3–4 times.": "Enfoncez à fond puis relâchez les autres entrées analogiques 3 à 4 fois.",
   "Press Calibrate, press it down to the membrane and release 3–4 times. Don’t click. Then press Finish.": "Appuyez sur Calibrer, enfoncez jusqu’à la membrane et relâchez 3 à 4 fois. Sans clic. Puis appuyez sur Terminer.",
+  "Switch 2 only": "Switch 2 uniquement",
+  "Only a Switch 2 sees these, with the controller started in GameCube mode. GameCube consoles and Slippi ignore them.": "Seule une Switch 2 les voit, avec la manette démarrée en mode GameCube. Les consoles GameCube et Slippi les ignorent.",
 };

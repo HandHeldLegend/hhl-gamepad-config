@@ -283,4 +283,6 @@ export default {
   "Press each trigger down to the membrane and release 3–4 times. Don’t click.": "Presiona cada gatillo hasta la membrana y suéltalo 3–4 veces. No hagas clic.",
   "Fully press and release the other analog inputs 3–4 times.": "Presiona a fondo y suelta las demás entradas analógicas 3–4 veces.",
   "Press Calibrate, press it down to the membrane and release 3–4 times. Don’t click. Then press Finish.": "Pulsa Calibrar, presiónalo hasta la membrana y suéltalo 3–4 veces. No hagas clic. Luego pulsa Finalizar.",
+  "Switch 2 only": "Solo Switch 2",
+  "Only a Switch 2 sees these, with the controller started in GameCube mode. GameCube consoles and Slippi ignore them.": "Solo una Switch 2 los ve, con el control iniciado en modo GameCube. Las consolas GameCube y Slippi los ignoran.",
 };

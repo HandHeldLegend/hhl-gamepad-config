@@ -90,12 +90,15 @@ export function computeCaps(s, c) {
   caps.imuModeWii = caps.imuModes && caps.wii;
   // Separate wired / battery defaults and Auto: the firmware sets this marker byte once it migrated.
   caps.splitDefaults = c?.gamepad?.gamepad_defaults_split === 0x01;
+  // The Switch 2 GameCube buttons (GAMECUBE_CODE_ZL to RS): firmware that has them marks the input
+  // block once it added them to the GameCube profile. Older firmware keeps that byte reserved (0).
+  caps.switch2Buttons = (c?.input?.gamecube_ns2_version ?? 0) === LAYOUT.defines?.CFG_INPUT_GAMECUBE_NS2_VERSION;
   return caps;
 }
 
 const NO_CAPS = Object.freeze(Object.fromEntries(
   ['analog', 'leftStick', 'rightStick', 'triggers', 'invertAllowed', 'rgb', 'imu', 'haptics', 'hapticHD',
-    'battery', 'bluetooth', 'dongle', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'forgetHosts', 'imuModes', 'imuModeWii', 'flicks', 'splitDefaults',
+    'battery', 'bluetooth', 'dongle', 'wireless', 'externalBaseband', 'snes', 'joybus', 'wii', 'forgetHosts', 'imuModes', 'imuModeWii', 'flicks', 'splitDefaults', 'switch2Buttons',
     'viaDongle', 'viaBluetooth', 'noCable'].map((k) => [k, false]),
 ));
 

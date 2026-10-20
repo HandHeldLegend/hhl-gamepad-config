@@ -18,7 +18,7 @@ import { icon } from '../../ui/icons.js';
 import { t, fmt, N_ } from '../../i18n/index.js';
 import {
   INPUT_TYPE, OUTPUT_TYPE, OUTPUT_MODE, ANALOG_FULL, GAMECUBE_MIN_ANALOG, MODE_LABEL, MODE_CLIP_NAME, CLIPBOARD_HEADER,
-  INPUT_TYPE_LABEL, OUTPUT_TYPE_LABEL, WII_GROUPS, FLICK_TIP, getMode, outputsFor, outputOf, readProfile, writeSlot,
+  INPUT_TYPE_LABEL, OUTPUT_TYPE_LABEL, WII_GROUPS, FLICK_TIP, SWITCH2_TIP, getMode, outputsFor, outputOf, readProfile, writeSlot,
   modeOptions, defaultOutputMode, effectiveMode, usesThreshold, usesStaticOutput, isAnalogInput,
 } from './mapping.js';
 import { glyph, meter, outputName, modeName } from './parts.js';
@@ -34,6 +34,7 @@ const PICKER_GROUPS = [
   [(x) => !x.group && x.type === OUTPUT_TYPE.HOVER, N_('Analog triggers')],
   [(x) => !x.group && x.type === OUTPUT_TYPE.JOYSTICK, N_('Stick directions')],
   [(x) => x.group === 'motion', N_('Motion'), FLICK_TIP],
+  [(x) => x.group === 'switch2', N_('Switch 2 only'), SWITCH2_TIP],
 ];
 
 const MODE_HELP = {
@@ -106,6 +107,8 @@ export function createEditor(o) {
     }
     // Flick outputs only on firmware that has them (older firmware treats the codes as unmapped).
     if (!session.caps?.flicks) outputs = outputs.filter((x) => x.group !== 'motion' || x.code === current);
+    // The Switch 2 GameCube buttons, likewise, only on firmware that has them.
+    if (!session.caps?.switch2Buttons) outputs = outputs.filter((x) => x.group !== 'switch2' || x.code === current);
     // Wii profiles share one output list: offer the groups this profile uses (the firmware accepts
     // any Wii code in any Wii profile, so keep showing the current one even from another group).
     const groups = mode.groups

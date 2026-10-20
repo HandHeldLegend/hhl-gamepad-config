@@ -283,4 +283,6 @@ export default {
   "Press each trigger down to the membrane and release 3–4 times. Don’t click.": "各トリガーをメンブレンまで押して離す動作を3〜4回繰り返してください。クリックさせないでください。",
   "Fully press and release the other analog inputs 3–4 times.": "その他のアナログ入力は奥まで押して離す動作を3〜4回繰り返してください。",
   "Press Calibrate, press it down to the membrane and release 3–4 times. Don’t click. Then press Finish.": "「キャリブレーション」を押し、メンブレンまで押して離す動作を3〜4回繰り返してください。クリックさせないでください。その後「完了」を押します。",
+  "Switch 2 only": "Switch 2 専用",
+  "Only a Switch 2 sees these, with the controller started in GameCube mode. GameCube consoles and Slippi ignore them.": "コントローラーをゲームキューブモードで起動したときに、Switch 2 だけが認識します。ゲームキューブ本体と Slippi では無視されます。",
 };
