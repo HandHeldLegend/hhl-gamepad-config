@@ -160,12 +160,23 @@ function flagRow(address) {
   return h('div.cm-flag-row', h('code.cm-flag', address), copy);
 }
 
+/**
+ * Bluetooth that's switched off in the browser: one small line, with the steps and flag addresses
+ * behind "How to turn it on" (USB still works, so it shouldn't crowd the popup).
+ */
+function bluetoothOffCard(title, text, addresses) {
+  return h('details.cm-bt-off',
+    h('summary', icon('bluetooth'), h('span.cm-bt-off-title', title),
+      h('span.cm-bt-off-more', t('How to turn it on')), icon('chevron-down', 'cm-bt-off-chev')),
+    h('div.cm-bt-off-body', h('p', text), addresses.map(flagRow)));
+}
+
 function braveNote() {
   // On Linux, Brave also needs Chromium's experimental features flag (linuxBluetoothNote)
   if (isLinux()) return linuxBluetoothNote('brave');
-  return callout({ tone: 'yellow', title: t('Bluetooth is off in Brave.'),
-    text: t('To turn it on, open this address, set Web Bluetooth API to Enabled, then relaunch Brave.') },
-  flagRow('brave://flags/#brave-web-bluetooth-api'));
+  return bluetoothOffCard(t('Bluetooth is off in Brave.'),
+    t('To turn it on, open this address, set Web Bluetooth API to Enabled, then relaunch Brave.'),
+    ['brave://flags/#brave-web-bluetooth-api']);
 }
 
 /**
@@ -175,12 +186,11 @@ function braveNote() {
  */
 function linuxBluetoothNote(scheme) {
   const browser = { chrome: t('your browser'), edge: 'Edge', brave: 'Brave' }[scheme] || t('your browser');
-  return callout({ tone: 'yellow', icon: 'bluetooth', title: t('Bluetooth is turned off in this browser on Linux.'),
-    text: fillNodes(scheme === 'brave'
+  return bluetoothOffCard(t('Bluetooth is turned off in this browser on Linux.'),
+    fillNodes(scheme === 'brave'
       ? t('On Linux, {browser} needs two settings for Bluetooth. Open each address below, set it to Enabled, then relaunch {browser}.')
-      : t('On Linux, {browser} keeps Bluetooth behind a setting. Open this address, set it to Enabled, then relaunch {browser}.'), { browser }) },
-  scheme === 'brave' && flagRow('brave://flags/#brave-web-bluetooth-api'),
-  flagRow(`${scheme}://flags/#enable-experimental-web-platform-features`));
+      : t('On Linux, {browser} keeps Bluetooth behind a setting. Open this address, set it to Enabled, then relaunch {browser}.'), { browser }),
+    [...(scheme === 'brave' ? ['brave://flags/#brave-web-bluetooth-api'] : []), `${scheme}://flags/#enable-experimental-web-platform-features`]);
 }
 
 /** Chromium-based browsers, by the address scheme of their flags page; null for others (Firefox, Safari). */

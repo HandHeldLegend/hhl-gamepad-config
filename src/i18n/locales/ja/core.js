@@ -545,4 +545,5 @@ export default {
   "Bluetooth is turned off in this browser on Linux.": "Linux のこのブラウザーでは Bluetooth がオフになっています。",
   "On Linux, {browser} needs two settings for Bluetooth. Open each address below, set it to Enabled, then relaunch {browser}.": "Linux では、{browser} の Bluetooth に 2 つの設定が必要です。下の各アドレスを開いて Enabled にし、{browser} を再起動してください。",
   "On Linux, {browser} keeps Bluetooth behind a setting. Open this address, set it to Enabled, then relaunch {browser}.": "Linux では、{browser} の Bluetooth は設定でオフになっています。このアドレスを開いて Enabled にし、{browser} を再起動してください。",
+  "How to turn it on": "オンにする方法",
 };

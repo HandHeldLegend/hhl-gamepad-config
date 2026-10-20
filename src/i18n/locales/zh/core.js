@@ -532,4 +532,5 @@ export default {
   "Bluetooth is turned off in this browser on Linux.": "在 Linux 上，此浏览器的蓝牙已关闭。",
   "On Linux, {browser} needs two settings for Bluetooth. Open each address below, set it to Enabled, then relaunch {browser}.": "在 Linux 上，{browser} 的蓝牙需要两项设置。打开下面的每个地址，设为 Enabled，然后重新启动 {browser}。",
   "On Linux, {browser} keeps Bluetooth behind a setting. Open this address, set it to Enabled, then relaunch {browser}.": "在 Linux 上，{browser} 的蓝牙需要在设置中开启。打开此地址，设为 Enabled，然后重新启动 {browser}。",
+  "How to turn it on": "如何开启",
 };
