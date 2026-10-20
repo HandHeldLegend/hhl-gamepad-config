@@ -144,7 +144,10 @@ function entryRow(e, session, { isCurrent, showName }) {
       button({ icon: 'download', size: 'sm', variant: 'ghost', title: t('Download as a file'), onClick: () => saveFile(e.backup) })));
 }
 
-/** The automatic backups: this controller's first, other controllers' behind a disclosure. */
+/**
+ * The automatic backups, collapsed until opened (the list grows with every controller): this
+ * controller's first, other controllers' behind a second disclosure.
+ */
 async function autoBackups(session) {
   const all = await listBackups();
   const unit = session.connected ? await unitId(session.config) : null;
@@ -152,13 +155,13 @@ async function autoBackups(session) {
   const mine = unit ? all.filter((e) => e.unit === unit) : [];
   const others = all.filter((e) => e.unit !== unit);
   const row = (e, showName) => entryRow(e, session, { isCurrent: !!latest && e.id === latest.id, showName });
-  return h('div.bk-auto',
-    h('div.field-label', t('Automatic backups')),
+  return h('details.bk-auto',
+    h('summary', h('span.field-label', t('Automatic backups')), all.length > 0 && h('span.field-desc', plural(all.length, '{n} saved backup', '{n} saved backups'))),
     h('div.field-desc', t('Saved in this browser each time a controller connects. The last {n} versions of each controller are kept.', { n: KEEP })),
     mine.length
       ? h('ul.bk-entries', mine.map((e) => row(e, false)))
       : h('p.small.faint', session.connected ? t('No automatic backups of this controller yet.') : t('Connect a controller to restore one of its automatic backups.')),
-    others.length ? h('details.bk-others', { open: !unit },
+    others.length ? h('details.bk-others',
       h('summary', unit
         ? plural(others.length, '{n} backup of other controllers', '{n} backups of other controllers')
         : plural(others.length, '{n} saved backup', '{n} saved backups')),
@@ -169,6 +172,11 @@ async function autoBackups(session) {
 export function backupCard(session) {
   const style = h('style', `
     .bk-auto { display: grid; gap: var(--space-1); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+    .bk-auto > summary { cursor: pointer; display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-2); }
+    .bk-auto > summary::before { content: '▸'; display: inline-block; color: var(--text-muted); transition: transform var(--dur-med); }
+    .bk-auto[open] > summary::before { transform: rotate(90deg); }
+    .bk-auto > summary::-webkit-details-marker { display: none; }
+    .bk-auto > summary { list-style: none; }
     .bk-auto .field-desc { margin: 0; }
     .bk-entries { list-style: none; margin: var(--space-1) 0 0; padding: 0; display: grid; gap: 4px; }
     .bk-entry { display: flex; align-items: center; gap: var(--space-2); padding: 6px 6px 6px var(--space-3); border-radius: var(--radius-sm); background: var(--surface-sunken); }
