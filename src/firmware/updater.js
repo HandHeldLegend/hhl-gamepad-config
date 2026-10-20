@@ -111,7 +111,8 @@ const st = {
   bleSupported: false,   // the controller connected over Bluetooth said it takes updates that way
   bootloaderChip: null,  // 'rp2040' | 'rp2350': the last boot ROM seen (filters the installer's builds); null for the HOJA update mode
   knownBuild: null,      // the installer's build when the HOJA update mode named it: no picker then
-  installKind: null,     // the installer's list: 'controller', 'dongle', or null for both (a bootloader appeared)
+  installKind: null,     // what the installer installs: 'controller', 'dongle', or null until the owner says
+  installDetected: false, // the installer opened because a bootloader appeared (not from a Firmware page card)
   fresh: false,          // "Start fresh": erase with NUKE_BUILD before writing pendingUrl
   erased: false,         // the nuke has been written in this run
   stagedImage: null,     // 'nuke' | 'firmware': which image picoboot.js staged for the drive picker
@@ -180,6 +181,8 @@ function ensureUi() {
   const pickerLabel = h('label.field-label');
   const installConfirmText = h('span');
   const howTo = h('div'); // how to put the chosen dongle in its bootloader
+  const kindPad = h('input', { type: 'radio', name: 'fw-kind', value: 'controller' });
+  const kindDongle = h('input', { type: 'radio', name: 'fw-kind', value: 'dongle' });
   const picker = h('div.stack', { style: { '--gap': '12px' } },
     pickerLabel, buildSelect, howTo,
     h('label.row.small', { style: { flexWrap: 'nowrap', alignItems: 'flex-start', '--gap': '10px' } }, installConfirm, installConfirmText));
@@ -211,6 +214,12 @@ function ensureUi() {
     option(freshRadio, t('Start fresh: erase everything first'), t('Wipe the controller completely, then write the firmware. Try this if it misbehaves even after a reinstall.'), 'danger'),
     eraseWarn);
   freshChoice.hidden = true;
+  // Gamepad or dongle? Asked first in the installer: the list, the steps and the options follow it.
+  const kindChoice = h('fieldset.fw-fresh',
+    h('legend.field-label', t('What are you installing?')),
+    option(kindPad, t('Gamepad firmware'), t('For a controller: GC Ultimate, ProGCC, Phob, Hoverboard and the others.')),
+    option(kindDongle, t('Dongle firmware'), t('For the USB wireless receiver: the HOJA Dongle, or a Pico W / Pico 2 W used as one.')));
+  kindChoice.hidden = true;
   const stepCaption = h('p.small.muted.fw-step-caption');
   const style = h('style', `
     .fw-step-caption { margin: 6px 0 0; }
@@ -226,11 +235,14 @@ function ensureUi() {
 
   const dlg = openDialog({
     title: t('Firmware'), icon: 'firmware', tone: 'blue', dismissible: false,
-    body: [style, steps, stepCaption, guide, notes, backup, picker, freshChoice, folderHint, tips, progress],
+    body: [style, steps, stepCaption, guide, notes, backup, kindChoice, picker, freshChoice, folderHint, tips, progress],
   });
 
   ui = { dlg, steps, stepCaption, guide, notes, backup, progress, picker, pickerLabel, buildSelect, howTo, installConfirm, installConfirmText, tips, folderHint, select: null,
-    freshChoice, keepRadio, freshRadio, eraseConfirm, eraseWarn };
+    freshChoice, keepRadio, freshRadio, eraseConfirm, eraseWarn, kindChoice, kindPad, kindDongle };
+  const onKind = () => { if (st.mode === 'bootloader-install' && !st.knownBuild) applyInstallKind(kindDongle.checked ? 'dongle' : 'controller'); };
+  kindPad.addEventListener('change', onKind);
+  kindDongle.addEventListener('change', onKind);
   installConfirm.addEventListener('change', refreshInstallState);
   const onFreshChange = () => {
     st.fresh = freshRadio.checked;
@@ -348,8 +360,9 @@ function paintSteps() {
 }
 
 /** Show/hide the optional dialog panels (build picker, keep/fresh choice, drive-picker tips). */
-function panels({ picker = false, fresh = false, tips = false, folderHint = false } = {}) {
+function panels({ picker = false, fresh = false, tips = false, folderHint = false, kind = false } = {}) {
   const u = ensureUi();
+  u.kindChoice.hidden = !kind;
   u.picker.hidden = !picker;
   u.freshChoice.hidden = !fresh;
   u.tips.hidden = !tips;
@@ -420,6 +433,7 @@ function hide() {
   st.dongle = false;
   st.knownBuild = null;
   st.installKind = null;
+  st.installDetected = false;
   resetFresh();
   pico_clear_cached_uf2(); // a later run must download its own image
   ui?.dlg.close();
@@ -692,7 +706,7 @@ function showCableComplete(u, dongle) {
  * kind: 'controller' or 'dongle' when opened from that card (the list and the text are for those
  * only); null when a bootloader appeared, which could be either.
  */
-async function showBootloaderInstall(preselect, { updateModeBuild = null, kind = null } = {}) {
+async function showBootloaderInstall(preselect, { updateModeBuild = null, kind = null, detected = false } = {}) {
   ensureUi();
   resetFresh();
   st.pendingUrl = undefined;
@@ -712,20 +726,45 @@ async function showBootloaderInstall(preselect, { updateModeBuild = null, kind =
     installActions();
     return;
   }
+  st.installDetected = detected;
+  if (preselect && !kind) kind = isDongleBuild(preselect) ? 'dongle' : 'controller';
+  u.kindPad.checked = kind === 'controller';
+  u.kindDongle.checked = kind === 'dongle';
+  await applyInstallKind(kind, preselect);
+}
+
+/**
+ * The installer once it's known what goes on: 'controller' or 'dongle' (the list, the text, the
+ * options and the confirm follow it), or null to ask first.
+ */
+async function applyInstallKind(kind, preselect) {
+  const u = ensureUi();
   st.installKind = kind;
   const dongle = kind === 'dongle';
-  panels({ picker: true, fresh: !dongle }); // a dongle has no settings worth a Start fresh
   u.installConfirm.checked = false;
+  if (!kind) {
+    panels({ kind: true });
+    paint(t('Install HOJA firmware?'), st.installDetected
+      ? t('A Raspberry Pi bootloader (BOOTSEL) was detected. Is it a gamepad or a dongle?')
+      : t('Is it a gamepad or a dongle?'), { icon: 'firmware' });
+    setUpdateStatus(t('Choose gamepad or dongle to continue'), 0, false);
+    installActions();
+    return;
+  }
+  if (dongle && st.fresh) { u.keepRadio.checked = true; u.keepRadio.dispatchEvent(new Event('change')); }
+  panels({ kind: true, picker: true, fresh: !dongle }); // a dongle has no settings worth a Start fresh
   u.pickerLabel.textContent = dongle ? t('Choose your dongle') : t('Choose your controller');
   u.installConfirmText.textContent = dongle
     ? t('I understand that installing the wrong firmware can stop this dongle working until it’s put in its bootloader and installed again.')
     : t('I understand that installing the wrong firmware can brick this controller, and recovery may require opening it up to reach BOOTSEL again.');
   if (dongle) {
-    paint(t('Install dongle firmware?'), t('Choose your dongle below and put it in its bootloader as shown, then press Install and pick it in the window your browser opens.'), { icon: 'firmware' });
-  } else if (kind === 'controller') {
-    paint(t('Install HOJA firmware?'), t('Choose your controller below, then press Install and pick its bootloader (“RP2 Boot” or “RP2350 Boot”) in the window your browser opens.'), { icon: 'firmware' });
+    paint(t('Install dongle firmware?'), st.installDetected
+      ? t('Choose your dongle below, then press Install.')
+      : t('Choose your dongle below and put it in its bootloader as shown, then press Install and pick it in the window your browser opens.'), { icon: 'firmware' });
   } else {
-    paint(t('Install HOJA firmware?'), t('A Raspberry Pi bootloader (BOOTSEL) was detected. Choose your controller below, then press Install.'), { icon: 'firmware' });
+    paint(t('Install HOJA firmware?'), st.installDetected
+      ? t('Choose your controller below, then press Install.')
+      : t('Choose your controller below, then press Install and pick its bootloader (“RP2 Boot” or “RP2350 Boot”) in the window your browser opens.'), { icon: 'firmware' });
   }
   setUpdateStatus(dongle ? t('Choose a dongle to continue') : t('Choose a controller to continue'), 0, false);
   installActions();
@@ -743,7 +782,7 @@ async function showBootloaderInstall(preselect, { updateModeBuild = null, kind =
 async function fillBuildSelect(preselect) {
   const { builds, dongles, offline } = await listBuilds();
   const u = ui;
-  if (!u || st.mode !== 'bootloader-install' || st.knownBuild) return;
+  if (!u || st.mode !== 'bootloader-install' || st.knownBuild || !st.installKind) return;
   const chip = st.bootloaderChip;
   const fits = (b) => !chip || !b.chip || b.chip === chip;
   const kind = st.installKind;
@@ -755,7 +794,8 @@ async function fillBuildSelect(preselect) {
     ...pads.map((b) => ({ value: b.id, label: b.label })),
     ...forChip.map((b) => ({ value: b.id, label: t(b.label), group: dongleGroup })),
     ...nuke.map((b) => ({ value: b.id, label: t(b.label) }))];
-  const value = options.some((o) => o.value === preselect) ? preselect : '';
+  const only = kind && pads.length + forChip.length === 1 ? (pads[0] || forChip[0]).id : '';
+  const value = options.some((o) => o.value === preselect) ? preselect : only;
   u.select = select({ options, value, ariaLabel: t('Controller build'), onChange: refreshInstallState });
   u.select.style.width = '100%';
   const note = (text) => h('p.small.muted', { style: { marginTop: '6px' } }, text);
@@ -779,6 +819,12 @@ function refreshInstallState() {
     // The controller named its build: nothing to pick or confirm, except erasing for Start fresh.
     const btn = ui.dlg.action('primary');
     if (btn) btn.disabled = st.fresh && !ui.eraseConfirm.checked;
+    return;
+  }
+  if (!st.installKind) {
+    // Gamepad or dongle not chosen yet: nothing to install
+    const btn = ui.dlg.action('primary');
+    if (btn) btn.disabled = true;
     return;
   }
   const value = ui.select?.value;
@@ -1010,7 +1056,7 @@ function noteBootloader(usb) {
 /** The installer for a bootloader that just appeared: the HOJA update mode names its build. */
 const installFor = async (usb) => {
   const buildId = await updateModeBuildId(usb);
-  return showBootloaderInstall(buildId ?? undefined, { updateModeBuild: buildId });
+  return showBootloaderInstall(undefined, { updateModeBuild: buildId, detected: true });
 };
 
 async function onBootloaderConnect(usb) {
