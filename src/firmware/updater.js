@@ -51,7 +51,7 @@ import { device, isPicoBootloader, updateModeBuildId, isHojaUpdateMode } from '.
 import { isDemo } from '../device/mock.js';
 import { prefs } from '../app/prefs.js';
 import { isIOS } from '../app/platform.js';
-import { listBuilds, buildById, getBuildManifest, dongleBuild, NUKE_BUILD } from './builds.js';
+import { listBuilds, buildById, getBuildManifest, dongleBuild, isDongleBuild, NUKE_BUILD } from './builds.js';
 import { hojaDriveLabel, hasHojaDrive, romDriveName } from './drives.js';
 import { loadChangelog, pendingActions, buildIdFromManifestUrl, inlineRuns } from './changelog.js';
 import {
@@ -111,6 +111,8 @@ const st = {
   bleSupported: false,   // the controller connected over Bluetooth said it takes updates that way
   bootloaderChip: null,  // 'rp2040' | 'rp2350': the last boot ROM seen (filters the installer's builds); null for the HOJA update mode
   knownBuild: null,      // the installer's build when the HOJA update mode named it: no picker then
+  installKind: null,     // what the installer installs: 'controller', 'dongle', or null until the owner says
+  installDetected: false, // the installer opened because a bootloader appeared (not from a Firmware page card)
   fresh: false,          // "Start fresh": erase with NUKE_BUILD before writing pendingUrl
   erased: false,         // the nuke has been written in this run
   stagedImage: null,     // 'nuke' | 'firmware': which image picoboot.js staged for the drive picker
@@ -166,6 +168,27 @@ async function fetchManifest(url) {
 // Dialog UI
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * Glyphs for the installer's "Gamepad or dongle?" tiles: Material Symbols Rounded, filled (Apache-2.0,
+ * tools/material-symbols), 960-unit viewBox from y = -960.
+ */
+const KIND_GLYPHS = {
+  gamepad: 'M182-200q-51 0-79-35.5T82-322l42-300q9-60 53.5-99T282-760h396q60 0 104.5 39t53.5 99l42 300q7 51-21 86.5T778-200q-21 0-39-7.5T706-230l-90-90H344l-90 90q-15 15-33 22.5t-39 7.5Zm526.5-251.5Q720-463 720-480t-11.5-28.5Q697-520 680-520t-28.5 11.5Q640-497 640-480t11.5 28.5Q663-440 680-440t28.5-11.5Zm-80-120Q640-583 640-600t-11.5-28.5Q617-640 600-640t-28.5 11.5Q560-617 560-600t11.5 28.5Q583-560 600-560t28.5-11.5ZM310-510v40q0 13 8.5 21.5T340-440q13 0 21.5-8.5T370-470v-40h40q13 0 21.5-8.5T440-540q0-13-8.5-21.5T410-570h-40v-40q0-13-8.5-21.5T340-640q-13 0-21.5 8.5T310-610v40h-40q-13 0-21.5 8.5T240-540q0 13 8.5 21.5T270-510h40Z',
+  dongle: 'M80-480q-17 0-29-10.5T41-516q7-85 44-159t96-128.5Q240-858 317-889t163-31q86 0 163 31t136 85.5Q838-749 875-675t44 159q2 15-10 25.5T880-480q-16 0-28-10t-14-26q-14-138-116-231t-242-93q-140 0-242 93T122-516q-2 16-14 26t-28 10Zm160 0q-17 0-28.5-11t-9.5-26q14-104 92.5-173.5T480-760q107 0 185.5 69.5T758-517q2 15-9.5 26T720-480q-16 0-28.5-8.5T677-512q-12-72-67-120t-130-48q-75 0-130 48t-67 120q-2 15-14.5 23.5T240-480Zm240 296-92 92q-11 11-28 11t-28-11q-11-11-11-28t11-28l108-108v-132q-27-12-43.5-37T380-480q0-42 29-71t71-29q42 0 71 29t29 71q0 30-16.5 55T520-388v132l108 108q11 11 11 28t-11 28q-11 11-28 11t-28-11l-92-92Z',
+  check: 'm424-408-86-86q-11-11-28-11t-28 11q-11 11-11 28t11 28l114 114q12 12 28 12t28-12l226-226q11-11 11-28t-11-28q-11-11-28-11t-28 11L424-408Zm56 328q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z',
+};
+function glyphSvg(name, cls) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 -960 960 960');
+  svg.setAttribute('class', cls);
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(NS, 'path');
+  path.setAttribute('d', KIND_GLYPHS[name]);
+  svg.append(path);
+  return svg;
+}
+
 function ensureUi() {
   if (ui) return ui;
   const steps = h('div.steps', [1, 2, 3, 4].map(() => h('span.step')));
@@ -176,10 +199,14 @@ function ensureUi() {
 
   const installConfirm = h('input', { type: 'checkbox' });
   const buildSelect = h('div');
+  const pickerLabel = h('label.field-label');
+  const installConfirmText = h('span');
+  const howTo = h('div'); // how to put the chosen dongle in its bootloader
+  const kindPad = h('input', { type: 'radio', name: 'fw-kind', value: 'controller' });
+  const kindDongle = h('input', { type: 'radio', name: 'fw-kind', value: 'dongle' });
   const picker = h('div.stack', { style: { '--gap': '12px' } },
-    h('label.field-label', t('Choose your controller')), buildSelect,
-    h('label.row.small', { style: { flexWrap: 'nowrap', alignItems: 'flex-start', '--gap': '10px' } }, installConfirm,
-      h('span', t('I understand that installing the wrong firmware can brick this controller, and recovery may require opening it up to reach BOOTSEL again.'))));
+    pickerLabel, buildSelect, howTo,
+    h('label.row.small', { style: { flexWrap: 'nowrap', alignItems: 'flex-start', '--gap': '10px' } }, installConfirm, installConfirmText));
   picker.hidden = true;
 
   const tips = callout({ tone: 'blue', title: t('In the folder window:') },
@@ -208,6 +235,18 @@ function ensureUi() {
     option(freshRadio, t('Start fresh: erase everything first'), t('Wipe the controller completely, then write the firmware. Try this if it misbehaves even after a reinstall.'), 'danger'),
     eraseWarn);
   freshChoice.hidden = true;
+  // Gamepad or dongle? Asked first in the installer: the list, the steps and the options follow it.
+  const kindTile = (input, kind, glyph, title, text) => h('label.fw-kind-tile', { dataset: { kind } }, input,
+    h('span.fw-kind-art', glyphSvg(glyph, 'fw-kind-glyph')),
+    h('span.fw-kind-title', title),
+    h('span.fw-kind-text', text),
+    glyphSvg('check', 'fw-kind-check'));
+  const kindChoice = h('fieldset.fw-kind',
+    h('legend.field-label', t('What are you installing?')),
+    h('div.fw-kind-tiles',
+      kindTile(kindPad, 'pad', 'gamepad', t('Gamepad firmware'), t('For GC Ultimate, ProGCC, Padbox and more.')),
+      kindTile(kindDongle, 'dongle', 'dongle', t('Dongle firmware'), t('For the HOJA Dongle, Pico W / 2 W and more.'))));
+  kindChoice.hidden = true;
   const stepCaption = h('p.small.muted.fw-step-caption');
   const style = h('style', `
     .fw-step-caption { margin: 6px 0 0; }
@@ -219,15 +258,58 @@ function ensureUi() {
     .fw-choice input { margin-top: 3px; flex: none; }
     .fw-choice > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .fw-choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
-    .fw-choice.danger:has(input:checked) { border-color: var(--red); background: var(--red-soft); }`);
+    .fw-choice.danger:has(input:checked) { border-color: var(--red); background: var(--red-soft); }
+    .fw-kind { border: 0; padding: 0; margin: 0; min-width: 0; }
+    .fw-kind[hidden] { display: none; }
+    .fw-kind legend { padding: 0; margin-bottom: 8px; }
+    .fw-kind-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .fw-kind-tile { --kind: var(--fill-accent); --kind-2: var(--sfc-lavender); --kind-soft: var(--accent-soft);
+      position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
+      padding: 18px 14px 16px; border: 2px solid var(--border); border-radius: var(--radius-lg); cursor: pointer;
+      background: var(--surface); transition: transform var(--dur-med) var(--ease-spring), border-color var(--dur-med), background-color var(--dur-med), box-shadow var(--dur-med); }
+    .fw-kind-tile[data-kind="dongle"] { --kind: var(--fill-blue); --kind-2: var(--sfc-blue); --kind-soft: var(--blue-soft); }
+    .fw-kind-tile input { position: absolute; opacity: 0; pointer-events: none; }
+    .fw-kind-tile:hover { transform: translateY(-3px); border-color: var(--kind); box-shadow: 0 8px 20px -12px var(--kind); }
+    .fw-kind-tile:has(input:focus-visible) { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+    .fw-kind-tile:has(input:checked) { border-color: var(--kind); background: var(--kind-soft); }
+    .fw-kind-art { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--kind-2), var(--kind)); box-shadow: 0 6px 16px -8px var(--kind);
+      transition: transform var(--dur-med) var(--ease-spring); }
+    .fw-kind-glyph { width: 36px; height: 36px; fill: #fff; }
+    .fw-kind-tile:hover .fw-kind-art { transform: rotate(-8deg) scale(1.06); }
+    .fw-kind-tile[data-kind="dongle"]:hover .fw-kind-art { transform: rotate(8deg) scale(1.06); }
+    .fw-kind-tile:has(input:checked) .fw-kind-art { animation: fw-kind-pop 420ms var(--ease-spring); }
+    .fw-kind-title { font-weight: 700; font-size: var(--text-md); }
+    .fw-kind-text { font-size: var(--text-xs); color: var(--text-muted); line-height: 1.35; }
+    .fw-kind-check { position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; fill: var(--kind);
+      opacity: 0; transform: scale(0.4); transition: opacity var(--dur-fast), transform var(--dur-med) var(--ease-spring); }
+    .fw-kind-tile:has(input:checked) .fw-kind-check { opacity: 1; transform: scale(1); }
+    @media (max-width: 480px) {
+      .fw-kind-tiles { grid-template-columns: 1fr; }
+      .fw-kind-tile { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; row-gap: 2px; text-align: left; align-items: center; padding: 12px 36px 12px 12px; }
+      .fw-kind-art { grid-row: span 2; width: 48px; height: 48px; }
+      .fw-kind-glyph { width: 28px; height: 28px; }
+      .fw-kind-title { align-self: end; }
+      .fw-kind-text { align-self: start; }
+    }
+    @keyframes fw-kind-pop { 0% { transform: scale(1); } 40% { transform: scale(1.18) rotate(-6deg); } 100% { transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) {
+      .fw-kind-tile, .fw-kind-art, .fw-kind-check { transition: none; }
+      .fw-kind-tile:hover, .fw-kind-tile:hover .fw-kind-art { transform: none; }
+      .fw-kind-tile:has(input:checked) .fw-kind-art { animation: none; }
+    }`);
 
   const dlg = openDialog({
     title: t('Firmware'), icon: 'firmware', tone: 'blue', dismissible: false,
-    body: [style, steps, stepCaption, guide, notes, backup, picker, freshChoice, folderHint, tips, progress],
+    body: [style, steps, stepCaption, guide, notes, backup, kindChoice, picker, freshChoice, folderHint, tips, progress],
   });
 
-  ui = { dlg, steps, stepCaption, guide, notes, backup, progress, picker, buildSelect, installConfirm, tips, folderHint, select: null,
-    freshChoice, keepRadio, freshRadio, eraseConfirm, eraseWarn };
+  ui = { dlg, steps, stepCaption, guide, notes, backup, progress, picker, pickerLabel, buildSelect, howTo, installConfirm, installConfirmText, tips, folderHint, select: null,
+    freshChoice, keepRadio, freshRadio, eraseConfirm, eraseWarn, kindChoice, kindPad, kindDongle };
+  const onKind = () => { if (st.mode === 'bootloader-install' && !st.knownBuild) applyInstallKind(kindDongle.checked ? 'dongle' : 'controller'); };
+  kindPad.addEventListener('change', onKind);
+  kindDongle.addEventListener('change', onKind);
   installConfirm.addEventListener('change', refreshInstallState);
   const onFreshChange = () => {
     st.fresh = freshRadio.checked;
@@ -345,8 +427,9 @@ function paintSteps() {
 }
 
 /** Show/hide the optional dialog panels (build picker, keep/fresh choice, drive-picker tips). */
-function panels({ picker = false, fresh = false, tips = false, folderHint = false } = {}) {
+function panels({ picker = false, fresh = false, tips = false, folderHint = false, kind = false } = {}) {
   const u = ensureUi();
+  u.kindChoice.hidden = !kind;
   u.picker.hidden = !picker;
   u.freshChoice.hidden = !fresh;
   u.tips.hidden = !tips;
@@ -371,7 +454,7 @@ function actions({ primary, restart = false, dismiss = true, drive = false }) {
   const u = ensureUi();
   const list = [];
   if (dismiss) list.push({ label: st.mode === 'update-complete' ? t('Close') : t('Dismiss'), variant: 'ghost', keepOpen: true, onClick: () => { hide(); return false; } });
-  if (restart) list.push({ label: t('Restart controller'), icon: 'refresh', variant: 'tonal', keepOpen: true, onClick: restartFromBootloader });
+  if (restart) list.push({ label: st.dongle || st.installKind === 'dongle' ? t('Restart dongle') : t('Restart controller'), icon: 'refresh', variant: 'tonal', keepOpen: true, onClick: restartFromBootloader });
   // Way around WebUSB (e.g. the controller isn't listed in the browser's device window): the drive copy,
   // named as the controller shows it. A HOJA update mode from before the drive has nothing to copy to.
   const bd = bootDrive();
@@ -416,6 +499,8 @@ function hide() {
   st.pendingLegacy = false;
   st.dongle = false;
   st.knownBuild = null;
+  st.installKind = null;
+  st.installDetected = false;
   resetFresh();
   pico_clear_cached_uf2(); // a later run must download its own image
   ui?.dlg.close();
@@ -685,8 +770,10 @@ function showCableComplete(u, dongle) {
  * The installer. preselect: a build id the caller chose. updateModeBuild: the build the HOJA update
  * mode names (its serial, updateModeBuildId): the controller says what it is, so there's no picker,
  * just that build. The picker is for the boot ROM (RPI-RP2 / RP2350), which can't say.
+ * kind: 'controller' or 'dongle' when opened from that card (the list and the text are for those
+ * only); null when a bootloader appeared, which could be either.
  */
-async function showBootloaderInstall(preselect, { updateModeBuild = null } = {}) {
+async function showBootloaderInstall(preselect, { updateModeBuild = null, kind = null, detected = false } = {}) {
   ensureUi();
   resetFresh();
   st.pendingUrl = undefined;
@@ -706,10 +793,47 @@ async function showBootloaderInstall(preselect, { updateModeBuild = null } = {})
     installActions();
     return;
   }
-  panels({ picker: true, fresh: true });
+  st.installDetected = detected;
+  if (preselect && !kind) kind = isDongleBuild(preselect) ? 'dongle' : 'controller';
+  u.kindPad.checked = kind === 'controller';
+  u.kindDongle.checked = kind === 'dongle';
+  await applyInstallKind(kind, preselect);
+}
+
+/**
+ * The installer once it's known what goes on: 'controller' or 'dongle' (the list, the text, the
+ * options and the confirm follow it), or null to ask first.
+ */
+async function applyInstallKind(kind, preselect) {
+  const u = ensureUi();
+  st.installKind = kind;
+  const dongle = kind === 'dongle';
   u.installConfirm.checked = false;
-  paint(t('Install HOJA firmware?'), t('A Raspberry Pi bootloader (BOOTSEL) was detected. Choose your controller below, then press Install.'), { icon: 'firmware' });
-  setUpdateStatus(t('Choose a controller to continue'), 0, false);
+  if (!kind) {
+    panels({ kind: true });
+    paint(t('Install HOJA firmware?'), st.installDetected
+      ? t('A Raspberry Pi bootloader (BOOTSEL) was detected. Is it a gamepad or a dongle?')
+      : t('Is it a gamepad or a dongle?'), { icon: 'firmware' });
+    setUpdateStatus(t('Choose gamepad or dongle to continue'), 0, false);
+    installActions();
+    return;
+  }
+  if (dongle && st.fresh) { u.keepRadio.checked = true; u.keepRadio.dispatchEvent(new Event('change')); }
+  panels({ kind: true, picker: true, fresh: !dongle }); // a dongle has no settings worth a Start fresh
+  u.pickerLabel.textContent = dongle ? t('Choose your dongle') : t('Choose your controller');
+  u.installConfirmText.textContent = dongle
+    ? t('I understand that installing the wrong firmware can stop this dongle working until it’s put in its bootloader and installed again.')
+    : t('I understand that installing the wrong firmware can brick this controller, and recovery may require opening it up to reach BOOTSEL again.');
+  if (dongle) {
+    paint(t('Install dongle firmware?'), st.installDetected
+      ? t('Choose your dongle below, then press Install.')
+      : t('Choose your dongle below and put it in its bootloader as shown, then press Install and pick it in the window your browser opens.'), { icon: 'firmware' });
+  } else {
+    paint(t('Install HOJA firmware?'), st.installDetected
+      ? t('Choose your controller below, then press Install.')
+      : t('Choose your controller below, then press Install and pick its bootloader (“RP2 Boot” or “RP2350 Boot”) in the window your browser opens.'), { icon: 'firmware' });
+  }
+  setUpdateStatus(dongle ? t('Choose a dongle to continue') : t('Choose a controller to continue'), 0, false);
   installActions();
 
   u.buildSelect.replaceChildren(h('span.muted.small', t('Loading builds…')));
@@ -717,31 +841,35 @@ async function showBootloaderInstall(preselect, { updateModeBuild = null } = {})
 }
 
 /**
- * The installer's build list: controllers, then dongles, then the flash nuke. Once a boot ROM has been
- * seen, only the builds for its chip (RP2040 or RP2350) are offered; a build of unknown chip always is.
- * Runs again when a bootloader of the other chip appears.
+ * The installer's build list: controllers, then dongles, then the flash nuke; from the dongle card
+ * only the dongles, from the controller card only the controllers and the nuke. Once a boot ROM has
+ * been seen, only the builds for its chip (RP2040 or RP2350) are offered; a build of unknown chip
+ * always is. Runs again when a bootloader of the other chip appears.
  */
 async function fillBuildSelect(preselect) {
   const { builds, dongles, offline } = await listBuilds();
   const u = ui;
-  if (!u || st.mode !== 'bootloader-install' || st.knownBuild) return;
+  if (!u || st.mode !== 'bootloader-install' || st.knownBuild || !st.installKind) return;
   const chip = st.bootloaderChip;
   const fits = (b) => !chip || !b.chip || b.chip === chip;
-  const pads = builds.filter(fits);
-  const forChip = dongles.filter(fits);
-  const dongleGroup = t('Dongle');
-  const options = [{ value: '', label: t('Choose a controller…') },
+  const kind = st.installKind;
+  const pads = kind === 'dongle' ? [] : builds.filter(fits);
+  const forChip = kind === 'controller' ? [] : dongles.filter(fits);
+  const nuke = kind === 'dongle' ? [] : [NUKE_BUILD];
+  const dongleGroup = kind === 'dongle' ? undefined : t('Dongle');
+  const options = [{ value: '', label: kind === 'dongle' ? t('Choose a dongle…') : t('Choose a controller…') },
     ...pads.map((b) => ({ value: b.id, label: b.label })),
     ...forChip.map((b) => ({ value: b.id, label: t(b.label), group: dongleGroup })),
-    { value: NUKE_BUILD.id, label: t(NUKE_BUILD.label) }];
-  const value = options.some((o) => o.value === preselect) ? preselect : '';
+    ...nuke.map((b) => ({ value: b.id, label: t(b.label) }))];
+  const only = kind && pads.length + forChip.length === 1 ? (pads[0] || forChip[0]).id : '';
+  const value = options.some((o) => o.value === preselect) ? preselect : only;
   u.select = select({ options, value, ariaLabel: t('Controller build'), onChange: refreshInstallState });
   u.select.style.width = '100%';
   const note = (text) => h('p.small.muted', { style: { marginTop: '6px' } }, text);
   replace(u.buildSelect, u.select,
-    chip && note(chip === 'rp2350' ? t('Showing firmware for RP2350 controllers (the bootloader is an RP2350).') : t('Showing firmware for RP2040 controllers (the bootloader is an RP2040).')),
+    chip && kind !== 'dongle' && note(chip === 'rp2350' ? t('Showing firmware for RP2350 controllers (the bootloader is an RP2350).') : t('Showing firmware for RP2040 controllers (the bootloader is an RP2040).')),
     offline && note(t('Offline: showing the last known list. Installing needs an internet connection.')));
-  u.builds = [...pads, ...forChip, NUKE_BUILD];
+  u.builds = [...pads, ...forChip, ...nuke];
   refreshInstallState();
 }
 
@@ -760,10 +888,19 @@ function refreshInstallState() {
     if (btn) btn.disabled = st.fresh && !ui.eraseConfirm.checked;
     return;
   }
+  if (!st.installKind) {
+    // Gamepad or dongle not chosen yet: nothing to install
+    const btn = ui.dlg.action('primary');
+    if (btn) btn.disabled = true;
+    return;
+  }
   const value = ui.select?.value;
+  // How to put the chosen dongle in its bootloader (not needed once one has appeared)
+  const how = !st.installDetected && ui.builds?.find((b) => b.id === value)?.howTo;
+  replace(ui.howTo, how && callout({ tone: 'blue', icon: 'usb', title: t('Put it in its bootloader'), text: t(how) }));
   // The nuke on its own already erases everything, so "Start fresh" doesn't apply to it.
   const nukeOnly = value === NUKE_BUILD.id;
-  ui.freshChoice.hidden = nukeOnly;
+  ui.freshChoice.hidden = nukeOnly || st.installKind === 'dongle';
   if (nukeOnly && st.fresh) { ui.keepRadio.checked = true; ui.keepRadio.dispatchEvent(new Event('change')); return; }
   const ok = !!value && ui.installConfirm.checked && (!st.fresh || ui.eraseConfirm.checked);
   const btn = ui.dlg.action('primary');
@@ -986,7 +1123,7 @@ function noteBootloader(usb) {
 /** The installer for a bootloader that just appeared: the HOJA update mode names its build. */
 const installFor = async (usb) => {
   const buildId = await updateModeBuildId(usb);
-  return showBootloaderInstall(buildId ?? undefined, { updateModeBuild: buildId });
+  return showBootloaderInstall(undefined, { updateModeBuild: buildId, detected: true });
 };
 
 async function onBootloaderConnect(usb) {
@@ -1015,8 +1152,16 @@ async function onBootloaderConnect(usb) {
   if (st.mode !== 'bootloader-install') await installFor(usb);
 }
 
-function onBootloaderDisconnect() {
+function onBootloaderDisconnect(usb) {
   if (st.mode === 'hidden') return; // e.g. the board leaving BOOTSEL after "Restart controller": nothing to do
+  // The installer opened for a bootloader that's now unplugged: what it detected (the build, the chip)
+  // may not fit what's plugged in next, so close it; the next bootloader opens a fresh one.
+  if (st.mode === 'bootloader-install' && st.installDetected && (!usb || !st.bootUsb || usb === st.bootUsb)) {
+    st.bootUsb = null;
+    st.bootloaderChip = null;
+    hide();
+    return;
+  }
   if (ACTIVE.includes(st.mode)) return; // keep the dialog through reboots
   hide();
 }
@@ -1160,7 +1305,7 @@ export function initFirmware() {
 
   if (navigator.usb) {
     navigator.usb.addEventListener('connect', (e) => { if (isPicoBootloader(e.device)) onBootloaderConnect(e.device); });
-    navigator.usb.addEventListener('disconnect', (e) => { if (isPicoBootloader(e.device)) onBootloaderDisconnect(); });
+    navigator.usb.addEventListener('disconnect', (e) => { if (isPicoBootloader(e.device)) onBootloaderDisconnect(e.device); });
     navigator.usb.getDevices().then(async (devs) => {
       const boot = devs.find(isPicoBootloader);
       noteBootloader(boot);
@@ -1183,9 +1328,12 @@ export async function openUpdateWizard({ reinstall = false } = {}) {
   showUpdateAvailable(url, latest?.checksum ?? null, { reinstall, ble, debugForced: !reinstall && (!latest || !(latest.version > (session.info.fwVersion >>> 0))) ? debugForce : false });
 }
 
-/** Open the install flow manually (e.g. Firmware page → "Install on a blank board"). */
-export async function openInstallWizard(buildId) {
-  await showBootloaderInstall(buildId);
+/**
+ * Open the install flow manually: kind 'controller' (Firmware page, "Install on a blank board") or
+ * 'dongle' (its Dongle card) lists only those builds. buildId preselects one.
+ */
+export async function openInstallWizard(buildId, { kind = buildId && isDongleBuild(buildId) ? 'dongle' : 'controller' } = {}) {
+  await showBootloaderInstall(buildId, { kind });
 }
 
 /** How long a controller gets to leave USB after the boot ROM command before the fallback. */

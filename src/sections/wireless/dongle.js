@@ -14,7 +14,7 @@ import { t, N_ } from '../../i18n/index.js';
 loadStyles(new URL('./wireless.css', import.meta.url));
 
 /** Dongle boards (0xD0 byte 2). */
-const BOARDS = { 1: 'HOJA', 2: 'Pico W', 3: 'Pico 2 W' };
+const BOARDS = { 1: 'HOJA', 2: 'Pico W', 3: 'Pico 2 W', 4: 'Waveshare RP2350B-Plus-W' };
 /** Hosts the dongle detects (byte 10). Brand names stay untranslated (GLOSSARY.md). */
 const HOSTS = { 1: N_('PC'), 2: 'Switch', 3: 'N64', 4: 'GameCube', 5: 'NES/SNES' };
 /** Output modes (bytes 11 and 12); the UI calls the firmware's SInput mode "Steam". */
