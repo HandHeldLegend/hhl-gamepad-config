@@ -168,6 +168,27 @@ async function fetchManifest(url) {
 // Dialog UI
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * Glyphs for the installer's "Gamepad or dongle?" tiles: Material Symbols Rounded, filled (Apache-2.0,
+ * tools/material-symbols), 960-unit viewBox from y = -960.
+ */
+const KIND_GLYPHS = {
+  gamepad: 'M182-200q-51 0-79-35.5T82-322l42-300q9-60 53.5-99T282-760h396q60 0 104.5 39t53.5 99l42 300q7 51-21 86.5T778-200q-21 0-39-7.5T706-230l-90-90H344l-90 90q-15 15-33 22.5t-39 7.5Zm526.5-251.5Q720-463 720-480t-11.5-28.5Q697-520 680-520t-28.5 11.5Q640-497 640-480t11.5 28.5Q663-440 680-440t28.5-11.5Zm-80-120Q640-583 640-600t-11.5-28.5Q617-640 600-640t-28.5 11.5Q560-617 560-600t11.5 28.5Q583-560 600-560t28.5-11.5ZM310-510v40q0 13 8.5 21.5T340-440q13 0 21.5-8.5T370-470v-40h40q13 0 21.5-8.5T440-540q0-13-8.5-21.5T410-570h-40v-40q0-13-8.5-21.5T340-640q-13 0-21.5 8.5T310-610v40h-40q-13 0-21.5 8.5T240-540q0 13 8.5 21.5T270-510h40Z',
+  dongle: 'M80-480q-17 0-29-10.5T41-516q7-85 44-159t96-128.5Q240-858 317-889t163-31q86 0 163 31t136 85.5Q838-749 875-675t44 159q2 15-10 25.5T880-480q-16 0-28-10t-14-26q-14-138-116-231t-242-93q-140 0-242 93T122-516q-2 16-14 26t-28 10Zm160 0q-17 0-28.5-11t-9.5-26q14-104 92.5-173.5T480-760q107 0 185.5 69.5T758-517q2 15-9.5 26T720-480q-16 0-28.5-8.5T677-512q-12-72-67-120t-130-48q-75 0-130 48t-67 120q-2 15-14.5 23.5T240-480Zm240 296-92 92q-11 11-28 11t-28-11q-11-11-11-28t11-28l108-108v-132q-27-12-43.5-37T380-480q0-42 29-71t71-29q42 0 71 29t29 71q0 30-16.5 55T520-388v132l108 108q11 11 11 28t-11 28q-11 11-28 11t-28-11l-92-92Z',
+  check: 'm424-408-86-86q-11-11-28-11t-28 11q-11 11-11 28t11 28l114 114q12 12 28 12t28-12l226-226q11-11 11-28t-11-28q-11-11-28-11t-28 11L424-408Zm56 328q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z',
+};
+function glyphSvg(name, cls) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 -960 960 960');
+  svg.setAttribute('class', cls);
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(NS, 'path');
+  path.setAttribute('d', KIND_GLYPHS[name]);
+  svg.append(path);
+  return svg;
+}
+
 function ensureUi() {
   if (ui) return ui;
   const steps = h('div.steps', [1, 2, 3, 4].map(() => h('span.step')));
@@ -215,10 +236,16 @@ function ensureUi() {
     eraseWarn);
   freshChoice.hidden = true;
   // Gamepad or dongle? Asked first in the installer: the list, the steps and the options follow it.
-  const kindChoice = h('fieldset.fw-fresh',
+  const kindTile = (input, kind, glyph, title, text) => h('label.fw-kind-tile', { dataset: { kind } }, input,
+    h('span.fw-kind-art', glyphSvg(glyph, 'fw-kind-glyph')),
+    h('span.fw-kind-title', title),
+    h('span.fw-kind-text', text),
+    glyphSvg('check', 'fw-kind-check'));
+  const kindChoice = h('fieldset.fw-kind',
     h('legend.field-label', t('What are you installing?')),
-    option(kindPad, t('Gamepad firmware'), t('For a controller: GC Ultimate, ProGCC, Phob, Hoverboard and the others.')),
-    option(kindDongle, t('Dongle firmware'), t('For the USB wireless receiver: the HOJA Dongle, or a Pico W, Pico 2 W or RP2350B-Plus-W used as one.')));
+    h('div.fw-kind-tiles',
+      kindTile(kindPad, 'pad', 'gamepad', t('Gamepad firmware'), t('For a controller: GC Ultimate, ProGCC, Phob, Hoverboard and the others.')),
+      kindTile(kindDongle, 'dongle', 'dongle', t('Dongle firmware'), t('For the USB wireless receiver: the HOJA Dongle, or a Pico W, Pico 2 W or RP2350B-Plus-W used as one.'))));
   kindChoice.hidden = true;
   const stepCaption = h('p.small.muted.fw-step-caption');
   const style = h('style', `
@@ -231,7 +258,39 @@ function ensureUi() {
     .fw-choice input { margin-top: 3px; flex: none; }
     .fw-choice > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .fw-choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
-    .fw-choice.danger:has(input:checked) { border-color: var(--red); background: var(--red-soft); }`);
+    .fw-choice.danger:has(input:checked) { border-color: var(--red); background: var(--red-soft); }
+    .fw-kind { border: 0; padding: 0; margin: 0; min-width: 0; }
+    .fw-kind[hidden] { display: none; }
+    .fw-kind legend { padding: 0; margin-bottom: 8px; }
+    .fw-kind-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 480px) { .fw-kind-tiles { grid-template-columns: 1fr; } }
+    .fw-kind-tile { --kind: var(--fill-accent); --kind-2: var(--sfc-lavender); --kind-soft: var(--accent-soft);
+      position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
+      padding: 18px 14px 16px; border: 2px solid var(--border); border-radius: var(--radius-lg); cursor: pointer;
+      background: var(--surface); transition: transform var(--dur-med) var(--ease-spring), border-color var(--dur-med), background-color var(--dur-med), box-shadow var(--dur-med); }
+    .fw-kind-tile[data-kind="dongle"] { --kind: var(--fill-blue); --kind-2: var(--sfc-blue); --kind-soft: var(--blue-soft); }
+    .fw-kind-tile input { position: absolute; opacity: 0; pointer-events: none; }
+    .fw-kind-tile:hover { transform: translateY(-3px); border-color: var(--kind); box-shadow: 0 8px 20px -12px var(--kind); }
+    .fw-kind-tile:has(input:focus-visible) { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+    .fw-kind-tile:has(input:checked) { border-color: var(--kind); background: var(--kind-soft); }
+    .fw-kind-art { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--kind-2), var(--kind)); box-shadow: 0 6px 16px -8px var(--kind);
+      transition: transform var(--dur-med) var(--ease-spring); }
+    .fw-kind-glyph { width: 36px; height: 36px; fill: #fff; }
+    .fw-kind-tile:hover .fw-kind-art { transform: rotate(-8deg) scale(1.06); }
+    .fw-kind-tile[data-kind="dongle"]:hover .fw-kind-art { transform: rotate(8deg) scale(1.06); }
+    .fw-kind-tile:has(input:checked) .fw-kind-art { animation: fw-kind-pop 420ms var(--ease-spring); }
+    .fw-kind-title { font-weight: 700; font-size: var(--text-md); }
+    .fw-kind-text { font-size: var(--text-xs); color: var(--text-muted); line-height: 1.35; }
+    .fw-kind-check { position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; fill: var(--kind);
+      opacity: 0; transform: scale(0.4); transition: opacity var(--dur-fast), transform var(--dur-med) var(--ease-spring); }
+    .fw-kind-tile:has(input:checked) .fw-kind-check { opacity: 1; transform: scale(1); }
+    @keyframes fw-kind-pop { 0% { transform: scale(1); } 40% { transform: scale(1.18) rotate(-6deg); } 100% { transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) {
+      .fw-kind-tile, .fw-kind-art, .fw-kind-check { transition: none; }
+      .fw-kind-tile:hover, .fw-kind-tile:hover .fw-kind-art { transform: none; }
+      .fw-kind-tile:has(input:checked) .fw-kind-art { animation: none; }
+    }`);
 
   const dlg = openDialog({
     title: t('Firmware'), icon: 'firmware', tone: 'blue', dismissible: false,
@@ -1085,8 +1144,16 @@ async function onBootloaderConnect(usb) {
   if (st.mode !== 'bootloader-install') await installFor(usb);
 }
 
-function onBootloaderDisconnect() {
+function onBootloaderDisconnect(usb) {
   if (st.mode === 'hidden') return; // e.g. the board leaving BOOTSEL after "Restart controller": nothing to do
+  // The installer opened for a bootloader that's now unplugged: what it detected (the build, the chip)
+  // may not fit what's plugged in next, so close it; the next bootloader opens a fresh one.
+  if (st.mode === 'bootloader-install' && st.installDetected && (!usb || !st.bootUsb || usb === st.bootUsb)) {
+    st.bootUsb = null;
+    st.bootloaderChip = null;
+    hide();
+    return;
+  }
   if (ACTIVE.includes(st.mode)) return; // keep the dialog through reboots
   hide();
 }
@@ -1230,7 +1297,7 @@ export function initFirmware() {
 
   if (navigator.usb) {
     navigator.usb.addEventListener('connect', (e) => { if (isPicoBootloader(e.device)) onBootloaderConnect(e.device); });
-    navigator.usb.addEventListener('disconnect', (e) => { if (isPicoBootloader(e.device)) onBootloaderDisconnect(); });
+    navigator.usb.addEventListener('disconnect', (e) => { if (isPicoBootloader(e.device)) onBootloaderDisconnect(e.device); });
     navigator.usb.getDevices().then(async (devs) => {
       const boot = devs.find(isPicoBootloader);
       noteBootloader(boot);
