@@ -55,6 +55,8 @@ export const DONGLE_BUILDS = {
     howTo: N_('Unplug the Pico W, then hold its BOOTSEL button while you plug it back in. The browser lists it as “RP2 Boot”.') },
   3: { id: 'dongle_pico2_w', label: N_('Dongle (Pico 2 W)'), chip: 'rp2350',
     howTo: N_('Unplug the Pico 2 W, then hold its BOOTSEL button while you plug it back in. The browser lists it as “RP2350 Boot”.') },
+  4: { id: 'dongle_rp2350b_plus_w', label: N_('Dongle (RP2350B-Plus-W)'), chip: 'rp2350',
+    howTo: N_('Unplug the RP2350B-Plus-W, then hold its BOOT button while you plug it back in. The browser lists it as “RP2350 Boot”.') },
 };
 
 /**
@@ -100,7 +102,7 @@ function toBuild(id) {
   };
 }
 
-/** The firmware build for a dongle board (1 HOJA, 2 Pico W, 3 Pico 2 W), or null when unknown. */
+/** The firmware build for a dongle board (1 HOJA, 2 Pico W, 3 Pico 2 W, 4 RP2350B-Plus-W), or null when unknown. */
 export function dongleBuild(board) {
   const d = DONGLE_BUILDS[board];
   return d ? { ...toBuild(d.id), chip: d.chip } : null;

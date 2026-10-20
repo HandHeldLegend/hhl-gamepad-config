@@ -242,7 +242,7 @@ export const LIVE_MODES = {
 
 /**
  * Decode the dongle's 0xD0 reply (64 bytes):
- *   [1] protocol version   [2] board: 0 unknown, 1 HOJA, 2 Pico W, 3 Pico 2 W   [3] 1 = controller connected
+ *   [1] protocol version   [2] board: 0 unknown, 1 HOJA, 2 Pico W, 3 Pico 2 W, 4 Waveshare RP2350B-Plus-W   [3] 1 = controller connected
  *   [4..7] dongle firmware version (u32 LE build stamp)   [8..9] reserved (0)
  *   [10] detected host: 0 unknown, 1 PC, 2 Switch, 3 N64, 4 GameCube
  *   [11] mode the dongle presents, [12] the controller's mode (0xFF without one):

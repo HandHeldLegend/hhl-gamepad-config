@@ -92,7 +92,7 @@ function installCard(params) {
  */
 function dongleInstallCard() {
   return card({ title: t('Dongle'), icon: 'link', tone: 'blue', subtitle: t('Update the dongle itself, not the controller.') },
-    h('p.muted.small', t('To update a dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W or Pico 2 W, hold BOOTSEL), then choose its firmware here.')),
+    h('p.muted.small', t('To update a dongle by hand, hold both buttons on the dongle while plugging it in (on a Pico W, Pico 2 W or RP2350B-Plus-W, hold BOOTSEL or BOOT), then choose its firmware here.')),
     h('div.row', button({ label: t('Open installer'), icon: 'firmware', variant: 'tonal', onClick: () => openInstallWizard(undefined, { kind: 'dongle' }) })));
 }
 
