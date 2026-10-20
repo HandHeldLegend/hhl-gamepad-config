@@ -247,15 +247,15 @@ async function onBootloader(allowRequestDevice = false) {
   if (result === true) { flashed(); return; }
   if (result?.needsUserAction && result.reason === 'permission') {
     // The browser hasn't allowed this unit's bootloader yet: the operator picks it once.
-    u.flash = { percent: 0, status: t('Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).'), needsPermission: true };
+    u.flash = { percent: 0, status: t('Press Allow the bootloader and pick the controller in update mode (“… Update”), or “RP2 Boot” / “RP2350 Boot” on a blank board.'), needsPermission: true };
     go('flashing');
   } else if (result?.needsUserAction && result.reason === 'directory-picker') {
     // Direct USB flashing isn't available: copy the (already downloaded) firmware onto the RPI-RP2 drive.
-    u.flash = { percent: 100, status: t('Direct USB flashing isn’t available here. Press Select the RPI-RP2 drive and pick the drive in the folder window.'), needsDrive: true };
+    u.flash = { percent: 100, status: t('Direct USB flashing isn’t available here. Press Select the drive and pick the controller’s drive in the folder window.'), needsDrive: true };
     go('flashing');
   } else {
     // Device window closed, the bootloader not listed, or the write failed: let the operator choose.
-    u.flash = { percent: 0, status: t('The firmware wasn’t written. Try again, or copy it onto the RPI-RP2 drive instead.'), needsPermission: true };
+    u.flash = { percent: 0, status: t('The firmware wasn’t written. Try again, or copy it onto the controller’s drive instead.'), needsPermission: true };
     go('flashing');
   }
 }
@@ -274,7 +274,7 @@ async function useDrive() {
     u.flashing = false;
   }
   if (result?.needsUserAction && result.reason === 'directory-picker') {
-    u.flash = { percent: 100, status: t('Press Select the RPI-RP2 drive and pick the drive in the folder window.'), needsDrive: true };
+    u.flash = { percent: 100, status: t('Press Select the drive and pick the controller’s drive in the folder window.'), needsDrive: true };
   } else {
     u.flash = { percent: 0, status: t('This browser can’t write to the drive. Use Chrome or Edge.'), needsPermission: true };
   }
@@ -421,7 +421,7 @@ function waitForBootloader(u) {
   clearTimeout(u.waitTimer);
   u.waitTimer = setTimeout(() => {
     if (station.unit !== u || u.stage !== 'flashing' || u.flashing) return;
-    u.flash = { percent: 0, status: t('Press Allow the bootloader and pick “RP2 Boot” (or “RP2350 Boot”).'), needsPermission: true };
+    u.flash = { percent: 0, status: t('Press Allow the bootloader and pick the controller in update mode (“… Update”), or “RP2 Boot” / “RP2350 Boot” on a blank board.'), needsPermission: true };
     redraw();
   }, BOOTLOADER_WAIT_MS);
 }
@@ -585,8 +585,8 @@ export function mount(root, { session, params = {} }) {
         return big('download', t('Updating firmware'), t('Don’t unplug the controller.'), bar,
           (u.flash?.needsPermission || u.flash?.needsDrive) && h('div.row.fac-actions',
             u.flash.needsPermission && button({ label: t('Allow the bootloader'), icon: 'usb', variant: 'primary', size: 'lg', onClick: () => onBootloader(true) }),
-            u.flash.needsPermission && button({ label: t('Use the RPI-RP2 drive instead'), icon: 'upload', variant: 'tonal', onClick: () => useDrive() }),
-            u.flash.needsDrive && button({ label: t('Select the RPI-RP2 drive'), icon: 'upload', variant: 'primary', size: 'lg', onClick: () => copyToDrive() }),
+            u.flash.needsPermission && button({ label: t('Use the drive instead'), icon: 'upload', variant: 'tonal', onClick: () => useDrive() }),
+            u.flash.needsDrive && button({ label: t('Select the drive'), icon: 'upload', variant: 'primary', size: 'lg', onClick: () => copyToDrive() }),
             button({ label: t('Fail'), variant: 'ghost', onClick: () => { setResult('firmware', N_('Firmware'), 'fail', t('Not updated')); finish(); } })));
       }
       case 'rebooting': {

@@ -52,6 +52,7 @@ import { isDemo } from '../device/mock.js';
 import { prefs } from '../app/prefs.js';
 import { isIOS } from '../app/platform.js';
 import { listBuilds, getBuildManifest, dongleBuild, NUKE_BUILD } from './builds.js';
+import { hojaDriveLabel, hasHojaDrive, romDriveName } from './drives.js';
 import { loadChangelog, pendingActions, buildIdFromManifestUrl, inlineRuns } from './changelog.js';
 import {
   pico_update_attempt_flash, pico_exit_bootloader_attempt, pico_complete_uf2_picker_flash,
@@ -114,6 +115,8 @@ const st = {
   stagedImage: null,     // 'nuke' | 'firmware': which image picoboot.js staged for the drive picker
   manualUrl: undefined,  // UF2 offered as a manual download in uf2-drive-select
   wantRom: false,        // "Boot ROM" recovery reboot asked: hand the HOJA update mode on to the boot ROM
+  bootUsb: null,         // the bootloader that last appeared (which drive it shows, see bootDrive)
+  lastName: '',          // the last connected controller's name (the HOJA drive is named after it)
   status: { state: 'unknown', latest: null, url: null },
 };
 
@@ -184,7 +187,7 @@ function ensureUi() {
 
   // Brave ships with the folder picker turned off: say where to turn it on.
   const folderHint = callout({ tone: 'yellow', title: t('Folder access is off in Brave') },
-    h('p.small', { style: { margin: '4px 0 0' } }, t('To copy the firmware straight to {drive}, open {flag}, set it to Enabled and restart Brave.', { drive: 'RPI-RP2', flag: 'brave://flags/#file-system-access-api' })));
+    h('p.small', { style: { margin: '4px 0 0' } }, t('To copy the firmware straight to {drive}, open {flag}, set it to Enabled and restart Brave.', { drive: bootDrive().name || t('the controller’s drive'), flag: 'brave://flags/#file-system-access-api' })));
   folderHint.hidden = true;
 
   // Keep my settings / Start fresh (Reinstall + installer). Start fresh needs an explicit danger confirm.
@@ -250,6 +253,38 @@ function ensureUi() {
 }
 
 /**
+ * The drive the controller in its bootloader shows, from the bootloader that last appeared:
+ *   { name }        HOJA update mode with its drive (bcdDevice 0xB002+): named after the controller,
+ *                   e.g. "GCU 1" (name null when this tab never saw the controller's name);
+ *                   or the chip's boot ROM: RPI-RP2 / RP2350
+ *   { none: true }  HOJA update mode from before the drive: there is nothing to copy to
+ *   { name: null }  no bootloader seen yet
+ */
+function bootDrive() {
+  const usb = st.bootUsb;
+  if (usb && isHojaUpdateMode(usb)) return hasHojaDrive(usb) ? { name: hojaDriveLabel(st.lastName) || null } : { none: true };
+  if (usb) return { name: romDriveName(usb.productId === 0x000f ? 'rp2350' : 'rp2040') };
+  return { name: null };
+}
+
+/**
+ * The bootloader's name in the browser's USB device window. The HOJA bootloader calls itself
+ * "<controller name> Update" (bootloader/boot_usb.c); the boot ROM "RP2 Boot" or "RP2350 Boot".
+ *   { name, sure }  sure: this bootloader has appeared; else the controller is expected to show
+ *                   `name` if it has the HOJA bootloader
+ *   null            nothing known (no bootloader seen, no controller name)
+ */
+function bootDeviceName() {
+  const usb = st.bootUsb;
+  if (usb && isHojaUpdateMode(usb)) {
+    const name = usb.productName || (st.lastName ? `${st.lastName} Update` : '');
+    return name ? { name, sure: true } : null;
+  }
+  if (usb) return { name: usb.productId === 0x000f ? 'RP2350 Boot' : 'RP2 Boot', sure: true };
+  return st.lastName ? { name: `${st.lastName} Update`, sure: false } : null;
+}
+
+/**
  * Where to find the boot drive in the browser's folder window, for this system. The window is a
  * folder chooser, so it only lists folders: the drive looks empty (its INFO_UF2.TXT isn't shown),
  * which the steps call out. Browsers give pages no option to show files there.
@@ -257,26 +292,30 @@ function ensureUi() {
 function driveSteps() {
   const ua = navigator.userAgent || '';
   const platform = navigator.userAgentData?.platform || '';
-  const drives = { drive: h('strong', 'RPI-RP2'), drive2: h('strong', 'RP2350') };
+  const name = bootDrive().name;
+  const drive = { drive: h('strong', name || '') };
   const b = (text) => h('strong', text);
   const allow = t('If the browser asks to let this site edit files, allow it. Writing starts right after.');
   if (/Windows/i.test(platform) || /Windows/i.test(ua)) {
     return [
       fillNodes(t('In the left sidebar, click {place}.'), { place: b(t('This PC')) }),
-      fillNodes(t('Click the drive named {drive} (or {drive2}) once to select it.'), drives),
+      name ? fillNodes(t('Click the drive named {drive} once to select it.'), drive)
+        : t('Click the controller’s drive once to select it. It’s named after the controller, or RPI-RP2 / RP2350.'),
       fillNodes(t('Press {button}. The drive looks empty in this window because it only shows folders. That’s normal.'), { button: b(t('Select Folder')) }),
       allow,
     ];
   }
   if (/mac/i.test(platform) || /Macintosh/.test(ua)) {
     return [
-      fillNodes(t('In the left sidebar under {section}, click {drive} (or {drive2}).'), { section: b(t('Locations')), ...drives }),
+      name ? fillNodes(t('In the left sidebar under {section}, click {drive}.'), { section: b(t('Locations')), ...drive })
+        : fillNodes(t('In the left sidebar under {section}, click the controller’s drive (named after the controller, or RPI-RP2 / RP2350).'), { section: b(t('Locations')) }),
       fillNodes(t('Press {button}. The drive may look empty in this window. That’s normal.'), { button: b(t('Select')) }),
       allow,
     ];
   }
   return [
-    fillNodes(t('Find {drive} (or {drive2}) in the sidebar with your other drives and select it.'), drives),
+    name ? fillNodes(t('Find {drive} in the sidebar with your other drives and select it.'), drive)
+      : t('Find the controller’s drive (named after the controller, or RPI-RP2 / RP2350) in the sidebar with your other drives and select it.'),
     fillNodes(t('Press {button}. The drive may look empty in this window. That’s normal.'), { button: b(t('Select')) }),
     allow,
   ];
@@ -332,8 +371,13 @@ function actions({ primary, restart = false, dismiss = true, drive = false }) {
   const list = [];
   if (dismiss) list.push({ label: st.mode === 'update-complete' ? t('Close') : t('Dismiss'), variant: 'ghost', keepOpen: true, onClick: () => { hide(); return false; } });
   if (restart) list.push({ label: t('Restart controller'), icon: 'refresh', variant: 'tonal', keepOpen: true, onClick: restartFromBootloader });
-  // Way around WebUSB (e.g. the controller isn't listed in the browser's device window): the drive copy.
-  if (drive) list.push({ label: t('Use the RPI-RP2 drive instead'), icon: 'upload', variant: 'tonal', keepOpen: true, onClick: () => { flashNext({ drive: true }); return false; } });
+  // Way around WebUSB (e.g. the controller isn't listed in the browser's device window): the drive copy,
+  // named as the controller shows it. A HOJA update mode from before the drive has nothing to copy to.
+  const bd = bootDrive();
+  if (drive && !bd.none) {
+    list.push({ label: bd.name ? t('Use the {drive} drive instead', { drive: bd.name }) : t('Use the controller’s drive instead'),
+      icon: 'upload', variant: 'tonal', keepOpen: true, onClick: () => { flashNext({ drive: true }); return false; } });
+  }
   if (primary) {
     list.push({
       id: 'primary', label: primary.label, icon: primary.icon, variant: primary.variant || 'primary', disabled: primary.enabled === false, keepOpen: true,
@@ -461,6 +505,7 @@ function updateAvailableActions() {
 
 async function enterBootloader() {
   st.mode = 'awaiting-bootloader';
+  st.bootUsb = null; // a new bootloader is on its way: don't name the drive or device of an earlier one
   if (ui) replace(ui.backup);
   paint(t('Entering update mode'), t('Restarting into update mode. This takes a few seconds.'));
   setUpdateStatus(t('Sending reboot to bootloader…'), 10, true);
@@ -533,7 +578,13 @@ const NUDGE_MS = 3500;
 /** awaiting-bootloader, and nothing started on its own: make the next action unmistakable. */
 function showPressUpdate() {
   if (st.mode !== 'awaiting-bootloader') return;
-  paint(t('One more step: press Update'), t('Your controller is now in update mode. Press Update, then choose it in the window your browser opens (its name ends in “Update”, or it shows as “RP2 Boot” or “RP2350 Boot”) and press Connect.'), { icon: 'download' });
+  const dev = bootDeviceName();
+  paint(t('One more step: press Update'), !dev
+    ? t('Your controller is now in update mode. Press Update, then choose it in the window your browser opens (its name ends in “Update”, or it shows as “RP2 Boot” or “RP2350 Boot”) and press Connect.')
+    : dev.sure
+      ? t('Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens and press Connect.', { device: dev.name })
+      : t('Your controller is now in update mode. Press Update, then choose “{device}” in the window your browser opens (on controllers without the HOJA bootloader: “RP2 Boot” or “RP2350 Boot”) and press Connect.', { device: dev.name }),
+  { icon: 'download' });
   setUpdateStatus(t('Waiting for you to press Update'), 30, false);
   actions({ primary: { label: t('Update'), icon: 'download', run: () => flashNext({ allowRequestDevice: true }) }, drive: true });
   ui?.dlg.action('primary')?.classList.add('btn-attention');
@@ -542,7 +593,7 @@ function showPressUpdate() {
 function showBootloaderFlash() {
   st.mode = 'bootloader-flash';
   panels();
-  paint(t('Writing firmware'), t('Don’t unplug the controller. If direct USB flashing is blocked, you’ll get simple steps to pick the RPI-RP2 drive.'));
+  paint(t('Writing firmware'), t('Don’t unplug the controller. If direct USB flashing is blocked, you’ll get simple steps to copy it onto the controller’s drive instead.'));
   setUpdateStatus(t('Bootloader detected'), 40, true);
   // While writing, Update and Restart would interrupt the write: show Update disabled, no Restart.
   actions({ primary: { label: t('Update'), icon: 'download', enabled: false, run: () => {} }, dismiss: false });
@@ -552,20 +603,28 @@ function showUf2DriveStep() {
   st.mode = 'uf2-drive-select';
   st.manualUrl = undefined;
   panels({ tips: true });
-  paint(t('Select the RPI-RP2 drive'), erasing()
+  // The steps name the drive this bootloader shows, known only now that it has appeared
+  ui.tips.querySelector('ol')?.replaceChildren(...driveSteps().map((s) => h('li', s)));
+  const name = bootDrive().name;
+  paint(name ? t('Select the {drive} drive', { drive: name }) : t('Select the controller’s drive'), erasing()
     ? t('The erase tool is copied onto the RPI-RP2 drive. Read the steps, then press the button. A folder dialog will open on top of this window.')
-    : t('The firmware is ready to copy onto the RPI-RP2 drive. Read the steps, then press the button. A folder dialog will open on top of this window.'),
+    : name ? t('The firmware is ready to copy onto the {drive} drive. Read the steps, then press the button. A folder dialog will open on top of this window.', { drive: name })
+      : t('The firmware is ready to copy onto the controller’s drive. Read the steps, then press the button. A folder dialog will open on top of this window.'),
   { icon: erasing() ? 'trash' : 'download', tone: erasing() ? 'red' : 'blue' });
-  setUpdateStatus(t('Ready: pick RPI-RP2 in the next dialog'), 100, false);
-  actions({ primary: { label: t('Select RPI-RP2'), icon: 'upload', run: completeUf2Step }, restart: true });
+  setUpdateStatus(name ? t('Ready: pick {drive} in the next dialog', { drive: name }) : t('Ready: pick the controller’s drive in the next dialog'), 100, false);
+  actions({ primary: { label: name ? t('Select {drive}', { drive: name }) : t('Select the drive'), icon: 'upload', run: completeUf2Step }, restart: true });
 }
 
 function showManualUf2Step(uf2Url) {
   st.mode = 'uf2-drive-select';
   st.manualUrl = uf2Url;
   panels({ folderHint: !!navigator.brave && !supportsDirectoryPicker() });
-  paint(t('Copy the UF2 to RPI-RP2'), t('Download the UF2 file, then copy it onto the drive named RPI-RP2 (or RP2350). The controller restarts when the copy finishes.'), { icon: 'download' });
-  setUpdateStatus(t('Download the UF2, then copy it to RPI-RP2'), 100, false);
+  const name = bootDrive().name;
+  paint(name ? t('Copy the UF2 to {drive}', { drive: name }) : t('Copy the UF2 to the controller’s drive'),
+    name ? t('Download the UF2 file, then copy it onto the drive named {drive}. The controller restarts when the copy finishes.', { drive: name })
+      : t('Download the UF2 file, then copy it onto the controller’s drive (named after the controller, or RPI-RP2 / RP2350). The controller restarts when the copy finishes.'),
+    { icon: 'download' });
+  setUpdateStatus(name ? t('Download the UF2, then copy it to {drive}', { drive: name }) : t('Download the UF2, then copy it to the controller’s drive'), 100, false);
   actions({ primary: { label: t('Download UF2'), icon: 'download', run: completeUf2Step } });
 }
 
@@ -718,7 +777,7 @@ function applyFlashResult(result) {
     if (result.reason === 'manual-download') {
       st.stagedImage = pico_has_cached_uf2() ? (erasing() ? 'nuke' : 'firmware') : null;
       showManualUf2Step(result.uf2Url);
-      if (result.error) setUpdateStatus(t('Automatic download blocked ({reason}). Download the UF2, then copy it to RPI-RP2', { reason: result.error }), 100, false);
+      if (result.error) setUpdateStatus(t('Automatic download blocked ({reason}). Download the UF2, then copy it to the controller’s drive', { reason: result.error }), 100, false);
       return true;
     }
     paint(t('Permission needed'), t('Press Update and allow access to the Pico bootloader in the browser popup.'));
@@ -863,6 +922,7 @@ export function setUpdaterQuiet(on) { quiet = !!on; }
 /** Remember which chip the bootloader is (RP2350 enumerates as PID 0x000f, RP2040 as 0x0003). */
 function noteBootloader(usb) {
   if (!usb) return;
+  st.bootUsb = usb;
   const chip = usb.productId === 0x000f ? 'rp2350' : 'rp2040';
   if (chip === st.bootloaderChip) return;
   st.bootloaderChip = chip;
@@ -1031,6 +1091,8 @@ function onDongleConnect() {
 
 export function initFirmware() {
   session.on('state', ({ state }) => {
+    // The HOJA bootloader's drive is named after the controller: remember the name it last had.
+    if (state === 'connected' && session.info?.name) st.lastName = session.info.name;
     if (state === 'connected') onControllerConnect();
     if (state === 'dongle') onDongleConnect();
     if (state === 'disconnected') onControllerDisconnect();
