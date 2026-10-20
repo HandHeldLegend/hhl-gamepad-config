@@ -10,7 +10,8 @@
  */
 import { h, replace, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
-import { card, button, asyncButton, callout, kv, badge } from '../../ui/controls.js';
+import { card, button, asyncButton, callout, kv, badge, segmented } from '../../ui/controls.js';
+import { LAYOUT } from '../../device/struct.js';
 import { confirmDialog, toast } from '../../ui/overlay.js';
 import { connectController, connectWithUsbChooser } from '../../app/shell.js';
 import { isIOS } from '../../app/platform.js';
@@ -176,10 +177,68 @@ function bootloaderRows(session) {
   return [safe, rom];
 }
 
+/**
+ * Reset settings without reinstalling the firmware, on the firmware there is today: the app writes
+ * each settings block with its version byte blanked and saves. At the next boot the firmware sees the
+ * mismatch and rebuilds that block's defaults (settings.c and each module's init; the trigger block
+ * has no version byte and stays). Two scopes:
+ *   settings     every block except gamepad: settings, the active profile's parts and calibration;
+ *                default mode, Switch colors, the Bluetooth address and pairings stay
+ *   everything   gamepad too, which gets a new random Bluetooth address: every host pairs again
+ * Profiles saved apart from the live settings (the other slots) keep their stored copies.
+ */
+function resetSettingsRow(session) {
+  let scope = 'settings';
+  const run = async () => {
+    const everything = scope === 'everything';
+    const ok = await confirmDialog({
+      title: everything ? t('Reset everything?') : t('Reset settings and calibration?'),
+      message: everything
+        ? t('All settings and calibration go back to their defaults when the controller restarts, and it gets a new Bluetooth address: pair it with your Switch, PC and other devices again. The firmware stays as it is. Back up first if you might want them again.')
+        : t('All settings and calibration go back to their defaults when the controller restarts. The default mode, Switch colors and Bluetooth pairings stay. The firmware stays as it is. Back up first if you might want them again.'),
+      confirmLabel: t('Reset'), danger: true,
+    });
+    if (!ok) return false;
+    try {
+      await resetSettingsBlocks(session, { everything });
+      toast(t('Done. Unplug the controller and plug it back in (or turn it off and on) to start with the defaults.'), { tone: 'green', icon: 'check', timeout: 9000 });
+      return true;
+    } catch (err) {
+      console.error('[firmware] reset settings failed', err);
+      toast(t('Couldn’t reset the settings. Try again.'), { tone: 'red' });
+      return false;
+    }
+  };
+  return h('div.fw-recovery-row',
+    h('div', h('div.field-label', t('Reset settings')),
+      h('div.field-desc', t('Back to the defaults without reinstalling the firmware. It takes effect when the controller restarts.')),
+      segmented({
+        options: [{ value: 'settings', label: t('Settings and calibration') }, { value: 'everything', label: t('Everything, including pairings') }],
+        value: scope, tone: 'red', ariaLabel: t('What to reset'), onChange: (v) => { scope = v; },
+      })),
+    asyncButton({ label: t('Reset…'), icon: 'trash', variant: 'tonal', disabled: !session.connected, run }));
+}
+
+/** Blank every settings block's version byte (gamepad only with `everything`), write them and save. */
+async function resetSettingsBlocks(session, { everything = false } = {}) {
+  const keys = [];
+  for (const b of LAYOUT.blocks.config) {
+    if (b.key === 'gamepad' && !everything) continue;
+    const block = session.config[b.key];
+    const field = LAYOUT.structs[b.struct]?.fields.find((f) => /_config_version$/.test(f.name));
+    if (!block || !field) continue; // not served by this firmware, or no version byte (trigger)
+    block[field.name] = 0;
+    keys.push(b.key);
+  }
+  await Promise.all(keys.map((key) => session.commit(key, { immediate: true })));
+  if (!(await session.save())) throw new Error('save not confirmed');
+}
+
 function recoveryCard(session) {
   const body = h('div.stack');
   const render = () => body.replaceChildren(
     ...bootloaderRows(session),
+    resetSettingsRow(session),
     h('div.fw-recovery-row',
       h('div', h('div.field-label', t('Stuck in the bootloader?')),
         h('div.field-desc', t('After an interrupted update, restart it, or reinstall from the installer. If the board misbehaves even after reinstalling, reinstall again and choose “{fresh}” to wipe all settings, calibration and pairings first.', { fresh: t('Start fresh: erase everything first') }))),
