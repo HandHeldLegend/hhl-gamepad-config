@@ -40,7 +40,7 @@ import { device, isListedUsb, requestUsbController } from '../device/hoja-device
 import { session } from '../device/session.js';
 import { decodeText } from '../device/struct.js';
 import { isDemo } from '../device/mock.js';
-import { BleLink, requestBluetoothController, rememberedBluetoothControllers } from '../device/ble-link.js';
+import { BleLink, requestBluetoothController, rememberedBluetoothControllers, forgetBluetoothController } from '../device/ble-link.js';
 import { t, N_ } from '../i18n/index.js';
 import { isIOS, openInBluefy, BLUEFY_STORE_URL } from './platform.js';
 import { isLinux } from './linux.js';
@@ -276,12 +276,58 @@ export function openConnectModule({ cable = false } = {}) {
 
     const seenNow = (e) => e.seenAt > 0 && performance.now() - e.seenAt < SEEN_MS;
 
-    function item({ kind, name, status, live, onClick }) {
-      return h('button.cm-item', { type: 'button', role: 'listitem', class: live ? 'live' : null, onclick: onClick },
-        h('span.cm-kind', icon(kind)),
-        h('span.cm-text', h('span.cm-name', name),
-          h('span.cm-sub', h('span.cm-tag', kind === 'usb' ? 'USB' : t('Bluetooth')), ' · ', status)),
-        icon('chevron-right'));
+    function item({ kind, name, status, live, onClick, onRemove }) {
+      return h('div.cm-row', { role: 'listitem' },
+        h('button.cm-item', { type: 'button', class: live ? 'live' : null, onclick: onClick },
+          h('span.cm-kind', icon(kind)),
+          h('span.cm-text', h('span.cm-name', name),
+            h('span.cm-sub', h('span.cm-tag', kind === 'usb' ? 'USB' : t('Bluetooth')), ' · ', status)),
+          icon('chevron-right')),
+        onRemove && removeButton(name, onRemove));
+    }
+
+    /**
+     * Remove: a small trash button that asks once ("Remove?", for a few seconds), then forgets the
+     * controller. It grows to the left, so it stays under the pointer for the second click.
+     */
+    function removeButton(name, onRemove) {
+      let armed = 0;
+      const label = h('span.cm-remove-label', t('Remove?'));
+      const btn = h('button.cm-remove', {
+        type: 'button', title: t('Remove'), 'aria-label': t('Remove {name}', { name }),
+        onclick: (e) => {
+          e.stopPropagation();
+          if (!armed) {
+            btn.classList.add('armed');
+            armed = setTimeout(() => { armed = 0; btn.classList.remove('armed'); }, 3500);
+            return;
+          }
+          clearTimeout(armed);
+          onRemove(btn.closest('.cm-row'));
+        },
+      }, label, icon('trash'));
+      return btn;
+    }
+
+    /** Forget a remembered Bluetooth controller: the browser's permission, its token, its name here. */
+    async function removeRemembered(entry, rowEl) {
+      cancelAttempt();
+      entry.bt.removeEventListener('advertisementreceived', onAdvertisement);
+      remembered = remembered.filter((e) => e !== entry);
+      rowCache.delete(entry.bt);
+      forgetKnown(`ble:${entry.bt.id}`);
+      delete known[`ble:${entry.bt.id}`];
+      // Slide the row away, then redraw the list without it
+      const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (rowEl && !still) {
+        const height = rowEl.offsetHeight;
+        await rowEl.animate([
+          { height: `${height}px`, opacity: 1, transform: 'none' },
+          { height: '0px', opacity: 0, transform: 'translateX(24px)', marginBottom: 'calc(-1 * var(--space-2))' },
+        ], { duration: 240, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'forwards' }).finished.catch(() => {});
+      }
+      await forgetBluetoothController(entry.bt);
+      renderList();
     }
 
     // Rows by device, kept while they look the same: the list redraws every few seconds while it
@@ -312,7 +358,9 @@ export function openConnectModule({ cable = false } = {}) {
             const buttons = info?.start && info?.select ? chordGlyphs(info.start, info.select, 18) : h('strong', chordText(null));
             return item({ kind: 'bluetooth', name: btTitle(e.bt), live: seen,
               status: seen ? t('Visible now') : fillNodes(t('Press {buttons} on it to connect'), { buttons }),
-              onClick: () => { cancelAttempt(); reach(e.bt, { manual: true }); } });
+              onClick: () => { cancelAttempt(); reach(e.bt, { manual: true }); },
+              // Not the controller connected right now (forgetting it would drop the connection)
+              onRemove: device.transportId === `ble:${e.bt.id}` ? null : (rowEl) => removeRemembered(e, rowEl) });
           });
         }),
       ];
