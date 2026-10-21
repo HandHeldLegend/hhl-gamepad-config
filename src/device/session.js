@@ -408,6 +408,11 @@ class Session extends EventTarget {
     if (index != null) await device.requestStatic(index);
   }
 
+  /** The config blocks' fingerprints (CRC32 by block index), or null from firmware without them. */
+  configFingerprints() {
+    return device.configFingerprints();
+  }
+
   /** Re-read a config block from the controller (e.g. after a calibration command). */
   async refresh(block) {
     await device.requestBlock(block);

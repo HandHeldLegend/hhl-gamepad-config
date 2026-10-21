@@ -267,3 +267,53 @@
 }
 @keyframes td-cal { 0%, 10% { transform: translateX(30px); } 45%, 70% { transform: translateX(220px); } 100% { transform: translateX(30px); } }
 @keyframes td-chk { 0%, 8% { transform: translateX(30px); } 35%, 50% { transform: translateX(220px); } 70%, 82% { transform: translateX(300px); } 100% { transform: translateX(30px); } }
+
+/* Triggers card (triggers-card.js): a tile per trigger, Auto / Analog / Mechanical, and the click check */
+.inp-trigs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-3); }
+.inp-trig-row { display: grid; justify-items: center; align-content: start; gap: var(--space-3); padding: var(--space-4) var(--space-3);
+  border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-sunken); text-align: center; }
+.inp-trig-name { font-size: var(--text-md); }
+.inp-trig-check { display: grid; justify-items: center; gap: var(--space-2); }
+.inp-trig-check[hidden] { display: none; }
+/* The ring: travel sweeps around inside it, the click dots sit on it */
+.inp-trig-ring { --v: 0; position: relative; width: 104px; height: 104px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface); box-shadow: inset 0 0 0 2px var(--border); transition: transform var(--dur-fast) var(--ease-out); }
+.inp-trig-ring.pressed { transform: scale(0.94); }
+.inp-trig-sweep { position: absolute; inset: 8px; border-radius: 50%;
+  background: conic-gradient(var(--accent-soft) calc(var(--v) * 360deg), transparent 0); transition: background var(--dur-fast); }
+.inp-trig-glyph { position: relative; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%;
+  background: var(--surface-2, var(--surface)); box-shadow: 0 2px 8px -4px rgba(0, 0, 0, 0.4); }
+.inp-trig-dot { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; margin: -7px; border-radius: 50%;
+  background: var(--surface-sunken); border: 2px solid var(--text-faint);
+  transform: rotate(calc(var(--i) * 72deg - 90deg)) translateX(52px) scale(0.85);
+  transition: background-color var(--dur-med), border-color var(--dur-med), transform var(--dur-med) var(--ease-spring), box-shadow var(--dur-med); }
+.inp-trig-dot.on { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px var(--accent);
+  transform: rotate(calc(var(--i) * 72deg - 90deg)) translateX(52px) scale(1.1); }
+.inp-trig-check[data-phase="checking"] .inp-trig-dot.on { animation: inp-trig-wait 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 120ms); }
+.inp-trig-check[data-phase="done"] .inp-trig-dot.on { background: var(--green); border-color: var(--green); box-shadow: 0 0 10px var(--green); }
+/* Done: the glyph in the middle turns into a green check (the dots stay clear) */
+.inp-trig-badge { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 56px; height: 56px; margin: -28px;
+  border-radius: 50%; background: var(--green); color: #fff; box-shadow: 0 0 16px -2px var(--green); opacity: 0; transform: scale(0.4) rotate(-30deg);
+  transition: opacity var(--dur-med), transform var(--dur-slow) var(--ease-spring); }
+.inp-trig-badge .icon { width: 28px; height: 28px; }
+.inp-trig-check[data-phase="done"] .inp-trig-badge { opacity: 1; transform: none; }
+@keyframes inp-trig-wait { 50% { opacity: 0.45; } }
+.inp-trig-status { display: flex; align-items: center; justify-content: center; gap: var(--space-2); max-width: 28ch;
+  min-height: 2.6em; color: var(--text-muted); font-size: var(--text-sm); }
+.inp-trig-check[data-phase="done"] .inp-trig-status { color: var(--green-ink, var(--green)); font-weight: 600; }
+.inp-trig-status-icon:empty { display: none; }
+.inp-trig-status-icon .icon { width: 16px; height: 16px; }
+.inp-trig-status-icon .spinner { width: 14px; height: 14px; }
+.inp-trig-hint:empty { display: none; }
+.inp-trig-mismatch { display: grid; justify-items: center; gap: var(--space-2); padding: 8px 12px; border-radius: var(--radius-md);
+  background: var(--yellow-soft); color: var(--yellow-ink); animation: rise-in var(--dur-med) var(--ease-out); }
+/* Checked: the type, and Check again */
+.inp-trig-summary { display: grid; justify-items: center; gap: var(--space-1); }
+.inp-trig-summary[hidden] { display: none; }
+.inp-trig-type { padding: 4px 14px; border-radius: var(--radius-pill); background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; }
+.inp-trig-type.is-mech { background: var(--blue-soft); color: var(--blue-ink); }
+/* Every check done: the result, a note, and Done */
+.inp-trig-finish { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md); background: var(--green-soft); animation: rise-in var(--dur-slow) var(--ease-out); }
+.inp-trig-finish[hidden] { display: none; }
+.inp-trig-finish-text { flex: 1; min-width: 220px; display: grid; gap: 2px; }

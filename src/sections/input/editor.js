@@ -178,16 +178,19 @@ export function createEditor(o) {
     const showThreshold = usesThreshold(input.type, out?.type, m);
     const showStatic = usesStaticOutput(input.type, out?.type, m);
     const analog = isAnalogInput(input.type);
+    // A mechanical trigger's unmapped click presses its analog input's mapping fully (view.js `inherits`)
+    const inh = !out && input.inherits != null ? outputOf(modeId, readProfile(session, modeId)[input.inherits]?.output_code) : null;
 
     // Header: input → output (the output is the button that opens the picker).
     const outBtn = h('button.inp-out-btn', {
       type: 'button', 'aria-expanded': String(pickerOpen), onclick: () => { pickerOpen = !pickerOpen; render(); },
     },
-    glyph(out ? out.glyph : 'Off', { shape: 'square', size: 44, off: !out }),
+    glyph(out ? out.glyph : inh ? inh.glyph : 'Off', { shape: 'square', size: 44, off: !out && !inh }),
     h('span.inp-out-text',
-      h('span.inp-out-label', out ? outputName(out.label) : t('Nothing')),
-      h('span.inp-out-kind', out ? t(out.hint || OUTPUT_TYPE_LABEL[out.type]) : t('Input disabled in this mode'))),
-    h('span.inp-out-change', t('Change'), icon('chevron-down')));
+      h('span.inp-out-label', out ? outputName(out.label) : inh ? outputName(inh.label) : t('Nothing')),
+      h('span.inp-out-kind', out ? t(out.hint || OUTPUT_TYPE_LABEL[out.type])
+        : inh ? t('Uses the trigger’s mapping: {output}, full press', { output: outputName(inh.label) }) : t('Input disabled in this mode'))),
+    h('span.inp-out-change', inh ? t('Map the click itself') : t('Change'), icon('chevron-down')));
 
     const head = h('div.inp-ed-head',
       h('div.inp-ed-in', glyph(input.name, { size: 44 }),

@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: github HandHeldLegend/HOJA-LIB-RP2040@ns2-gc)
-// Validated 6 size assertion(s) from the firmware headers.
+// Regenerate with: node tools/sync-firmware.mjs   (source: github HandHeldLegend/HOJA-LIB-RP2040@master)
+// Validated 7 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "github",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "ns2-gc"
+  "ref": "master"
  },
  "blocks": {
   "config": [
@@ -698,10 +698,23 @@ export default {
      "count": 36
     },
     {
-     "name": "reserved",
+     "name": "trigger_hw_version",
      "offset": 146,
      "type": "u8",
-     "count": 110
+     "doc": "TRIGGER_HW_VERSION once trigger_hw is set (older firmware left 0xFF)"
+    },
+    {
+     "name": "trigger_hw",
+     "offset": 147,
+     "type": "u8",
+     "count": 2,
+     "doc": "Left, right"
+    },
+    {
+     "name": "reserved",
+     "offset": 149,
+     "type": "u8",
+     "count": 107
     }
    ]
   },
@@ -910,12 +923,22 @@ export default {
      }
     },
     {
-     "name": "reserved_bits",
+     "name": "mechanical_triggers_supported",
      "type": "u8",
      "offset": 708,
      "bits": {
       "shift": 2,
-      "width": 6
+      "width": 1
+     },
+     "doc": "Triggers can be fitted as mechanical (hoverConfig_s.trigger_hw)"
+    },
+    {
+     "name": "reserved_bits",
+     "type": "u8",
+     "offset": 708,
+     "bits": {
+      "shift": 3,
+      "width": 5
      }
     },
     {
@@ -2860,6 +2883,12 @@ export default {
   "ANALOG_EXP_SENSITIVITY_MAX": 300,
   "ANALOG_EXP_SENSITIVITY_DEFAULT": 100,
   "RGB_BRIGHTNESS_MAX": 4096,
+  "TRIGGER_HW_VERSION": 1,
+  "TRIGGER_HW_AUTO": 0,
+  "TRIGGER_HW_ANALOG": 1,
+  "TRIGGER_HW_MECHANICAL": 2,
+  "TRIGGER_HW_CHOICE_MASK": 3,
+  "TRIGGER_HW_DETECTED_MECHANICAL": 128,
   "AUTO_ORDER_VERSION": 1,
   "AUTO_HOST_DONGLE": 0,
   "AUTO_HOST_SWITCH": 1,

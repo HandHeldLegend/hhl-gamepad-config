@@ -9,6 +9,7 @@
 import { h } from '../../ui/dom.js';
 import { t } from '../../i18n/index.js';
 import { INPUT_CODES, INPUT_TYPE } from './mapping.js';
+import { mechanicalSides } from '../../device/triggers.js';
 
 const codeOf = (key) => INPUT_CODES.find((c) => c.key === key)?.code;
 
@@ -18,9 +19,11 @@ const codeOf = (key) => INPUT_CODES.find((c) => c.key === key)?.code;
  */
 export function dualStageTriggers(session) {
   const infos = session.static.input?.input_info || [];
+  const mechanical = new Set(mechanicalSides(session).map((s) => s.side)); // a click only (device/triggers.js)
   return [['LT', 'left'], ['RT', 'right']]
     .map(([key, side]) => ({ side, analog: codeOf(`${key}_ANALOG`), click: codeOf(key) }))
-    .filter((p) => infos[p.analog]?.input_type === INPUT_TYPE.HOVER && infos[p.click]?.input_type === INPUT_TYPE.DIGITAL);
+    .filter((p) => !mechanical.has(p.side)
+      && infos[p.analog]?.input_type === INPUT_TYPE.HOVER && infos[p.click]?.input_type === INPUT_TYPE.DIGITAL);
 }
 
 /**

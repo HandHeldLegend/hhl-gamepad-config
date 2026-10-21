@@ -544,6 +544,26 @@ export class HojaDevice extends EventTarget {
     return { fp, entry, key: entry?.key ?? null, reused: 0, fresh: [] };
   }
 
+  /**
+   * The config blocks' fingerprints now (CRC32 per block, by block index), or null from firmware
+   * without them. One request and one reply: cheap enough to poll, so a block is read again only
+   * when its CRC changes (the mechanical trigger finding, device/triggers.js).
+   */
+  configFingerprints() {
+    return this.#exclusive(async () => {
+      this.#fingerprints = { config: null, static: null };
+      try {
+        await this.#out([REPORT.FINGERPRINTS]);
+        await waitFor(() => this.#fingerprints.config, 500);
+        return this.#fingerprints.config;
+      } catch {
+        return null;
+      } finally {
+        this.#fingerprints = null; // the static reply that follows is ignored
+      }
+    });
+  }
+
   /** FIRST_ANSWER_WAIT_*_MS for the transport in use. */
   #firstAnswerWait() {
     return this.#ble ? FIRST_ANSWER_WAIT_BLE_MS : FIRST_ANSWER_WAIT_USB_MS;

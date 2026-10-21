@@ -43,6 +43,8 @@ import { glyph, meter, outputName, modeName, rich } from './parts.js';
 import { createEditor } from './editor.js';
 import { createPopover } from './popover.js';
 import { createCalibration, renderCalibrationTab } from './calibration.js';
+import { triggersCard } from './triggers-card.js';
+import { triggersSupported, mechanicalSides, mechanicalKey, triggerState, needsTriggerCheck, TRIGGER_SIDES } from '../../device/triggers.js';
 
 loadStyles(new URL('./input.css', import.meta.url));
 
@@ -54,11 +56,43 @@ const GROUPS = [
     tip: N_('Each stick direction can be sent somewhere else too, for example to the d-pad or a button.') },
 ];
 
+/**
+ * The page, rebuilt when a trigger starts or stops counting as mechanical (its analog input comes and
+ * goes): the mode, tab and open input carry over through the params kept here.
+ */
 export function mount(root, ctx) {
+  const params = { ...ctx.params };
+  const pageCtx = { ...ctx, params, setParams: (p) => { Object.assign(params, p); ctx.setParams(p); } };
+  let key = mechanicalKey(ctx.session);
+  let page = null;
+  const build = () => {
+    page = mountPage(root, pageCtx, { onTriggers: () => {
+      const k = mechanicalKey(ctx.session);
+      if (k === key) return;
+      key = k;
+      page.destroy();
+      root.replaceChildren();
+      build();
+    } });
+  };
+  build();
+  return {
+    update(p) { Object.assign(params, p); page.update(p); },
+    destroy() { page.destroy(); },
+  };
+}
+
+function mountPage(root, ctx, { onTriggers }) {
   const { session, device } = ctx;
 
   // ---- What this build has ---------------------------------------------------------------------
   const infos = session.static.input.input_info;
+  // A mechanical trigger (device/triggers.js) has no analog input: it's left out, and its click
+  // stands alone. Unmapped, the click presses the analog input's mapping fully (`inherits`).
+  const mech = mechanicalSides(session);
+  const noAnalog = new Set(mech.map((s) => s.analog));
+  const clickOf = new Map(mech.map((s) => [s.click, s.analog]));
+  const codeOf = (key) => INPUT_CODES.find((c) => c.key === key)?.code;
   /**
    * Physical inputs present on this build. `name` is the build's own name (also the glyph name and a
    * deep-link value); `label` is the display text (descriptive names like 'D Up' translated).
@@ -67,8 +101,10 @@ export function mount(root, ctx) {
   const inputs = INPUT_CODES
     .map(({ code, key }) => ({ code, key, type: infos[code]?.input_type ?? INPUT_TYPE.UNUSED,
       name: decodeText(infos[code]?.input_name ?? new Uint8Array()) || key.replace(/_/g, ' ') }))
-    .filter((i) => i.type !== INPUT_TYPE.UNUSED)
-    .map((i) => ({ ...i, label: outputName(i.name) }));
+    .filter((i) => i.type !== INPUT_TYPE.UNUSED && !noAnalog.has(i.key))
+    .map((i) => (clickOf.has(i.key)
+      ? { ...i, label: t('{name} (click)', { name: outputName(i.name) }), inherits: codeOf(clickOf.get(i.key)) }
+      : { ...i, label: outputName(i.name) }));
   const hoverInputs = inputs.filter((i) => i.type === INPUT_TYPE.HOVER);
 
   /** Resolve a deep-link value (code key, build name or number) to an input. */
@@ -267,25 +303,30 @@ export function mount(root, ctx) {
         h('span.inp-tile-map', inG, icon('chevron-right'), outG),
         foot, m);
       el.update = () => {
-        const s = readProfile(session, state.mode)[input.code];
+        const profile = readProfile(session, state.mode);
+        const s = profile[input.code];
         const out = outputOf(state.mode, s.output_code);
         const modeLabel = modeName(getMode(state.mode));
-        outG.set(out ? out.glyph : 'Off', !out);
-        el.classList.toggle('is-off', !out);
+        // A mechanical trigger's unmapped click presses its analog input's mapping fully
+        const inh = !out && input.inherits != null ? outputOf(state.mode, profile[input.inherits]?.output_code) : null;
+        outG.set(out ? out.glyph : inh ? inh.glyph : 'Off', !out && !inh);
+        el.classList.toggle('is-off', !out && !inh);
         // No "remapped" highlight: each board can override its default maps (hoja config defaults_<mode>),
         // so the app can't know the true default. The glyph pair + tooltip state the mapping exactly.
         // Analog inputs: show how they behave at a glance.
         const md = isAnalogInput(input.type) ? effectiveMode(input.type, out?.type, s.output_mode) : null;
         const pct = fmt.percent(Math.round((s.threshold_delta / ANALOG_FULL) * 100) / 100);
         foot.replaceChildren(
-          !out ? h('span.inp-tile-off', t('Disabled'))
+          inh ? h('span.inp-tile-pill', t('Uses {output}', { output: outputName(inh.label) }))
+          : !out ? h('span.inp-tile-off', t('Disabled'))
             : md === OUTPUT_MODE.THRESHOLD ? h('span.inp-tile-pill', t('Threshold {value}', { value: pct }))
               : md === OUTPUT_MODE.RAPID ? h('span.inp-tile-pill', t('Rapid'))
                 : md === OUTPUT_MODE.PASSTHROUGH ? h('span.inp-tile-pill', t('Analog'))
                   : out.group === 'switch2' ? h('span.inp-tile-pill', t('Switch 2 only')) : '');
         const sentence = out
           ? t('{input} sends {output} in {mode} mode.', { input: input.label, output: outputName(out.label), mode: modeLabel })
-          : t('{input} is off in {mode} mode.', { input: input.label, mode: modeLabel });
+          : inh ? t('{input} uses the trigger’s mapping in {mode} mode: {output}, full press.', { input: input.label, output: outputName(inh.label), mode: modeLabel })
+            : t('{input} is off in {mode} mode.', { input: input.label, mode: modeLabel });
         const detail = md === OUTPUT_MODE.THRESHOLD ? t('Threshold mode, activation point {value}.', { value: pct })
           : md === OUTPUT_MODE.RAPID ? t('Rapid trigger mode.') : md === OUTPUT_MODE.PASSTHROUGH ? t('Full analog mode.')
             : out?.group === 'switch2' ? t('Switch 2 only') : '';
@@ -349,7 +390,12 @@ export function mount(root, ctx) {
       refreshTiles: (code) => { if (code == null) for (const t of tiles.values()) t.update(); else tiles.get(code)?.update(); },
     };
     setModeUI();
-    panel.append(h('div.stack', attention, modeCard, inputsCard, pop.el));
+    // Mechanical triggers not checked yet on this controller: ask, like the calibration reminder
+    const trigAsk = needsTriggerCheck(session)
+      ? callout({ tone: 'yellow', title: t('Check your triggers.'), text: `${t('Click each trigger a few times so the controller knows whether they’re analog or mechanical.')} ` },
+        button({ label: t('Check now'), size: 'sm', variant: 'tonal', icon: 'trigger', onClick: () => { tabs?.select('triggers'); ctx.setParams({ tab: 'triggers' }); } }))
+      : null;
+    panel.append(h('div.stack', attention, trigAsk, modeCard, inputsCard, pop.el));
 
     // Re-open the editor if one was selected (deep link on load, or after switching tabs).
     if (state.selected != null) openEditor(state.selected, { updateUrl: false });
@@ -376,20 +422,30 @@ export function mount(root, ctx) {
 
   // ---- Page ---------------------------------------------------------------------------------------
 
+  // Mechanical triggers: the Triggers card, in its own tab (the controller keeps its finding, so
+  // once checked it needs no room on the main view)
+  const hasTriggers = triggersSupported(session);
+  const renderTriggers = (panel) => {
+    const c = triggersCard(session, { device, calib, onChange: onTriggers, onChecked: paintTrigBadge });
+    panel.append(c.el);
+    return c.destroy;
+  };
+
   const showCalibration = hoverInputs.length > 0 || !session.config.hover.hover_calibration_set;
   const initialInput = findInput(ctx.params.input);
   let tabs = null;
   if (initialInput) state.selected = initialInput.code;
 
-  if (showCalibration) {
+  if (showCalibration || hasTriggers) {
     tabs = tabView({
       tone: 'lavender',
       value: initialInput ? 'remap' : ctx.params.tab,
       tabs: [
         { id: 'remap', label: t('Remap'), icon: 'input', render: renderRemap },
-        { id: 'calibrate', label: t('Analog calibration'), icon: 'calibrate',
+        showCalibration && { id: 'calibrate', label: t('Analog calibration'), icon: 'calibrate',
           render: (panel) => renderCalibrationTab(panel, { session, calib, hoverInputs, live }) },
-      ],
+        hasTriggers && { id: 'triggers', label: t('Triggers'), icon: 'trigger', render: renderTriggers },
+      ].filter(Boolean),
       onChange: (id) => ctx.setParams({ tab: id }),
     });
     root.append(tabs);
@@ -406,11 +462,23 @@ export function mount(root, ctx) {
   tabBadge.title = t('Needs calibration');
   const paintTabBadge = () => {
     const need = hoverInputs.length > 0 && !session.config.hover.hover_calibration_set && calib.active == null;
-    if (need) tabs.querySelector?.('[role="tab"]:last-child')?.append(tabBadge);
+    if (need) tabs.querySelectorAll?.('[role="tab"]')[1]?.append(tabBadge);
     else tabBadge.remove();
   };
+  const trigBadge = badge('!', 'yellow');
+  trigBadge.classList.add('inp-tab-badge');
+  paintTrigBadge();
   const offTabBadge = showCalibration ? calib.on(paintTabBadge) : () => {};
   if (showCalibration) paintTabBadge();
+  // Flag the Triggers tab until they were checked, or when a forced choice no longer matches the trigger
+  function paintTrigBadge() {
+    if (!hasTriggers) return;
+    const mismatch = TRIGGER_SIDES.some((x) => triggerState(session, x.index).mismatch);
+    const need = needsTriggerCheck(session);
+    trigBadge.title = mismatch ? t('This trigger’s setting doesn’t match the trigger fitted') : t('Check your triggers.');
+    if (mismatch || need) tabs.querySelector?.('[role="tab"]:last-child')?.append(trigBadge);
+    else trigBadge.remove();
+  }
 
   return {
     update(params) {
