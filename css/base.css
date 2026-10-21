@@ -10,6 +10,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    `hidden` on html only (it goes to the viewport, so body doesn't become a scroll container either).
    Scrollers inside the app (tab strips, wide tables) keep their own overflow-x: auto. */
 html { overflow-x: hidden; }
+/* The page's scrollbar keeps its room even when a page is too short to scroll, so switching between a
+   long view and a short one (Input's Remap and Triggers tabs) never widens the page and slides what was
+   just clicked out from under the pointer. scrollbar-gutter alone isn't enough here: Chromium doesn't
+   reserve the root's gutter while the page can't scroll, so the track always shows (overflow-x then
+   computes to hidden on html, as the older-Safari fallback already had; body keeps clip). */
+html { overflow-y: scroll; scrollbar-gutter: stable; }
 @supports (overflow-x: clip) { html, body { overflow-x: clip; } }
 html, body { overscroll-behavior-x: none; }
 
