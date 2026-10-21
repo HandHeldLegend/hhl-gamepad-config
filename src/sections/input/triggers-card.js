@@ -22,8 +22,9 @@ import { TRIGGER_SIDES, TRIGGER_CHOICE, triggerState, setTriggerChoice, mechanic
 
 /** Clicks the controller needs to call a trigger mechanical. */
 const CLICKS = 5;
-/** After the last click, how long to wait for the controller's finding before showing the result anyway. */
-const SETTLE_MS = 2500;
+/** After the 5th click, when to read the controller's finding (it judges the click as it lands and
+ *  saves a change straight away). */
+const READ_AFTER_MS = 350;
 
 const codeOf = (key) => INPUT_CODES.find((c) => c.key === key)?.code;
 
@@ -92,7 +93,7 @@ export function triggersCard(session, { device, calib, onChange }) {
   function paintCheck(r, st) {
     r.dots.forEach((d, i) => d.classList.toggle('on', i < Math.min(r.clicks, CLICKS)));
     r.check.dataset.phase = r.phase;
-    const found = st.detected ? t('Mechanical (found from use)') : t('Analog');
+    const found = st.detected ? t('Mechanical') : t('Analog');
     const [ic, text] = r.phase === 'counting' ? [null, t('{n} of {total} clicks', { n: Math.min(r.clicks, CLICKS), total: CLICKS })]
       : r.phase === 'checking' ? ['spinner', t('Checking…')]
         : r.phase === 'done' ? [null, t('Found: {result}', { result: found })] // the ring shows the check
@@ -114,8 +115,8 @@ export function triggersCard(session, { device, calib, onChange }) {
         r.clicks++;
         r.phase = r.clicks >= CLICKS ? 'checking' : 'counting';
         clearTimeout(r.settle);
-        // The finding arrives through watchTriggers; show the result even if it didn't change
-        if (r.phase === 'checking') r.settle = setTimeout(() => { if (r.phase === 'checking') { r.phase = 'done'; paint(); } }, SETTLE_MS);
+        // Read the finding right away instead of waiting for the next fingerprint round
+        if (r.phase === 'checking') r.settle = setTimeout(() => readFinding(r), READ_AFTER_MS);
         paint();
       }
       r.down = !!c?.pressed;
@@ -138,6 +139,29 @@ export function triggersCard(session, { device, calib, onChange }) {
 
   // Read the finding again while the owner clicks (skipped while something else uses the hover block)
   let lastDetected = rows.map((r) => triggerState(session, r.s.index).detected);
+
+  /** The 5th click landed: read the hover block now and show what the controller found. */
+  async function readFinding(r, attempt = 0) {
+    if (r.phase !== 'checking') return;
+    if (busy) { r.settle = setTimeout(() => readFinding(r, attempt), 100); return; }
+    busy = true;
+    try {
+      await session.refresh('hover');
+    } catch {
+      busy = false;
+      if (attempt < 3) r.settle = setTimeout(() => readFinding(r, attempt + 1), 300);
+      return;
+    }
+    busy = false;
+    rows.forEach((x, i) => {
+      const d = triggerState(session, x.s.index).detected;
+      if (d !== lastDetected[i]) justFound.set(x.s.side, Date.now());
+      lastDetected[i] = d;
+    });
+    if (r.phase === 'checking') { r.phase = 'done'; justFound.set(r.s.side, Date.now()); }
+    paint();
+    changed();
+  }
   const stopWatch = watchTriggers(session, () => {
     rows.forEach((r, i) => {
       const d = triggerState(session, r.s.index).detected;
