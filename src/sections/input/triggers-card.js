@@ -33,6 +33,10 @@ const CLICKS = 5;
 /** After the 5th click, when to read the controller's finding (it judges the click as it lands and
  *  saves a change straight away). */
 const READ_AFTER_MS = 350;
+/** A read that hasn't answered by then counts as failed (slow links, a busy controller). */
+const READ_TIMEOUT_MS = 4000;
+/** "Checking…" never lasts longer than this: the result shows from what the app has by then. */
+const CHECK_MAX_MS = 8000;
 
 const codeOf = (key) => INPUT_CODES.find((c) => c.key === key)?.code;
 
@@ -86,6 +90,9 @@ export function triggersCard(session, { device, calib, onChange, onChecked }) {
   });
 
   const finish = h('div.inp-trig-finish');
+  // A check that was waiting for its result when the page rebuilt (a new finding changes the inputs):
+  // read it now, or it would wait forever
+  for (const r of rows) if (r.phase === 'checking') r.timer = setTimeout(() => readFinding(r), 0);
   const save = (r) => kept.set(r.s.side, { phase: r.phase, clicks: r.clicks });
 
   function paint() {
@@ -172,20 +179,33 @@ export function triggersCard(session, { device, calib, onChange, onChecked }) {
     }
   });
 
-  /** The 5th click landed: read the hover block now and show what the controller found. */
+  /**
+   * The 5th click landed: read the hover block now and show what the controller found. It always ends:
+   * a read that fails or doesn't answer is tried again, and after CHECK_MAX_MS the result shows from
+   * what was read last (the background watch keeps it current afterwards).
+   */
   async function readFinding(r, attempt = 0) {
     if (r.phase !== 'checking') return;
-    if (busy) { r.timer = setTimeout(() => readFinding(r, attempt), 100); return; }
-    busy = true;
-    try {
-      await session.refresh('hover');
-    } catch {
-      busy = false;
-      if (attempt < 3) r.timer = setTimeout(() => readFinding(r, attempt + 1), 300);
-      return;
+    r.checkStart ||= Date.now();
+    const late = Date.now() - r.checkStart > CHECK_MAX_MS;
+    if (busy && !late) { r.timer = setTimeout(() => readFinding(r, attempt), 100); return; }
+    let ok = false;
+    if (!late) {
+      busy = true;
+      try {
+        await Promise.race([session.refresh('hover'),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), READ_TIMEOUT_MS))]);
+        ok = true;
+      } catch (err) {
+        console.warn('[input] trigger finding not read', err?.message || err);
+      } finally {
+        busy = false;
+      }
     }
-    busy = false;
+    if (r.phase !== 'checking') return;
+    if (!ok && !late && attempt < 3) { r.timer = setTimeout(() => readFinding(r, attempt + 1), 300); return; }
     r.phase = 'done';
+    r.checkStart = 0;
     save(r);
     paint();
     changed();
