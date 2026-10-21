@@ -296,4 +296,6 @@ export default {
   "{name} (click)": "{name} (clic)",
   "Uses {output}": "Utilise {output}",
   "{input} uses the trigger’s mapping in {mode} mode: {output}, full press.": "{input} utilise l’affectation de la gâchette en mode {mode} : {output}, appui complet.",
+  "Found: {result}": "Détecté : {result}",
+  "Now: {result}. Click the trigger {n} times to check it.": "Actuellement : {result}. Cliquez la gâchette {n} fois pour la vérifier.",
 };

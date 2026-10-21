@@ -418,7 +418,7 @@ function mountPage(root, ctx, { onTriggers }) {
   // ---- Page ---------------------------------------------------------------------------------------
 
   // Mechanical triggers: the Triggers card, above the tabs
-  const trigCard = triggersSupported(session) ? triggersCard(session, { calib, onChange: onTriggers }) : null;
+  const trigCard = triggersSupported(session) ? triggersCard(session, { device, calib, onChange: onTriggers }) : null;
   if (trigCard) root.append(trigCard.el);
 
   const showCalibration = hoverInputs.length > 0 || !session.config.hover.hover_calibration_set;

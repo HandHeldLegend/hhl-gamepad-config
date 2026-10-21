@@ -246,4 +246,6 @@ export default {
   "{name} (click)": "{name}（点击）",
   "Uses {output}": "使用 {output}",
   "{input} uses the trigger’s mapping in {mode} mode: {output}, full press.": "{input} 在 {mode} 模式下使用扳机的映射：{output}，按到底。",
+  "Found: {result}": "检测结果：{result}",
+  "Now: {result}. Click the trigger {n} times to check it.": "当前：{result}。按扳机 {n} 次进行检查。",
 };

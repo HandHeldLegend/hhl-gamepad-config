@@ -296,4 +296,6 @@ export default {
   "{name} (click)": "{name} (clic)",
   "Uses {output}": "Usa {output}",
   "{input} uses the trigger’s mapping in {mode} mode: {output}, full press.": "{input} usa la asignación del gatillo en el modo {mode}: {output}, a fondo.",
+  "Found: {result}": "Detectado: {result}",
+  "Now: {result}. Click the trigger {n} times to check it.": "Ahora: {result}. Haz clic en el gatillo {n} veces para comprobarlo.",
 };

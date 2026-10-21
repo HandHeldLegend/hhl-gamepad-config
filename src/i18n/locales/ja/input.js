@@ -296,4 +296,6 @@ export default {
   "{name} (click)": "{name}（クリック）",
   "Uses {output}": "{output} を使用",
   "{input} uses the trigger’s mapping in {mode} mode: {output}, full press.": "{input} は {mode} モードでトリガーの割り当てを使用します：{output}、フル押し込み。",
+  "Found: {result}": "検出：{result}",
+  "Now: {result}. Click the trigger {n} times to check it.": "現在：{result}。確認するにはトリガーを {n} 回クリックしてください。",
 };
