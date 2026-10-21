@@ -45,4 +45,9 @@ export default {
   "{n} saved backups": "{n} sauvegardes enregistrées",
   "Settings backed up automatically. If the update resets them, restore them from the Firmware page.": "Réglages sauvegardés automatiquement. Si la mise à jour les réinitialise, restaurez-les depuis la page Firmware.",
   "Download a copy": "Télécharger une copie",
+  "{n} backup": "{n} sauvegarde",
+  "{n} backups": "{n} sauvegardes",
+  "latest {when}": "la dernière le {when}",
+  "Show {n} more controller": "Afficher {n} autre manette",
+  "Show {n} more controllers": "Afficher {n} autres manettes",
 };

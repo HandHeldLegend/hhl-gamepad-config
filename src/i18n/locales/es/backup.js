@@ -45,4 +45,9 @@ export default {
   "{n} saved backups": "{n} copias guardadas",
   "Settings backed up automatically. If the update resets them, restore them from the Firmware page.": "Ajustes guardados automáticamente. Si la actualización los restablece, restáuralos desde la página Firmware.",
   "Download a copy": "Descargar una copia",
+  "{n} backup": "{n} copia",
+  "{n} backups": "{n} copias",
+  "latest {when}": "la última {when}",
+  "Show {n} more controller": "Mostrar {n} control más",
+  "Show {n} more controllers": "Mostrar {n} controles más",
 };

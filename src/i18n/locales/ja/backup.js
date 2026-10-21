@@ -45,4 +45,9 @@ export default {
   "{n} saved backups": "保存済みのバックアップ {n} 件",
   "Settings backed up automatically. If the update resets them, restore them from the Firmware page.": "設定は自動でバックアップされました。アップデートで設定がリセットされた場合は、ファームウェアページから復元できます。",
   "Download a copy": "コピーをダウンロード",
+  "{n} backup": "バックアップ {n} 件",
+  "{n} backups": "バックアップ {n} 件",
+  "latest {when}": "最新 {when}",
+  "Show {n} more controller": "ほかのコントローラーを {n} 台表示",
+  "Show {n} more controllers": "ほかのコントローラーを {n} 台表示",
 };

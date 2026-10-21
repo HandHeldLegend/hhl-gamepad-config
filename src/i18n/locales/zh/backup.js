@@ -51,4 +51,9 @@ export default {
   "{n} saved backups": "{n} 个已保存的备份",
   "Settings backed up automatically. If the update resets them, restore them from the Firmware page.": "设置已自动备份。如果更新重置了设置，可以在固件页面恢复。",
   "Download a copy": "下载副本",
+  "{n} backup": "{n} 个备份",
+  "{n} backups": "{n} 个备份",
+  "latest {when}": "最新 {when}",
+  "Show {n} more controller": "再显示 {n} 个手柄",
+  "Show {n} more controllers": "再显示 {n} 个手柄",
 };

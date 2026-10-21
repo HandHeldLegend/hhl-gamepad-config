@@ -128,13 +128,27 @@ const fwDate = (n) => {
   return v > 1.4e9 && v < 4e9 ? fmt.date(new Date(v * 1000)) : String(v);
 };
 
-/** One automatic backup: when, which firmware, and Restore / Download. */
-function entryRow(e, session, { isCurrent, showName }) {
-  const detail = [showName && e.name, e.fwVersion != null && t('Firmware from {date}', { date: fwDate(e.fwVersion) })].filter(Boolean).join(' · ');
-  return h('li.bk-entry',
+/** How many controllers show before "Show N more". */
+const SHOWN = 4;
+
+/** The owner's name saved in a backup (the User page), or ''. */
+function ownerName(backup) {
+  const v = backup?.blocks?.user?.fields?.user_name;
+  if (typeof v === 'string') return v.replace(/\0.*$/s, '').trim();
+  if (Array.isArray(v)) {
+    const end = v.indexOf(0);
+    try { return new TextDecoder().decode(new Uint8Array(end < 0 ? v : v.slice(0, end))).trim(); } catch { return ''; }
+  }
+  return '';
+}
+
+/** One automatic backup on a controller's timeline: when, which firmware, and Restore / Download. */
+function entryRow(e, session, { isCurrent }) {
+  return h('li.bk-entry', { class: isCurrent ? 'is-current' : null },
+    h('span.bk-entry-dot'),
     h('span.bk-entry-text',
       h('span.bk-entry-when', when(e.created), isCurrent && badge(t('Current settings'), 'green')),
-      detail && h('span.field-desc', detail)),
+      e.fwVersion != null && h('span.field-desc', t('Firmware from {date}', { date: fwDate(e.fwVersion) }))),
     h('span.bk-entry-actions',
       button({
         label: t('Restore'), icon: 'upload', size: 'sm', variant: 'ghost', disabled: !session.connected || isCurrent,
@@ -145,46 +159,98 @@ function entryRow(e, session, { isCurrent, showName }) {
 }
 
 /**
- * The automatic backups, collapsed until opened (the list grows with every controller): this
- * controller's first, other controllers' behind a second disclosure.
+ * The automatic backups, one card per controller (newest first, the connected one on top and open):
+ * its name, how many versions and the latest, and its versions as a timeline when opened. One card is
+ * open at a time. Past SHOWN controllers, the rest wait behind "Show N more".
  */
-async function autoBackups(session) {
+async function autoBackups(session, ui) {
   const all = await listBackups();
   const unit = session.connected ? await unitId(session.config) : null;
   const latest = connectionBackup();
-  const mine = unit ? all.filter((e) => e.unit === unit) : [];
-  const others = all.filter((e) => e.unit !== unit);
-  const row = (e, showName) => entryRow(e, session, { isCurrent: !!latest && e.id === latest.id, showName });
-  return h('details.bk-auto',
-    h('summary', h('span.field-label', t('Automatic backups')), all.length > 0 && h('span.field-desc', plural(all.length, '{n} saved backup', '{n} saved backups'))),
-    h('div.field-desc', t('Saved in this browser each time a controller connects. The last {n} versions of each controller are kept.', { n: KEEP })),
-    mine.length
-      ? h('ul.bk-entries', mine.map((e) => row(e, false)))
-      : h('p.small.faint', session.connected ? t('No automatic backups of this controller yet.') : t('Connect a controller to restore one of its automatic backups.')),
-    others.length ? h('details.bk-others',
-      h('summary', unit
-        ? plural(others.length, '{n} backup of other controllers', '{n} backups of other controllers')
-        : plural(others.length, '{n} saved backup', '{n} saved backups')),
-      h('ul.bk-entries', others.map((e) => row(e, true)))) : '');
+  // Group by controller, newest backup first (listBackups is newest first)
+  const groups = new Map();
+  for (const e of all) {
+    if (!groups.has(e.unit)) groups.set(e.unit, []);
+    groups.get(e.unit).push(e);
+  }
+  const list = [...groups.entries()].map(([u, entries]) => ({ unit: u, entries, mine: u === unit }));
+  list.sort((a, b) => (b.mine - a.mine) || (Date.parse(b.entries[0].created) - Date.parse(a.entries[0].created)));
+  // Same model twice: tell them apart by the owner's name, else a short id
+  const names = list.map((g) => g.entries[0].name || t('Controller'));
+  const title = (g, i) => {
+    const owner = ownerName(g.entries[0].backup);
+    if (owner) return `${names[i]} · ${owner}`;
+    return names.filter((n) => n === names[i]).length > 1 ? `${names[i]} · ${String(g.unit).slice(0, 4).toUpperCase()}` : names[i];
+  };
+
+  const cards = list.map((g, i) => {
+    const d = h('details.bk-unit', { name: 'bk-units', class: g.mine ? 'is-mine' : null },
+      h('summary',
+        h('span.bk-unit-art', icon('gamepad')),
+        h('span.bk-unit-text',
+          h('span.bk-unit-name', title(g, i), g.mine && badge(t('This controller'), 'green')),
+          h('span.bk-unit-sub', plural(g.entries.length, '{n} backup', '{n} backups'), ' · ',
+            t('latest {when}', { when: when(g.entries[0].created) }))),
+        h('span.bk-unit-chev', icon('chevron-down'))),
+      h('ol.bk-entries', g.entries.map((e) => entryRow(e, session, { isCurrent: !!latest && e.id === latest.id }))));
+    if (ui.open === g.unit || (ui.open == null && g.mine)) d.open = true;
+    d.addEventListener('toggle', () => { if (d.open) ui.open = g.unit; else if (ui.open === g.unit) ui.open = ''; });
+    return d;
+  });
+  const hide = ui.all ? [] : cards.slice(SHOWN).filter((c) => !c.open);
+  hide.forEach((c) => { c.hidden = true; });
+  const more = hide.length > 0 && button({
+    label: plural(hide.length, 'Show {n} more controller', 'Show {n} more controllers'),
+    icon: 'chevron-down', size: 'sm', variant: 'ghost',
+    onClick: () => { ui.all = true; hide.forEach((c) => { c.hidden = false; c.classList.add('bk-unit-in'); }); more.remove(); },
+  });
+
+  return h('div.bk-auto',
+    h('div.bk-auto-head', h('span.field-label', t('Automatic backups')),
+      h('span.field-desc', t('Saved in this browser each time a controller connects. The last {n} versions of each controller are kept.', { n: KEEP }))),
+    cards.length
+      ? h('div.bk-units', cards, more)
+      : h('p.small.faint', session.connected ? t('No automatic backups of this controller yet.') : t('Connect a controller to restore one of its automatic backups.')));
 }
 
 /** The Firmware page card. */
 export function backupCard(session) {
   const style = h('style', `
-    .bk-auto { display: grid; gap: var(--space-1); padding-top: var(--space-3); border-top: 1px solid var(--border); }
-    .bk-auto > summary { cursor: pointer; display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-2); }
-    .bk-auto > summary::before { content: '▸'; display: inline-block; color: var(--text-muted); transition: transform var(--dur-med); }
-    .bk-auto[open] > summary::before { transform: rotate(90deg); }
-    .bk-auto > summary::-webkit-details-marker { display: none; }
-    .bk-auto > summary { list-style: none; }
+    .bk-auto { display: grid; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+    .bk-auto-head { display: grid; gap: 2px; }
     .bk-auto .field-desc { margin: 0; }
-    .bk-entries { list-style: none; margin: var(--space-1) 0 0; padding: 0; display: grid; gap: 4px; }
-    .bk-entry { display: flex; align-items: center; gap: var(--space-2); padding: 6px 6px 6px var(--space-3); border-radius: var(--radius-sm); background: var(--surface-sunken); }
+    .bk-units { display: grid; gap: var(--space-2); justify-items: stretch; }
+    .bk-units > .btn { justify-self: start; }
+    .bk-unit { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); transition: border-color var(--dur-med), box-shadow var(--dur-med); }
+    .bk-unit[hidden] { display: none; }
+    .bk-unit.bk-unit-in { animation: rise-in var(--dur-slow) var(--ease-out); }
+    .bk-unit[open] { border-color: var(--border-strong); box-shadow: 0 6px 18px -12px rgba(0, 0, 0, 0.45); }
+    .bk-unit.is-mine { border-color: color-mix(in srgb, var(--green) 45%, var(--border)); }
+    .bk-unit > summary { display: flex; align-items: center; gap: var(--space-3); padding: 10px 12px; cursor: pointer; list-style: none; border-radius: var(--radius-md);
+      transition: background-color var(--dur-fast); }
+    .bk-unit > summary::-webkit-details-marker { display: none; }
+    .bk-unit > summary:hover { background: var(--surface-sunken); }
+    .bk-unit > summary:focus-visible { box-shadow: var(--focus-ring); outline: none; }
+    .bk-unit-art { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--green-soft); color: var(--green);
+      transition: transform var(--dur-slow) var(--ease-spring); }
+    .bk-unit:not(.is-mine) .bk-unit-art { background: var(--surface-sunken); color: var(--text-muted); }
+    .bk-unit[open] .bk-unit-art { transform: rotate(-10deg) scale(1.06); }
+    .bk-unit-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+    .bk-unit-name { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); font-weight: 700; }
+    .bk-unit-sub { font-size: var(--text-xs); color: var(--text-muted); }
+    .bk-unit-chev { flex: none; color: var(--text-faint); transition: transform var(--dur-med) var(--ease-out); }
+    .bk-unit[open] .bk-unit-chev { transform: rotate(180deg); }
+    /* A controller's versions: a small timeline */
+    .bk-entries { list-style: none; margin: 0; padding: 0 12px 10px 30px; display: grid; gap: 2px; position: relative; }
+    .bk-entries::before { content: ''; position: absolute; left: 30px; top: 12px; bottom: 22px; width: 2px; background: var(--border); border-radius: 1px; }
+    .bk-entry { position: relative; display: flex; align-items: center; gap: var(--space-2); padding: 6px 6px 6px 22px; border-radius: var(--radius-sm); transition: background-color var(--dur-fast); }
+    .bk-entry:hover { background: var(--surface-sunken); }
+    .bk-entry-dot { position: absolute; left: -5px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: var(--surface); border: 2px solid var(--text-faint); }
+    .bk-entry.is-current .bk-entry-dot { background: var(--green); border-color: var(--green); box-shadow: 0 0 8px var(--green); }
     .bk-entry-text { flex: 1; min-width: 0; display: grid; }
     .bk-entry-text .field-desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .bk-entry-when { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); font-weight: 600; font-size: var(--text-sm); }
     .bk-entry-actions { display: flex; gap: 2px; flex: none; }
-    .bk-others summary { cursor: pointer; color: var(--text-muted); font-size: var(--text-sm); margin-top: var(--space-2); }
     .bk-summary .bk-list { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
     .bk-cal { display: flex; gap: 12px; align-items: flex-start; }
     .bk-cal > span { display: grid; gap: 2px; }
@@ -194,9 +260,10 @@ export function backupCard(session) {
   const body = h('div.stack');
   const auto = h('div');
   let token = 0; // only the latest render of the list lands
+  const ui = { open: null, all: false }; // the open controller and "show all", kept across redraws
   const renderAuto = async () => {
     const mine = ++token;
-    const list = await autoBackups(session);
+    const list = await autoBackups(session, ui);
     if (mine === token) auto.replaceChildren(list);
   };
   const render = () => {
