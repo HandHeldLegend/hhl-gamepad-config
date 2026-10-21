@@ -287,22 +287,35 @@ export function openConnectModule({ cable = false } = {}) {
     }
 
     /**
-     * Remove: a small trash button that asks once ("Remove?", for a few seconds), then forgets the
-     * controller. It grows to the left, so it stays under the pointer for the second click.
+     * Remove: a small trash button that asks once ("Remove?"), then forgets the controller. It grows to
+     * the left, so it stays under the pointer for the second click. A press anywhere else, Escape, or a
+     * few seconds put it back.
      */
     function removeButton(name, onRemove) {
       let armed = 0;
       const label = h('span.cm-remove-label', t('Remove?'));
+      const elsewhere = (e) => { if (!btn.contains(e.target)) disarm(); };
+      const onKey = (e) => { if (e.key === 'Escape' && armed) { e.preventDefault(); e.stopPropagation(); disarm(); } };
+      function disarm() {
+        clearTimeout(armed);
+        armed = 0;
+        btn.classList.remove('armed');
+        document.removeEventListener('pointerdown', elsewhere, true);
+        document.removeEventListener('keydown', onKey, true);
+      }
       const btn = h('button.cm-remove', {
         type: 'button', title: t('Remove'), 'aria-label': t('Remove {name}', { name }),
         onclick: (e) => {
           e.stopPropagation();
           if (!armed) {
             btn.classList.add('armed');
-            armed = setTimeout(() => { armed = 0; btn.classList.remove('armed'); }, 3500);
+            armed = setTimeout(disarm, 4000);
+            document.addEventListener('pointerdown', elsewhere, true);
+            document.addEventListener('keydown', onKey, true);
             return;
           }
-          clearTimeout(armed);
+          disarm();
+          btn.classList.add('removing');
           onRemove(btn.closest('.cm-row'));
         },
       }, label, icon('trash'));
@@ -320,11 +333,14 @@ export function openConnectModule({ cable = false } = {}) {
       // Slide the row away, then redraw the list without it
       const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (rowEl && !still) {
+        // Slide out and fade first, then close the gap, so nothing jumps
         const height = rowEl.offsetHeight;
+        const gap = parseFloat(getComputedStyle(listEl).rowGap) || 0;
         await rowEl.animate([
-          { height: `${height}px`, opacity: 1, transform: 'none' },
-          { height: '0px', opacity: 0, transform: 'translateX(24px)', marginBottom: 'calc(-1 * var(--space-2))' },
-        ], { duration: 240, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'forwards' }).finished.catch(() => {});
+          { height: `${height}px`, opacity: 1, transform: 'none', marginBottom: '0px', offset: 0 },
+          { height: `${height}px`, opacity: 0, transform: 'translateX(32px) scale(0.98)', marginBottom: '0px', offset: 0.5 },
+          { height: '0px', opacity: 0, transform: 'translateX(32px) scale(0.98)', marginBottom: `${-gap}px`, offset: 1 },
+        ], { duration: 520, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' }).finished.catch(() => {});
       }
       await forgetBluetoothController(entry.bt);
       renderList();
