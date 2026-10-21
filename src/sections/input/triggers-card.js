@@ -3,17 +3,16 @@
  * triggers (device/triggers.js). Per side: Auto / Analog / Mechanical, what the controller found from
  * use (on Auto), and a hint when a forced choice no longer matches the trigger fitted.
  *
- * The finding changes while the owner clicks, so the hover block is read again every few seconds
- * while the card is on screen (not while a hover change waits to be sent, or while calibrating).
+ * The finding changes while the owner clicks: watchTriggers reads the hover block again when its
+ * fingerprint changes, while the card is on screen (not while a hover change waits to be sent, or while
+ * calibrating).
  * onChange runs when a side starts or stops counting as mechanical: the page rebuilds its inputs.
  */
 import { h } from '../../ui/dom.js';
 import { card, segmented, button } from '../../ui/controls.js';
 import { toast } from '../../ui/overlay.js';
 import { t } from '../../i18n/index.js';
-import { TRIGGER_SIDES, TRIGGER_CHOICE, triggerState, setTriggerChoice, mechanicalKey } from '../../device/triggers.js';
-
-const POLL_MS = 1500;
+import { TRIGGER_SIDES, TRIGGER_CHOICE, triggerState, setTriggerChoice, mechanicalKey, watchTriggers } from '../../device/triggers.js';
 
 export function triggersCard(session, { calib, onChange }) {
   let key = mechanicalKey(session);
@@ -75,17 +74,12 @@ export function triggersCard(session, { calib, onChange }) {
   }
 
   // Read the finding again while the owner clicks (skipped while something else uses the hover block)
-  const timer = setInterval(async () => {
-    if (busy || calib?.active != null || session.dirty.has('hover') || !session.connected) return;
-    busy = true;
-    try { await session.refresh('hover'); } catch { /* the next round reads again */ } finally { busy = false; }
-    paint();
-    changed();
-  }, POLL_MS);
+  const stopWatch = watchTriggers(session, () => { paint(); changed(); },
+    { paused: () => busy || calib?.active != null || session.dirty.has('hover') });
 
   paint();
   const el = card({ title: t('Triggers'), icon: 'trigger', tone: 'lavender',
     subtitle: t('Fitted mechanical triggers, or swapped them back? Leave this on Auto: click the trigger a few times and the controller notices. Or set it here.') },
   h('div.inp-trigs', rows.map((r) => r.el)));
-  return { el, destroy: () => clearInterval(timer) };
+  return { el, destroy: stopWatch };
 }

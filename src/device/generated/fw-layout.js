@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: github HandHeldLegend/HOJA-LIB-RP2040@gcu1-mechanical-triggers)
+// Regenerate with: node tools/sync-firmware.mjs   (source: github HandHeldLegend/HOJA-LIB-RP2040@master)
 // Validated 7 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "github",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "gcu1-mechanical-triggers"
+  "ref": "master"
  },
  "blocks": {
   "config": [

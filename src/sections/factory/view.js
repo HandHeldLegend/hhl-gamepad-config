@@ -54,7 +54,7 @@ import { COLOR_SKUS, getSku, FCC_LABEL_BUILDS, SKU_BUILDS } from './skus.js';
 import { padPreview } from '../gamepad/pad-preview.js';
 import { LEGACY_DEVICES } from '../../device/legacy.js';
 import { hardwareChecks, testInputs, inputReached, imuAxes, dualStageTriggers, DUAL_FULL } from './checks.js';
-import { triggersSupported, triggerState, TRIGGER_SIDES } from '../../device/triggers.js';
+import { triggersSupported, triggerState, watchTriggers, TRIGGER_SIDES } from '../../device/triggers.js';
 import { INPUT_CODES } from '../input/mapping.js';
 
 loadStyles(new URL('./factory.css', import.meta.url));
@@ -838,14 +838,9 @@ export function mount(root, { session, params = {} }) {
       }
       paint();
     });
-    // The finding lives in the hover block: read it again while the tester clicks.
-    let reading = false;
-    const timer = setInterval(async () => {
-      if (reading || done) return;
-      reading = true;
-      try { await session.refresh('hover'); paint(); } catch { /* the next round reads again */ } finally { reading = false; }
-    }, 700);
-    stageCleanup = () => { off(); clearInterval(timer); };
+    // The finding lives in the hover block: read it again when it changes while the tester clicks.
+    const stopWatch = watchTriggers(session, paint, { ms: 700, paused: () => done });
+    stageCleanup = () => { off(); stopWatch(); };
     paint();
     return big('trigger', t('Check the trigger type'),
       t('Click each trigger {n} times. Pull analog triggers all the way in as you do.', { n: TRIGGER_CLICKS }),

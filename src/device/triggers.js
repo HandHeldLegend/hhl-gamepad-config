@@ -11,7 +11,7 @@
  * A side counts as mechanical when the choice is Mechanical, or Auto and found mechanical. On Auto the
  * controller works it out: 5 clicks with no travel make it mechanical, 2 full pulls analog again.
  */
-import { fwDefine } from './struct.js';
+import { fwDefine, LAYOUT } from './struct.js';
 
 const VERSION = fwDefine('TRIGGER_HW_VERSION', 1);
 const CHOICE_MASK = fwDefine('TRIGGER_HW_CHOICE_MASK', 3);
@@ -54,6 +54,34 @@ export const mechanicalSides = (session) => TRIGGER_SIDES.filter((s) => triggerS
 
 /** A key that changes whenever a side starts or stops counting as mechanical (to rebuild views). */
 export const mechanicalKey = (session) => mechanicalSides(session).map((s) => s.side).join(',');
+
+/**
+ * Keep the finding current while a view shows it: ask for the block fingerprints every `ms` and read
+ * the hover block again only when its CRC changes (the firmware saves the finding when it changes, so
+ * the CRC moves exactly then). Firmware without fingerprints gets the block read every time. `paused()`
+ * skips a round (a hover change waiting to be sent, calibrating). onRead runs after each read.
+ * @returns {() => void} stop
+ */
+export function watchTriggers(session, onRead, { ms = 1000, paused = () => false } = {}) {
+  const index = LAYOUT.blocks.config.find((b) => b.key === 'hover')?.index;
+  let last;
+  let busy = false;
+  const timer = setInterval(async () => {
+    if (busy || paused() || !session.connected) return;
+    busy = true;
+    try {
+      const crcs = await session.configFingerprints();
+      const crc = crcs?.[index];
+      if (crc != null && crc === last) return;
+      last = crc;
+      await session.refresh('hover');
+      onRead();
+    } catch { /* the next round asks again */ } finally {
+      busy = false;
+    }
+  }, ms);
+  return () => clearInterval(timer);
+}
 
 /**
  * Set one side's choice. The block is read first, so the firmware's finding (bit 7) is current and
