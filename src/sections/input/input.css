@@ -267,3 +267,12 @@
 }
 @keyframes td-cal { 0%, 10% { transform: translateX(30px); } 45%, 70% { transform: translateX(220px); } 100% { transform: translateX(30px); } }
 @keyframes td-chk { 0%, 8% { transform: translateX(30px); } 35%, 50% { transform: translateX(220px); } 70%, 82% { transform: translateX(300px); } 100% { transform: translateX(30px); } }
+
+/* Triggers card (triggers-card.js): Auto / Analog / Mechanical per side */
+.inp-trigs { display: grid; gap: var(--space-3); }
+.inp-trig-row { display: grid; gap: 4px; }
+.inp-trig-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2) var(--space-3); }
+.inp-trig-head > strong { min-width: 7.5em; }
+.inp-trig-found { margin: 0; }
+.inp-trig-mismatch { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); padding: 8px 12px; border-radius: var(--radius-md);
+  background: var(--yellow-soft); color: var(--yellow-ink); animation: rise-in var(--dur-med) var(--ease-out); }

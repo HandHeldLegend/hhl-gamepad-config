@@ -32,6 +32,13 @@ export const BACKUP_FORMAT_VERSION = 1;
 /** The controller's identity and pairings: left out of a backup unless asked for ({ identity }). */
 const IDENTITY = new Set(['gamepad_mac_address', 'host_mac_switch', 'host_mac_sinput', 'host_mac_wii', 'gamepad_defaults_split']);
 
+/**
+ * The controller's own hardware, never restored: which triggers are fitted (mechanical or analog, and
+ * what the controller found from use; device/triggers.js). A backup from a pad with mechanical
+ * triggers would otherwise switch an analog pad's triggers off until two full pulls bring them back.
+ */
+const HARDWARE = new Set(['trigger_hw']);
+
 /** Per-unit calibration. `true` = the whole block. */
 const CALIBRATION = {
   hover: true,
@@ -218,7 +225,7 @@ export async function planRestore(backup, session, { calibration = false, identi
     for (const [name, value] of Object.entries(saved.fields)) {
       const field = byName.get(name);
       if (!field) { skipped.push(`${b.key}.${name}`); continue; }
-      if ((!identity && IDENTITY.has(name)) || isVersionField(name) || isReserved(name)) continue;
+      if ((!identity && IDENTITY.has(name)) || HARDWARE.has(name) || isVersionField(name) || isReserved(name)) continue;
       const cal = isCalibration(b.key, name);
       if (cal) hasCalibration = true;
       if (cal && !calibration) continue;

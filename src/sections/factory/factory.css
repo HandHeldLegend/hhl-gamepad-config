@@ -58,6 +58,16 @@
 .fac-sku-btn { display: flex; align-items: center; gap: var(--space-2); padding: 12px 14px; border: 2px solid var(--border); border-radius: var(--radius-md);
   background: var(--surface-2); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; text-align: left; }
 .fac-sku-btn:hover { border-color: var(--green); }
+/* Trigger type (mechanical triggers) */
+.fac-trigs { display: grid; gap: var(--space-3); width: min(640px, 100%); }
+.fac-trig { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-3);
+  border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); text-align: left; }
+.fac-trig-body { display: grid; gap: 4px; min-width: 0; }
+.fac-trig-state { display: grid; gap: 4px; justify-items: end; font-weight: 600; }
+.fac-trig-clicks { color: var(--text-muted); transition: color var(--dur-med); }
+.fac-trig-clicks.ok, .fac-trig-found.ok { color: var(--green); }
+.fac-trig-found.bad { color: var(--red); }
+.fac-trig-found { transition: color var(--dur-med); }
 .fac-sku-dots { display: inline-flex; flex: none; }
 .fac-sku-dots span { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--surface); margin-left: -5px; }
 .fac-sku-dots span:first-child { margin-left: 0; }

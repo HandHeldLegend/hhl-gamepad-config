@@ -10,10 +10,14 @@
  *            flashed). Each model's firmware is fetched once and cached.
  *     skip   comma list of steps to leave out: flash, calibrate, inputs, operator
  *     sku    color SKU id (skus.js); kept between units
+ *     triggers  the line's trigger build on controllers that take mechanical triggers (GCU 1):
+ *            analog | mechanical | left | right (mechanical on that side only). Without it the operator
+ *            picks it once; it's kept between units.
  *
  * Per unit: plug in → (bootloader: flash) → (HOJA on another build or older firmware: update) →
  * hardware self-check → Switch colors (a color SKU on SKU builds, custom colors with recent sets on
- * the others) → stick and trigger calibration →
+ * the others) → stick calibration → trigger type (mechanical triggers: the controller's own finding
+ * against the line's build) → trigger calibration (analog sides only) →
  * input test (every input, IMU axes live) → operator checks (FCC label on GCU 2, rumble, LEDs) →
  * save → result. Unplug for the next unit.
  *
@@ -50,6 +54,8 @@ import { COLOR_SKUS, getSku, FCC_LABEL_BUILDS, SKU_BUILDS } from './skus.js';
 import { padPreview } from '../gamepad/pad-preview.js';
 import { LEGACY_DEVICES } from '../../device/legacy.js';
 import { hardwareChecks, testInputs, inputReached, imuAxes, dualStageTriggers, DUAL_FULL } from './checks.js';
+import { triggersSupported, triggerState, TRIGGER_SIDES } from '../../device/triggers.js';
+import { INPUT_CODES } from '../input/mapping.js';
 
 loadStyles(new URL('./factory.css', import.meta.url));
 loadStyles(new URL('../input/input.css', import.meta.url)); // glyphs and meters
@@ -59,6 +65,16 @@ loadStyles(new URL('../gamepad/gamepad.css', import.meta.url)); // controller co
 
 const LOG_KEY = 'hhl-factory-log';
 const SKU_KEY = 'hhl-factory-sku';
+const TRIGGERS_KEY = 'hhl-factory-triggers';
+/** Trigger builds on controllers that take mechanical triggers: which sides are mechanical. */
+const TRIGGER_BUILDS = {
+  analog: { left: false, right: false, label: N_('Analog triggers') },
+  mechanical: { left: true, right: true, label: N_('Mechanical triggers') },
+  left: { left: true, right: false, label: N_('Mechanical left, analog right') },
+  right: { left: false, right: true, label: N_('Analog left, mechanical right') },
+};
+/** Clicks per side before the controller's finding counts (it marks a trigger mechanical after 5). */
+const TRIGGER_CLICKS = 5;
 const RECENT_KEY = 'hhl-factory-colors';
 const RECENT_MAX = 24;
 /** The four Switch colors: setting key and the color set's field. */
@@ -93,6 +109,13 @@ const station = {
 export { station as factoryStation, flashed as factoryFlashed };
 
 function loadSku() { try { return localStorage.getItem(SKU_KEY) || ''; } catch { return ''; } }
+/** The line's trigger build: ?triggers= first, else the operator's last pick. */
+function triggerBuild() {
+  const p = String(station.params.triggers || '').toLowerCase();
+  if (TRIGGER_BUILDS[p]) return p;
+  try { const v = localStorage.getItem(TRIGGERS_KEY); return TRIGGER_BUILDS[v] ? v : ''; } catch { return ''; }
+}
+function setTriggerBuild(id) { try { localStorage.setItem(TRIGGERS_KEY, id); } catch { /* storage blocked */ } }
 function setSku(id) { station.sku = id; try { localStorage.setItem(SKU_KEY, id); } catch { /* storage blocked */ } }
 /** Recent custom color sets, newest first: [{ body, buttons, leftGrip, rightGrip }]. */
 function loadRecents() { try { const v = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } }
@@ -129,6 +152,7 @@ function go(stage) {
 /** Which results belong to which step (Back clears them so the step runs again). */
 const STEP_RESULTS = {
   sticks: (id) => id === 'sticks',
+  triggerhw: (id) => id === 'trigger-hw',
   triggers: (id) => id === 'triggers',
   triggercheck: (id) => id.startsWith('dual-'),
   inputs: (id) => id.startsWith('in-') || /^(gyro|accel)-/.test(id) || id === 'inputs-operator',
@@ -140,11 +164,13 @@ function back(fromStage) {
   if (!u) return;
   const clear = (key) => { for (const id of [...u.results.keys()]) if (STEP_RESULTS[key](id)) u.results.delete(id); };
   clear(fromStage);
-  if (fromStage === 'triggers') { clear('sticks'); go('calibrate'); return; }
+  if (fromStage === 'triggerhw') { clear('sticks'); go('calibrate'); return; }
+  if (fromStage === 'triggers') { clear(u.results.has('trigger-hw') ? 'triggerhw' : 'sticks'); go('calibrate'); return; }
   if (fromStage === 'triggercheck') { clear('triggers'); go('calibrate'); return; }
   if (fromStage === 'inputs') {
     const hasDual = [...u.results.keys()].some(STEP_RESULTS.triggercheck);
-    if (hasDual) clear('triggercheck'); else if (u.results.has('triggers')) clear('triggers'); else clear('sticks');
+    if (hasDual) clear('triggercheck'); else if (u.results.has('triggers')) clear('triggers');
+    else if (u.results.has('trigger-hw')) clear('triggerhw'); else clear('sticks');
     go('calibrate');
     return;
   }
@@ -684,6 +710,8 @@ export function mount(root, { session, params = {} }) {
     const hover = testInputs(session).filter((i) => i.type === 'hover');
     const doneSticks = station.unit.results.has('sticks');
     if (sticks.length && !doneSticks) return stickCalibration(sticks);
+    // Mechanical triggers: first what the controller finds, so their sides drop out of what follows
+    if (triggersSupported(session) && !station.unit.results.has('trigger-hw')) return triggerHardware();
     if (hover.length && !station.unit.results.has('triggers')) return triggerCalibration(hover);
     const dual = dualStageTriggers(session);
     if (dual.length && !dual.every((d) => station.unit.results.has(d.id))) return triggerCheck(dual);
@@ -755,6 +783,79 @@ export function mount(root, { session, params = {} }) {
       h('div.row.fac-actions', startBtn, doneBtn,
         button({ label: t('Fail'), variant: 'ghost', onClick: () => { calib.stop().catch(() => {}); setResult('triggers', N_('Trigger calibration'), 'fail'); render(); } }),
         backButton(() => { if (running) calib.stop().catch(() => {}); running = false; back('triggers'); })));
+  }
+
+  /**
+   * Trigger type, on controllers that take mechanical triggers: the tester clicks each trigger 5 times
+   * (and pulls analog ones all the way), the controller works out each side from that (device/triggers.js),
+   * and its finding has to match the line's build. A broken analog sensor reads as mechanical, so this
+   * catches that too. The choice stays on Auto: a customer who fits other triggers later needs no app.
+   */
+  function triggerHardware() {
+    const build = triggerBuild();
+    const fail = (detail) => { setResult('trigger-hw', N_('Trigger type'), 'fail', detail); render(); };
+    const pickBuild = () => big('trigger', t('Which triggers does this unit have?'), t('The station checks that the controller finds the same. It’s kept for the next units.'),
+      h('div.fac-skus', Object.entries(TRIGGER_BUILDS).map(([id, b]) => h('button.fac-sku-btn', { type: 'button', class: id === build ? 'is-last' : null,
+        onclick: () => { setTriggerBuild(id); render(); } }, t(b.label)))),
+      h('div.row.fac-actions', backButton(() => back('triggerhw'))));
+    if (!build) return pickBuild();
+    const want = TRIGGER_BUILDS[build];
+    const codeOf = (key) => INPUT_CODES.find((c) => c.key === key)?.code;
+    const sides = TRIGGER_SIDES.map((s) => {
+      const meterEl = meter({ label: s.side === 'left' ? 'LT' : 'RT' });
+      const clicksEl = h('span.fac-trig-clicks');
+      const foundEl = h('span.fac-trig-found');
+      return { ...s, clickCode: codeOf(s.click), analogCode: codeOf(s.analog), clicks: 0, down: false, meterEl, clicksEl, foundEl,
+        el: h('div.fac-trig', glyph(s.side === 'left' ? 'L' : 'R', { size: 38 }),
+          h('div.fac-trig-body', h('strong', s.side === 'left' ? t('Left trigger') : t('Right trigger')),
+            h('span.small.muted', t('Should be: {kind}', { kind: want[s.side] ? t('Mechanical') : t('Analog') })), meterEl),
+          h('div.fac-trig-state', clicksEl, foundEl)) };
+    });
+    let done = false;
+    const paint = () => {
+      for (const s of sides) {
+        const found = triggerState(session, s.index).detected;
+        s.clicksEl.textContent = t('{n} of {total} clicks', { n: Math.min(s.clicks, TRIGGER_CLICKS), total: TRIGGER_CLICKS });
+        s.clicksEl.classList.toggle('ok', s.clicks >= TRIGGER_CLICKS);
+        s.foundEl.textContent = s.clicks >= TRIGGER_CLICKS ? (found ? t('Found: mechanical') : t('Found: analog')) : '';
+        s.foundEl.classList.toggle('ok', s.clicks >= TRIGGER_CLICKS && found === want[s.side]);
+        s.foundEl.classList.toggle('bad', s.clicks >= TRIGGER_CLICKS && found !== want[s.side]);
+      }
+      const counted = sides.every((s) => s.clicks >= TRIGGER_CLICKS);
+      const match = counted && sides.every((s) => triggerState(session, s.index).detected === want[s.side]);
+      if (match && !done) {
+        done = true;
+        later(() => { setResult('trigger-hw', N_('Trigger type'), 'pass', t(want.label)); render(); });
+      }
+    };
+    const off = onInputReport(device, (r) => {
+      if (r.kind !== 'raw' || done) return;
+      for (const s of sides) {
+        const c = r.inputs[s.clickCode];
+        s.meterEl.set((r.inputs[s.analogCode]?.value || 0) / 127, c?.pressed);
+        if (c?.pressed && !s.down) s.clicks++;
+        s.down = !!c?.pressed;
+      }
+      paint();
+    });
+    // The finding lives in the hover block: read it again while the tester clicks.
+    let reading = false;
+    const timer = setInterval(async () => {
+      if (reading || done) return;
+      reading = true;
+      try { await session.refresh('hover'); paint(); } catch { /* the next round reads again */ } finally { reading = false; }
+    }, 700);
+    stageCleanup = () => { off(); clearInterval(timer); };
+    paint();
+    return big('trigger', t('Check the trigger type'),
+      t('Click each trigger {n} times. Pull analog triggers all the way in as you do.', { n: TRIGGER_CLICKS }),
+      h('div.fac-trigs', sides.map((s) => s.el)),
+      h('div.row.fac-trig-line', h('span.small.muted', t('Line build: {build}', { build: t(want.label) })),
+        !TRIGGER_BUILDS[String(station.params.triggers || '').toLowerCase()] // set by ?triggers=: not changed here
+          && button({ label: t('Change'), size: 'sm', variant: 'ghost', onClick: () => { setTriggerBuild(''); render(); } })),
+      h('div.row.fac-actions',
+        button({ label: t('Fail'), variant: 'ghost', onClick: () => fail(sides.map((s) => `${s.side}: ${triggerState(session, s.index).detected ? 'mechanical' : 'analog'}`).join(', ')) }),
+        backButton(() => back('triggerhw'))));
   }
 
   // Dual-stage trigger check: full analog at the top of the membrane, then the click only after that.

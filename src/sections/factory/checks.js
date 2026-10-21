@@ -7,6 +7,9 @@
  *   imuAxes(session)         the IMU axes to watch for live data
  *   dualStageTriggers(s)     analog triggers that also click at full press (GameCube style)
  *
+ * A trigger that counts as mechanical (device/triggers.js) has no analog input: it's left out of the
+ * input test, trigger calibration and the dual-stage check, and its click is tested as a button.
+ *
  * Results: 'pass' | 'fail' | 'na' (not fitted on this build, not counted).
  */
 import { decodeText } from '../../device/struct.js';
@@ -15,6 +18,7 @@ import { decodePmicStatus, decodeFuelGauge, PACK } from '../battery/status.js';
 import { chipStatus } from '../wireless/info.js';
 import { reportedVersion } from '../wireless/channels.js';
 import { INPUT_CODES, INPUT_TYPE } from '../input/mapping.js';
+import { mechanicalSides } from '../../device/triggers.js';
 import { t, N_ } from '../../i18n/index.js';
 
 /** Raw-stream thresholds (reports.js): hover inputs 0..127, joystick directions 0..64. */
@@ -69,9 +73,10 @@ export function hardwareChecks(session) {
 export function testInputs(session) {
   const infos = session.static.input?.input_info || [];
   const type = (n) => (n === INPUT_TYPE.HOVER ? 'hover' : n === INPUT_TYPE.JOYSTICK ? 'joystick' : 'digital');
+  const noAnalog = new Set(mechanicalSides(session).map((s) => s.analog));
   return INPUT_CODES
     .map(({ code, key }) => ({ code, key, info: infos[code] }))
-    .filter((x) => x.info && x.info.input_type && x.info.input_type !== INPUT_TYPE.UNUSED)
+    .filter((x) => x.info && x.info.input_type && x.info.input_type !== INPUT_TYPE.UNUSED && !noAnalog.has(x.key))
     .map(({ code, key, info }) => ({ code, key, name: decodeText(info.input_name) || key, type: type(info.input_type) }));
 }
 
