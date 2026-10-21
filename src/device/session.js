@@ -35,6 +35,7 @@
 import { device, USB_FILTERS, LIVE_MODES, isPicoBootloader, isCh340 } from './hoja-device.js';
 import { decodeText, LAYOUT } from './struct.js';
 import { liveStatus } from './live-status.js';
+import { needsTriggerCheck, triggerState, TRIGGER_SIDES } from './triggers.js';
 import { N_ } from '../i18n/index.js'; // attention texts are translated where displayed
 
 /** Static block indexes by name, for refreshStatic */
@@ -438,6 +439,10 @@ class Session extends EventTarget {
       return;
     }
     if (!device.config.hover.hover_calibration_set) next.input = { level: 'warn', text: N_('Analog inputs need calibration') };
+    // Mechanical triggers (GCU 1): not checked yet, or set by hand to the wrong type
+    else if (needsTriggerCheck(this) || TRIGGER_SIDES.some((s) => triggerState(this, s.index).mismatch)) {
+      next.input = { level: 'warn', text: N_('Check your triggers') };
+    }
     if (this.caps.analog && !device.config.analog.analog_calibration_set) next.joysticks = { level: 'warn', text: N_('Joysticks need calibration') };
 
     // Without a USB cable the controller can't enter wireless-module update mode: no badge for it.

@@ -426,7 +426,7 @@ function mountPage(root, ctx, { onTriggers }) {
   // once checked it needs no room on the main view)
   const hasTriggers = triggersSupported(session);
   const renderTriggers = (panel) => {
-    const c = triggersCard(session, { device, calib, onChange: onTriggers, onChecked: paintTrigBadge });
+    const c = triggersCard(session, { device, calib, onChange: onTriggers, onChecked: () => { paintTrigBadge(); session.refreshAttention(); } });
     panel.append(c.el);
     return c.destroy;
   };

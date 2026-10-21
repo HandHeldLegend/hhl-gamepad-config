@@ -255,4 +255,6 @@ export default {
   "Check your triggers.": "请检查你的扳机。",
   "Click each trigger a few times so the controller knows whether they’re analog or mechanical.": "每个扳机按几下，手柄就能知道它们是模拟的还是机械的。",
   "Check now": "立即检查",
+  "Playing through Steam?": "通过 Steam 游玩？",
+  "After a trigger changes type, turn the controller off and on (or unplug it and plug it back in), then quit Steam completely (right-click its icon by the clock and choose Exit) and open it again. Steam only checks the triggers when both start.": "扳机类型改变后，请将手柄关机再开机（或拔下后重新插上），然后完全退出 Steam（右键单击时钟旁的图标并选择“退出”）再重新打开。Steam 只在两者启动时检查扳机。",
 };

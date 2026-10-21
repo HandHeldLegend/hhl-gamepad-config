@@ -305,4 +305,6 @@ export default {
   "Check your triggers.": "Comprueba tus gatillos.",
   "Click each trigger a few times so the controller knows whether they’re analog or mechanical.": "Haz clic en cada gatillo unas cuantas veces para que el control sepa si son analógicos o mecánicos.",
   "Check now": "Comprobar ahora",
+  "Playing through Steam?": "¿Juegas con Steam?",
+  "After a trigger changes type, turn the controller off and on (or unplug it and plug it back in), then quit Steam completely (right-click its icon by the clock and choose Exit) and open it again. Steam only checks the triggers when both start.": "Cuando un gatillo cambia de tipo, apaga y enciende el control (o desconéctalo y vuelve a conectarlo), luego cierra Steam por completo (clic derecho en su icono junto al reloj y elige Salir) y vuelve a abrirlo. Steam solo revisa los gatillos cuando ambos se inician.",
 };

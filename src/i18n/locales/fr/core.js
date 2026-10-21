@@ -546,4 +546,5 @@ export default {
   "On Linux, {browser} needs two settings for Bluetooth. Open each address below, set it to Enabled, then relaunch {browser}.": "Sous Linux, {browser} a besoin de deux réglages pour le Bluetooth. Ouvrez chaque adresse ci-dessous, réglez-la sur Enabled, puis relancez {browser}.",
   "On Linux, {browser} keeps Bluetooth behind a setting. Open this address, set it to Enabled, then relaunch {browser}.": "Sous Linux, {browser} garde le Bluetooth derrière un réglage. Ouvrez cette adresse, réglez-la sur Enabled, puis relancez {browser}.",
   "How to turn it on": "Comment l’activer",
+  "Check your triggers": "Vérifiez vos gâchettes",
 };
