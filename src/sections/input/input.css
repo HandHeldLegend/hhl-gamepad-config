@@ -291,11 +291,12 @@
   transform: rotate(calc(var(--i) * 72deg - 90deg)) translateX(52px) scale(1.1); }
 .inp-trig-check[data-phase="checking"] .inp-trig-dot.on { animation: inp-trig-wait 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 120ms); }
 .inp-trig-check[data-phase="done"] .inp-trig-dot.on { background: var(--green); border-color: var(--green); box-shadow: 0 0 10px var(--green); }
-.inp-trig-badge { position: absolute; right: 4px; bottom: 4px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
-  background: var(--green); color: #fff; opacity: 0; transform: scale(0.3);
+/* Done: the glyph in the middle turns into a green check (the dots stay clear) */
+.inp-trig-badge { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 56px; height: 56px; margin: -28px;
+  border-radius: 50%; background: var(--green); color: #fff; box-shadow: 0 0 16px -2px var(--green); opacity: 0; transform: scale(0.4) rotate(-30deg);
   transition: opacity var(--dur-med), transform var(--dur-slow) var(--ease-spring); }
-.inp-trig-badge .icon { width: 16px; height: 16px; }
-.inp-trig-check[data-phase="done"] .inp-trig-badge { opacity: 1; transform: scale(1); }
+.inp-trig-badge .icon { width: 28px; height: 28px; }
+.inp-trig-check[data-phase="done"] .inp-trig-badge { opacity: 1; transform: none; }
 @keyframes inp-trig-wait { 50% { opacity: 0.45; } }
 .inp-trig-status { display: flex; align-items: center; justify-content: center; gap: var(--space-2); max-width: 28ch;
   min-height: 2.6em; color: var(--text-muted); font-size: var(--text-sm); }

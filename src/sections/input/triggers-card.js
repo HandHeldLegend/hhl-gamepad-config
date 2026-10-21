@@ -95,7 +95,7 @@ export function triggersCard(session, { device, calib, onChange }) {
     const found = st.detected ? t('Mechanical (found from use)') : t('Analog');
     const [ic, text] = r.phase === 'counting' ? [null, t('{n} of {total} clicks', { n: Math.min(r.clicks, CLICKS), total: CLICKS })]
       : r.phase === 'checking' ? ['spinner', t('Checking…')]
-        : r.phase === 'done' ? ['check', t('Found: {result}', { result: found })]
+        : r.phase === 'done' ? [null, t('Found: {result}', { result: found })] // the ring shows the check
           : [null, t('Now: {result}. Click the trigger {n} times to check it.', { result: found, n: CLICKS })];
     r.statusText.textContent = text;
     r.statusIcon.replaceChildren(ic === 'spinner' ? h('span.spinner.motion-ok') : ic ? icon(ic) : '');
