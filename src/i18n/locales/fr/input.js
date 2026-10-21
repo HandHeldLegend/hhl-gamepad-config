@@ -305,4 +305,6 @@ export default {
   "Check your triggers.": "Vérifiez vos gâchettes.",
   "Click each trigger a few times so the controller knows whether they’re analog or mechanical.": "Cliquez quelques fois sur chaque gâchette pour que la manette sache si elles sont analogiques ou mécaniques.",
   "Check now": "Vérifier maintenant",
+  "Playing through Steam?": "Vous jouez via Steam ?",
+  "After a trigger changes type, turn the controller off and on (or unplug it and plug it back in), then quit Steam completely (right-click its icon by the clock and choose Exit) and open it again. Steam only checks the triggers when both start.": "Quand une gâchette change de type, éteignez puis rallumez la manette (ou débranchez-la et rebranchez-la), puis quittez complètement Steam (clic droit sur son icône près de l’horloge, puis Quitter) et relancez-le. Steam ne vérifie les gâchettes qu’au démarrage des deux.",
 };

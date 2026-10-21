@@ -305,4 +305,6 @@ export default {
   "Check your triggers.": "トリガーを確認してください。",
   "Click each trigger a few times so the controller knows whether they’re analog or mechanical.": "各トリガーを数回クリックすると、コントローラーがアナログかメカニカルかを判別します。",
   "Check now": "今すぐ確認",
+  "Playing through Steam?": "Steam でプレイしていますか？",
+  "After a trigger changes type, turn the controller off and on (or unplug it and plug it back in), then quit Steam completely (right-click its icon by the clock and choose Exit) and open it again. Steam only checks the triggers when both start.": "トリガーの種類が変わったら、コントローラーの電源を入れ直し（または抜き差しし）、Steam を完全に終了して（時計の近くのアイコンを右クリックして「終了」）、もう一度起動してください。Steam は両方が起動したときにだけトリガーを確認します。",
 };

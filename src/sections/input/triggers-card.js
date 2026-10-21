@@ -16,7 +16,7 @@
  * mechanical (the page rebuilds its inputs); onChecked when the owner finishes with Done.
  */
 import { h } from '../../ui/dom.js';
-import { card, segmented, button } from '../../ui/controls.js';
+import { card, segmented, button, callout } from '../../ui/controls.js';
 import { toast } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { t } from '../../i18n/index.js';
@@ -46,6 +46,13 @@ const codeOf = (key) => INPUT_CODES.find((c) => c.key === key)?.code;
  */
 const kept = new Map();
 
+/**
+ * Steam (SInput mode) learns which triggers are analog when the controller starts, and keeps what it
+ * learned until it quits: after a trigger changes type, the controller needs a restart and Steam a full
+ * exit and relaunch. Shown once a type changed while the app was open, until dismissed.
+ */
+const steamNote = { show: false };
+
 export function triggersCard(session, { device, calib, onChange, onChecked }) {
   let key = mechanicalKey(session);
   let busy = false;
@@ -53,8 +60,16 @@ export function triggersCard(session, { device, calib, onChange, onChecked }) {
     const k = mechanicalKey(session);
     if (k === key) return;
     key = k;
+    steamNote.show = true;
     onChange?.();
   };
+  const note = h('div.inp-trig-steam');
+  function paintNote() {
+    note.replaceChildren(...(steamNote.show ? [callout({ tone: 'blue', icon: 'info', title: t('Playing through Steam?'),
+      text: t('After a trigger changes type, turn the controller off and on (or unplug it and plug it back in), then quit Steam completely (right-click its icon by the clock and choose Exit) and open it again. Steam only checks the triggers when both start.') },
+    h('div.row', { style: { marginTop: '8px' } },
+      button({ label: t('Got it'), size: 'sm', variant: 'tonal', onClick: () => { steamNote.show = false; paintNote(); } })))] : []));
+  }
   const sideName = (s) => (s.side === 'left' ? t('Left trigger') : t('Right trigger'));
   const typeName = (st) => (st.mechanical ? t('Mechanical') : t('Analog'));
   // Checking: until this controller was checked here, or after Check again
@@ -232,7 +247,8 @@ export function triggersCard(session, { device, calib, onChange, onChecked }) {
   paint();
   const el = card({ title: t('Triggers'), icon: 'trigger', tone: 'lavender',
     subtitle: t('Fitted mechanical triggers, or swapped them back? Leave this on Auto: click the trigger a few times and the controller notices. Or set it here.') },
-  h('div.inp-trigs', rows.map((r) => r.el)), finish);
+  h('div.inp-trigs', rows.map((r) => r.el)), finish, note);
+  paintNote();
   return {
     el,
     destroy: () => { stopWatch(); offReports(); rows.forEach((r) => clearTimeout(r.timer)); },
