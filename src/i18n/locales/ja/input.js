@@ -298,4 +298,11 @@ export default {
   "{input} uses the trigger’s mapping in {mode} mode: {output}, full press.": "{input} は {mode} モードでトリガーの割り当てを使用します：{output}、フル押し込み。",
   "Found: {result}": "検出：{result}",
   "Now: {result}. Click the trigger {n} times to check it.": "現在：{result}。確認するにはトリガーを {n} 回クリックしてください。",
+  "This trigger’s setting doesn’t match the trigger fitted": "このトリガーの設定が取り付けられたトリガーと一致しません",
+  "Click this trigger {n} times.": "このトリガーを {n} 回クリックしてください。",
+  "Your triggers are set.": "トリガーの設定が完了しました。",
+  "Fitted other triggers later? Come back to this Triggers tab and check them again, or set them by hand.": "あとで別のトリガーに交換したら、このトリガータブに戻って再確認するか、手動で設定してください。",
+  "Check your triggers.": "トリガーを確認してください。",
+  "Click each trigger a few times so the controller knows whether they’re analog or mechanical.": "各トリガーを数回クリックすると、コントローラーがアナログかメカニカルかを判別します。",
+  "Check now": "今すぐ確認",
 };

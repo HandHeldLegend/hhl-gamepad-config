@@ -44,7 +44,7 @@ import { createEditor } from './editor.js';
 import { createPopover } from './popover.js';
 import { createCalibration, renderCalibrationTab } from './calibration.js';
 import { triggersCard } from './triggers-card.js';
-import { triggersSupported, mechanicalSides, mechanicalKey } from '../../device/triggers.js';
+import { triggersSupported, mechanicalSides, mechanicalKey, triggerState, needsTriggerCheck, TRIGGER_SIDES } from '../../device/triggers.js';
 
 loadStyles(new URL('./input.css', import.meta.url));
 
@@ -390,7 +390,12 @@ function mountPage(root, ctx, { onTriggers }) {
       refreshTiles: (code) => { if (code == null) for (const t of tiles.values()) t.update(); else tiles.get(code)?.update(); },
     };
     setModeUI();
-    panel.append(h('div.stack', attention, modeCard, inputsCard, pop.el));
+    // Mechanical triggers not checked yet on this controller: ask, like the calibration reminder
+    const trigAsk = needsTriggerCheck(session)
+      ? callout({ tone: 'yellow', title: t('Check your triggers.'), text: `${t('Click each trigger a few times so the controller knows whether they’re analog or mechanical.')} ` },
+        button({ label: t('Check now'), size: 'sm', variant: 'tonal', icon: 'trigger', onClick: () => { tabs?.select('triggers'); ctx.setParams({ tab: 'triggers' }); } }))
+      : null;
+    panel.append(h('div.stack', attention, trigAsk, modeCard, inputsCard, pop.el));
 
     // Re-open the editor if one was selected (deep link on load, or after switching tabs).
     if (state.selected != null) openEditor(state.selected, { updateUrl: false });
@@ -417,24 +422,30 @@ function mountPage(root, ctx, { onTriggers }) {
 
   // ---- Page ---------------------------------------------------------------------------------------
 
-  // Mechanical triggers: the Triggers card, above the tabs
-  const trigCard = triggersSupported(session) ? triggersCard(session, { device, calib, onChange: onTriggers }) : null;
-  if (trigCard) root.append(trigCard.el);
+  // Mechanical triggers: the Triggers card, in its own tab (the controller keeps its finding, so
+  // once checked it needs no room on the main view)
+  const hasTriggers = triggersSupported(session);
+  const renderTriggers = (panel) => {
+    const c = triggersCard(session, { device, calib, onChange: onTriggers, onChecked: paintTrigBadge });
+    panel.append(c.el);
+    return c.destroy;
+  };
 
   const showCalibration = hoverInputs.length > 0 || !session.config.hover.hover_calibration_set;
   const initialInput = findInput(ctx.params.input);
   let tabs = null;
   if (initialInput) state.selected = initialInput.code;
 
-  if (showCalibration) {
+  if (showCalibration || hasTriggers) {
     tabs = tabView({
       tone: 'lavender',
       value: initialInput ? 'remap' : ctx.params.tab,
       tabs: [
         { id: 'remap', label: t('Remap'), icon: 'input', render: renderRemap },
-        { id: 'calibrate', label: t('Analog calibration'), icon: 'calibrate',
+        showCalibration && { id: 'calibrate', label: t('Analog calibration'), icon: 'calibrate',
           render: (panel) => renderCalibrationTab(panel, { session, calib, hoverInputs, live }) },
-      ],
+        hasTriggers && { id: 'triggers', label: t('Triggers'), icon: 'trigger', render: renderTriggers },
+      ].filter(Boolean),
       onChange: (id) => ctx.setParams({ tab: id }),
     });
     root.append(tabs);
@@ -451,11 +462,23 @@ function mountPage(root, ctx, { onTriggers }) {
   tabBadge.title = t('Needs calibration');
   const paintTabBadge = () => {
     const need = hoverInputs.length > 0 && !session.config.hover.hover_calibration_set && calib.active == null;
-    if (need) tabs.querySelector?.('[role="tab"]:last-child')?.append(tabBadge);
+    if (need) tabs.querySelectorAll?.('[role="tab"]')[1]?.append(tabBadge);
     else tabBadge.remove();
   };
+  const trigBadge = badge('!', 'yellow');
+  trigBadge.classList.add('inp-tab-badge');
+  paintTrigBadge();
   const offTabBadge = showCalibration ? calib.on(paintTabBadge) : () => {};
   if (showCalibration) paintTabBadge();
+  // Flag the Triggers tab until they were checked, or when a forced choice no longer matches the trigger
+  function paintTrigBadge() {
+    if (!hasTriggers) return;
+    const mismatch = TRIGGER_SIDES.some((x) => triggerState(session, x.index).mismatch);
+    const need = needsTriggerCheck(session);
+    trigBadge.title = mismatch ? t('This trigger’s setting doesn’t match the trigger fitted') : t('Check your triggers.');
+    if (mismatch || need) tabs.querySelector?.('[role="tab"]:last-child')?.append(trigBadge);
+    else trigBadge.remove();
+  }
 
   return {
     update(params) {
@@ -470,7 +493,6 @@ function mountPage(root, ctx, { onTriggers }) {
       if (!inp && params.tab && tabs?.value !== params.tab) tabs.select(params.tab);
     },
     destroy() {
-      trigCard?.destroy();
       cancelAnimationFrame(raf);
       stopLive();
       stopWatch?.();

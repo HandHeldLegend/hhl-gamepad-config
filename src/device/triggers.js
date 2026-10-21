@@ -97,3 +97,32 @@ export async function setTriggerChoice(session, index, choice) {
   await session.commit('hover', { immediate: true });
   return session.save();
 }
+
+// ---- Checked once ----------------------------------------------------------------------------
+// The controller keeps its finding, but not whether its owner went through the check. This browser
+// remembers that per controller (its Bluetooth address), so the Input page asks only until it's done.
+
+const CHECKED_KEY = 'hhl-config:triggers-checked';
+const unitKey = (session) => {
+  const mac = session.config?.gamepad?.gamepad_mac_address;
+  return mac ? Array.from(mac, (b) => b.toString(16).padStart(2, '0')).join('') : null;
+};
+function loadChecked() {
+  try { const v = JSON.parse(localStorage.getItem(CHECKED_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
+}
+
+/** Whether the Input page should ask for the trigger check: supported, a side on Auto, never checked here. */
+export function needsTriggerCheck(session) {
+  if (!triggersSupported(session)) return false;
+  if (!TRIGGER_SIDES.some((s) => triggerState(session, s.index).choice === TRIGGER_CHOICE.AUTO)) return false;
+  const key = unitKey(session);
+  return !!key && !loadChecked().includes(key);
+}
+
+/** Remember that this controller's triggers were checked (the last 32 controllers). */
+export function markTriggersChecked(session) {
+  const key = unitKey(session);
+  if (!key) return;
+  const list = [key, ...loadChecked().filter((k) => k !== key)].slice(0, 32);
+  try { localStorage.setItem(CHECKED_KEY, JSON.stringify(list)); } catch { /* storage blocked */ }
+}

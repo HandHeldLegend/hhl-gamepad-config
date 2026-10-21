@@ -298,4 +298,11 @@ export default {
   "{input} uses the trigger’s mapping in {mode} mode: {output}, full press.": "{input} utilise l’affectation de la gâchette en mode {mode} : {output}, appui complet.",
   "Found: {result}": "Détecté : {result}",
   "Now: {result}. Click the trigger {n} times to check it.": "Actuellement : {result}. Cliquez la gâchette {n} fois pour la vérifier.",
+  "This trigger’s setting doesn’t match the trigger fitted": "Le réglage de cette gâchette ne correspond pas à la gâchette montée",
+  "Click this trigger {n} times.": "Cliquez cette gâchette {n} fois.",
+  "Your triggers are set.": "Vos gâchettes sont réglées.",
+  "Fitted other triggers later? Come back to this Triggers tab and check them again, or set them by hand.": "Vous changez de gâchettes plus tard ? Revenez dans cet onglet Gâchettes pour les vérifier à nouveau, ou réglez-les à la main.",
+  "Check your triggers.": "Vérifiez vos gâchettes.",
+  "Click each trigger a few times so the controller knows whether they’re analog or mechanical.": "Cliquez quelques fois sur chaque gâchette pour que la manette sache si elles sont analogiques ou mécaniques.",
+  "Check now": "Vérifier maintenant",
 };

@@ -307,3 +307,13 @@
 .inp-trig-hint:empty { display: none; }
 .inp-trig-mismatch { display: grid; justify-items: center; gap: var(--space-2); padding: 8px 12px; border-radius: var(--radius-md);
   background: var(--yellow-soft); color: var(--yellow-ink); animation: rise-in var(--dur-med) var(--ease-out); }
+/* Checked: the type, and Check again */
+.inp-trig-summary { display: grid; justify-items: center; gap: var(--space-1); }
+.inp-trig-summary[hidden] { display: none; }
+.inp-trig-type { padding: 4px 14px; border-radius: var(--radius-pill); background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; }
+.inp-trig-type.is-mech { background: var(--blue-soft); color: var(--blue-ink); }
+/* Every check done: the result, a note, and Done */
+.inp-trig-finish { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md); background: var(--green-soft); animation: rise-in var(--dur-slow) var(--ease-out); }
+.inp-trig-finish[hidden] { display: none; }
+.inp-trig-finish-text { flex: 1; min-width: 220px; display: grid; gap: 2px; }

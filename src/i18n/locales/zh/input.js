@@ -248,4 +248,11 @@ export default {
   "{input} uses the trigger’s mapping in {mode} mode: {output}, full press.": "{input} 在 {mode} 模式下使用扳机的映射：{output}，按到底。",
   "Found: {result}": "检测结果：{result}",
   "Now: {result}. Click the trigger {n} times to check it.": "当前：{result}。按扳机 {n} 次进行检查。",
+  "This trigger’s setting doesn’t match the trigger fitted": "此扳机的设置与安装的扳机不符",
+  "Click this trigger {n} times.": "按这个扳机 {n} 次。",
+  "Your triggers are set.": "扳机已设置好。",
+  "Fitted other triggers later? Come back to this Triggers tab and check them again, or set them by hand.": "以后换了别的扳机？回到这个“扳机”标签页重新检查，或手动设置。",
+  "Check your triggers.": "请检查你的扳机。",
+  "Click each trigger a few times so the controller knows whether they’re analog or mechanical.": "每个扳机按几下，手柄就能知道它们是模拟的还是机械的。",
+  "Check now": "立即检查",
 };

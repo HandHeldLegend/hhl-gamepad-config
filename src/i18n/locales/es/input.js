@@ -298,4 +298,11 @@ export default {
   "{input} uses the trigger’s mapping in {mode} mode: {output}, full press.": "{input} usa la asignación del gatillo en el modo {mode}: {output}, a fondo.",
   "Found: {result}": "Detectado: {result}",
   "Now: {result}. Click the trigger {n} times to check it.": "Ahora: {result}. Haz clic en el gatillo {n} veces para comprobarlo.",
+  "This trigger’s setting doesn’t match the trigger fitted": "El ajuste de este gatillo no coincide con el gatillo instalado",
+  "Click this trigger {n} times.": "Haz clic en este gatillo {n} veces.",
+  "Your triggers are set.": "Tus gatillos están listos.",
+  "Fitted other triggers later? Come back to this Triggers tab and check them again, or set them by hand.": "¿Cambias de gatillos más adelante? Vuelve a esta pestaña Gatillos y compruébalos de nuevo, o ajústalos a mano.",
+  "Check your triggers.": "Comprueba tus gatillos.",
+  "Click each trigger a few times so the controller knows whether they’re analog or mechanical.": "Haz clic en cada gatillo unas cuantas veces para que el control sepa si son analógicos o mecánicos.",
+  "Check now": "Comprobar ahora",
 };
