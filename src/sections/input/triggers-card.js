@@ -238,6 +238,7 @@ export function triggersCard(session, { device, calib, onChange, onChecked }) {
     }
     paint();
     changed();
+    session.refreshAttention?.(); // the menu's dot: a hand-set type may now match, or not
   }
 
   // A finding can also change on its own (the owner clicking with the check closed)
