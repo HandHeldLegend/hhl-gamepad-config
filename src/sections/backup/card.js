@@ -7,10 +7,10 @@
 import { h } from '../../ui/dom.js';
 import { card, button, callout, toggle, badge } from '../../ui/controls.js';
 import { icon } from '../../ui/icons.js';
-import { openDialog, toast } from '../../ui/overlay.js';
+import { openDialog, toast, confirmDialog } from '../../ui/overlay.js';
 import { t, N_, plural, fmt } from '../../i18n/index.js';
 import { createBackup, backupFileName, parseBackup, planRestore, applyRestore, unitId } from './backup.js';
-import { listBackups, connectionBackup, snapshot, history, KEEP } from './history.js';
+import { listBackups, connectionBackup, snapshot, history, deleteBackups, KEEP } from './history.js';
 
 const BLOCK_LABELS = {
   gamepad: N_('Gamepad'), hover: N_('Analog triggers'), analog: N_('Joysticks'), rgb: N_('RGB'), trigger: N_('Triggers'),
@@ -128,8 +128,15 @@ const fwDate = (n) => {
   return v > 1.4e9 && v < 4e9 ? fmt.date(new Date(v * 1000)) : String(v);
 };
 
-/** How many controllers show before "Show N more". */
-const SHOWN = 4;
+/** The firm part of every delete warning. */
+const DELETE_WARNING = N_('Automatic backups are only kept in this browser. Once deleted, they’re gone for good and can’t be restored. Download one first if you might need it.');
+
+/** Delete backups after a firm warning. */
+async function confirmDelete({ title, ids }) {
+  const ok = await confirmDialog({ title, message: t(DELETE_WARNING), confirmLabel: t('Delete'), danger: true });
+  if (!ok) return;
+  if (!(await deleteBackups(ids))) toast(t('Couldn’t delete the backups. Try again.'), { tone: 'red' });
+}
 
 /** The owner's name saved in a backup (the User page), or ''. */
 function ownerName(backup) {
@@ -142,7 +149,7 @@ function ownerName(backup) {
   return '';
 }
 
-/** One automatic backup on a controller's timeline: when, which firmware, and Restore / Download. */
+/** One automatic backup on a controller's timeline: when, which firmware, and Restore / Download / Delete. */
 function entryRow(e, session, { isCurrent }) {
   return h('li.bk-entry', { class: isCurrent ? 'is-current' : null },
     h('span.bk-entry-dot'),
@@ -155,13 +162,16 @@ function entryRow(e, session, { isCurrent }) {
         title: isCurrent ? t('The controller already has these settings.') : null,
         onClick: () => openRestoreDialog(e.backup, session),
       }),
-      button({ icon: 'download', size: 'sm', variant: 'ghost', title: t('Download as a file'), onClick: () => saveFile(e.backup) })));
+      button({ icon: 'download', size: 'sm', variant: 'ghost', title: t('Download as a file'), onClick: () => saveFile(e.backup) }),
+      button({ icon: 'trash', size: 'sm', variant: 'ghost', class: 'bk-del', title: t('Delete this backup'),
+        onClick: () => confirmDelete({ title: t('Delete this backup?'), ids: [e.id] }) })));
 }
 
 /**
- * The automatic backups, one card per controller (newest first, the connected one on top and open):
- * its name, how many versions and the latest, and its versions as a timeline when opened. One card is
- * open at a time. Past SHOWN controllers, the rest wait behind "Show N more".
+ * The automatic backups, one card per controller: its name, how many versions and the latest, and,
+ * opened, its versions as a timeline (Restore, Download, Delete) and Delete all. Up front only the
+ * connected controller's card shows; the others wait behind "Show N other controllers". One card is
+ * open at a time.
  */
 async function autoBackups(session, ui) {
   const all = await listBackups();
@@ -192,15 +202,22 @@ async function autoBackups(session, ui) {
           h('span.bk-unit-sub', plural(g.entries.length, '{n} backup', '{n} backups'), ' · ',
             t('latest {when}', { when: when(g.entries[0].created) }))),
         h('span.bk-unit-chev', icon('chevron-down'))),
-      h('ol.bk-entries', g.entries.map((e) => entryRow(e, session, { isCurrent: !!latest && e.id === latest.id }))));
-    if (ui.open === g.unit || (ui.open == null && g.mine)) d.open = true;
+      h('ol.bk-entries', g.entries.map((e) => entryRow(e, session, { isCurrent: !!latest && e.id === latest.id }))),
+      h('div.bk-unit-foot',
+        button({ label: plural(g.entries.length, 'Delete this backup', 'Delete all {n} backups'), icon: 'trash', size: 'sm', variant: 'ghost', class: 'bk-del',
+          onClick: () => confirmDelete({ title: t('Delete every backup of {name}?', { name: title(g, i) }), ids: g.entries.map((e) => e.id) }) })));
+    if (ui.open === g.unit) d.open = true;
     d.addEventListener('toggle', () => { if (d.open) ui.open = g.unit; else if (ui.open === g.unit) ui.open = ''; });
     return d;
   });
-  const hide = ui.all ? [] : cards.slice(SHOWN).filter((c) => !c.open);
+  // Up front: the connected controller only (and one left open); the rest behind one button
+  const hide = ui.all ? [] : cards.filter((c, i) => !list[i].mine && !c.open);
   hide.forEach((c) => { c.hidden = true; });
+  const others = list.some((g) => g.mine);
   const more = hide.length > 0 && button({
-    label: plural(hide.length, 'Show {n} more controller', 'Show {n} more controllers'),
+    label: others
+      ? plural(hide.length, 'Show {n} other controller', 'Show {n} other controllers')
+      : plural(hide.length, 'Show backups of {n} controller', 'Show backups of {n} controllers'),
     icon: 'chevron-down', size: 'sm', variant: 'ghost',
     onClick: () => { ui.all = true; hide.forEach((c) => { c.hidden = false; c.classList.add('bk-unit-in'); }); more.remove(); },
   });
@@ -251,6 +268,8 @@ export function backupCard(session) {
     .bk-entry-text .field-desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .bk-entry-when { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); font-weight: 600; font-size: var(--text-sm); }
     .bk-entry-actions { display: flex; gap: 2px; flex: none; }
+    .bk-del:hover { color: var(--red); }
+    .bk-unit-foot { display: flex; justify-content: flex-end; padding: 0 12px 10px; }
     .bk-summary .bk-list { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
     .bk-cal { display: flex; gap: 12px; align-items: flex-start; }
     .bk-cal > span { display: grid; gap: 2px; }

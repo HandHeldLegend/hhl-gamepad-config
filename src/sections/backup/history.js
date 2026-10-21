@@ -115,6 +115,23 @@ export async function snapshot(session) {
   }
 }
 
+/**
+ * Delete stored backups by id (the owner asked, after a warning). They can't be brought back: this
+ * browser holds the only copy. Resolves true when deleted.
+ */
+export async function deleteBackups(ids) {
+  if (!globalThis.indexedDB || !ids.length) return false;
+  try {
+    await withStore('readwrite', async (store) => { for (const id of ids) store.delete(id); });
+    if (current && ids.includes(current.id)) current = null;
+    changed();
+    return true;
+  } catch (err) {
+    console.warn('[backup] delete failed', err);
+    return false;
+  }
+}
+
 /** Snapshot every controller as it connects. */
 export function initAutoBackup(session) {
   session.on('state', ({ state }) => {
