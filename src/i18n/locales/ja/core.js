@@ -547,4 +547,7 @@ export default {
   "On Linux, {browser} keeps Bluetooth behind a setting. Open this address, set it to Enabled, then relaunch {browser}.": "Linux では、{browser} の Bluetooth は設定でオフになっています。このアドレスを開いて Enabled にし、{browser} を再起動してください。",
   "How to turn it on": "オンにする方法",
   "Check your triggers": "トリガーを確認してください",
+  "Remove?": "削除しますか？",
+  "Remove": "削除",
+  "Remove {name}": "{name} を削除",
 };

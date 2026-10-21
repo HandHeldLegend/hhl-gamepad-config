@@ -547,4 +547,7 @@ export default {
   "On Linux, {browser} keeps Bluetooth behind a setting. Open this address, set it to Enabled, then relaunch {browser}.": "En Linux, {browser} tiene Bluetooth tras un ajuste. Abre esta dirección, ponla en Enabled y reinicia {browser}.",
   "How to turn it on": "Cómo activarlo",
   "Check your triggers": "Comprueba tus gatillos",
+  "Remove?": "¿Quitar?",
+  "Remove": "Quitar",
+  "Remove {name}": "Quitar {name}",
 };

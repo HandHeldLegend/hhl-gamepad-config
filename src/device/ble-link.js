@@ -180,6 +180,16 @@ export async function rememberedBluetoothControllers() {
   }
 }
 
+/**
+ * Forget a remembered controller: this browser's token for it, and the browser's own permission
+ * (BluetoothDevice.forget, where the browser has it), so it leaves the remembered list. Using it again
+ * means picking it in the browser's chooser and entering the button code once more.
+ */
+export async function forgetBluetoothController(bt) {
+  saveToken(bt.id, null);
+  try { await bt.forget?.(); } catch (err) { console.warn('[ble] forget failed', err); }
+}
+
 function parseUpdateState(p) {
   return { status: p[0], written: (p[1] | (p[2] << 8) | (p[3] << 16) | (p[4] << 24)) >>> 0 };
 }

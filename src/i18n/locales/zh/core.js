@@ -534,4 +534,7 @@ export default {
   "On Linux, {browser} keeps Bluetooth behind a setting. Open this address, set it to Enabled, then relaunch {browser}.": "在 Linux 上，{browser} 的蓝牙需要在设置中开启。打开此地址，设为 Enabled，然后重新启动 {browser}。",
   "How to turn it on": "如何开启",
   "Check your triggers": "请检查扳机",
+  "Remove?": "移除？",
+  "Remove": "移除",
+  "Remove {name}": "移除 {name}",
 };
