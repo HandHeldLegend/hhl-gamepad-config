@@ -157,19 +157,6 @@
 .page:has(.lr-split:not(.single)) { max-width: 1240px; } /* left/right pages get room for two columns */
 .page:has(.card-grid) { max-width: 1160px; } /* pages with side-by-side cards */
 .page.page-enter { animation: rise-in var(--dur-slow) var(--ease-out) both; }
-/* Screen door (shell.js): a section slides in from the right over Home; back slides it out again */
-.main { overflow-x: clip; }
-.page.page-in-right { animation: page-in-right 480ms cubic-bezier(0.22, 1, 0.36, 1) both; background: var(--bg);
-  box-shadow: -24px 0 40px -28px rgba(0, 0, 0, 0.55); }
-.page.page-in-back { animation: page-in-back 420ms var(--ease-out) both; }
-.page-ghost { position: fixed; margin: 0; pointer-events: none; }
-.page-ghost.page-out-fade { animation: page-out-fade 480ms var(--ease-out) both; }
-.page-ghost.page-out-right { animation: page-out-right 460ms cubic-bezier(0.55, 0, 0.75, 0.3) both; background: var(--bg);
-  box-shadow: -24px 0 40px -28px rgba(0, 0, 0, 0.55); }
-@keyframes page-in-right { from { transform: translateX(100vw); } to { transform: none; } }
-@keyframes page-in-back { from { opacity: 0.4; transform: translateX(-24px) scale(0.99); } to { opacity: 1; transform: none; } }
-@keyframes page-out-fade { to { opacity: 0.35; transform: translateX(-32px) scale(0.98); } }
-@keyframes page-out-right { to { transform: translateX(100vw); } }
 .page-body { display: flex; flex-direction: column; gap: var(--space-4); }
 .page-head { display: flex; align-items: center; gap: var(--space-3); }
 .page-head .page-titles { min-width: 0; flex: 1; }
@@ -323,6 +310,7 @@ html.layout-simple .app[data-page="home"] .page { max-width: 720px; }
   background: var(--blue); animation: fade-in var(--dur-med) var(--ease-out); }
 .simple-icon-dot.warn { background: var(--yellow); }
 /* Simple layout: Back sits at the app bar's top left (where HOJA 2 had it), in place of the logo */
-html.layout-simple .app:not([data-page="home"]) .appbar-back { display: inline-flex; }
+html.layout-simple .app:not([data-page="home"]) .appbar-back { display: inline-flex; animation: fade-in var(--dur-med) var(--ease-out); }
+html.layout-simple .app[data-page="home"] .brand { animation: fade-in var(--dur-med) var(--ease-out); }
 html.layout-simple .app:not([data-page="home"]) .brand { display: none; }
 html.layout-simple .page-head > .back-btn { display: none; }

@@ -23,7 +23,7 @@ import { session } from '../device/session.js';
 import { device } from '../device/hoja-device.js';
 import { isDemo, startDemo } from '../device/mock.js';
 import { onRoute, currentRoute, navigate, setParams } from './router.js';
-import { prefs, prefersReducedMotion } from './prefs.js';
+import { prefs } from './prefs.js';
 import { pwa } from './pwa.js';
 import { isIOS, explainIOS } from './platform.js';
 import { isLinux, explainLinux } from './linux.js';
@@ -166,7 +166,6 @@ export function createShell(root) {
   let chipDot; let chipName; let chipSub; let chip;
   let saveBtn; let connectBtn; let installBtn;
   let page; let main; let frame;
-  let shownSection = null; // the page on screen, for the screen-door transition's direction
   const navLinks = new Map();
 
   function build() {
@@ -378,39 +377,12 @@ export function createShell(root) {
     if (mounted?.section.keepsScroll) keptScrollY.set(mounted.section.id, window.scrollY);
     teardown();
     for (const [id, a] of navLinks) a.toggleAttribute('aria-current', id === section.id);
-    const leavingRect = page?.getBoundingClientRect(); // before the frame says which page: its styles follow that
     frame.dataset.page = section.id;
     document.title = section.id === 'home' ? 'HHL Gamepad Config' : `${t(section.title)} · HHL Gamepad Config`;
 
-    // Screen door, after HOJA 2: a section slides in from the right over Home, and going back slides it
-    // out to the right again. The leaving page is pinned where it was on screen (fixed), so the next
-    // page's scroll position can't drag it about, and removed once it's gone.
-    const from = shownSection;
-    shownSection = section.id;
-    const dir = from === 'home' && section.id !== 'home' ? 'forward'
-      : from && from !== 'home' && section.id === 'home' ? 'back' : 'none';
-    if (dir !== 'none' && page.childElementCount && !prefersReducedMotion()) {
-      // The leaving page moves into a fixed box of its own size, so the next page's styles (Home's
-      // narrower column, the page's own width rules) can't reshape it while it animates away
-      const leaving = page;
-      const r = leavingRect;
-      const ghost = h('div.page-ghost', { 'aria-hidden': 'true', class: dir === 'back' ? 'page-out-right' : 'page-out-fade',
-        style: { top: `${r.top}px`, left: `${r.left}px`, width: `${r.width}px`, zIndex: dir === 'back' ? '40' : '0' } });
-      leaving.classList.remove('page-enter', 'page-in-right', 'page-in-back');
-      leaving.style.maxWidth = 'none';
-      leaving.style.margin = '0';
-      ghost.append(leaving);
-      document.body.append(ghost);
-      const drop = () => ghost.remove();
-      ghost.addEventListener('animationend', (e) => { if (e.target === ghost) drop(); }); // not its children's
-      setTimeout(drop, 900);
-      page = h('div.page');
-      main.append(page);
-    }
     const content = h('div.page-body');
     replace(page, pageHeader(section), content);
-    const enter = dir === 'forward' ? 'page-in-right' : dir === 'back' ? 'page-in-back' : 'page-enter';
-    page.classList.remove('page-enter', 'page-in-right', 'page-in-back'); void page.offsetWidth; page.classList.add(enter);
+    page.classList.remove('page-enter'); void page.offsetWidth; page.classList.add('page-enter');
     if (!section.keepsScroll) placeScroll(0); // a keepsScroll page is placed once mounted (below)
 
     if (reason) {
