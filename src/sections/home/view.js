@@ -151,6 +151,11 @@ function simpleHome(session) {
 
 export function mount(root, { session, device }) {
   let hub = null;
+  // Home redraws when the attention check or the firmware check reports in (several times right after
+  // connecting). Only the parts around the quick settings are redrawn: the hub stays the same element,
+  // never taken out and put back (that restarted its animations, so the profile buttons blinked).
+  const before = h('div.home-slot');
+  const after = h('div.home-slot');
   const render = () => {
     if (prefs.get('layout') === 'simple') {
       hub?.destroy();
@@ -159,14 +164,14 @@ export function mount(root, { session, device }) {
       return;
     }
     const dongleOnly = session.state === 'dongle';
-    hub?.destroy();
-    hub = session.connected ? quickHub(session, device) : null;
-    replace(root,
-      session.connected ? deviceCard(session) : dongleOnly ? dongleCard(session) : hero(session),
-      hub,
+    if (!session.connected) { hub?.destroy(); hub = null; } else if (!hub) hub = quickHub(session, device);
+    replace(before, session.connected ? deviceCard(session) : dongleOnly ? dongleCard(session) : hero(session));
+    replace(after,
       !session.connected && !dongleOnly && connectTips(),
       h('h2.section-heading', session.connected ? t('Configure') : t('Explore')),
       tiles(session));
+    const want = [before, hub, after].filter(Boolean);
+    if (want.some((el, i) => root.children[i] !== el) || root.children.length !== want.length) root.replaceChildren(...want);
   };
   render();
   const offs = [session.on('attention', render), session.on('firmware', render), prefs.on('layout', render)];

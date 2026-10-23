@@ -274,6 +274,8 @@ h1 .beta-badge { font-size: 0.72rem; position: relative; top: -0.15em; }
 /* Profiles: a button each, all in view (two to a row on a phone, four across when they fit); a long
    name ends in an ellipsis. Rename and Copy from… sit below. */
 .hub-profile-control { --gap: var(--space-2); width: 100%; }
+/* Home's redrawn parts around the quick settings (home/view.js): their children lay out as if direct */
+.home-slot { display: contents; }
 .hub-profiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-2); }
 .hub-profiles .btn { min-width: 0; }
 .hub-profiles .btn-label { overflow: hidden; text-overflow: ellipsis; }
