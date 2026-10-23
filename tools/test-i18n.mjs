@@ -9,7 +9,7 @@
  * Strings are collected from:
  *   - t('…') and plural(n, '…', '…') calls with literal text in src/**.js (not template literals with ${}),
  *   - N_('…') markers (for literals translated later, e.g. attention texts in session.js),
- *   - registry.js (section titles/summaries, group titles) and every SettingDef (label, description,
+ *   - registry.js (section titles/summaries, group titles) and every SettingDef (label, short, description,
  *     tip, placeholder, unit, option labels).
  * Each string belongs to an "area" (src/sections/<id>/ → <id>, settings keys → their section, the rest →
  * core) which maps to src/i18n/locales/<lang>/<area>.js. A string counts as translated if ANY area file of
@@ -111,7 +111,7 @@ export async function collect() {
   const { SETTINGS } = await import(pathToFileURL(path.join(ROOT, 'src/settings/schema.js')).href);
   for (const d of SETTINGS) {
     const area = d.key.split('.')[0];
-    for (const v of [d.label, d.description, d.tip, d.placeholder, d.unit]) add(v, area);
+    for (const v of [d.label, d.short, d.description, d.tip, d.placeholder, d.unit]) add(v, area);
     for (const o of d.options || []) add(o.label, area);
   }
   return strings;

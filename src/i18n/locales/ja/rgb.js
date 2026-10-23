@@ -77,4 +77,11 @@ export default {
   'On battery': 'バッテリー駆動',
   'Idle glow colors': 'アイドル時の点灯色',
   "Face buttons light up by their printed letter in the classic colors of the current output mode (Switch / SNES: A red, B yellow, X blue, Y green; Steam / XInput: A green, B red, X blue, Y yellow); other LEDs glow soft white. Your colors are only used for the player LEDs.": "フェイスボタンは印字された文字に応じて、現在の出力モードの定番カラーで光ります（Switch / SNES：Aが赤、Bが黄、Xが青、Yが緑。Steam / XInput：Aが緑、Bが赤、Xが青、Yが黄）。その他のLEDは柔らかい白で光ります。あなたの色はプレイヤーLEDにのみ使われます。",
+  "Classic face-button colors for each mode.": "モードごとの定番のボタンカラー。",
+  "Your colors, glowing steadily.": "選んだ色で常時点灯。",
+  "Fades through the rainbow.": "虹色に変化。",
+  "Lights up as you press.": "押すと光る。",
+  "Blends your first six colors.": "最初の 6 色を混ぜ合わせる。",
+  "Lower is faster.": "小さいほど速い。",
+  "A battery light when idle.": "待機中にバッテリーランプを表示。",
 };
