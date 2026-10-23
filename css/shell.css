@@ -157,13 +157,30 @@
 .page:has(.lr-split:not(.single)) { max-width: 1240px; } /* left/right pages get room for two columns */
 .page:has(.card-grid) { max-width: 1160px; } /* pages with side-by-side cards */
 .page.page-enter { animation: rise-in var(--dur-slow) var(--ease-out) both; }
+/* Screen door (shell.js): a section slides in from the right over Home; back slides it out again */
+.main { overflow-x: clip; }
+.page.page-in-right { animation: page-in-right 480ms cubic-bezier(0.22, 1, 0.36, 1) both; background: var(--bg);
+  box-shadow: -24px 0 40px -28px rgba(0, 0, 0, 0.55); }
+.page.page-in-back { animation: page-in-back 420ms var(--ease-out) both; }
+.page-ghost { position: fixed; margin: 0; pointer-events: none; }
+.page-ghost.page-out-fade { animation: page-out-fade 480ms var(--ease-out) both; }
+.page-ghost.page-out-right { animation: page-out-right 460ms cubic-bezier(0.55, 0, 0.75, 0.3) both; background: var(--bg);
+  box-shadow: -24px 0 40px -28px rgba(0, 0, 0, 0.55); }
+@keyframes page-in-right { from { transform: translateX(100vw); } to { transform: none; } }
+@keyframes page-in-back { from { opacity: 0.4; transform: translateX(-24px) scale(0.99); } to { opacity: 1; transform: none; } }
+@keyframes page-out-fade { to { opacity: 0.35; transform: translateX(-32px) scale(0.98); } }
+@keyframes page-out-right { to { transform: translateX(100vw); } }
 .page-body { display: flex; flex-direction: column; gap: var(--space-4); }
 .page-head { display: flex; align-items: center; gap: var(--space-3); }
 .page-head .page-titles { min-width: 0; flex: 1; }
 .page-head h1 { font-size: 1.5rem; }
 .page-head p { font-size: var(--text-sm); margin-top: 1px; line-height: 1.4; }
 .page-head-extra { display: flex; gap: var(--space-2); align-items: center; }
-.app.wide .page-head > .btn:first-child { display: none; } /* back button only on narrow layouts */
+/* Back to Home: arrow, "Back" and the Esc key hint (computers) */
+.back-btn { gap: 6px; }
+.esc-hint { margin-left: 2px; padding: 1px 6px; border: 1px solid var(--border-strong); border-radius: 6px; font: 600 var(--text-xs) var(--font-mono);
+  color: var(--text-muted); background: var(--surface-sunken); }
+.appbar-back { display: none; }
 .app[data-page="home"] .page-head { display: none; }
 @media (max-width: 560px) {
   .main { padding-top: var(--space-3); }
@@ -285,7 +302,6 @@ html.layout-simple .page,
 html.layout-simple .page:has(.card-grid),
 html.layout-simple .page:has(.lr-split:not(.single)) { max-width: 860px; }
 html.layout-simple .page-titles > p { display: none; }
-html.layout-simple .app.wide .page-head > .btn:first-child { display: inline-flex; }
 html.layout-simple .app[data-page="home"] .page { max-width: 720px; }
 
 .simple-bar { display: flex; align-items: center; gap: var(--space-3); padding: 10px 14px; border: 1px solid var(--border);
@@ -306,3 +322,7 @@ html.layout-simple .app[data-page="home"] .page { max-width: 720px; }
 .simple-icon-dot { position: absolute; top: 0; right: 0; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--bg);
   background: var(--blue); animation: fade-in var(--dur-med) var(--ease-out); }
 .simple-icon-dot.warn { background: var(--yellow); }
+/* Simple layout: Back sits at the app bar's top left (where HOJA 2 had it), in place of the logo */
+html.layout-simple .app:not([data-page="home"]) .appbar-back { display: inline-flex; }
+html.layout-simple .app:not([data-page="home"]) .brand { display: none; }
+html.layout-simple .page-head > .back-btn { display: none; }
