@@ -39,4 +39,8 @@ export default {
   "Reset app": "重置应用",
   "Reset the app?": "重置应用？",
   "This clears the app’s offline files and preferences on this device and reloads. Your controller’s settings are not affected.": "这会清除此设备上应用的离线文件和偏好设置，然后重新加载。手柄的设置不受影响。",
+  "Standard": "标准",
+  "Simple": "简洁",
+  "Layout": "布局",
+  "Simple: a home screen of icons and no sidebar, like the HOJA 2 app. Every feature stays.": "简洁：类似 HOJA 2 应用的图标主屏，没有侧边栏。所有功能都保留。",
 };

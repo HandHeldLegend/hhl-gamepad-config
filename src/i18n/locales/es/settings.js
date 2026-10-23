@@ -40,4 +40,8 @@ export default {
   "Reset app": "Restablecer app",
   "Reset the app?": "¿Restablecer la app?",
   "This clears the app’s offline files and preferences on this device and reloads. Your controller’s settings are not affected.": "Esto borra los archivos sin conexión y las preferencias de la app en este dispositivo, y la vuelve a cargar. Los ajustes de tu control no se ven afectados.",
+  "Standard": "Estándar",
+  "Simple": "Simple",
+  "Layout": "Diseño",
+  "Simple: a home screen of icons and no sidebar, like the HOJA 2 app. Every feature stays.": "Simple: una pantalla de inicio con iconos y sin barra lateral, como la app HOJA 2. Todas las funciones siguen ahí.",
 };

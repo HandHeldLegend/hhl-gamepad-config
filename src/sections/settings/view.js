@@ -11,6 +11,11 @@ import { isDemo, startDemo, stopDemo } from '../../device/mock.js';
 import { DEBUG, debugForceUpdate } from '../../firmware/updater.js';
 import { t, N_, LANGUAGES, detectLanguage, setLanguage } from '../../i18n/index.js';
 
+const LAYOUTS = [
+  { value: 'standard', label: N_('Standard') },
+  { value: 'simple', label: N_('Simple') },
+];
+
 const THEMES = [
   { value: 'dark', label: N_('Dark'), icon: 'moon' },
   { value: 'light', label: N_('Light'), icon: 'sun' },
@@ -20,6 +25,8 @@ const THEMES = [
 function appearanceCard() {
   const theme = segmented({ options: THEMES.map((o) => ({ ...o, label: t(o.label) })), value: prefs.get('theme'), ariaLabel: t('Theme'), onChange: (v) => prefs.set('theme', v) });
   const off = prefs.on('theme', (v) => { theme.value = v; });
+  const layout = segmented({ options: LAYOUTS.map((o) => ({ ...o, label: t(o.label) })), value: prefs.get('layout') || 'standard', ariaLabel: t('Layout'),
+    onChange: (v) => prefs.set('layout', v) });
   const motion = toggle({ checked: prefs.get('reduceMotion') === 'on', label: t('Reduce motion'), onChange: (v) => prefs.set('reduceMotion', v ? 'on' : 'system') });
   const auto = LANGUAGES.find((l) => l.code === detectLanguage());
   const language = select({
@@ -30,6 +37,7 @@ function appearanceCard() {
   const el = card({ title: t('Appearance'), icon: 'palette', tone: 'lavender' },
     field({ label: t('Language'), description: t('Automatic uses your device’s language. Translations are new, so tell us if something reads oddly.'), control: language }),
     field({ label: t('Theme'), description: t('Dark is the default. System follows your device’s setting.'), control: theme }),
+    field({ label: t('Layout'), description: t('Simple: a home screen of icons and no sidebar, like the HOJA 2 app. Every feature stays.'), control: layout }),
     field({ label: t('Reduce motion'), description: t('Turns off decorative animation. Your device’s reduced-motion setting is always respected.'), control: motion }));
   el.cleanup = off;
   return el;
