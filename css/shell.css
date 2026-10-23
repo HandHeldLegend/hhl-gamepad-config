@@ -163,7 +163,11 @@
 .page-head h1 { font-size: 1.5rem; }
 .page-head p { font-size: var(--text-sm); margin-top: 1px; line-height: 1.4; }
 .page-head-extra { display: flex; gap: var(--space-2); align-items: center; }
-.app.wide .page-head > .btn:first-child { display: none; } /* back button only on narrow layouts */
+/* Back to Home: arrow, "Back" and the Esc key hint (computers) */
+.back-btn { gap: 6px; }
+.esc-hint { margin-left: 2px; padding: 1px 6px; border: 1px solid var(--border-strong); border-radius: 6px; font: 600 var(--text-xs) var(--font-mono);
+  color: var(--text-muted); background: var(--surface-sunken); }
+.appbar-back { display: none; }
 .app[data-page="home"] .page-head { display: none; }
 @media (max-width: 560px) {
   .main { padding-top: var(--space-3); }
@@ -275,3 +279,38 @@ h1 .beta-badge { font-size: 0.72rem; position: relative; top: -0.15em; }
 .hub-profiles .btn-label { overflow: hidden; text-overflow: ellipsis; }
 /* The buttons the tournament lock blocks, in a line of text */
 .hub-glyphs { display: inline-flex; flex-wrap: wrap; gap: var(--space-1); vertical-align: middle; }
+
+/* ---- Simple layout (App settings > Layout): a HOJA 2 style app ---------------------------
+   No sidebar, a centred column, and a home of round icons (sections/home/view.js simpleHome).
+   Page summaries hide; a back arrow returns home. Every page and setting stays the same. */
+html.layout-simple .app.wide { grid-template-columns: minmax(0, 1fr); grid-template-areas: "bar" "main"; }
+html.layout-simple .sidebar { display: none !important; }
+html.layout-simple .page,
+html.layout-simple .page:has(.card-grid),
+html.layout-simple .page:has(.lr-split:not(.single)) { max-width: 860px; }
+html.layout-simple .page-titles > p { display: none; }
+html.layout-simple .app[data-page="home"] .page { max-width: 720px; }
+
+.simple-bar { display: flex; align-items: center; gap: var(--space-3); padding: 10px 14px; border: 1px solid var(--border);
+  border-radius: var(--radius-lg); background: var(--surface); animation: rise-in var(--dur-slow) var(--ease-out) both; }
+.simple-bar-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.simple-connect { justify-content: center; flex-wrap: wrap; }
+.simple-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: var(--space-4) var(--space-2); padding: var(--space-3) 0; }
+.simple-icon { display: grid; justify-items: center; gap: 8px; padding: 10px 4px; border-radius: var(--radius-lg); color: var(--text);
+  text-decoration: none; transition: background-color var(--dur-med), opacity var(--dur-med);
+  animation: rise-in var(--dur-slow) var(--ease-out) both; }
+.simple-icon:hover { background: var(--surface-sunken); }
+.simple-icon:focus-visible { box-shadow: var(--focus-ring); outline: none; }
+.simple-icon-art { position: relative; display: grid; transition: transform var(--dur-med) var(--ease-spring); }
+.simple-icon:hover .simple-icon-art { transform: translateY(-3px) scale(1.04); }
+.simple-icon:active .simple-icon-art { transform: scale(0.96); }
+.simple-icon-label { font-size: var(--text-sm); font-weight: 600; text-align: center; line-height: 1.2; }
+.simple-icon.waiting { opacity: 0.55; }
+.simple-icon-dot { position: absolute; top: 0; right: 0; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--bg);
+  background: var(--blue); animation: fade-in var(--dur-med) var(--ease-out); }
+.simple-icon-dot.warn { background: var(--yellow); }
+/* Simple layout: Back sits at the app bar's top left (where HOJA 2 had it), in place of the logo */
+html.layout-simple .app:not([data-page="home"]) .appbar-back { display: inline-flex; animation: fade-in var(--dur-med) var(--ease-out); }
+html.layout-simple .app[data-page="home"] .brand { animation: fade-in var(--dur-med) var(--ease-out); }
+html.layout-simple .app:not([data-page="home"]) .brand { display: none; }
+html.layout-simple .page-head > .back-btn { display: none; }
