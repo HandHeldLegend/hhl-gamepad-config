@@ -149,13 +149,21 @@ export function quickHub(session, device) {
       return;
     }
     if (!profiles) { collapse(profileField); return; }
-    // One button per profile, all in view (two to a row on a phone)
-    profilePick.replaceChildren(...profiles.names.map((_, n) => {
-      const b = button({ label: profileName(n), variant: n === profiles.active ? 'primary' : 'tonal', disabled: busy,
-        onClick: () => switchProfile(n) });
-      b.setAttribute('aria-pressed', String(n === profiles.active));
-      return b;
-    }));
+    // One button per profile, all in view (two to a row on a phone). Built once, then updated in place:
+    // a busy or active change only restyles them, so nothing blinks or replays its arrival.
+    const built = [...profilePick.querySelectorAll('.btn:not(.hub-skeleton)')];
+    if (built.length !== profiles.names.length) {
+      profilePick.replaceChildren(...profiles.names.map((_, n) => button({ label: profileName(n), variant: 'tonal', onClick: () => switchProfile(n) })));
+    }
+    [...profilePick.children].forEach((b, n) => {
+      const active = n === profiles.active;
+      b.classList.toggle('btn-primary', active);
+      b.classList.toggle('btn-tonal', !active);
+      b.setAttribute('aria-pressed', String(active));
+      b.disabled = busy;
+      const label = b.querySelector('.btn-label');
+      if (label && label.textContent !== profileName(n)) label.textContent = profileName(n);
+    });
     renameBtn.disabled = copyBtn.disabled = busy;
   }
 
