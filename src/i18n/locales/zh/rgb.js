@@ -121,4 +121,11 @@ export default {
   "Color of LED group 31 as listed on the RGB page (group names and count depend on the controller, e.g. \"D-Pad\" or \"A\").": "RGB 页面中列出的指示灯分组 31 的颜色（分组名称和数量取决于手柄，例如“D-Pad”或“A”）。",
   "Group 32 color": "分组 32 颜色",
   "Color of LED group 32 as listed on the RGB page (group names and count depend on the controller, e.g. \"D-Pad\" or \"A\").": "RGB 页面中列出的指示灯分组 32 的颜色（分组名称和数量取决于手柄，例如“D-Pad”或“A”）。",
+  "Classic face-button colors for each mode.": "各模式的经典按键配色。",
+  "Your colors, glowing steadily.": "你的颜色，持续常亮。",
+  "Fades through the rainbow.": "彩虹色渐变。",
+  "Lights up as you press.": "按下时亮起。",
+  "Blends your first six colors.": "混合你的前六种颜色。",
+  "Lower is faster.": "数值越小越快。",
+  "A battery light when idle.": "闲置时显示电池指示灯。",
 };
