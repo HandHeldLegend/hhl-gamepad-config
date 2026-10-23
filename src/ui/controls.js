@@ -437,10 +437,41 @@ export function tabView(o) {
     current = tab.id;
     for (const [k, b] of buttons) b.setAttribute('aria-selected', String(k === tab.id));
     if (typeof cleanup === 'function') cleanup();
+    // Hold the panel's height while it empties and fills: an empty panel for even a frame shortens the
+    // page, the browser pulls the scroll position up to fit, and the tabs jump away from the pointer.
+    // Then ease to the new panel's height.
+    const before = panel.offsetHeight;
+    if (before) panel.style.minHeight = `${before}px`;
     panel.replaceChildren();
     panel.style.animation = 'none'; void panel.offsetWidth; panel.style.animation = '';
     cleanup = tab.render(panel);
+    if (before) settleHeight(before);
     if (fire) o.onChange?.(tab.id);
+  }
+  let settling = null;
+  /**
+   * After a switch: ease the panel from its old height to the new content's, but never so short that
+   * the page has to scroll back up (a shorter tab keeps room below it instead), so the tabs stay where
+   * they were on screen. The content is measured without letting go of the held height, or the
+   * browser would already have pulled the scroll position up.
+   */
+  function settleHeight(from) {
+    settling?.cancel();
+    const y = window.scrollY;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const top = panel.getBoundingClientRect().top;
+      const bottom = Math.max(top, ...[...panel.children].map((c) => c.getBoundingClientRect().bottom));
+      const natural = Math.ceil(bottom - top);
+      const page = document.documentElement.scrollHeight - Math.max(0, from - natural);
+      const keep = Math.max(0, y + window.innerHeight - page); // room needed to stay scrolled where we are
+      const to = natural + keep;
+      if (to >= from) { panel.style.minHeight = keep ? `${to}px` : ''; return; }
+      const done = () => { panel.style.minHeight = keep ? `${to}px` : ''; settling = null; };
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) { done(); return; }
+      settling = panel.animate([{ minHeight: `${from}px` }, { minHeight: `${to}px` }],
+        { duration: 320, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+      settling.finished.then(done, () => {});
+    }));
   }
   el.select = (id) => select(id, false);
   el.destroy = () => { if (typeof cleanup === 'function') cleanup(); };
