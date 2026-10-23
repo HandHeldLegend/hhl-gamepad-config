@@ -39,7 +39,7 @@ export const ALIASES = { user: 'gamepad' };
 export const SECTIONS = [
   {
     id: 'home', title: 'Home', icon: 'home', tone: 'lavender', group: 'start', device: false, requires: null,
-    keepsScroll: true,
+    keepsScroll: true, stable: true, // redraws itself as a controller connects (home/view.js)
     summary: 'Connect a controller and see its status at a glance.',
     params: { connect: 'Set to 1 to open the controller picker immediately (needs a click in most browsers).' },
     load: () => import('./home/view.js'),

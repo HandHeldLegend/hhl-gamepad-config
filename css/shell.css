@@ -310,6 +310,7 @@ html.layout-simple .app[data-page="home"] .page { max-width: 720px; }
 .simple-icon.waiting { opacity: 0.55; }
 .simple-icon-dot { position: absolute; top: 0; right: 0; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--bg);
   background: var(--blue); animation: fade-in var(--dur-med) var(--ease-out); }
+.simple-icon-dot[hidden] { display: none; }
 .simple-icon-dot.warn { background: var(--yellow); }
 /* Simple layout: Back sits at the app bar's top left (where HOJA 2 had it), in place of the logo */
 html.layout-simple .app:not([data-page="home"]) .appbar-back { display: inline-flex; animation: fade-in var(--dur-med) var(--ease-out); }
