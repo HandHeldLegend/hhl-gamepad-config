@@ -27,17 +27,25 @@ export const MAX_GROUPS = LAYOUT.structs.rgbConfig_s.fields.find((f) => f.name =
 /** Fairy mode blends between the first six colors only (FAIRY_NUM_OPTIONS in anm_fairy.c). */
 export const FAIRY_COLORS = 6;
 
-/** rgb_anim_t values a user can pick, with plain-language explanations used by the RGB page. */
+/**
+ * rgb_anim_t values a user can pick. `short`: the one line the RGB page shows; `about`: the full
+ * explanation, in its ? tip (and for the MCP server).
+ */
 export const RGB_MODES = [
   { value: 0, id: 'authentic', label: 'Authentic', aliases: ['chroma', 'auto', 'era', 'classic'],
+    short: N_('Classic face-button colors for each mode.'),
     about: N_('Face buttons light up by their printed letter in the classic colors of the current output mode (Switch / SNES: A red, B yellow, X blue, Y green; Steam / XInput: A green, B red, X blue, Y yellow); other LEDs glow soft white. Your colors are only used for the player LEDs.') },
   { value: 1, id: 'static', label: 'Static', aliases: ['user', 'solid', 'none', 'custom'],
+    short: N_('Your colors, glowing steadily.'),
     about: N_('Each group glows steadily in the color you pick below.') },
   { value: 2, id: 'rainbow', label: 'Rainbow', aliases: ['cycle', 'spectrum'],
+    short: N_('Fades through the rainbow.'),
     about: N_('All LEDs (except the player LEDs) fade together through the colors of the rainbow. Animation time sets how long each color step takes.') },
   { value: 3, id: 'react', label: 'React', aliases: ['reactive', 'press'],
+    short: N_('Lights up as you press.'),
     about: N_('Lights flash on in your colors when you press an input, then fade out over the animation time. The player LEDs stay lit in their color.') },
   { value: 4, id: 'fairy', label: 'Fairy', aliases: ['twinkle', 'sparkle'],
+    short: N_('Blends your first six colors.'),
     about: N_('Every LED (except the player LEDs) slowly blends between the first six colors below, like fairy lights.') },
 ];
 
@@ -79,6 +87,7 @@ export default [
   {
     key: 'rgb.speed',
     label: 'Animation time',
+    short: 'Lower is faster.',
     description: 'How long one animation step or fade takes, in milliseconds. Lower is faster.',
     block: 'rgb',
     type: 'number', min: SPEED_MIN, max: SPEED_MAX, step: 25, unit: 'ms',
@@ -89,6 +98,7 @@ export default [
   {
     key: 'rgb.idleGlow',
     label: 'Idle glow',
+    short: 'A battery light when idle.',
     description: 'After 5 minutes without input the lights go dark and a single LED glows to show battery status. Any input turns it off again. Turn this off to keep it dark too.',
     block: 'rgb',
     type: 'boolean',

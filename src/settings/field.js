@@ -68,8 +68,11 @@ export function settingField(keyOrDef, o = {}) {
   const row = field({
     // Setting text is English data (Node-importable); translate at render time.
     label: o.label || t(def.label),
-    description: o.description ?? (def.description && t(def.description)),
-    tip: o.tip === false ? null : (def.tip && t(def.tip)),
+    // `short`: a one-line description on screen, with the full description (and any tip) in the ? tip
+    description: o.description ?? ((def.short || def.description) && t(def.short || def.description)),
+    tip: o.tip === false ? null
+      : def.short ? [def.description, def.tip].filter(Boolean).map((x) => t(x)).join(' ') || null
+        : (def.tip && t(def.tip)),
     control,
     stacked: o.stacked,
     settingKey: def.key,

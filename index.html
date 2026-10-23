@@ -41,6 +41,7 @@
       try {
         var p = JSON.parse(localStorage.getItem('hhl-config:prefs') || '{}');
         var t = p.theme || 'dark';
+        if (p.layout === 'simple') document.documentElement.classList.add('layout-simple');
         if (t !== 'system') document.documentElement.setAttribute('data-theme', t);
         var light = t === 'light' || (t === 'system' && matchMedia('(prefers-color-scheme: light)').matches);
         document.querySelector('meta[name="theme-color"]').setAttribute('content', light ? '#f8f7f4' : '#121117');

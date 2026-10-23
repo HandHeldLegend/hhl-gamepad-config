@@ -40,4 +40,8 @@ export default {
   "Reset app": "アプリをリセット",
   "Reset the app?": "アプリをリセットしますか？",
   "This clears the app’s offline files and preferences on this device and reloads. Your controller’s settings are not affected.": "この端末に保存されたアプリのオフライン用ファイルと設定を消去して再読み込みします。コントローラーの設定には影響しません。",
+  "Standard": "標準",
+  "Simple": "シンプル",
+  "Layout": "レイアウト",
+  "Simple: a home screen of icons and no sidebar, like the HOJA 2 app. Every feature stays.": "シンプル：HOJA 2 アプリのような、サイドバーのないアイコンのホーム画面。すべての機能はそのままです。",
 };

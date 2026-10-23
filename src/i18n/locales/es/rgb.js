@@ -77,4 +77,11 @@ export default {
   'On battery': 'Con batería',
   'Idle glow colors': 'Colores del brillo en reposo',
   "Face buttons light up by their printed letter in the classic colors of the current output mode (Switch / SNES: A red, B yellow, X blue, Y green; Steam / XInput: A green, B red, X blue, Y yellow); other LEDs glow soft white. Your colors are only used for the player LEDs.": "Los botones frontales se iluminan según su letra impresa con los colores clásicos del modo de salida actual (Switch / SNES: A rojo, B amarillo, X azul, Y verde; Steam / XInput: A verde, B rojo, X azul, Y amarillo); los demás LED brillan en blanco suave. Tus colores solo se usan para los LED de jugador.",
+  "Classic face-button colors for each mode.": "Colores clásicos de los botones para cada modo.",
+  "Your colors, glowing steadily.": "Tus colores, fijos.",
+  "Fades through the rainbow.": "Recorre el arcoíris.",
+  "Lights up as you press.": "Se ilumina al pulsar.",
+  "Blends your first six colors.": "Mezcla tus seis primeros colores.",
+  "Lower is faster.": "Menos es más rápido.",
+  "A battery light when idle.": "Una luz de batería en reposo.",
 };

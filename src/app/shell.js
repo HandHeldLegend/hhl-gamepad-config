@@ -189,7 +189,9 @@ export function createShell(root) {
     const settingsBtn = button({ icon: 'settings', variant: 'ghost', title: t('App settings'), onClick: () => navigate('settings') });
     settingsBtn.classList.add('appbar-settings');
 
-    const appbar = h('header.appbar', brand, h('div.spacer'), chip, installBtn, saveBtn, connectBtn, languagePicker(), settingsBtn);
+    const appbarBack = backButton();
+    appbarBack.classList.add('appbar-back');
+    const appbar = h('header.appbar', appbarBack, brand, h('div.spacer'), chip, installBtn, saveBtn, connectBtn, languagePicker(), settingsBtn);
 
     // ---- Sidebar -------------------------------------------------------------------------
     const nav = h('nav.sidebar', { 'aria-label': t('Sections') });
@@ -332,10 +334,18 @@ export function createShell(root) {
     }
   }
 
+  /** Back to Home: an arrow and "Back", with the Esc key that does the same on a computer. */
+  function backButton() {
+    const b = button({ icon: 'back', label: t('Back'), variant: 'ghost', title: t('Back to home'), onClick: () => navigate('home') });
+    b.classList.add('back-btn');
+    if (matchMedia('(pointer: fine)').matches) b.append(h('kbd.esc-hint', 'Esc'));
+    return b;
+  }
+
   function pageHeader(section) {
     const showBack = section.id !== 'home';
     return h('header.page-head', { class: `tone-${section.tone}` },
-      showBack && button({ icon: 'back', variant: 'ghost', title: t('Back to home'), onClick: () => navigate('home') }),
+      showBack && backButton(),
       section.id !== 'home' && face(section.icon, section.tone, 44),
       h('div.page-titles', h('h1', t(section.title), section.beta && betaBadge()), h('p.muted', t(section.summary))),
       h('div.page-head-extra'));

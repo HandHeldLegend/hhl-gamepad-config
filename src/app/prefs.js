@@ -14,6 +14,7 @@ const DEFAULTS = {
   theme: 'dark',           // 'dark' | 'light' | 'system'
   language: 'auto',        // 'auto' | 'en' | 'es' | 'ja' (see src/i18n/index.js)
   reduceMotion: 'system',  // 'system' | 'on'
+  layout: 'standard',      // 'standard' | 'simple' (a HOJA 2 style home of icons, no sidebar)
   autoUpdateCheck: true,   // check for controller firmware updates on connect
   lastSection: null,
 };
@@ -50,6 +51,7 @@ export function apply() {
   if (values.theme === 'system') root.removeAttribute('data-theme');
   else root.setAttribute('data-theme', values.theme);
   root.classList.toggle('reduce-motion', values.reduceMotion === 'on');
+  root.classList.toggle('layout-simple', values.layout === 'simple');
   // Keep the browser/OS chrome color in sync with the theme.
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', effectiveTheme() === 'light' ? '#f8f7f4' : '#121117');

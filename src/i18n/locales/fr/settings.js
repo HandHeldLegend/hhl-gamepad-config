@@ -40,4 +40,8 @@ export default {
   "Reset app": "Réinitialiser l’app",
   "Reset the app?": "Réinitialiser l’app ?",
   "This clears the app’s offline files and preferences on this device and reloads. Your controller’s settings are not affected.": "Cela efface les fichiers hors ligne et les préférences de l’app sur cet appareil, puis la recharge. Les réglages de votre manette ne sont pas affectés.",
+  "Standard": "Standard",
+  "Simple": "Simple",
+  "Layout": "Disposition",
+  "Simple: a home screen of icons and no sidebar, like the HOJA 2 app. Every feature stays.": "Simple : un écran d’accueil d’icônes, sans barre latérale, comme l’app HOJA 2. Toutes les fonctions restent.",
 };

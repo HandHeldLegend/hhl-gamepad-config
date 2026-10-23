@@ -14,6 +14,7 @@ import { quickHub } from './hub.js';
 import { t } from '../../i18n/index.js';
 import { isIOS, explainIOS } from '../../app/platform.js';
 import { isLinux, explainLinux } from '../../app/linux.js';
+import { prefs } from '../../app/prefs.js';
 
 function tiles(session) {
   return h('div.tiles', SECTIONS.filter((s) => s.id !== 'home' && !s.hidden).map((s) => {
@@ -114,6 +115,40 @@ function deviceCard(session) {
       h('a', { href: `#/${id}` }, t('Open'), icon('chevron-right')))));
 }
 
+/**
+ * The simple layout's home (App settings > Layout), after the HOJA 2 app: one line to connect or
+ * showing the controller, then every page as a round icon with its name. A page that needs attention
+ * gets a dot; one that needs a controller waits dimmed.
+ */
+function simpleHome(session) {
+  const connecting = session.state === 'connecting';
+  const fw = firmwareStatus();
+  const top = session.connected
+    ? h('div.simple-bar',
+      face('gamepad', 'lavender', 40),
+      h('div.simple-bar-text', h('strong.ellipsis', session.info.name),
+        h('span.small.muted', isDemo() ? t('Demo controller') : fw.state === 'available' ? t('Update available') : t('Connected'))),
+      fw.state === 'available' && !session.caps.noCable
+        ? updateButton()
+        : button({ label: t('Firmware'), icon: 'firmware', variant: 'ghost', size: 'sm', onClick: () => { location.hash = '#/firmware'; } }))
+    : session.state === 'dongle' ? null
+      : h('div.simple-bar.simple-connect',
+        button({ label: connecting ? t('Connecting…') : t('Connect controller'), icon: 'usb', variant: 'primary', disabled: connecting, onClick: () => connectController() }),
+        button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() }));
+  const icons = h('nav.simple-grid', { 'aria-label': t('Sections') },
+    SECTIONS.filter((s) => s.id !== 'home' && !s.hidden).map((s) => {
+      const reason = unavailableReason(s);
+      const att = session.attention[s.id];
+      return h('a.simple-icon', {
+        href: `#/${s.id}`, class: [`tone-${s.tone}`, reason ? 'waiting' : null].filter(Boolean),
+        title: reason || t(s.summary),
+      },
+      h('span.simple-icon-art', face(s.icon, s.tone, 64), att && h('span.simple-icon-dot', { class: att.level === 'warn' ? 'warn' : 'info' })),
+      h('span.simple-icon-label', t(s.title)));
+    }));
+  return [top, session.state === 'dongle' && dongleCard(session), icons];
+}
+
 export function mount(root, { session, device }) {
   let hub = null;
   // Home redraws when the attention check or the firmware check reports in (several times right after
@@ -122,6 +157,12 @@ export function mount(root, { session, device }) {
   const before = h('div.home-slot');
   const after = h('div.home-slot');
   const render = () => {
+    if (prefs.get('layout') === 'simple') {
+      hub?.destroy();
+      hub = null;
+      replace(root, ...simpleHome(session));
+      return;
+    }
     const dongleOnly = session.state === 'dongle';
     if (!session.connected) { hub?.destroy(); hub = null; } else if (!hub) hub = quickHub(session, device);
     replace(before, session.connected ? deviceCard(session) : dongleOnly ? dongleCard(session) : hero(session));
@@ -133,6 +174,6 @@ export function mount(root, { session, device }) {
     if (want.some((el, i) => root.children[i] !== el) || root.children.length !== want.length) root.replaceChildren(...want);
   };
   render();
-  const offs = [session.on('attention', render), session.on('firmware', render)];
+  const offs = [session.on('attention', render), session.on('firmware', render), prefs.on('layout', render)];
   return () => { offs.forEach((f) => f()); hub?.destroy(); };
 }
