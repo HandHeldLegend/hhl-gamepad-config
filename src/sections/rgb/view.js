@@ -192,7 +192,7 @@ export function mount(root, { session }) {
 
   /** Idle glow toggle with a small color key (the three status-light colors) under its description. */
   function idleGlowField() {
-    const row = settingField('rgb.idleGlow', { tone: TONE, tip: false });
+    const row = settingField('rgb.idleGlow', { tone: TONE });
     const key = h('ul.rgb-glow-key', { 'aria-label': t('Idle glow colors') },
       [['cyan', N_('On battery')], ['orange', N_('Charging')], ['green', N_('Fully charged')]].map(([c, label]) =>
         h('li', h('span.rgb-glow-led', { class: `glow-${c}`, 'aria-hidden': 'true' }), t(label))));
@@ -206,7 +206,9 @@ export function mount(root, { session }) {
 
   function onModeChange() {
     const m = RGB_MODES.find((x) => x.value === rgb().rgb_mode);
-    modeAbout.textContent = m ? t(m.about) : t('This controller is using an effect this app doesn’t know about.');
+    // One short line; the full explanation in its ? tip
+    modeAbout.replaceChildren(m ? t(m.short) : t('This controller is using an effect this app doesn’t know about.'),
+      ...(m ? [' ', infoTip(t(m.about))] : []));
     colorHint.textContent = {
       authentic: t('Authentic mode picks its own colors, so your colors are ignored, except the Player LED.'),
       rainbow: t('Your colors are ignored in Rainbow mode, except the Player LED.'),
