@@ -6,8 +6,10 @@
  *
  * Layout: the shared left/right split (docs/SECTIONS.md "Left/right layouts"). Each stick gets a column
  * with the same two cards in the same order, so they line up side by side on wide pages:
- *   1. Snapback filter: filter mode (l/r_snapback_type: Low-pass / Auto / Off) and the low-pass cutoff
- *      (l/r_snapback_intensity, tenths of a Hz), written live through settingField (settings.js).
+ *   1. Snapback filter: filter mode (l/r_snapback_type: Low-pass / Auto / Off, and Spring on firmware
+ *      that has it) and the low-pass cutoff (l/r_snapback_intensity, tenths of a Hz), written live through
+ *      settingField (settings.js). In Spring mode the cutoff gives way to the stick's tuning: built-in or
+ *      tuned to this stick, Tune (tune.js) and Reset to defaults (spring-config.js).
  *   2. Analyzer: that stick's latest capture (X or Y axis), its stats and a short capture history.
  * Narrow pages show one column at a time with a Left/Right switch; single-stick builds show one column.
  *
@@ -20,11 +22,13 @@
  * Deep link: #/snapback?stick=right selects that column (narrow) or scrolls to and highlights it (wide).
  */
 import { h, loadStyles } from '../../ui/dom.js';
-import { card, segmented, callout, badge, dot } from '../../ui/controls.js';
+import { card, segmented, callout, badge, dot, button, asyncButton } from '../../ui/controls.js';
 import { settingField } from '../../settings/field.js';
 import { prefersReducedMotion } from '../../ui/canvas-surface.js';
 import { waveformView, parseDump, analyze, AXES } from './waveform.js';
 import { t, N_, fmt } from '../../i18n/index.js';
+import { springStatus, resetSpring } from './spring-config.js';
+import { tuneSpring } from './tune.js';
 
 loadStyles(new URL('./snapback.css', import.meta.url));
 
@@ -46,29 +50,77 @@ function stat(label, value, tip) {
 }
 
 /**
+ * Spring mode: whose tuning the stick uses (built in, or tuned to it here) and the way to tune it.
+ * @returns {{el: HTMLElement, paint: () => void}}
+ */
+function springPanel(stick, { session, device, onTuned }) {
+  const state = h('div.sb-spring-state');
+  let tuning = false;
+  const reset = asyncButton({
+    label: t('Reset to defaults'), icon: 'refresh', variant: 'ghost', size: 'sm',
+    run: async () => { const ok = await resetSpring(session, stick); paint(); return ok; },
+  });
+  const tune = button({
+    label: t('Tune to my stick'), icon: 'sparkle', variant: 'tonal', size: 'sm',
+    onClick: async () => {
+      if (tuning) return; // a second press while the dialog opens
+      tuning = true;
+      try { if (await tuneSpring({ session, device, stick })) { paint(); onTuned(stick); } } finally { tuning = false; }
+    },
+  });
+  function paint() {
+    const tuned = springStatus(session, stick) === 'tuned';
+    state.replaceChildren(
+      badge(tuned ? t('Tuned to this stick') : t('Built-in tuning'), tuned ? TONE : 'lavender'),
+      h('span.muted.small', tuned
+        ? t('Fitted to how this stick springs back. The same in every profile.')
+        : t('Works for most sticks. Tuning learns how yours springs back, in about 2 minutes.')));
+    tune.setLabel(tuned ? t('Tune again') : t('Tune to my stick'));
+    // Reset fades in and out (it sits after Tune, so nothing else moves)
+    clearTimeout(resetTimer);
+    if (tuned && reset.hidden) { reset.hidden = false; reset.classList.remove('sb-leaving'); reset.classList.add('rise-in'); }
+    else if (!tuned && !reset.hidden) {
+      reset.classList.add('sb-leaving');
+      resetTimer = setTimeout(() => { reset.hidden = true; reset.classList.remove('sb-leaving', 'rise-in'); }, 400);
+    }
+  }
+  let resetTimer = 0;
+  reset.hidden = springStatus(session, stick) !== 'tuned';
+  paint();
+  const el = h('div.sb-spring',
+    h('p.sb-spring-about.small', t('Spring knows how your stick springs back when you let go and holds back only that rebound. Your thumb’s own moves go straight through.')),
+    state,
+    h('div.sb-spring-actions', tune, reset));
+  return { el, paint };
+}
+
+/**
  * One stick's column: header, filter card, analyzer card.
  * @returns {{el: HTMLElement, add: (c: object) => void, destroy: () => void}}
  */
-function stickColumn(stick) {
+function stickColumn(stick, { session, device, onTuned }) {
   const right = stick === 'right';
   const stickName = t(STICK_NAME[stick]);
 
   // ---- Filter settings -----------------------------------------------------------------------
   const note = h('p.sb-mode-note.muted.small');
   let cutoff;
+  let spring;
   const syncMode = (v) => {
     cutoff.hidden = v !== 0; // the cutoff is only used by the low-pass mode
-    note.hidden = v === 0;
+    spring.el.hidden = v !== 3;
+    note.hidden = v === 0 || v === 3;
     note.textContent = MODE_NOTE[v] ? t(MODE_NOTE[v]) : '';
   };
   const type = settingField(`snapback.${stick}Type`, { tone: TONE, stacked: true, onChange: syncMode });
   cutoff = settingField(`snapback.${stick}Intensity`, { tone: TONE, stacked: true });
+  spring = springPanel(stick, { session, device, onTuned });
   syncMode(type.control.value);
 
   const filterCard = card({
     title: t('Snapback filter'),
     icon: 'snapback', tone: TONE, class: 'sb-filter',
-  }, type, cutoff, note);
+  }, type, cutoff, spring.el, note);
 
   // ---- Analyzer --------------------------------------------------------------------------------
   const wave = waveformView({
@@ -126,6 +178,8 @@ function stickColumn(stick) {
 
   return {
     el,
+    analyzer: analyzerCard,
+    refresh() { type.refresh(); syncMode(type.control.value); spring.paint(); },
     add(c) {
       captures.unshift(c);
       captures.length = Math.min(captures.length, HISTORY);
@@ -145,7 +199,14 @@ export function mount(root, ctx) {
   let highlightTimer = 0;
   let highlightFrame = 0;
 
-  const columns = Object.fromEntries(sticks.map((s) => [s, stickColumn(s)]));
+  // After tuning, bring that stick's Analyzer into view (a completion step: the next thing to do is flick it)
+  const onTuned = (s) => {
+    const card = columns[s]?.analyzer;
+    if (!card) return;
+    pick(s);
+    card.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'center' });
+  };
+  const columns = Object.fromEntries(sticks.map((s) => [s, stickColumn(s, { session, device, onTuned })]));
 
   // ---- Left/right switch (narrow pages only; CSS hides it on wide ones) ------------------------
   // A capture for the hidden stick would otherwise go unnoticed on a phone, so offer a shortcut to it.

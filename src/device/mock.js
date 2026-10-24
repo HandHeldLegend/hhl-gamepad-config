@@ -181,6 +181,9 @@ export async function startDemo() {
   patch('copyProfile', async () => later(true));
   patch('setInputMode', async (joysticks) => { streamKind = joysticks ? 'joysticks' : 'raw'; });
   patch('setFocusedInput', async (code) => { focused = code; });
+  // Stick captures for the Spring tuning (snapback/demo.js makes them up, matching what the flow asks for)
+  patch('armSpringCapture', async (stick) => { for (const hk of hooks) hk.springArm?.(device, stick); });
+  patch('springCaptureHint', (hint) => { for (const hk of hooks) hk.springHint?.(device, hint); });
   patch('disconnect', async () => { stopDemo(); return true; });
 
   seed();

@@ -4,11 +4,16 @@
  *
  * Fields (HOJA-LIB-RP2040 src/input/snapback.c, snapback/snapback_lpf.c):
  *   l/r_snapback_type       u8: how snapback.c actually dispatches it (and what hoja2 showed):
- *                             0 = low-pass filter (default), 1 = auto (rebound detection), 2 = off.
+ *                             0 = low-pass filter (default), 1 = auto (rebound detection), 2 = off,
+ *                             3 = spring (holds back only the rebound, tuned per stick; spring.js).
+ *                           Older firmware treats 3 as low-pass, and only firmware that has it offers it
+ *                           (caps.snapbackSpring).
  *                           NOTE: the header enum `snapback_type_t` names these DISABLED/ZERO/POST, which does
  *                           not match the runtime switch; we follow the runtime behavior, like hoja2 did.
  *   l/r_snapback_intensity  u16: low-pass cutoff in tenths of a Hz (600 = 60.0 Hz). The firmware clamps it
  *                           to 300..1500 (30–150 Hz). Only used by the low-pass mode.
+ *   l/r_spring              snapbackSpringCfg_s: the spring's tuning for that stick, global (not per profile).
+ *                           Written by the tuning flow (tune.js), not a setting here.
  */
 import { clampInt } from '../../settings/schema.js';
 
@@ -17,6 +22,7 @@ export const SNAPBACK_TYPES = [
   { value: 0, label: 'Low-pass', aliases: ['lpf', 'low-pass filter', 'lowpass', 'filter', 'default'] },
   { value: 1, label: 'Auto', aliases: ['automatic', 'detect'] },
   { value: 2, label: 'Off', aliases: ['disabled', 'none', 'raw'] },
+  { value: 3, label: 'Spring', aliases: ['spring', 'tuned'], requires: 'snapbackSpring' },
 ];
 
 export const CUTOFF = { min: 30, max: 150, step: 0.5, default: 60 };
@@ -31,16 +37,16 @@ function stickSettings(stick) {
       key: `snapback.${stick}Type`,
       label: 'Filter mode',
       description: `How the ${stick} stick suppresses the rebound past center after you let go.`,
-      tip: 'Low-pass: smooths fast movement near the center (adjust with the cutoff). Auto: detects a release and holds back the rebound only when it happens. Off: raw stick output. Use this to see your stick’s natural snapback.',
+      tip: 'Low-pass: smooths fast movement near the center (adjust with the cutoff). Auto: detects a release and holds back the rebound only when it happens. Off: raw stick output. Use this to see your stick’s natural snapback. Spring (newer firmware): learns how your stick springs back and holds back only that rebound.',
       block: 'analog',
       type: 'enum',
       options: SNAPBACK_TYPES,
       requires: CAP[stick],
       get: (s) => {
         const v = s.config.analog[`${p}_snapback_type`];
-        return v <= 2 ? v : 0; // firmware treats unknown values as low-pass (switch default)
+        return v <= 3 ? v : 0; // firmware treats unknown values as low-pass (switch default)
       },
-      set: (s, v) => { s.config.analog[`${p}_snapback_type`] = clampInt(v, 0, 2); },
+      set: (s, v) => { s.config.analog[`${p}_snapback_type`] = clampInt(v, 0, s.caps.snapbackSpring ? 3 : 2); },
     },
     {
       key: `snapback.${stick}Intensity`,

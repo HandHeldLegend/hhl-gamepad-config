@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: github HandHeldLegend/HOJA-LIB-RP2040@master)
-// Validated 7 size assertion(s) from the firmware headers.
+// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@7622c15)
+// Validated 9 size assertion(s) from the firmware headers.
 export default {
  "source": {
-  "kind": "github",
+  "kind": "local",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "master"
+  "ref": "7622c15"
  },
  "blocks": {
   "config": [
@@ -335,6 +335,60 @@ export default {
     }
    ]
   },
+  "snapbackSpringCfg_s": {
+   "size": 74,
+   "fields": [
+    {
+     "name": "version",
+     "offset": 0,
+     "type": "u8"
+    },
+    {
+     "name": "flags",
+     "offset": 1,
+     "type": "u8",
+     "doc": "SNAPBACK_SPRING_FLAG_*"
+    },
+    {
+     "name": "a1",
+     "offset": 2,
+     "type": "i32",
+     "count": 8,
+     "doc": "Free stick: s[n+1] = a1 s[n] + a2 s[n-1], Q16, per octant"
+    },
+    {
+     "name": "a2",
+     "offset": 34,
+     "type": "i32",
+     "count": 8,
+     "doc": "(octant 0 is +x, counting towards +y)"
+    },
+    {
+     "name": "decide_step",
+     "offset": 66,
+     "type": "u16",
+     "doc": "A release stays within this many counts per sample of the spring"
+    },
+    {
+     "name": "grab_err",
+     "offset": 68,
+     "type": "u16",
+     "doc": "The thumb has the stick back past this one-step error (counts)"
+    },
+    {
+     "name": "stiff_den",
+     "offset": 70,
+     "type": "u16",
+     "doc": "A centre crossing is a rebound at stiffness 1/stiff_den or more"
+    },
+    {
+     "name": "cross_speed",
+     "offset": 72,
+     "type": "u16",
+     "doc": "Centre crossings faster than this (counts per sample) are checked"
+    }
+   ]
+  },
   "analogConfig_s": {
    "size": 1024,
    "fields": [
@@ -484,10 +538,20 @@ export default {
      "type": "u8"
     },
     {
-     "name": "reserved",
+     "name": "l_spring",
      "offset": 698,
+     "struct": "snapbackSpringCfg_s"
+    },
+    {
+     "name": "r_spring",
+     "offset": 772,
+     "struct": "snapbackSpringCfg_s"
+    },
+    {
+     "name": "reserved",
+     "offset": 846,
      "type": "u8",
-     "count": 326
+     "count": 178
     }
    ]
   },
@@ -2882,6 +2946,8 @@ export default {
   "ANALOG_EXP_SENSITIVITY_MIN": 50,
   "ANALOG_EXP_SENSITIVITY_MAX": 300,
   "ANALOG_EXP_SENSITIVITY_DEFAULT": 100,
+  "SNAPBACK_SPRING_CFG_VERSION": 1,
+  "SNAPBACK_SPRING_FLAG_TUNED": 1,
   "RGB_BRIGHTNESS_MAX": 4096,
   "TRIGGER_HW_VERSION": 1,
   "TRIGGER_HW_AUTO": 0,

@@ -28,6 +28,90 @@
 .sb-filter .field-control > .slider { width: 100%; max-width: 480px; }
 .sb-mode-note { margin: 0; padding-top: var(--space-3); border-top: 1px dashed var(--border); }
 
+/* Spring mode: the stick's tuning in place of the cutoff */
+.sb-spring { display: grid; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px dashed var(--border);
+  animation: fade-in var(--dur-med) var(--ease-out); }
+.sb-spring[hidden] { display: none; }
+.sb-spring-about { margin: 0; color: var(--text-muted); }
+.sb-spring-state { display: flex; align-items: center; gap: var(--space-2) var(--space-3); flex-wrap: wrap; }
+.sb-spring-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.sb-spring-actions .btn { transition: opacity var(--dur-med) var(--ease-out); }
+.sb-spring-actions .btn.sb-leaving { opacity: 0; pointer-events: none; }
+
+/* ---- Tuning dialog (tune.js) ---- */
+.spr { display: grid; gap: var(--space-4); }
+.spr-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.spr-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 4px; border-radius: var(--radius-pill);
+  background: var(--surface-2); color: var(--text-muted); font-size: var(--text-xs); font-weight: 700;
+  transition: background-color var(--dur-med), color var(--dur-med); }
+.spr-pill-n { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--border);
+  color: var(--text); font-variant-numeric: tabular-nums; transition: background-color var(--dur-med), color var(--dur-med); }
+.spr-pill.active { background: var(--tone-soft); color: var(--text); }
+.spr-pill.active .spr-pill-n, .spr-pill.done .spr-pill-n { background: var(--fill-green); color: var(--on-green); }
+/* The stage keeps one height for every step, so the dialog never jumps between them */
+.spr-stage { min-height: 300px; display: grid; }
+.spr-capture { display: grid; grid-template-columns: minmax(200px, 280px) 1fr; gap: var(--space-5); align-items: center; }
+@media (max-width: 620px) {
+  .spr-capture { grid-template-columns: 1fr; justify-items: center; gap: var(--space-3); }
+  .spr-compass { width: min(240px, 70vw); }
+  .spr-side { text-align: center; justify-items: center; }
+}
+.spr-side { display: grid; gap: var(--space-2); align-content: center; min-width: 0; }
+.spr-title { margin: 0; font-size: var(--text-lg); }
+.spr-how { margin: 0; color: var(--text-muted); }
+.spr-count { font-family: var(--font-mono); font-weight: 800; font-size: var(--text-xl); font-variant-numeric: tabular-nums; color: var(--tone); }
+.spr-dots { display: flex; gap: 6px; flex-wrap: wrap; }
+.spr-dots:empty { display: none; }
+.spr-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border); transition: background-color var(--dur-med), border-color var(--dur-med), transform var(--dur-med) var(--ease-out); }
+.spr-dot.on { background: var(--tone); border-color: var(--tone); transform: scale(1.1); }
+.spr-feedback { margin: 0; min-height: 2.6em; font-weight: 600; }
+.spr-feedback.good { color: var(--tone); }
+.spr-feedback.warn { color: var(--yellow); }
+.spr-say { display: inline-block; animation: rise-in var(--dur-med) var(--ease-out); }
+
+.spr-compass { width: 100%; max-width: 280px; aspect-ratio: 1; overflow: visible; }
+.spr-gate { fill: var(--surface-2); stroke: var(--border); stroke-width: 2; }
+.spr-axis { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 4; }
+.spr-part { fill: none; stroke: var(--tone); stroke-width: 2; stroke-dasharray: 5 6; opacity: 0; transition: opacity var(--dur-med); }
+.spr-capture[data-step="turnarounds"] .spr-part { opacity: 0.7; }
+.spr-target { transition: opacity var(--dur-med); }
+.spr-capture:not([data-step="releases"]) .spr-target { opacity: 0; }
+.spr-target-ring { fill: var(--surface); stroke: var(--border); stroke-width: 2; transition: stroke var(--dur-med), fill var(--dur-med); }
+.spr-target-core { fill: var(--border); transition: fill var(--dur-med); }
+.spr-target.next .spr-target-ring { stroke: var(--tone); }
+.spr-target.next .spr-target-core { fill: var(--tone); animation: spr-beckon 1.4s var(--ease-out) infinite; transform-box: fill-box; transform-origin: center; }
+.spr-target.full .spr-target-ring { fill: var(--tone-soft); stroke: var(--tone); }
+.spr-target.full .spr-target-core { fill: var(--tone); }
+@keyframes spr-beckon { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.6); } }
+.spr-pip { fill: var(--border); transition: fill var(--dur-med); }
+.spr-pip.on { fill: var(--tone); }
+.spr-trail { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; animation: spr-trail 1.4s var(--ease-out) forwards; }
+.spr-trail.good { stroke: var(--tone); }
+.spr-trail.bad { stroke: var(--yellow); }
+@keyframes spr-trail { 0%, 40% { opacity: 0.9; } 100% { opacity: 0; } }
+.spr-stick { fill: var(--tone); stroke: var(--surface); stroke-width: 3; }
+.spr.still .spr-target.next .spr-target-core { animation: none; }
+
+.spr-results { display: grid; gap: var(--space-4); align-content: start; }
+.spr-verdict { display: flex; gap: var(--space-3); align-items: center; }
+.spr-verdict p { margin: 2px 0 0; }
+.spr-verdict-art { display: grid; place-items: center; width: 48px; height: 48px; flex: none; border-radius: 50%; background: var(--tone-soft); color: var(--tone); }
+.spr-verdict.warn .spr-verdict-art { background: color-mix(in srgb, var(--yellow) 18%, transparent); color: var(--yellow); }
+.spr-verdict-art .icon { width: 26px; height: 26px; }
+.spr-rows { display: grid; gap: 2px; }
+.spr-row { display: flex; align-items: center; gap: var(--space-3); padding: 8px 12px; border-radius: var(--radius-md); background: var(--surface-2); }
+.spr-row-icon { display: grid; place-items: center; color: var(--tone); }
+.spr-row.warn .spr-row-icon { color: var(--yellow); }
+.spr-row-label { flex: 1; min-width: 0; }
+.spr-row-value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.spr-results .callout p { margin: 0; }
+.spr-results:has(.spr-done) { align-content: center; }
+.spr-done { display: grid; justify-items: center; gap: var(--space-2); text-align: center; max-width: 440px; margin: 0 auto; }
+.spr-done h3, .spr-done p { margin: 0; }
+.spr-done-art { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: var(--tone-soft); color: var(--tone);
+  animation: rise-in var(--dur-slow) var(--ease-out) both; }
+.spr-done-art .icon { width: 36px; height: 36px; }
+
 .sb-status { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--text-muted); font-weight: 600; white-space: nowrap; }
 
 /* Analyzer: sized by its own width (a column can be narrow even on a wide screen). */
