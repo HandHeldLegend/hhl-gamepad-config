@@ -141,7 +141,7 @@ export function tuneSpring({ session, device, stick }) {
   const body = h('div.spr', h('ol.spr-steps', pills), stage);
 
   const dlg = openDialog({
-    title: stick === 'left' ? t('Tune Spring: left stick') : t('Tune Spring: right stick'),
+    title: stick === 'left' ? t('Tune Auto: left stick') : t('Tune Auto: right stick'),
     icon: 'snapback', tone: 'green', wide: true, dismissible: false, body,
   });
   dlg.el.classList.add('spr-dialog');
@@ -443,7 +443,7 @@ export function tuneSpring({ session, device, stick }) {
       h('div.spr-verdict', { class: score.ok ? 'good' : 'warn' },
         h('span.spr-verdict-art', icon(score.ok ? 'sparkle' : 'warning')),
         h('div',
-          h('strong', score.ok ? t('Your stick’s spring is learned') : limit ? t('Learned as well as this stick allows') : t('Almost there')),
+          h('strong', score.ok ? t('Learned how your stick springs back') : limit ? t('Learned as well as this stick allows') : t('Almost there')),
           h('p.muted.small', score.ok
             ? t('Every rebound was held back and every thumb move went through. Save it to the controller to use it.')
             : limit ? t('Some rebounds still get through, even with the best tuning for this stick. Redoing the steps won’t change that. Save it to use it.')
@@ -454,11 +454,14 @@ export function tuneSpring({ session, device, stick }) {
         row(score.thumbs.pass === score.thumbs.of, t('Thumb moves left alone'), ratio(score.thumbs)),
         thumbList(ms),
         row(score.delayOk, t('Most delay added to a thumb move'), ms(score.delayMs)),
-        hz.length ? row(true, t('Your stick’s spring'), t('{low} to {high} Hz', { low: fmt.number(Math.min(...hz), { maximumFractionDigits: 0 }), high: fmt.number(Math.max(...hz), { maximumFractionDigits: 0 }) })) : null),
+        hz.length ? row(true, t('How fast it springs back'), t('{low} to {high} Hz', { low: fmt.number(Math.min(...hz), { maximumFractionDigits: 0 }), high: fmt.number(Math.max(...hz), { maximumFractionDigits: 0 }) })) : null),
       ...(score.redo.length ? [callout({ tone: 'yellow', icon: 'warning' },
         h('p', t('Some thumb moves were held back or unclear. Do those moves again.')))] : []),
       ...(limit && leaks ? [callout({ tone: 'blue', icon: 'info' },
         h('p', plural(leaks, '{n} rebound still gets through.', '{n} rebounds still get through.')))] : []),
+      h('p.spr-save-note.small.muted', [1, 3].includes(session.config.analog?.[stick === 'left' ? 'l_snapback_type' : 'r_snapback_type'])
+        ? t('Auto will use this tuning.')
+        : t('Saving switches this stick to Auto, which will use this tuning.')),
       exportRow());
     swap(resultPanel);
     setActions();
@@ -539,7 +542,7 @@ export function tuneSpring({ session, device, stick }) {
     resultPanel.replaceChildren(h('div.spr-done',
       h('span.spr-done-art', icon('check')),
       h('h3', t('Saved')),
-      h('p.muted', t('This stick now uses Spring with its own tuning. Flick it in the Analyzer to see the rebound held back.')),
+      h('p.muted', t('Auto now uses this stick’s own tuning. Flick it in the Analyzer to see the rebound held back.')),
       exportRow()));
     replay(resultPanel);
     saved = true;

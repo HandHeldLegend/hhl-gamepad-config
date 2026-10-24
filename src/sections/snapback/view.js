@@ -6,10 +6,10 @@
  *
  * Layout: the shared left/right split (docs/SECTIONS.md "Left/right layouts"). Each stick gets a column
  * with the same two cards in the same order, so they line up side by side on wide pages:
- *   1. Snapback filter: filter mode (l/r_snapback_type: Low-pass / Auto / Off, and Spring on firmware
- *      that has it) and the low-pass cutoff (l/r_snapback_intensity, tenths of a Hz), written live through
- *      settingField (settings.js). In Spring mode the cutoff gives way to the stick's tuning: built-in or
- *      tuned to this stick, Tune (tune.js) and Reset to defaults (spring-config.js).
+ *   1. Snapback filter: filter mode (l/r_snapback_type: Low-pass / Auto / Off) and the low-pass cutoff
+ *      (l/r_snapback_intensity, tenths of a Hz), written live through settingField (settings.js). On
+ *      firmware with the spring model, Auto shows the stick's tuning in place of the cutoff: tuned to this
+ *      stick or not (standard Auto), Tune (tune.js) and Reset tuning (spring-config.js).
  *   2. Analyzer: that stick's latest capture (X or Y axis), its stats and a short capture history.
  * Narrow pages show one column at a time with a Left/Right switch; single-stick builds show one column.
  *
@@ -50,14 +50,14 @@ function stat(label, value, tip) {
 }
 
 /**
- * Spring mode: whose tuning the stick uses (built in, or tuned to it here) and the way to tune it.
+ * Auto, on firmware with the spring model: whether it's tuned to this stick, and the way to tune it.
  * @returns {{el: HTMLElement, paint: () => void}}
  */
 function springPanel(stick, { session, device, onTuned }) {
   const state = h('div.sb-spring-state');
   let tuning = false;
   const reset = asyncButton({
-    label: t('Reset to defaults'), icon: 'refresh', variant: 'ghost', size: 'sm',
+    label: t('Reset tuning'), icon: 'refresh', variant: 'ghost', size: 'sm',
     run: async () => { const ok = await resetSpring(session, stick); paint(); return ok; },
   });
   const tune = button({
@@ -71,10 +71,10 @@ function springPanel(stick, { session, device, onTuned }) {
   function paint() {
     const tuned = springStatus(session, stick) === 'tuned';
     state.replaceChildren(
-      badge(tuned ? t('Tuned to this stick') : t('Built-in tuning'), tuned ? TONE : 'lavender'),
+      badge(tuned ? t('Tuned to this stick') : t('Not tuned (standard Auto)'), tuned ? TONE : 'lavender'),
       h('span.muted.small', tuned
-        ? t('Fitted to how this stick springs back. The same in every profile.')
-        : t('Works for most sticks. Tuning learns how yours springs back, in about 2 minutes.')));
+        ? t('Fitted to how this stick springs back. The same in every profile. Tune again after recalibrating the stick.')
+        : t('Tuning takes about 2 minutes.')));
     tune.setLabel(tuned ? t('Tune again') : t('Tune to my stick'));
     // Reset fades in and out (it sits after Tune, so nothing else moves)
     clearTimeout(resetTimer);
@@ -88,7 +88,7 @@ function springPanel(stick, { session, device, onTuned }) {
   reset.hidden = springStatus(session, stick) !== 'tuned';
   paint();
   const el = h('div.sb-spring',
-    h('p.sb-spring-about.small', t('Spring knows how your stick springs back when you let go and holds back only that rebound. Your thumb’s own moves go straight through.')),
+    h('p.sb-spring-about.small', t('Auto learns how this stick springs back, so it can hold back the rebound without slowing your own moves.')),
     state,
     h('div.sb-spring-actions', tune, reset));
   return { el, paint };
@@ -106,10 +106,11 @@ function stickColumn(stick, { session, device, onTuned }) {
   const note = h('p.sb-mode-note.muted.small');
   let cutoff;
   let spring;
+  const tunable = !!session.caps.snapbackSpring;
   const syncMode = (v) => {
     cutoff.hidden = v !== 0; // the cutoff is only used by the low-pass mode
-    spring.el.hidden = v !== 3;
-    note.hidden = v === 0 || v === 3;
+    spring.el.hidden = !(tunable && v === 1);
+    note.hidden = v === 0 || !spring.el.hidden;
     note.textContent = MODE_NOTE[v] ? t(MODE_NOTE[v]) : '';
   };
   const type = settingField(`snapback.${stick}Type`, { tone: TONE, stacked: true, onChange: syncMode });

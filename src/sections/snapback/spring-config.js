@@ -1,11 +1,12 @@
 /**
- * spring-config.js: Reading and writing a stick's Spring tuning (analogConfig_s.l_spring / r_spring,
- * snapbackSpringCfg_s). No DOM.
+ * spring-config.js: Reading and writing a stick's tuning for Auto snapback (analogConfig_s.l_spring /
+ * r_spring, snapbackSpringCfg_s). No DOM. On firmware with the spring model, Auto on a stick whose tuning is
+ * flagged TUNED holds back only the rebound its own spring makes; untuned, Auto works as it always did.
  *
  * The tuning belongs to the stick, not the profile: it sits past the per-profile part of the analog
  * block. The firmware loads it whenever the analog block is written, so a write takes effect at once;
- * a tuning it can't use (version 0 included) is replaced with its built-in defaults (flags 0) and
- * written back, which is how "Reset to defaults" works.
+ * a tuning it can't use (version 0 included) is replaced with defaults (flags 0: not tuned) and written
+ * back, which is how "Reset tuning" works.
  *
  * A tuning is saved only once the controller holds it: after writing, the block is read back and the
  * stick's spring bytes and type compared with what was written (writes aren't acknowledged, and a write
@@ -18,14 +19,15 @@ const VERSION = LAYOUT.defines?.SNAPBACK_SPRING_CFG_VERSION ?? 1;
 const TUNED = LAYOUT.defines?.SNAPBACK_SPRING_FLAG_TUNED ?? 1;
 const FIELD = { left: 'l_spring', right: 'r_spring' };
 const TYPE = { left: 'l_snapback_type', right: 'r_snapback_type' };
-/** Snapback type 3: Spring (settings.js SNAPBACK_TYPES). */
-export const SPRING_TYPE = 3;
+/** Snapback type 1: Auto (settings.js SNAPBACK_TYPES), which uses the tuning. (3, the spring model's own type
+ *  for a while, also runs as Auto; it is never written now.) */
+export const AUTO_TYPE = 1;
 /** After a write, how long to give the firmware to load it (and fill in defaults) before reading it back. */
 const RELOAD_MS = 250;
 const WRITE_TRIES = 3;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** 'tuned' (fitted to this stick), 'defaults' (the built-in tuning), or null (none stored). */
+/** 'tuned' (fitted to this stick, Auto uses it), 'defaults' (not tuned: standard Auto), or null (none stored). */
 export function springStatus(session, stick) {
   const c = session.config.analog?.[FIELD[stick]];
   if (!c || c.version !== VERSION) return null;
@@ -33,7 +35,7 @@ export function springStatus(session, stick) {
 }
 
 /**
- * Store a fitted tuning for one stick and switch it to Spring, then save to the controller.
+ * Store a fitted tuning for one stick and switch it to Auto, then save to the controller.
  * @param {{a1: number[], a2: number[], decide_step: number, grab_err: number, stiff_den: number, cross_speed: number}} p
  * @returns {Promise<boolean>} saved
  */
@@ -49,8 +51,8 @@ export async function writeSpring(session, stick, p) {
   c.stiff_den = p.stiff_den;
   c.cross_speed = p.cross_speed;
   const want = c.buffer.slice();
-  const put = () => { cfg[FIELD[stick]] = new c.constructor(want.slice()); cfg[TYPE[stick]] = SPRING_TYPE; };
-  const held = () => cfg[TYPE[stick]] === SPRING_TYPE && want.every((b, i) => cfg[FIELD[stick]].buffer[i] === b);
+  const put = () => { cfg[FIELD[stick]] = new c.constructor(want.slice()); cfg[TYPE[stick]] = AUTO_TYPE; };
+  const held = () => cfg[TYPE[stick]] === AUTO_TYPE && want.every((b, i) => cfg[FIELD[stick]].buffer[i] === b);
   try {
     for (let n = 1; n <= WRITE_TRIES; n++) {
       put();
@@ -68,8 +70,8 @@ export async function writeSpring(session, stick, p) {
 }
 
 /**
- * Back to the firmware's built-in tuning for one stick: write version 0, let the firmware fill in its
- * defaults, read them back and save.
+ * Clear one stick's tuning (Auto goes back to standard): write version 0, let the firmware fill in its
+ * defaults (not tuned), read them back and save.
  * @returns {Promise<boolean>} saved
  */
 export async function resetSpring(session, stick) {

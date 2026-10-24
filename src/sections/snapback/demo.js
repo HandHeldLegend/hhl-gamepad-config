@@ -147,7 +147,7 @@ function dump(device) {
   const type = left ? a.l_snapback_type : a.r_snapback_type;
   const cutoff = (left ? a.l_snapback_intensity : a.r_snapback_intensity) / 10;
   const sign = Math.random() < 0.5 ? -1 : 1;
-  const samples = filtered(rawRebound(sign), type === 3 ? 1 : type > 2 ? 0 : type, cutoff); // Spring holds back the rebound like Auto
+  const samples = filtered(rawRebound(sign), type === 3 ? 1 : type > 2 ? 0 : type, cutoff); // 3 runs as Auto
 
   const buf = new Uint8Array(64);
   buf[0] = 0xfa;
@@ -166,7 +166,7 @@ export function seed(device) {
   a.r_snapback_type = 0;
   a.l_snapback_intensity = 600;
   a.r_snapback_intensity = 750;
-  // Firmware with Spring fills in each stick's built-in tuning (session caps.snapbackSpring)
+  // Firmware with the spring model fills in each stick's tuning, not tuned yet (session caps.snapbackSpring)
   for (const key of ['l_spring', 'r_spring']) {
     const sp = a[key];
     if (!sp) continue;

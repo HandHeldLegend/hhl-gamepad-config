@@ -157,4 +157,5 @@ export default {
   "Flip the right stick’s horizontal (left ↔ right) direction.": "翻转右摇杆的水平方向（左 ↔ 右）。",
   "Invert RY": "反转 RY",
   "Flip the right stick’s vertical (up ↔ down) direction.": "翻转右摇杆的垂直方向（上 ↔ 下）。",
+  "Auto snapback learned how your stick springs back. Tune it again on the Snapback page so it fits the new calibration.": "自动回弹抑制已学会你的摇杆如何回弹。请在回弹页面重新调校，以匹配新的校准。",
 };
