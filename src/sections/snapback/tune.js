@@ -50,6 +50,9 @@ const THUMB_MOVES = {
   back: { end: 'start', name: N_('Dash back and forth'), how: N_('Push to the marked edge, flick to the far edge and straight back, and keep holding at the marked edge until the target fills.') },
   pull: { end: 'center', name: N_('Pull back'), how: N_('Push to the marked edge, then slowly bring it back to the center and hold it there until the target fills.') },
 };
+/** A move's capture counts if the stick was at its starting edge this recently (the live stick: a slow
+ *  move starts long before the 24 ms a capture keeps). */
+const START_MS = 5000;
 /** Holding in the end target this long finishes a move. */
 const HOLD_MS = 300;
 /** A move's capture waits this long for the hold, then the move has to be done again. */
@@ -213,6 +216,7 @@ export function tuneSpring({ session, device, stick }) {
     if (guideMove && guideMove[0] === kind && guideMove[1] === o) return;
     const first = !guideMove;
     guideMove = [kind, o];
+    startSeenAt = -Infinity; // this move's own start, not the last one's
     moveName.textContent = t(THUMB_MOVES[kind].name);
     moveHow.textContent = t(THUMB_MOVES[kind].how);
     if (!first) replay(moveCard);
@@ -259,16 +263,21 @@ export function tuneSpring({ session, device, stick }) {
     endFill.style.strokeDashoffset = String(100 - f * 100);
     endTarget.classList.toggle('done', f >= 1);
   }
+  /** Is (x, y) out at the edge in direction a (within 30°)? */
+  const atEdge = (x, y, a) => {
+    const d = Math.hypot(x, y);
+    return d > 1400 && (x * Math.cos(a) + y * Math.sin(a)) / d > Math.cos(Math.PI / 6);
+  };
   /** Is the live stick inside the current move's end target? */
   function inEndZone(x, y) {
     if (!guideMove) return false;
     const [kind, o] = guideMove;
-    const d = Math.hypot(x, y);
     const end = THUMB_MOVES[kind].end;
-    if (end === 'center') return d < 350;
-    const a = (o * Math.PI) / 4 + (end === 'far' ? Math.PI : 0);
-    return d > 1400 && (x * Math.cos(a) + y * Math.sin(a)) / d > Math.cos(Math.PI / 6);
+    if (end === 'center') return Math.hypot(x, y) < 350;
+    return atEdge(x, y, (o * Math.PI) / 4 + (end === 'far' ? Math.PI : 0));
   }
+  /** When the live stick was last at the current move's starting edge. */
+  let startSeenAt = -Infinity;
   function paintHold(now) {
     if (!pending) { setHold(0); return; }
     if (now - pending.at > HOLD_WAIT_MS) {
@@ -378,7 +387,10 @@ export function tuneSpring({ session, device, stick }) {
       took(c);
       say(t('Got it.'), 'good');
     } else {
-      const r = readThumb(c);
+      let r = readThumb(c);
+      // Started at the marked edge: seen in the capture, or on the live stick shortly before
+      const sawStart = guideMove && (atEdge(c.x[0], c.y[0], (guideMove[1] * Math.PI) / 4) || performance.now() - startSeenAt < START_MS);
+      if (r.ok && !sawStart) r = { ok: false, why: 'edge' };
       entry.why = r.ok ? null : r.why;
       // Let go after the last move: the stick snapped back on its own, that's fine
       if (!r.ok && r.why === 'released' && !pending && performance.now() - lastMoveAt < AFTER_MOVE_MS) { entry.why = 'let-go-after-move'; return; }
@@ -561,6 +573,7 @@ export function tuneSpring({ session, device, stick }) {
     if (!s) return;
     live = stick === 'left' ? [s.lx, s.ly] : [s.rx, s.ry];
     if (step === 'thumbs') {
+      if (guideMove && atEdge(live[0], live[1], (guideMove[1] * Math.PI) / 4)) startSeenAt = performance.now();
       const inZone = inEndZone(live[0], live[1]);
       if (!inZone) zoneSince = null;
       else if (zoneSince == null) zoneSince = performance.now();
