@@ -7,7 +7,9 @@
  *   - Releases from the edge: a stick past 1600 falls through 1200. The free spring
  *     s[n+1] = a1 s[n] + a2 s[n-1] (a1, a2 in Q16 for the octant it left from) runs on from there; if the
  *     stick stays within decide_step × k counts of it at sample k (k = 2..6, 3 ms), it was let go and the
- *     output holds at neutral. Otherwise the thumb has it and it passes.
+ *     output holds at neutral. Otherwise the thumb has it and it passes. The check carries on through the
+ *     hold until FREE_CHECK_UNTIL samples after the line: a hand that carried the stick like the spring for
+ *     3 ms and then pauses near centre (a free spring never does) is let go then.
  *   - Turnarounds (let go partway): a centre crossing faster than cross_speed counts a sample is held for
  *     5 samples while the stiffness along the last direction out is measured. At 1/stiff_den or more it is
  *     the spring (hold), else the thumb (pass).
@@ -60,6 +62,8 @@ const SETTLED_RANGE = [40, 200];
 /** The firmware's default inner deadzone (analogConfig_s l/r_deadzone), used when none is given. */
 export const DEFAULT_DEADZONE = 144;
 const SETTLE_COUNT = 20;
+/** The release check carries on through a layer-1 hold this many samples after the release line (7 ms). */
+const FREE_CHECK_UNTIL = 14;
 /** A hold ends when the stick is parked: this far out, moving under 1/STILL_DIV of its distance a
  *  sample, STILL_N samples running. */
 const STILL_MIN = 600;
@@ -187,9 +191,18 @@ export function runGate(xs, ys, p, o = {}) {
         }
         neutral = s.state === GATE.CHECKING || s.state === GATE.HOLDING;
         break;
-      case GATE.HOLDING:
+      case GATE.HOLDING: {
+        const freeCheck = s.layer === 1 && s.step < FREE_CHECK_UNTIL;
+        const freeLimit = p.decide_step * (s.step + 1);
+        if (freeCheck && s.step + 1 >= 2 && freeErr > freeLimit * freeLimit) {
+          // Strayed from the free spring within 7 ms of the line: the hand had it after all
+          s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
+          break;
+        }
         // A layer-1 hold keeps the free spring running until the stick crosses (the thrown check above)
-        if (s.layer === 1 && !s.crossed) { s.fx2 = s.fx1; s.fy2 = s.fy1; s.fx1 = fx; s.fy1 = fy; }
+        // and for the release check's 7 ms
+        if (s.layer === 1 && (!s.crossed || freeCheck)) { s.fx2 = s.fx1; s.fy2 = s.fy1; s.fx1 = fx; s.fy1 = fy; }
+        if (freeCheck) s.step++;
         s.hold++;
         s.grab = stepErr > p.grab_err * p.grab_err ? s.grab + 1 : 0;
         s.settle = d < settled ? s.settle + 1 : 0;
@@ -201,6 +214,7 @@ export function runGate(xs, ys, p, o = {}) {
         else if (s.settle >= SETTLE_COUNT || s.hold >= HOLD_MAX) s.state = GATE.IDLE;
         else neutral = true;
         break;
+      }
       default:
         break;
     }
