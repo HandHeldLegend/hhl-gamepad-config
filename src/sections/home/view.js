@@ -118,62 +118,130 @@ function deviceCard(session) {
 /**
  * The simple layout's home (App settings > Layout), after the HOJA 2 app: one line to connect or
  * showing the controller, then every page as a round icon with its name. A page that needs attention
- * gets a dot; one that needs a controller waits dimmed.
+ * gets a dot; one that needs a controller waits dimmed. The icons are made once and only updated
+ * (dot, dimming), so nothing blinks while the controller connects and its checks report in.
  */
-function simpleHome(session) {
-  const connecting = session.state === 'connecting';
-  const fw = firmwareStatus();
-  const top = session.connected
-    ? h('div.simple-bar',
-      face('gamepad', 'lavender', 40),
-      h('div.simple-bar-text', h('strong.ellipsis', session.info.name),
-        h('span.small.muted', isDemo() ? t('Demo controller') : fw.state === 'available' ? t('Update available') : t('Connected'))),
-      fw.state === 'available' && !session.caps.noCable
-        ? updateButton()
-        : button({ label: t('Firmware'), icon: 'firmware', variant: 'ghost', size: 'sm', onClick: () => { location.hash = '#/firmware'; } }))
-    : session.state === 'dongle' ? null
-      : h('div.simple-bar.simple-connect',
-        button({ label: connecting ? t('Connecting…') : t('Connect controller'), icon: 'usb', variant: 'primary', disabled: connecting, onClick: () => connectController() }),
-        button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() }));
-  const icons = h('nav.simple-grid', { 'aria-label': t('Sections') },
+/**
+ * The simple layout's top line, made once per kind (connect, controller, dongle) and then updated in
+ * place: the firmware check, the mode and the rest report in after connecting, and redrawing the line
+ * for each made it blink.
+ */
+function simpleTop() {
+  let kind = '';
+  let parts = null;
+  const el = h('div.simple-top');
+  el.update = (session) => {
+    const k = session.state === 'dongle' ? 'dongle' : session.connected ? 'pad' : 'connect';
+    if (k !== kind) {
+      kind = k;
+      parts = null;
+      if (k === 'dongle') { replace(el, dongleCard(session)); return; }
+      if (k === 'pad') {
+        const sub = h('span.small.muted');
+        const name = h('strong.ellipsis');
+        const action = h('div.simple-bar-action');
+        parts = { sub, name, action, update: '' };
+        replace(el, h('div.simple-bar', face('gamepad', 'lavender', 40), h('div.simple-bar-text', name, sub), action));
+      } else {
+        const connect = button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', onClick: () => connectController() });
+        parts = { connect };
+        replace(el, h('div.simple-bar.simple-connect', connect,
+          button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() })));
+      }
+    }
+    if (k === 'dongle') return;
+    if (k === 'connect') {
+      const connecting = session.state === 'connecting';
+      parts.connect.setLabel(connecting ? t('Connecting…') : t('Connect controller'));
+      parts.connect.disabled = connecting;
+      return;
+    }
+    const fw = firmwareStatus();
+    if (parts.name.textContent !== session.info.name) parts.name.textContent = session.info.name;
+    const sub = isDemo() ? t('Demo controller') : fw.state === 'available' ? t('Update available') : t('Connected');
+    if (parts.sub.textContent !== sub) parts.sub.textContent = sub;
+    const upd = fw.state === 'available' && !session.caps.noCable ? 'update' : 'firmware';
+    if (parts.update !== upd) {
+      parts.update = upd;
+      replace(parts.action, upd === 'update' ? updateButton()
+        : button({ label: t('Firmware'), icon: 'firmware', variant: 'ghost', size: 'sm', onClick: () => { location.hash = '#/firmware'; } }));
+    }
+  };
+  return el;
+}
+
+function simpleGrid() {
+  const icons = new Map();
+  const el = h('nav.simple-grid', { 'aria-label': t('Sections') },
     SECTIONS.filter((s) => s.id !== 'home' && !s.hidden).map((s) => {
+      const dot = h('span.simple-icon-dot');
+      const a = h('a.simple-icon', { href: `#/${s.id}`, class: `tone-${s.tone}` },
+        h('span.simple-icon-art', face(s.icon, s.tone, 64), dot),
+        h('span.simple-icon-label', t(s.title)));
+      icons.set(s, { a, dot });
+      return a;
+    }));
+  el.update = (session) => {
+    for (const [s, { a, dot }] of icons) {
       const reason = unavailableReason(s);
       const att = session.attention[s.id];
-      return h('a.simple-icon', {
-        href: `#/${s.id}`, class: [`tone-${s.tone}`, reason ? 'waiting' : null].filter(Boolean),
-        title: reason || t(s.summary),
-      },
-      h('span.simple-icon-art', face(s.icon, s.tone, 64), att && h('span.simple-icon-dot', { class: att.level === 'warn' ? 'warn' : 'info' })),
-      h('span.simple-icon-label', t(s.title)));
-    }));
-  return [top, session.state === 'dongle' && dongleCard(session), icons];
+      a.classList.toggle('waiting', !!reason);
+      a.title = reason || t(s.summary);
+      dot.hidden = !att;
+      dot.classList.toggle('warn', att?.level === 'warn');
+    }
+  };
+  return el;
+}
+
+/** Redraw `slot` only when `sig` changed since its last drawing. */
+function draw(slot, sig, build) {
+  if (slot.dataset.sig === sig) return;
+  slot.dataset.sig = sig;
+  replace(slot, ...[].concat(build()));
 }
 
 export function mount(root, { session, device }) {
   let hub = null;
-  // Home redraws when the attention check or the firmware check reports in (several times right after
-  // connecting). Only the parts around the quick settings are redrawn: the hub stays the same element,
-  // never taken out and put back (that restarted its animations, so the profile buttons blinked).
+  let grid = null;
+  let top = null;
+  // Home stays mounted through connecting and disconnecting (registry: stable) and redraws itself when
+  // the state changes, the attention check or the firmware check reports in. Each part is redrawn only
+  // when what it shows changed, and the quick settings stay the same element (never taken out and put
+  // back), so nothing blinks or replays its arrival while a controller connects.
   const before = h('div.home-slot');
   const after = h('div.home-slot');
+  const place = (want) => {
+    if (want.some((el, i) => root.children[i] !== el) || root.children.length !== want.length) root.replaceChildren(...want);
+  };
   const render = () => {
+    const fw = firmwareStatus();
+    const attention = JSON.stringify(session.attention);
+    const who = [session.state, session.connected && session.info?.name, fw.state, isDemo(), session.caps?.noCable, session.caps?.viaDongle,
+      session.caps?.viaBluetooth, currentModeLabel()].join('|');
     if (prefs.get('layout') === 'simple') {
       hub?.destroy();
       hub = null;
-      replace(root, ...simpleHome(session));
+      grid ||= simpleGrid();
+      top ||= simpleTop();
+      top.update(session);
+      grid.update(session);
+      place([top, grid]);
       return;
     }
     const dongleOnly = session.state === 'dongle';
-    if (!session.connected) { hub?.destroy(); hub = null; } else if (!hub) hub = quickHub(session, device);
-    replace(before, session.connected ? deviceCard(session) : dongleOnly ? dongleCard(session) : hero(session));
-    replace(after,
+    if (!session.connected) { hub?.destroy(); hub = null; } else if (!hub) {
+      hub = quickHub(session, device);
+      hub.classList.add('rise-in'); // arrives with a fade, once (it then stays the same element)
+    }
+    draw(before, `std|${who}|${attention}`, () => (session.connected ? deviceCard(session) : dongleOnly ? dongleCard(session) : hero(session)));
+    draw(after, `std|${session.state}|${attention}|${SECTIONS.map((x) => unavailableReason(x) || '').join(',')}`, () => [
       !session.connected && !dongleOnly && connectTips(),
       h('h2.section-heading', session.connected ? t('Configure') : t('Explore')),
-      tiles(session));
-    const want = [before, hub, after].filter(Boolean);
-    if (want.some((el, i) => root.children[i] !== el) || root.children.length !== want.length) root.replaceChildren(...want);
+      tiles(session)]);
+    place([before, hub, after].filter(Boolean));
   };
   render();
-  const offs = [session.on('attention', render), session.on('firmware', render), prefs.on('layout', render)];
+  const offs = [session.on('state', render), session.on('attention', render), session.on('firmware', render), prefs.on('layout', render)];
   return () => { offs.forEach((f) => f()); hub?.destroy(); };
 }
