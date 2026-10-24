@@ -17,7 +17,9 @@
  *     crossing, it's the thumb: the release check or hold ends at once, and that same sample is looked at
  *     as an idle one (its crossing can still be checked: a slowly eased-back turnaround can look thrown).
  *   - A hold ends when the thumb takes the stick back (one-step error over grab_err, 3 samples running),
- *     or once it settles within the stick's deadzone (clamped to 40..200) for 10 ms, 100 ms at most.
+ *     when it's parked far out (STILL_N samples barely moving past STILL_MIN), when it's pushed (speeding
+ *     away from centre past PUSH_MIN, PUSH_N running: a spring only ever pulls it back), or once it settles
+ *     within the stick's deadzone (clamped to 40..200) for 10 ms, 100 ms at most.
  *   - The sample a fast crossing is found on is already past centre, so it is held too.
  *
  * Captures (device 'spring-capture'): 256 samples of x and y at 2 kHz, ±2048, as the filter sees them,
@@ -58,6 +60,14 @@ const SETTLED_RANGE = [40, 200];
 /** The firmware's default inner deadzone (analogConfig_s l/r_deadzone), used when none is given. */
 export const DEFAULT_DEADZONE = 144;
 const SETTLE_COUNT = 20;
+/** A hold ends when the stick is parked: this far out, moving under 1/STILL_DIV of its distance a
+ *  sample, STILL_N samples running. */
+const STILL_MIN = 600;
+const STILL_DIV = 64;
+const STILL_N = 4;
+/** A hold ends when the stick speeds up away from centre past PUSH_MIN, PUSH_N samples running. */
+const PUSH_MIN = 300;
+const PUSH_N = 3;
 /** Samples past the free spring's predicted centre crossing that say a thumb threw it, not the spring. */
 const CROSS_MARGIN = 3;
 const HOLD_MAX = 200;
@@ -100,7 +110,7 @@ export function runGate(xs, ys, p, o = {}) {
   const s = {
     state: GATE.IDLE, oct: 0, step: 0, grab: 0, settle: 0, hold: 0, ex: 0, ey: 0,
     x1: 0, y1: 0, x2: 0, y2: 0, fx1: 0, fy1: 0, fx2: 0, fy2: 0, rx: 0, ry: 0, p1: 0, p2: 0, num: 0, den: 0, at: 0, speed: 0,
-    layer: 1, crossed: false, fcross: -1,
+    layer: 1, crossed: false, fcross: -1, still: 0, push: 0, dprev: 0, dprev2: 0,
   };
   for (let i = 0; i < n; i++) {
     const x = xs[i] | 0;
@@ -183,7 +193,11 @@ export function runGate(xs, ys, p, o = {}) {
         s.hold++;
         s.grab = stepErr > p.grab_err * p.grab_err ? s.grab + 1 : 0;
         s.settle = d < settled ? s.settle + 1 : 0;
-        if (s.grab >= GRAB_COUNT) s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
+        // Parked far out by the hand (the grab check can miss a stick held still)
+        s.still = d >= STILL_MIN && Math.abs(d - s.dprev) * STILL_DIV <= d ? s.still + 1 : 0;
+        // Speeding up away from centre: pushed, as a spring only pulls it back
+        s.push = d >= PUSH_MIN && d > s.dprev && d - 2 * s.dprev + s.dprev2 > 0 ? s.push + 1 : 0;
+        if (s.push >= PUSH_N || s.still >= STILL_N || s.grab >= GRAB_COUNT) s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
         else if (s.settle >= SETTLE_COUNT || s.hold >= HOLD_MAX) s.state = GATE.IDLE;
         else neutral = true;
         break;
@@ -198,6 +212,7 @@ export function runGate(xs, ys, p, o = {}) {
     } else {
       s.p2 = s.p1; s.p1 = p0;
     }
+    s.dprev2 = s.dprev; s.dprev = d;
     s.x2 = s.x1; s.y2 = s.y1; s.x1 = x; s.y1 = y;
     outX[i] = neutral ? 0 : x;
     outY[i] = neutral ? 0 : y;
@@ -208,7 +223,7 @@ export function runGate(xs, ys, p, o = {}) {
 
 function holdStart(s) {
   s.state = GATE.HOLDING;
-  s.hold = 0; s.grab = 0; s.settle = 0;
+  s.hold = 0; s.grab = 0; s.settle = 0; s.still = 0; s.push = 0;
 }
 
 // ---- Reading a capture -----------------------------------------------------------------------
@@ -459,6 +474,8 @@ export function fitSpring({ releases, turnarounds, thumbs: moves, flicks = [], t
 
 /** A thumb move or flick may be held this long: one crossing check (6 samples, and 1 of the metric). */
 const DELAY_OK_MS = 3.5;
+/** A fast flick may be held this long: the crossing check plus a sample or two (a palm flick, at most). */
+const FLICK_OK_MS = 5;
 
 /** Position along the direction the stick left from (its furthest point before coming back). */
 function edgeDir(c) {
@@ -481,7 +498,9 @@ function blocked(c, g, dz) {
  *   changedMs   longest run of samples where the output differs from the stick and either is outside
  *               the deadzone (a hold that keeps a stick inside the deadzone at neutral changes nothing)
  *   farDelayMs  a move that crosses to the far side: when the output leaves the deadzone there, minus
- *               when the stick does (null if the stick never does)
+ *               when the stick does for good (from where it stays out on that side until it reaches the
+ *               far edge or the end; a brief poke past the deadzone first counts in changedMs); null if
+ *               the stick never does
  *   delayMs     the larger of the two: the move's added delay
  *   ratio       how far the move's exit from the edge strayed from the free spring (err_k / k)
  *   unclear     that exit is within decide_step: the gate can't tell it from a release
@@ -500,12 +519,13 @@ export function thumbEffect(c, p, dz = DEFAULT_DEADZONE, letGo = p.decide_step) 
     worst = Math.max(worst, run);
   }
   const { pk, ux, uy } = edgeDir(c);
-  const far = (xs, ys) => {
-    for (let i = pk.at; i < end; i++) if (xs[i] * ux + ys[i] * uy < -dz) return i;
-    return -1;
-  };
-  const rawAt = far(c.x, c.y);
-  const outAt = rawAt < 0 ? -1 : far(g.x, g.y);
+  const along = (xs, ys, i) => xs[i] * ux + ys[i] * uy;
+  let farEdge = end;
+  for (let i = pk.at; i < end; i++) if (along(c.x, c.y, i) < -EDGE) { farEdge = i; break; }
+  let rawAt = -1;
+  for (let i = farEdge - 1; i >= pk.at && along(c.x, c.y, i) < -dz; i--) rawAt = i;
+  let outAt = -1;
+  if (rawAt >= 0) for (let i = rawAt; i < end; i++) if (along(g.x, g.y, i) < -dz) { outAt = i; break; }
   const farDelayMs = rawAt < 0 ? null : outAt < 0 ? (end - rawAt) * SAMPLE_MS : (outAt - rawAt) * SAMPLE_MS;
   const changedMs = worst * SAMPLE_MS;
   const delayMs = Math.max(changedMs, farDelayMs ?? 0);
@@ -556,7 +576,7 @@ export function scorecard(p, { releases, turnarounds, thumbs, flicks = [], thumb
   // Fast flicks across: the delay a game sees. One the gate holds can't be fixed by redoing it (it's as
   // close to a release as the stick allows), so it is reported, not asked for again.
   const flickMoves = flicks.map((c) => ({ ...thumbEffect(c, p, dz, letGo), flickMs: flickMs(c) }))
-    .map((m) => ({ ...m, pass: m.delayMs <= DELAY_OK_MS }));
+    .map((m) => ({ ...m, pass: m.delayMs <= FLICK_OK_MS }));
   const flick = { moves: flickMoves, pass: flickMoves.filter((m) => m.pass).length, of: flickMoves.length,
     worstMs: Math.max(0, ...flickMoves.map((m) => m.delayMs)) };
   const ok = rel.pass === rel.of && turn.pass === turn.of && thumb.pass === thumb.of && flick.pass === flick.of;
