@@ -358,7 +358,7 @@ function holdMiss(c, p, dz) {
  * @param {{releases: object[], turnarounds: object[], thumbs: object[]}} caps  captures ({x, y}) by step
  * @returns {{params: typeof SPRING_DEFAULTS, shape: {hz: number, zeta: number}[], notes: object}}
  */
-export function fitSpring({ releases, turnarounds, thumbs }, deadzone = DEFAULT_DEADZONE) {
+export function fitSpring({ releases, turnarounds, thumbs, thumbsHeld = false }, deadzone = DEFAULT_DEADZONE) {
   // a1, a2 per octant: the mean of that octant's releases. An octant with none borrows its neighbours.
   const per = Array.from({ length: 8 }, () => []);
   for (const c of releases) {
@@ -383,7 +383,14 @@ export function fitSpring({ releases, turnarounds, thumbs }, deadzone = DEFAULT_
   // the two overlap: the releases win (a held rebound matters more), and the thumb moves inside are
   // flagged unclear, to be done again.
   const relWorst = Math.max(0, ...releases.map((c) => decideRatio(c, p) ?? 0));
-  const thumbRatios = thumbs.map((c) => decideRatio(c, p)).filter((v) => v != null);
+  // Every exit from an edge in a thumb move is the thumb (a dash back and forth leaves two). The flow's
+  // moves end held (thumbsHeld), so none of their exits is a let-go; in other recordings a later exit as
+  // close to the spring as the releases came is taken as letting go after the move, and left out.
+  const thumbRatios = thumbs.flatMap((c) => {
+    const exits = edgeExits(c, p);
+    const cut = thumbsHeld ? -1 : exits.findIndex((e, i) => i > 0 && e.ratio <= relWorst * 1.2);
+    return exits.slice(0, cut < 0 ? exits.length : cut).map((e) => e.ratio);
+  });
   const thumbBest = thumbRatios.length ? Math.min(...thumbRatios) : null;
   const need = Math.max(relWorst * 1.05, Math.min(SPRING_DEFAULTS.decide_step, relWorst * 1.2));
   const thumbCap = thumbBest == null ? Infinity : thumbBest / THUMB_MARGIN;
@@ -476,10 +483,52 @@ export function thumbEffect(c, p, dz = DEFAULT_DEADZONE, letGo = p.decide_step) 
   const farDelayMs = rawAt < 0 ? null : outAt < 0 ? (end - rawAt) * SAMPLE_MS : (outAt - rawAt) * SAMPLE_MS;
   const changedMs = worst * SAMPLE_MS;
   const delayMs = Math.max(changedMs, farDelayMs ?? 0);
-  const ratio = exits[0]?.ratio ?? null;
+  const ratio = exits.length ? Math.min(...exits.slice(0, cut ? exits.indexOf(cut) : exits.length).map((e) => e.ratio)) : null;
   const unclear = ratio != null && ratio <= p.decide_step;
   return { changedMs, farDelayMs, delayMs, ratio, unclear, endMs: end * SAMPLE_MS, pass: !unclear && delayMs <= DELAY_OK_MS };
 }
+
+/**
+ * A push after a let-go: released from edge A, then pushed to B (direction `b`, radians) while the stick
+ * is still ringing, and held there. One capture holds both (it runs 104 ms past the fall under 500).
+ *   - the release: an exit from the edge that follows the free spring (ratio within decide_step)
+ *   - the push: from the first sample past the deadzone towards B after which the stick stays on that
+ *     side to the end of the capture (where it is held at B)
+ *   - still ringing: the push starts within REPUSH_WITHIN_MS of the release line, before the stick has
+ *     been settled (within its deadzone, clamped 40..200) for SETTLE_COUNT samples
+ * Scored by the gate: the takeover delay is how long after the stick is past the deadzone towards B the
+ * output gets there too (a game sees the push that much later).
+ * @returns {{ok: true, releaseAt: number, pushAt: number, sinceReleaseMs: number, delayMs: number, pass: boolean}
+ *   | {ok: false, why: 'no-release'|'late'}}
+ */
+export function readRepush(c, p, b, dz = DEFAULT_DEADZONE) {
+  const rel = edgeExits(c, p).find((e) => e.ratio <= p.decide_step);
+  if (!rel) return { ok: false, why: 'no-release' };
+  const n = c.x.length;
+  const bx = Math.cos(b); const by = Math.sin(b);
+  const towards = (xs, ys, i) => xs[i] * bx + ys[i] * by;
+  let push = -1;
+  for (let i = n - 1; i >= rel.at; i--) {
+    if (towards(c.x, c.y, i) > dz) push = i;
+    else break;
+  }
+  const last = n - 1;
+  const heldAtB = Math.hypot(c.x[last], c.y[last]) > 1400 && towards(c.x, c.y, last) / Math.hypot(c.x[last], c.y[last]) > Math.cos(Math.PI / 6);
+  if (push < 0 || !heldAtB) return { ok: false, why: 'late' };
+  const settled = clamp(dz, SETTLED_RANGE);
+  for (let i = rel.at, run = 0; i < push; i++) {
+    run = Math.hypot(c.x[i], c.y[i]) < settled ? run + 1 : 0;
+    if (run >= SETTLE_COUNT) return { ok: false, why: 'late' };
+  }
+  const sinceReleaseMs = (push - rel.at) * SAMPLE_MS;
+  if (sinceReleaseMs > REPUSH_WITHIN_MS) return { ok: false, why: 'late' };
+  const g = runGate(c.x, c.y, p, { deadzone: dz });
+  let out = -1;
+  for (let i = push; i < n; i++) if (towards(g.x, g.y, i) > dz) { out = i; break; }
+  const delayMs = ((out < 0 ? n : out) - push) * SAMPLE_MS;
+  return { ok: true, releaseAt: rel.at, pushAt: push, sinceReleaseMs, delayMs, pass: delayMs <= DELAY_OK_MS };
+}
+const REPUSH_WITHIN_MS = 60;
 
 /**
  * Run a tuning over every capture. `deadzone`: the stick's inner deadzone (what a game sees as centre).
@@ -487,11 +536,12 @@ export function thumbEffect(c, p, dz = DEFAULT_DEADZONE, letGo = p.decide_step) 
  *   thumbs: {pass: number, of: number, moves: ReturnType<typeof thumbEffect>[]}, delayMs: number,
  *   delayOk: boolean, redo: ('releases'|'turnarounds'|'thumbs')[], ok: boolean, deadzone: number}}
  */
-export function scorecard(p, { releases, turnarounds, thumbs }, deadzone = DEFAULT_DEADZONE) {
+export function scorecard(p, { releases, turnarounds, thumbs, repushes = [], thumbsHeld = false }, deadzone = DEFAULT_DEADZONE) {
   const dz = deadzone || DEFAULT_DEADZONE;
   // A let-go after a thumb move strays from the spring no more than the releases did
   const relWorst = Math.max(0, ...releases.map((c) => decideRatio(c, p) ?? 0));
-  const letGo = Math.min(p.decide_step, (relWorst || p.decide_step) * 1.2);
+  // (none in the flow's thumb moves, which end held: every exit in them is the thumb)
+  const letGo = thumbsHeld ? -1 : Math.min(p.decide_step, (relWorst || p.decide_step) * 1.2);
   const count = (list, f) => ({ pass: list.filter(f).length, of: list.length });
   const rel = count(releases, (c) => blocked(c, runGate(c.x, c.y, p, { deadzone: dz }), dz));
   const turn = count(turnarounds, (c) => blocked(c, runGate(c.x, c.y, p, { deadzone: dz }), dz));
@@ -504,6 +554,12 @@ export function scorecard(p, { releases, turnarounds, thumbs }, deadzone = DEFAU
   const redo = [];
   if (thumb.pass < thumb.of) redo.push('thumbs');
   const unclear = moves.filter((m) => m.unclear).length;
+  // Pushes after a let-go: measured, not (yet) fitted to, and not part of `ok`
+  const pushes = repushes.map((r) => readRepush(r.c, p, r.b, dz));
+  const repush = {
+    moves: pushes, pass: pushes.filter((m) => m.ok && m.pass).length, of: pushes.length,
+    worstMs: Math.max(0, ...pushes.filter((m) => m.ok).map((m) => m.delayMs)),
+  };
   const ok = rel.pass === rel.of && turn.pass === turn.of && thumb.pass === thumb.of;
-  return { releases: rel, turnarounds: turn, thumbs: thumb, unclear, delayMs, delayOk: delayMs <= DELAY_OK_MS, redo, ok, deadzone: dz };
+  return { releases: rel, turnarounds: turn, thumbs: thumb, repush, unclear, delayMs, delayOk: delayMs <= DELAY_OK_MS, redo, ok, deadzone: dz };
 }

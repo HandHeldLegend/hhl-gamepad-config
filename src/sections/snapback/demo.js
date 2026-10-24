@@ -100,9 +100,29 @@ function toCapture(along, angle, stick) {
 const hold = (v, n) => Array(n).fill(v);
 const ease = (a, b, n) => Array.from({ length: n }, (_, i) => a + (b - a) * (1 - Math.cos((Math.PI * (i + 1)) / n)) / 2);
 
+/** Let go from A, then (while it still rings) pushed to B and held: two directions, so x and y directly. */
+function repushCapture(stick) {
+  const a = (hint.octant >= 0 ? hint.octant : 0) * Math.PI / 4 + noise(0.1);
+  const b = (hint.b ?? hint.octant ?? 0) * Math.PI / 4 + noise(0.1);
+  const edge = 1900 + noise(60);
+  const ring = [...hold(edge, 80), ...springPath(hint.octant >= 0 ? hint.octant : 0, edge, edge, 320)];
+  const start = 80 + 14 + Math.floor(Math.random() * 30);  // the push starts 7-22 ms into the swing back
+  const push = ring.map((_, i) => (i < start ? 0 : i < start + 50 ? edge * (1 - Math.cos((Math.PI * (i - start + 1)) / 50)) / 2 : edge));
+  // the thumb on the stick damps the ringing once it pushes
+  const xs = ring.map((v, i) => v * (i < start ? 1 : Math.max(0, 1 - (i - start) / 30)) * Math.cos(a) + push[i] * Math.cos(b));
+  const ys = ring.map((v, i) => v * (i < start ? 1 : Math.max(0, 1 - (i - start) / 30)) * Math.sin(a) + push[i] * Math.sin(b));
+  const d = xs.map((x, i) => Math.hypot(x, ys[i]));
+  const fall = d.findIndex((v, i) => i > 0 && v < 500 && d[i - 1] >= 500);
+  const from = Math.max(0, fall - CAPTURE_PRE);
+  const x = Int16Array.from(xs.slice(from, from + 256), (v) => Math.round(v + noise(4)));
+  const y = Int16Array.from(ys.slice(from, from + 256), (v) => Math.round(v + noise(4)));
+  return { stick, number: capNumber++ & 0xff, x, y };
+}
+
 function makeCapture(stick) {
   made++;
   const step = hint.step;
+  if (step === 'repush') return repushCapture(stick);
   if (step === 'releases') {
     const o = hint.octant >= 0 ? hint.octant : Math.floor(Math.random() * 8);
     const angle = (o * Math.PI) / 4 + noise(0.25);
