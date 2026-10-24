@@ -14,8 +14,8 @@
  *   - Thrown by the thumb: from the release line the free spring runs on and predicts when the stick
  *     crosses centre. A release crosses no more than a sample after it; a thumb flick (no thumb is as quick
  *     as the spring) arrives later. CROSS_MARGIN samples after the predicted crossing without the stick
- *     crossing, it's the thumb: the release check or hold ends at once, and the flick's own crossing gets no
- *     crossing check (for THROWN_MAX samples, or until it reaches an edge).
+ *     crossing, it's the thumb: the release check or hold ends at once, and that same sample is looked at
+ *     as an idle one (its crossing can still be checked: a slowly eased-back turnaround can look thrown).
  *   - A hold ends when the thumb takes the stick back (one-step error over grab_err, 3 samples running),
  *     or once it settles within the stick's deadzone (clamped to 40..200) for 10 ms, 100 ms at most.
  *   - The sample a fast crossing is found on is already past centre, so it is held too.
@@ -60,8 +60,6 @@ export const DEFAULT_DEADZONE = 144;
 const SETTLE_COUNT = 20;
 /** Samples past the free spring's predicted centre crossing that say a thumb threw it, not the spring. */
 const CROSS_MARGIN = 3;
-/** How long a thrown stick's own centre crossing goes unchecked (unless it reaches an edge first). */
-const THROWN_MAX = 40;
 const HOLD_MAX = 200;
 
 /** Gate states, as the trace reports them. */
@@ -102,7 +100,7 @@ export function runGate(xs, ys, p, o = {}) {
   const s = {
     state: GATE.IDLE, oct: 0, step: 0, grab: 0, settle: 0, hold: 0, ex: 0, ey: 0,
     x1: 0, y1: 0, x2: 0, y2: 0, fx1: 0, fy1: 0, fx2: 0, fy2: 0, rx: 0, ry: 0, p1: 0, p2: 0, num: 0, den: 0, at: 0, speed: 0,
-    layer: 1, crossed: false, fcross: -1, thrown: false, thrownAge: 0,
+    layer: 1, crossed: false, fcross: -1,
   };
   for (let i = 0; i < n; i++) {
     const x = xs[i] | 0;
@@ -128,15 +126,14 @@ export function runGate(xs, ys, p, o = {}) {
       if (s.fcross < 0 && fx * s.ex + fy * s.ey < 0) s.fcross = 0;
       else if (s.fcross >= 0) s.fcross++;
       if (!s.crossed && s.fcross >= CROSS_MARGIN) {
-        s.state = GATE.IDLE;
-        s.thrown = true;
-        st = -1; // this sample is the stick's own: nothing below runs
+        s.state = GATE.IDLE; // thrown by the thumb: it passes, and this sample is an idle one
+        st = GATE.IDLE;
       }
     }
     switch (st) {
       case GATE.IDLE:
         if (d >= EDGE) s.state = GATE.EDGE;
-        else if (crossing && !s.thrown) {
+        else if (crossing) {
           s.state = GATE.CHECKING;
           s.step = 0; s.num = 0; s.den = 0;
           s.at = i; s.speed = fall / Math.sqrt(outSq);
@@ -194,8 +191,6 @@ export function runGate(xs, ys, p, o = {}) {
         break;
     }
     if (s.state === GATE.IDLE && d >= EDGE) s.state = GATE.EDGE;
-    s.thrownAge = s.thrown ? s.thrownAge + 1 : 0;
-    if (s.state === GATE.EDGE || s.thrownAge > THROWN_MAX) s.thrown = false;
     if ((s.state === GATE.IDLE || s.state === GATE.EDGE) && d > OUT) {
       s.rx = x; s.ry = y;
       p0 = x * x + y * y;
@@ -462,7 +457,8 @@ export function fitSpring({ releases, turnarounds, thumbs: moves, flicks = [], t
 
 // ---- The scorecard ---------------------------------------------------------------------------
 
-const DELAY_OK_MS = 3;
+/** A thumb move or flick may be held this long: one crossing check (6 samples, and 1 of the metric). */
+const DELAY_OK_MS = 3.5;
 
 /** Position along the direction the stick left from (its furthest point before coming back). */
 function edgeDir(c) {

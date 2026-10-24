@@ -17,7 +17,7 @@
  *      move counted is ignored, not scolded. Moves the results flag (unclear, or held back) are redone
  *      on their own.
  *   4. Fast flicks: 6 flicks straight across as fast as the player can (mostly left to right), held at the
- *      far edge. A max-speed flick looks most like a release for the gate's first 3 ms, so these set where
+ *      far edge. A fast flick looks most like a release for the gate's first 3 ms, so these set where
  *      decide_step has to stay under; slower than FLICK_FAST_MS edge to edge is asked again ("Faster!").
  *      One the gate still holds is reported with its delay, not asked for again.
  * Then the fit, and a scorecard from running the firmware's gate (ported exactly) over every capture
@@ -58,8 +58,9 @@ const THUMB_MOVES = {
 /** Fast flicks across, from these edges (octants): mostly left to right, where it's felt most. */
 const FLICK_PLAN = [['flick', 4], ['flick', 4], ['flick', 0], ['flick', 4], ['flick', 2], ['flick', 6]];
 const FLICKS = FLICK_PLAN.length;
-/** A flick counts as fast at this edge to edge or quicker (everyday dashes take 20-40 ms). */
-const FLICK_FAST_MS = 20;
+/** A flick counts as fast at this edge to edge or quicker (a thumb manages 16-42 ms). The gate's thrown
+ *  check doesn't depend on the speed: a slower throw is later against the spring, so it passes sooner. */
+const FLICK_FAST_MS = 40;
 /** A move's capture counts if the stick was at its starting edge this recently (the live stick: a slow
  *  move starts long before the 24 ms a capture keeps). */
 const START_MS = 5000;
@@ -525,7 +526,7 @@ export function tuneSpring({ session, device, stick }) {
     const dz = score.deadzone;
     const data = {
       format: 'hoja-spring-tuning', version: 1, created: new Date().toISOString(),
-      controller: session.info?.name || null, stick, deadzone: dz,
+      controller: session.info?.name || null, stick, deadzone: dz, save: saveResult,
       params: fit.params,
       shape: fit.shape, notes: fit.notes,
       score: { ...score, thumbs: { pass: score.thumbs.pass, of: score.thumbs.of }, flicks: { pass: score.flicks.pass, of: score.flicks.of, worstMs: score.flicks.worstMs } },
@@ -569,6 +570,7 @@ export function tuneSpring({ session, device, stick }) {
     // Nothing more to record: stop the capture packets so the write has the link to itself
     await device.armSpringCapture(null)?.catch?.(() => {});
     const ok = await writeSpring(session, stick, fit.params);
+    saveResult = { at: new Date().toISOString(), ok };
     if (!ok) {
       setActions();
       resultPanel.querySelector('.spr-save-failed')?.remove();
@@ -588,6 +590,8 @@ export function tuneSpring({ session, device, stick }) {
   }
 
   let saved = false;
+  /** The last Save's outcome, for the export. */
+  let saveResult = null;
   function setActions() {
     const cancel = { label: t('Cancel'), variant: 'ghost', value: false };
     if (step !== 'results') {
