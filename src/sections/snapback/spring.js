@@ -358,7 +358,9 @@ function holdMiss(c, p, dz) {
  * @param {{releases: object[], turnarounds: object[], thumbs: object[]}} caps  captures ({x, y}) by step
  * @returns {{params: typeof SPRING_DEFAULTS, shape: {hz: number, zeta: number}[], notes: object}}
  */
-export function fitSpring({ releases, turnarounds, thumbs, thumbsHeld = false }, deadzone = DEFAULT_DEADZONE) {
+export function fitSpring({ releases, turnarounds, thumbs: moves, flicks = [], thumbsHeld = false }, deadzone = DEFAULT_DEADZONE) {
+  // Fast flicks are thumb moves too: the fastest ones are what decide_step has to stay under
+  const thumbs = [...moves, ...flicks];
   // a1, a2 per octant: the mean of that octant's releases. An octant with none borrows its neighbours.
   const per = Array.from({ length: 8 }, () => []);
   for (const c of releases) {
@@ -489,46 +491,19 @@ export function thumbEffect(c, p, dz = DEFAULT_DEADZONE, letGo = p.decide_step) 
 }
 
 /**
- * A push after a let-go: released from edge A, then pushed to B (direction `b`, radians) while the stick
- * is still ringing, and held there. One capture holds both (it runs 104 ms past the fall under 500).
- *   - the release: an exit from the edge that follows the free spring (ratio within decide_step)
- *   - the push: from the first sample past the deadzone towards B after which the stick stays on that
- *     side to the end of the capture (where it is held at B)
- *   - still ringing: the push starts within REPUSH_WITHIN_MS of the release line, before the stick has
- *     been settled (within its deadzone, clamped 40..200) for SETTLE_COUNT samples
- * Scored by the gate: the takeover delay is how long after the stick is past the deadzone towards B the
- * output gets there too (a game sees the push that much later).
- * @returns {{ok: true, releaseAt: number, pushAt: number, sinceReleaseMs: number, delayMs: number, pass: boolean}
- *   | {ok: false, why: 'no-release'|'late'}}
+ * How fast a flick across went: from the last sample past the edge (1600) on the side it left to the first
+ * past it on the far side, in ms. null if it didn't reach the far edge.
  */
-export function readRepush(c, p, b, dz = DEFAULT_DEADZONE) {
-  const rel = edgeExits(c, p).find((e) => e.ratio <= p.decide_step);
-  if (!rel) return { ok: false, why: 'no-release' };
-  const n = c.x.length;
-  const bx = Math.cos(b); const by = Math.sin(b);
-  const towards = (xs, ys, i) => xs[i] * bx + ys[i] * by;
-  let push = -1;
-  for (let i = n - 1; i >= rel.at; i--) {
-    if (towards(c.x, c.y, i) > dz) push = i;
-    else break;
-  }
-  const last = n - 1;
-  const heldAtB = Math.hypot(c.x[last], c.y[last]) > 1400 && towards(c.x, c.y, last) / Math.hypot(c.x[last], c.y[last]) > Math.cos(Math.PI / 6);
-  if (push < 0 || !heldAtB) return { ok: false, why: 'late' };
-  const settled = clamp(dz, SETTLED_RANGE);
-  for (let i = rel.at, run = 0; i < push; i++) {
-    run = Math.hypot(c.x[i], c.y[i]) < settled ? run + 1 : 0;
-    if (run >= SETTLE_COUNT) return { ok: false, why: 'late' };
-  }
-  const sinceReleaseMs = (push - rel.at) * SAMPLE_MS;
-  if (sinceReleaseMs > REPUSH_WITHIN_MS) return { ok: false, why: 'late' };
-  const g = runGate(c.x, c.y, p, { deadzone: dz });
-  let out = -1;
-  for (let i = push; i < n; i++) if (towards(g.x, g.y, i) > dz) { out = i; break; }
-  const delayMs = ((out < 0 ? n : out) - push) * SAMPLE_MS;
-  return { ok: true, releaseAt: rel.at, pushAt: push, sinceReleaseMs, delayMs, pass: delayMs <= DELAY_OK_MS };
+export function flickMs(c) {
+  const { pk, ux, uy } = edgeDir(c);
+  const along = (i) => c.x[i] * ux + c.y[i] * uy;
+  let far = -1;
+  for (let i = pk.at; i < c.x.length; i++) if (along(i) < -EDGE) { far = i; break; }
+  if (far < 0) return null;
+  let start = far;
+  while (start > 0 && along(start) < EDGE) start--;
+  return (far - start) * SAMPLE_MS;
 }
-const REPUSH_WITHIN_MS = 60;
 
 /**
  * Run a tuning over every capture. `deadzone`: the stick's inner deadzone (what a game sees as centre).
@@ -536,7 +511,7 @@ const REPUSH_WITHIN_MS = 60;
  *   thumbs: {pass: number, of: number, moves: ReturnType<typeof thumbEffect>[]}, delayMs: number,
  *   delayOk: boolean, redo: ('releases'|'turnarounds'|'thumbs')[], ok: boolean, deadzone: number}}
  */
-export function scorecard(p, { releases, turnarounds, thumbs, repushes = [], thumbsHeld = false }, deadzone = DEFAULT_DEADZONE) {
+export function scorecard(p, { releases, turnarounds, thumbs, flicks = [], thumbsHeld = false }, deadzone = DEFAULT_DEADZONE) {
   const dz = deadzone || DEFAULT_DEADZONE;
   // A let-go after a thumb move strays from the spring no more than the releases did
   const relWorst = Math.max(0, ...releases.map((c) => decideRatio(c, p) ?? 0));
@@ -554,12 +529,12 @@ export function scorecard(p, { releases, turnarounds, thumbs, repushes = [], thu
   const redo = [];
   if (thumb.pass < thumb.of) redo.push('thumbs');
   const unclear = moves.filter((m) => m.unclear).length;
-  // Pushes after a let-go: measured, not (yet) fitted to, and not part of `ok`
-  const pushes = repushes.map((r) => readRepush(r.c, p, r.b, dz));
-  const repush = {
-    moves: pushes, pass: pushes.filter((m) => m.ok && m.pass).length, of: pushes.length,
-    worstMs: Math.max(0, ...pushes.filter((m) => m.ok).map((m) => m.delayMs)),
-  };
-  const ok = rel.pass === rel.of && turn.pass === turn.of && thumb.pass === thumb.of;
-  return { releases: rel, turnarounds: turn, thumbs: thumb, repush, unclear, delayMs, delayOk: delayMs <= DELAY_OK_MS, redo, ok, deadzone: dz };
+  // Fast flicks across: the delay a game sees. One the gate holds can't be fixed by redoing it (it's as
+  // close to a release as the stick allows), so it is reported, not asked for again.
+  const flickMoves = flicks.map((c) => ({ ...thumbEffect(c, p, dz, letGo), flickMs: flickMs(c) }))
+    .map((m) => ({ ...m, pass: m.delayMs <= DELAY_OK_MS }));
+  const flick = { moves: flickMoves, pass: flickMoves.filter((m) => m.pass).length, of: flickMoves.length,
+    worstMs: Math.max(0, ...flickMoves.map((m) => m.delayMs)) };
+  const ok = rel.pass === rel.of && turn.pass === turn.of && thumb.pass === thumb.of && flick.pass === flick.of;
+  return { releases: rel, turnarounds: turn, thumbs: thumb, flicks: flick, unclear, delayMs, delayOk: delayMs <= DELAY_OK_MS, redo, ok, deadzone: dz };
 }

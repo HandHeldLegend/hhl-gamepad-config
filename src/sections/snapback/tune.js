@@ -16,9 +16,10 @@
  *      Letting go after a move makes the stick snap back, which records a release; one right after a
  *      move counted is ignored, not scolded. Moves the results flag (unclear, or held back) are redone
  *      on their own.
- *   4. Let go, then push: 8 moves. Push to edge A and let go, and while the stick still rings push to B
- *      and hold it (B: 4 the same way as A, 2 opposite, 2 at 90°). Measures how long the gate keeps a push
- *      that starts during the rebound at neutral (the takeover delay). Scored and exported, not fitted.
+ *   4. Fast flicks: 6 flicks straight across as fast as the player can (mostly left to right), held at the
+ *      far edge. A max-speed flick looks most like a release for the gate's first 3 ms, so these set where
+ *      decide_step has to stay under; slower than FLICK_FAST_MS edge to edge is asked again ("Faster!").
+ *      One the gate still holds is reported with its delay, not asked for again.
  * Then the fit, and a scorecard from running the firmware's gate (ported exactly) over every capture
  * with the fitted values: rebounds held back, thumb moves left alone, the worst delay added. A step
  * that fails can be redone on its own. Save writes l_spring / r_spring (flagged tuned) and the Spring
@@ -39,7 +40,7 @@ import { prefersReducedMotion } from '../../ui/canvas-surface.js';
 import { onInputReport } from '../../device/reports.js';
 import { t, N_, fmt, plural } from '../../i18n/index.js';
 import { isDemo } from '../../device/mock.js';
-import { readRelease, readTurnaround, readThumb, readRepush, fitSpring, scorecard, CAPTURE_PRE, SAMPLE_MS } from './spring.js';
+import { readRelease, readTurnaround, readThumb, flickMs, fitSpring, scorecard, CAPTURE_PRE, SAMPLE_MS } from './spring.js';
 import { writeSpring } from './spring-config.js';
 
 const PER_OCTANT = 3;
@@ -52,12 +53,13 @@ const THUMB_MOVES = {
   across: { end: 'far', name: N_('Dash across'), how: N_('Push to the marked edge, sweep all the way across, and keep holding at the far edge until the target fills.') },
   back: { end: 'start', name: N_('Dash back and forth'), how: N_('Push to the marked edge, flick to the far edge and straight back, and keep holding at the marked edge until the target fills.') },
   pull: { end: 'center', name: N_('Pull back'), how: N_('Push to the marked edge, then slowly bring it back to the center and hold it there until the target fills.') },
+  flick: { end: 'far', name: N_('Fast flick across'), how: N_('Push to the marked edge, then flick straight across to the far edge as fast as you can, and hold it there until the target fills.') },
 };
-/** Pushes after a let-go: [the edge let go from (octant), the edge pushed to]: 4 the same way, 2
- *  opposite, 2 at 90°. */
-const REPUSH_PLAN = [[0, 0], [2, 2], [4, 0], [6, 0], [1, 1], [3, 3], [5, 1], [7, 1]];
-const REPUSHES = REPUSH_PLAN.length;
-const REPUSH_MOVE = { name: N_('Let go, then push'), how: N_('Push to the marked edge and let go completely. As soon as it springs back, push to the target and hold it there until it fills.') };
+/** Fast flicks across, from these edges (octants): mostly left to right, where it's felt most. */
+const FLICK_PLAN = [['flick', 4], ['flick', 4], ['flick', 0], ['flick', 4], ['flick', 2], ['flick', 6]];
+const FLICKS = FLICK_PLAN.length;
+/** A flick counts as fast at this edge to edge or quicker (everyday dashes take 20-40 ms). */
+const FLICK_FAST_MS = 20;
 /** A move's capture counts if the stick was at its starting edge this recently (the live stick: a slow
  *  move starts long before the 24 ms a capture keeps). */
 const START_MS = 5000;
@@ -77,7 +79,7 @@ const STEPS = [
   { id: 'releases', title: N_('Releases') },
   { id: 'turnarounds', title: N_('Turnarounds') },
   { id: 'thumbs', title: N_('Thumb moves') },
-  { id: 'repush', title: N_('Let go, then push') },
+  { id: 'flicks', title: N_('Fast flicks') },
   { id: 'results', title: N_('Results') },
 ];
 
@@ -116,13 +118,12 @@ export function tuneSpring({ session, device, stick }) {
   const stickDot = h('circle.spr-stick', { cx: 0, cy: 0, r: 7 });
   // Thumb moves: the move's path and a ghost stick acting it out
   const guideLine = h('line.spr-guide-line');
-  const guideLine2 = h('line.spr-guide-line');  // a push after a let-go: from the center out to B
   const guideStart = h('circle.spr-guide-start', { r: 12 });
   const ghost = h('circle.spr-ghost', { r: 7 });
   // Where the move ends: hold the stick in it until it fills
   const endFill = h('circle.spr-end-fill', { r: 14, pathLength: 100 });
   const endTarget = h('g.spr-end', {}, h('circle.spr-end-ring', { r: 14 }), endFill);
-  const guide = h('g.spr-guide', {}, guideLine, guideLine2, guideStart, endTarget, ghost);
+  const guide = h('g.spr-guide', {}, guideLine, guideStart, endTarget, ghost);
   const compass = h('svg.spr-compass', { viewBox: '-128 -128 256 256', role: 'img', 'aria-label': t('Your stick, live') },
     h('circle.spr-gate', { cx: 0, cy: 0, r: R }),
     h('line.spr-axis', { x1: -R, y1: 0, x2: R, y2: 0 }), h('line.spr-axis', { x1: 0, y1: -R, x2: 0, y2: R }),
@@ -206,7 +207,7 @@ export function tuneSpring({ session, device, stick }) {
     const move = currentMove();
     moveCard.hidden = !move;
     if (move) showMove(move);
-    device.springCaptureHint?.({ stick, step, octant: step === 'releases' ? nextOctant() : move ? move[1] : -1, kind: move?.[0], b: move?.[2] });
+    device.springCaptureHint?.({ stick, step, octant: step === 'releases' ? nextOctant() : move ? move[1] : -1, kind: move?.[0] });
   }
 
   // ---- The thumb move guide --------------------------------------------------------------------
@@ -221,59 +222,35 @@ export function tuneSpring({ session, device, stick }) {
     // Each ends held still where the move finishes
     if (kind === 'pull') return u < 0.2 ? E : seg(E, 0, 0.2, 0.65);
     if (kind === 'across') return u < 0.15 ? E : seg(E, -E, 0.15, 0.45);
+    if (kind === 'flick') return u < 0.25 ? E : seg(E, -E, 0.25, 0.3);
     return u < 0.12 ? E : u < 0.32 ? seg(E, -E, 0.12, 0.32) : seg(-E, E, 0.32, 0.55);
   }
-  function showMove([kind, o, b]) {
-    if (guideMove && guideMove[0] === kind && guideMove[1] === o && guideMove[2] === b) return;
+  function showMove([kind, o]) {
+    if (guideMove && guideMove[0] === kind && guideMove[1] === o) return;
     const first = !guideMove;
-    guideMove = [kind, o, b];
+    guideMove = [kind, o];
     startSeenAt = -Infinity; // this move's own start, not the last one's
-    const info = kind === 'repush' ? REPUSH_MOVE : THUMB_MOVES[kind];
-    moveName.textContent = t(info.name);
-    moveHow.textContent = t(info.how);
+    moveName.textContent = t(THUMB_MOVES[kind].name);
+    moveHow.textContent = t(THUMB_MOVES[kind].how);
     if (!first) replay(moveCard);
     const a = (o * Math.PI) / 4;
     const [sx, sy] = [Math.cos(a) * R, -Math.sin(a) * R];
-    const line = (el, x1, y1, x2, y2) => Object.entries({ x1, y1, x2, y2 }).forEach(([k, v]) => el.setAttribute(k, v.toFixed(1)));
-    let ex; let ey;
-    if (kind === 'repush') {
-      // From A in to the center (the let-go), then out to B (the push)
-      [ex, ey] = [Math.cos((b * Math.PI) / 4) * R, -Math.sin((b * Math.PI) / 4) * R];
-      line(guideLine, sx, sy, 0, 0);
-      line(guideLine2, 0, 0, ex, ey);
-      guideLine2.style.display = '';
-    } else {
-      const end = kind === 'pull' ? 0 : -1;
-      line(guideLine, sx, sy, sx * end, sy * end);
-      guideLine2.style.display = 'none';
-      const endAt = { far: -1, start: 1, center: 0 }[THUMB_MOVES[kind].end];
-      [ex, ey] = [sx * endAt, sy * endAt];
-    }
+    const end = kind === 'pull' ? 0 : -1;
+    Object.entries({ x1: sx, y1: sy, x2: sx * end, y2: sy * end }).forEach(([k, v]) => guideLine.setAttribute(k, v.toFixed(1)));
     guideStart.setAttribute('cx', sx.toFixed(1));
     guideStart.setAttribute('cy', sy.toFixed(1));
-    endTarget.setAttribute('transform', `translate(${ex.toFixed(1)} ${ey.toFixed(1)})`);
+    const endAt = { far: -1, start: 1, center: 0 }[THUMB_MOVES[kind].end];
+    endTarget.setAttribute('transform', `translate(${(sx * endAt).toFixed(1)} ${(sy * endAt).toFixed(1)})`);
     setHold(0);
     guideT0 = performance.now();
     if (prefersReducedMotion()) { placeGhost(0.1); return; }
     if (!guideFrame) guideFrame = requestAnimationFrame(animateGuide);
   }
   function placeGhost(u) {
-    const [kind, o, b] = guideMove;
+    const [kind, o] = guideMove;
     const a = (o * Math.PI) / 4;
-    let gx; let gy;
-    if (kind === 'repush') {
-      // Held at A, let go (it springs back and rings), pushed to B while it still rings, held there
-      const tr = (u - 0.15) / 0.3;
-      const ring = u < 0.15 ? E : E * Math.exp(-3 * tr) * Math.cos(2 * Math.PI * 1.4 * tr) * Math.max(0, 1 - tr);
-      const push = u < 0.3 ? 0 : ease(0, E, (u - 0.3) / 0.2);
-      const bb = (b * Math.PI) / 4;
-      gx = Math.cos(a) * ring + Math.cos(bb) * push;
-      gy = Math.sin(a) * ring + Math.sin(bb) * push;
-    } else {
-      const s = along(kind, u);
-      [gx, gy] = [Math.cos(a) * s, Math.sin(a) * s];
-    }
-    const [x, y] = pos(gx, gy);
+    const s = along(kind, u);
+    const [x, y] = pos(Math.cos(a) * s, Math.sin(a) * s);
     ghost.setAttribute('cx', x.toFixed(1));
     ghost.setAttribute('cy', y.toFixed(1));
     // Fade in at the start of each showing, out at its end
@@ -281,7 +258,7 @@ export function tuneSpring({ session, device, stick }) {
   }
   function animateGuide(now) {
     guideFrame = 0;
-    if ((step !== 'thumbs' && step !== 'repush') || !guideMove) return;
+    if ((step !== 'thumbs' && step !== 'flicks') || !guideMove) return;
     placeGhost(((now - guideT0) % GUIDE_MS) / GUIDE_MS);
     guideFrame = requestAnimationFrame(animateGuide);
   }
@@ -307,8 +284,7 @@ export function tuneSpring({ session, device, stick }) {
   /** Is the live stick inside the current move's end target? */
   function inEndZone(x, y) {
     if (!guideMove) return false;
-    const [kind, o, b] = guideMove;
-    if (kind === 'repush') return atEdge(x, y, (b * Math.PI) / 4);
+    const [kind, o] = guideMove;
     const end = THUMB_MOVES[kind].end;
     if (end === 'center') return Math.hypot(x, y) < 350;
     return atEdge(x, y, (o * Math.PI) / 4 + (end === 'far' ? Math.PI : 0));
@@ -333,8 +309,7 @@ export function tuneSpring({ session, device, stick }) {
   function finishMove() {
     const { c, entry, slot } = pending;
     pending = null;
-    if (step === 'repush') repushSlots[slot] = { c, a: REPUSH_PLAN[slot][0], b: REPUSH_PLAN[slot][1], entry };
-    else thumbSlots[slot] = { c, kind: THUMB_PLAN[slot][0], entry };
+    slots()[slot] = { c, kind: plan()[slot][0], entry };
     entry.accepted = true;
     entry.why = null;
     lastMoveAt = performance.now();
@@ -355,13 +330,10 @@ export function tuneSpring({ session, device, stick }) {
     } else if (id === 'turnarounds') {
       stepTitle.textContent = t('Tilt partway, then let go');
       howTo.textContent = t('Tilt the stick about halfway out (the dashed ring), then let go. Mix it up: different directions, small and bigger tilts.');
-    } else if (id === 'repush') {
-      stepTitle.textContent = t('Let go, then push again');
-      howTo.textContent = t('This one measures how quickly Auto lets your thumb take over while the stick is still bouncing back. Push, let go, and push again right away.');
+    } else if (id === 'flicks') {
+      stepTitle.textContent = t('Fast flicks across');
+      howTo.textContent = t('A flick at full speed looks the most like letting go. These make sure Auto never holds yours back. Keep your thumb on the stick and go as fast as you can.');
       pending = null;
-      // To tell a let-go from a thumb move it needs the release check fitted so far
-      caps.thumbs = thumbSlots.filter(Boolean).map((x) => x.c);
-      repushParams = fitSpring(caps, deadzone() || undefined).params;
     } else {
       stepTitle.textContent = t('Copy the moves, thumb on the stick');
       howTo.textContent = t('Watch the ghost on the circle, then do the same move. Keep your thumb on the stick the whole time, and end each move holding still until the target fills.');
@@ -390,24 +362,21 @@ export function tuneSpring({ session, device, stick }) {
   const log = [];
   /** The thumb moves done, by place in THUMB_PLAN ({c, kind}; null: still to do). */
   const thumbSlots = Array(THUMBS).fill(null);
-  /** The pushes after a let-go done, by place in REPUSH_PLAN ({c, a, b}; null: still to do). */
-  const repushSlots = Array(REPUSHES).fill(null);
-  let repushParams = null;
-  const slots = () => (step === 'repush' ? repushSlots : thumbSlots);
+  /** The fast flicks done, by place in FLICK_PLAN. */
+  const flickSlots = Array(FLICKS).fill(null);
+  const slots = () => (step === 'flicks' ? flickSlots : thumbSlots);
+  const plan = () => (step === 'flicks' ? FLICK_PLAN : THUMB_PLAN);
   const nextSlot = () => slots().findIndex((x) => !x);
-  const deadzone = () => session.config.analog?.[stick === 'left' ? 'l_deadzone' : 'r_deadzone'];
-  /** The move asked for now: [kind, starting octant, octant pushed to (repush)], or null. */
+  /** The move asked for now: [kind, starting octant], or null. */
   function currentMove() {
-    if (step === 'thumbs') return THUMB_PLAN[nextSlot()] ?? null;
-    if (step === 'repush') { const m = REPUSH_PLAN[nextSlot()]; return m ? ['repush', m[0], m[1]] : null; }
-    return null;
+    if (step !== 'thumbs' && step !== 'flicks') return null;
+    return plan()[nextSlot()] ?? null;
   }
   function onCapture(e) {
     const c = e.detail;
     if (c.stick !== stickIdx || step === 'results' || advanceTimer) return;
-    const entry = { label: { releases: 'release', turnarounds: 'turnaround', thumbs: 'thumb', repush: 'repush' }[step], c, time: Date.now() / 1000, accepted: false, why: null };
-    if (step === 'thumbs') entry.kind = THUMB_PLAN[nextSlot()]?.[0];
-    if (step === 'repush') [entry.a, entry.b] = REPUSH_PLAN[nextSlot()] ?? [];
+    const entry = { label: { releases: 'release', turnarounds: 'turnaround', thumbs: 'thumb', flicks: 'flick' }[step], c, time: Date.now() / 1000, accepted: false, why: null };
+    if (step === 'thumbs' || step === 'flicks') entry.kind = plan()[nextSlot()]?.[0];
     log.push(entry);
     const took = (c2) => { entry.accepted = true; entry.c = c2; };
     if (step === 'releases') {
@@ -443,32 +412,16 @@ export function tuneSpring({ session, device, stick }) {
       caps.turnarounds.push(c);
       took(c);
       say(t('Got it.'), 'good');
-    } else if (step === 'repush') {
-      const r = readRepush(c, repushParams, (entry.b * Math.PI) / 4, deadzone() || undefined);
-      const sawStart = atEdge(c.x[0], c.y[0], (entry.a * Math.PI) / 4) || performance.now() - startSeenAt < START_MS;
-      entry.why = r.ok ? (sawStart ? null : 'edge') : r.why;
-      // Let go after the last push: the stick snapped back on its own, that's fine
-      if (entry.why && !pending && performance.now() - lastMoveAt < AFTER_MOVE_MS) { entry.why = 'let-go-after-move'; return; }
-      trail(c, !entry.why);
-      if (entry.why) {
-        if (pending) { pending.entry.why = 'not-held'; pending = null; }
-        say(entry.why === 'edge' ? t('Start each move with the stick pushed all the way to the edge the guide shows.')
-          : entry.why === 'no-release' ? t('Let go completely first, so it springs back on its own.')
-            : t('Push again sooner, while it’s still moving.'), 'warn');
-        return;
-      }
-      if (pending) pending.entry.why = 'replaced';
-      entry.why = 'waiting-for-hold';
-      pending = { c, entry, slot: nextSlot(), at: performance.now() };
-      clearTimeout(holdTimer);
-      holdTimer = setTimeout(() => paintHold(performance.now()), HOLD_WAIT_MS + 50);
-      say(t('Now hold it still in the target…'), '');
-      return;
     } else {
       let r = readThumb(c);
       // Started at the marked edge: seen in the capture, or on the live stick shortly before
       const sawStart = guideMove && (atEdge(c.x[0], c.y[0], (guideMove[1] * Math.PI) / 4) || performance.now() - startSeenAt < START_MS);
       if (r.ok && !sawStart) r = { ok: false, why: 'edge' };
+      // A fast flick: edge to far edge quicker than FLICK_FAST_MS
+      if (r.ok && step === 'flicks') {
+        entry.flickMs = flickMs(c);
+        if (entry.flickMs == null || entry.flickMs > FLICK_FAST_MS) r = { ok: false, why: 'slow-flick' };
+      }
       entry.why = r.ok ? null : r.why;
       // Let go after the last move: the stick snapped back on its own, that's fine
       if (!r.ok && r.why === 'released' && !pending && performance.now() - lastMoveAt < AFTER_MOVE_MS) { entry.why = 'let-go-after-move'; return; }
@@ -476,7 +429,8 @@ export function tuneSpring({ session, device, stick }) {
       if (!r.ok) {
         if (pending) { pending.entry.why = 'not-held'; pending = null; }
         say(r.why === 'edge' ? t('Start each move with the stick pushed all the way to the edge the guide shows.')
-          : t('That one was let go. Keep your thumb on the stick and hold still at the end until the target fills.'), 'warn');
+          : r.why === 'slow-flick' ? t('Faster! Flick it across as fast as you can.')
+            : t('That one was let go. Keep your thumb on the stick and hold still at the end until the target fills.'), 'warn');
         return;
       }
       // Taken once the stick is held still at the end of the move (paintHold)
@@ -506,7 +460,7 @@ export function tuneSpring({ session, device, stick }) {
   function showResults() {
     caps.thumbs = thumbSlots.filter(Boolean).map((x) => x.c);
     thumbKinds = thumbSlots.filter(Boolean).map((x) => x.kind);
-    caps.repushes = repushSlots.filter(Boolean).map((x) => ({ c: x.c, a: x.a, b: (x.b * Math.PI) / 4, aOct: x.a, bOct: x.b }));
+    caps.flicks = flickSlots.filter(Boolean).map((x) => x.c);
     const dz = session.config.analog?.[stick === 'left' ? 'l_deadzone' : 'r_deadzone'];
     fit = fitSpring(caps, dz || undefined);
     score = scorecard(fit.params, caps, dz);
@@ -533,8 +487,7 @@ export function tuneSpring({ session, device, stick }) {
         row(score.thumbs.pass === score.thumbs.of, t('Thumb moves left alone'), ratio(score.thumbs)),
         thumbList(ms),
         row(score.delayOk, t('Most delay added to a thumb move'), ms(score.delayMs)),
-        score.repush.of ? row(score.repush.pass === score.repush.of, t('Pushes after a let-go: worst delay'), ms(score.repush.worstMs)) : null,
-        repushList(ms),
+        score.flicks.of ? row(score.flicks.pass === score.flicks.of, t('Fast flicks: most delay added'), ms(score.flicks.worstMs)) : null,
         hz.length ? row(true, t('How fast it springs back'), t('{low} to {high} Hz', { low: fmt.number(Math.min(...hz), { maximumFractionDigits: 0 }), high: fmt.number(Math.max(...hz), { maximumFractionDigits: 0 }) })) : null),
       ...(score.redo.length ? [callout({ tone: 'yellow', icon: 'warning' },
         h('p', t('Some thumb moves were held back or unclear. Do those moves again.')))] : []),
@@ -561,17 +514,7 @@ export function tuneSpring({ session, device, stick }) {
   }
   let thumbKinds = [];
 
-  /** Each push after a let-go: which way it went from the let-go, and its takeover delay. */
-  function repushList(ms) {
-    const moves = score.repush.moves;
-    if (!moves.length) return null;
-    const way = (r) => { const d = (r.bOct - r.aOct + 8) % 8; return d === 0 ? t('Same way') : d === 4 ? t('Opposite way') : t('Sideways'); };
-    return h('details.spr-moves', { open: moves.some((m) => !m.ok || !m.pass) },
-      h('summary', t('Each push after a let-go')),
-      h('ol.spr-move-list', moves.map((m, i) => h('li', { class: m.ok && m.pass ? 'good' : 'warn' },
-        h('span.spr-move-kind', way(caps.repushes[i])),
-        h('span.spr-move-ms', !m.ok ? t('Not measured') : m.delayMs ? t('{time} added', { time: ms(m.delayMs) }) : t('Untouched'))))));
-  }
+
 
   function exportRow() {
     return h('div.spr-export', button({ label: t('Download tuning data'), icon: 'download', variant: 'ghost', size: 'sm', onClick: exportData }));
@@ -585,12 +528,12 @@ export function tuneSpring({ session, device, stick }) {
       controller: session.info?.name || null, stick, deadzone: dz,
       params: fit.params,
       shape: fit.shape, notes: fit.notes,
-      score: { ...score, thumbs: { pass: score.thumbs.pass, of: score.thumbs.of }, repush: { pass: score.repush.pass, of: score.repush.of, worstMs: score.repush.worstMs } },
+      score: { ...score, thumbs: { pass: score.thumbs.pass, of: score.thumbs.of }, flicks: { pass: score.flicks.pass, of: score.flicks.of, worstMs: score.flicks.worstMs } },
       thumbs: score.thumbs.moves.map((m, i) => ({ index: i, kind: thumbKinds[i] || 'other', ...m })),
-      repush: score.repush.moves.map((m, i) => ({ index: i, a: caps.repushes[i].aOct, b: caps.repushes[i].bOct, ...m })),
+      flicks: score.flicks.moves.map((m, i) => ({ index: i, from: FLICK_PLAN[i]?.[1], ...m })),
       captures: log.map((e) => ({
         label: e.label, stick, number: e.c.number, period_us: SAMPLE_MS * 1000, pre: CAPTURE_PRE, time: e.time,
-        accepted: e.accepted, superseded: !!e.superseded, why: e.why, ...(e.kind ? { kind: e.kind } : {}), ...(e.label === 'repush' ? { a: e.a, b: e.b } : {}), x: Array.from(e.c.x), y: Array.from(e.c.y),
+        accepted: e.accepted, superseded: !!e.superseded, why: e.why, ...(e.kind ? { kind: e.kind } : {}), ...(e.flickMs != null ? { flickMs: e.flickMs } : {}), x: Array.from(e.c.x), y: Array.from(e.c.y),
       })),
     };
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
@@ -669,7 +612,7 @@ export function tuneSpring({ session, device, stick }) {
     const s = r.sticks?.snapback;
     if (!s) return;
     live = stick === 'left' ? [s.lx, s.ly] : [s.rx, s.ry];
-    if (step === 'thumbs' || step === 'repush') {
+    if (step === 'thumbs' || step === 'flicks') {
       if (guideMove && atEdge(live[0], live[1], (guideMove[1] * Math.PI) / 4)) startSeenAt = performance.now();
       const inZone = inEndZone(live[0], live[1]);
       if (!inZone) zoneSince = null;
