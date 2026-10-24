@@ -140,4 +140,5 @@ export default {
   'Now hold it still in the target…': 'そのままターゲットで止めて…',
   'Some thumb moves were held back or unclear. Do those moves again.': '一部の親指の操作が抑えられたか、判別できませんでした。その操作をやり直してください。',
   'Unclear, do it again': '判別できず、やり直し',
+  'That one came back too slowly. Tilt a bit further out and let go faster.': '戻りが遅すぎました。もう少し大きく倒して、素早く離してください。',
 };

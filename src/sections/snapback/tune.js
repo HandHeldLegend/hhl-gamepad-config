@@ -370,7 +370,8 @@ export function tuneSpring({ session, device, stick }) {
       trail(c, r.ok);
       if (!r.ok) {
         say(r.why === 'release' ? t('That was a full release from the edge. Tilt only partway this time.')
-          : t('Let it go so it springs back past the center.'), 'warn');
+          : r.why === 'slow-crossing' ? t('That one came back too slowly. Tilt a bit further out and let go faster.')
+            : t('Let it go so it springs back past the center.'), 'warn');
         return;
       }
       caps.turnarounds.push(c);

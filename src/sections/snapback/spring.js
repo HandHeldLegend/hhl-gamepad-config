@@ -273,16 +273,20 @@ export function readRelease(c) {
 
 /**
  * Is this capture a turnaround (pushed out, then let go partway back)? Its first fast centre crossing,
- * measured the way the gate measures it. A clean release from the edge is the release step's.
- * @returns {{ok: true, speed: number, k: number} | {ok: false, why: 'release'|'slow'}}
+ * measured the way the gate measures it. A clean release from the edge is the release step's. One that
+ * crosses slower than TURN_MIN_SPEED (the default cross_speed + 10 %) is turned away: the gate would only
+ * catch it with a lower cross_speed, which checks (and holds) more thumb moves.
+ * @returns {{ok: true, speed: number, k: number} | {ok: false, why: 'release'|'slow'|'slow-crossing', speed?: number}}
  */
 export function readTurnaround(c) {
   if (readRelease(c).ok) return { ok: false, why: 'release' };
   const { checks } = runGate(c.x, c.y, SPRING_DEFAULTS, { measure: true });
   const first = checks.find((ch) => ch.at < MOVE_END && ch.speed >= 10);
   if (!first) return { ok: false, why: 'slow' };
+  if (first.speed < TURN_MIN_SPEED) return { ok: false, why: 'slow-crossing', speed: first.speed };
   return { ok: true, speed: first.speed, k: first.k };
 }
+const TURN_MIN_SPEED = 22;
 
 /**
  * A thumb move: anything the thumb guides, starting from the edge (where the release check runs). One
@@ -381,12 +385,13 @@ export function fitSpring({ releases, turnarounds, thumbs }, deadzone = DEFAULT_
   const decide = Math.min(DECIDE_MAX, Math.max(relWorst * 1.05, Math.min(SPRING_DEFAULTS.decide_step, relWorst * 1.2)));
   p.decide_step = clamp(Math.ceil(decide), SPRING_LIMITS.decide_step);
 
-  // cross_speed: below the slowest turnaround's crossing, and never above the default (slower turnarounds
-  // than the ones recorded still get checked)
+  // cross_speed: below the slowest turnaround's crossing, but never under the default: each crossing checked
+  // costs 3 ms of hold by design, so a lower one would add that to more thumb moves. Turnarounds too slow
+  // for the default to catch with a margin are turned away when recorded (readTurnaround), to be redone.
   const turns = turnarounds.map(readTurnaround).filter((r) => r.ok);
   if (turns.length) {
     const slowest = Math.min(...turns.map((r) => r.speed));
-    p.cross_speed = clamp(Math.min(SPRING_DEFAULTS.cross_speed, Math.floor(slowest * 0.7)), SPRING_LIMITS.cross_speed);
+    p.cross_speed = clamp(Math.max(SPRING_DEFAULTS.cross_speed, Math.floor(slowest * 0.7)), SPRING_LIMITS.cross_speed);
   }
 
   // stiff_den: the stiffness threshold between the softest turnaround and the stiffest fast thumb crossing

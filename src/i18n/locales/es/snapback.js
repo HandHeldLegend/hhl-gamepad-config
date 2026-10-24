@@ -140,4 +140,5 @@ export default {
   'Now hold it still in the target…': 'Ahora mantenlo quieto en el objetivo…',
   'Some thumb moves were held back or unclear. Do those moves again.': 'Algunos movimientos con el pulgar se frenaron o no quedaron claros. Repite esos movimientos.',
   'Unclear, do it again': 'No quedó claro, repítelo',
+  'That one came back too slowly. Tilt a bit further out and let go faster.': 'Ese regresó demasiado lento. Inclínalo un poco más y suéltalo más rápido.',
 };

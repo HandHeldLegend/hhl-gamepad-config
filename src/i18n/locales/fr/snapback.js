@@ -140,4 +140,5 @@ export default {
   'Now hold it still in the target…': 'Maintenant, garde-le immobile dans la cible…',
   'Some thumb moves were held back or unclear. Do those moves again.': 'Certains mouvements du pouce ont été freinés ou n’étaient pas nets. Refais ces mouvements.',
   'Unclear, do it again': 'Pas net, refais-le',
+  'That one came back too slowly. Tilt a bit further out and let go faster.': 'Celui-là est revenu trop lentement. Incline un peu plus loin et lâche plus vite.',
 };

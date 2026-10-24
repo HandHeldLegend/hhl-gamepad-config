@@ -125,4 +125,5 @@ export default {
   "Now hold it still in the target…": "现在在目标里保持不动…",
   "Some thumb moves were held back or unclear. Do those moves again.": "部分拇指操作被抑制或不够清晰。请重做这些动作。",
   "Unclear, do it again": "不清晰，请重做",
+  "That one came back too slowly. Tilt a bit further out and let go faster.": "这次回得太慢了。推得再远一点，松开得更快一些。",
 };
