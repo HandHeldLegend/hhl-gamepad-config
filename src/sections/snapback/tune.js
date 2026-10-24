@@ -503,6 +503,8 @@ export function tuneSpring({ session, device, stick }) {
 
   async function save() {
     dlg.setActions([{ label: t('Saving…'), icon: 'save', variant: 'primary', disabled: true }]);
+    // Nothing more to record: stop the capture packets so the write has the link to itself
+    await device.armSpringCapture(null)?.catch?.(() => {});
     const ok = await writeSpring(session, stick, fit.params);
     if (!ok) {
       setActions();
