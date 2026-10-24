@@ -415,8 +415,9 @@ export function tuneSpring({ session, device, stick }) {
   function showResults() {
     caps.thumbs = thumbSlots.filter(Boolean).map((x) => x.c);
     thumbKinds = thumbSlots.filter(Boolean).map((x) => x.kind);
-    fit = fitSpring(caps);
-    score = scorecard(fit.params, caps, session.config.analog?.[stick === 'left' ? 'l_deadzone' : 'r_deadzone']);
+    const dz = session.config.analog?.[stick === 'left' ? 'l_deadzone' : 'r_deadzone'];
+    fit = fitSpring(caps, dz || undefined);
+    score = scorecard(fit.params, caps, dz);
     const hz = fit.shape.filter(Boolean).map((s) => s.hz);
     const row = (ok, label, value) => h('div.spr-row', { class: ok ? 'good' : 'warn' },
       h('span.spr-row-icon', icon(ok ? 'check' : 'warning')), h('span.spr-row-label', label), h('strong.spr-row-value', value));

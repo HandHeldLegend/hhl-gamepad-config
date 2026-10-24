@@ -12,7 +12,8 @@
  *     5 samples while the stiffness along the last direction out is measured. At 1/stiff_den or more it is
  *     the spring (hold), else the thumb (pass).
  *   - A hold ends when the thumb takes the stick back (one-step error over grab_err, 3 samples running),
- *     or once it settles near centre, 100 ms at most.
+ *     or once it settles within the stick's deadzone (clamped to 40..200) for 10 ms, 100 ms at most.
+ *   - The sample a fast crossing is found on is already past centre, so it is held too.
  *
  * Captures (device 'spring-capture'): 256 samples of x and y at 2 kHz, ±2048, as the filter sees them,
  * 48 of them before the stick fell back under 500.
@@ -47,7 +48,10 @@ const DECIDE = 6;
 const OUT = 300;
 const CHECK = 5;
 const GRAB_COUNT = 3;
-const SETTLED = 200;
+/** A hold ends once the stick stays within its deadzone (clamped to this range) for SETTLE_COUNT samples. */
+const SETTLED_RANGE = [40, 200];
+/** The firmware's default inner deadzone (analogConfig_s l/r_deadzone), used when none is given. */
+export const DEFAULT_DEADZONE = 144;
 const SETTLE_COUNT = 20;
 const HOLD_MAX = 200;
 
@@ -73,8 +77,9 @@ const clamp = (v, [lo, hi]) => Math.min(hi, Math.max(lo, v));
  * @param {ArrayLike<number>} xs
  * @param {ArrayLike<number>} ys
  * @param {typeof SPRING_DEFAULTS} p  the tuning
- * @param {{measure?: boolean}} [o]  measure: check every centre crossing faster than 5 counts a sample and
- *   never hold on one (each check's stiffness and speed are reported in `checks`); for the fit
+ * @param {{measure?: boolean, deadzone?: number}} [o]  measure: check every centre crossing faster than 5
+ *   counts a sample and never hold on one (each check's stiffness and speed are reported in `checks`); for
+ *   the fit. deadzone: the stick's inner deadzone, which the firmware settles a hold within
  * @returns {{x: Int16Array, y: Int16Array, state: Uint8Array, checks: {at: number, speed: number, k: number}[]}}
  */
 export function runGate(xs, ys, p, o = {}) {
@@ -84,6 +89,7 @@ export function runGate(xs, ys, p, o = {}) {
   const trace = new Uint8Array(n);
   const checks = [];
   const crossSpeed = o.measure ? 5 : p.cross_speed;
+  const settled = clamp(o.deadzone ?? DEFAULT_DEADZONE, SETTLED_RANGE);
   const s = {
     state: GATE.IDLE, oct: 0, step: 0, grab: 0, settle: 0, hold: 0, ex: 0, ey: 0,
     x1: 0, y1: 0, x2: 0, y2: 0, fx1: 0, fy1: 0, fx2: 0, fy2: 0, rx: 0, ry: 0, p1: 0, p2: 0, num: 0, den: 0, at: 0, speed: 0,
@@ -112,6 +118,7 @@ export function runGate(xs, ys, p, o = {}) {
           s.state = GATE.CHECKING;
           s.step = 0; s.num = 0; s.den = 0;
           s.at = i; s.speed = fall / Math.sqrt(outSq);
+          neutral = true; // this sample is already past centre
         }
         break;
       case GATE.EDGE:
@@ -152,7 +159,7 @@ export function runGate(xs, ys, p, o = {}) {
       case GATE.HOLDING:
         s.hold++;
         s.grab = stepErr > p.grab_err * p.grab_err ? s.grab + 1 : 0;
-        s.settle = d < SETTLED ? s.settle + 1 : 0;
+        s.settle = d < settled ? s.settle + 1 : 0;
         if (s.grab >= GRAB_COUNT) s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
         else if (s.settle >= SETTLE_COUNT || s.hold >= HOLD_MAX) s.state = GATE.IDLE;
         else neutral = true;
@@ -326,8 +333,8 @@ function decideRatio(c, p) {
 }
 
 /** The worst one-step miss the spring makes while a release is held (3 samples running). */
-function holdMiss(c, p) {
-  const g = runGate(c.x, c.y, { ...p, grab_err: SPRING_LIMITS.grab_err[1] });
+function holdMiss(c, p, dz) {
+  const g = runGate(c.x, c.y, { ...p, grab_err: SPRING_LIMITS.grab_err[1] }, { deadzone: dz });
   const pk = peak(c);
   const o = octant(pk.x, pk.y);
   const run = [];
@@ -346,7 +353,7 @@ function holdMiss(c, p) {
  * @param {{releases: object[], turnarounds: object[], thumbs: object[]}} caps  captures ({x, y}) by step
  * @returns {{params: typeof SPRING_DEFAULTS, shape: {hz: number, zeta: number}[], notes: object}}
  */
-export function fitSpring({ releases, turnarounds, thumbs }) {
+export function fitSpring({ releases, turnarounds, thumbs }, deadzone = DEFAULT_DEADZONE) {
   // a1, a2 per octant: the mean of that octant's releases. An octant with none borrows its neighbours.
   const per = Array.from({ length: 8 }, () => []);
   for (const c of releases) {
@@ -393,7 +400,7 @@ export function fitSpring({ releases, turnarounds, thumbs }) {
   }
 
   // grab_err: comfortably above the spring's own miss while a release is held
-  const miss = Math.max(0, ...releases.map((c) => holdMiss(c, p)));
+  const miss = Math.max(0, ...releases.map((c) => holdMiss(c, p, deadzone)));
   // (kept near the default: a higher one makes the thumb taking the stick back slower to pass)
   p.grab_err = Math.min(GRAB_MAX, Math.max(SPRING_DEFAULTS.grab_err, Math.ceil(miss * 1.5)));
 
@@ -406,8 +413,6 @@ export function fitSpring({ releases, turnarounds, thumbs }) {
 
 // ---- The scorecard ---------------------------------------------------------------------------
 
-/** The firmware's default inner deadzone (analogConfig_s l/r_deadzone), used when none is given. */
-export const DEFAULT_DEADZONE = 144;
 const DELAY_OK_MS = 3;
 
 /** Position along the direction the stick left from (its furthest point before coming back). */
@@ -438,7 +443,7 @@ function blocked(c, g, dz) {
  *   endMs       where scoring stopped (ms into the capture)
  */
 export function thumbEffect(c, p, dz = DEFAULT_DEADZONE, letGo = p.decide_step) {
-  const g = runGate(c.x, c.y, p);
+  const g = runGate(c.x, c.y, p, { deadzone: dz });
   const exits = edgeExits(c, p);
   const cut = exits.slice(1).find((e) => e.ratio <= letGo);
   const end = cut ? cut.at : c.x.length;
@@ -476,8 +481,8 @@ export function scorecard(p, { releases, turnarounds, thumbs }, deadzone = DEFAU
   const relWorst = Math.max(0, ...releases.map((c) => decideRatio(c, p) ?? 0));
   const letGo = Math.min(p.decide_step, (relWorst || p.decide_step) * 1.2);
   const count = (list, f) => ({ pass: list.filter(f).length, of: list.length });
-  const rel = count(releases, (c) => blocked(c, runGate(c.x, c.y, p), dz));
-  const turn = count(turnarounds, (c) => blocked(c, runGate(c.x, c.y, p), dz));
+  const rel = count(releases, (c) => blocked(c, runGate(c.x, c.y, p, { deadzone: dz }), dz));
+  const turn = count(turnarounds, (c) => blocked(c, runGate(c.x, c.y, p, { deadzone: dz }), dz));
   const moves = thumbs.map((c) => thumbEffect(c, p, dz, letGo));
   const thumb = { pass: moves.filter((m) => m.pass).length, of: moves.length, moves };
   const delayMs = Math.max(0, ...moves.map((m) => m.delayMs));
