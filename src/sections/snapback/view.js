@@ -19,6 +19,12 @@
  * RX/RY → right), which keeps the last few so they can be compared. The filter and the result it
  * produces sit together, and on wide pages the two sticks can be compared directly.
  *
+ * Full-speed view (raw-view.js, firmware that records a stick at full rate): while the page is open the
+ * viewed stick is recorded (device.armSpringCapture) each time it comes back from a push, and the app's copy
+ * of Auto's filter is replayed over each recording with the stick's tuning: what the stick did against what
+ * the game sees, and any delay. One stick is recorded at a time, the one picked (the narrow page's switch, or
+ * the column worked in on a wide page); the tuning dialog takes the recording over while it's open.
+ *
  * Deep link: #/snapback?stick=right selects that column (narrow) or scrolls to and highlights it (wide).
  */
 import { h, loadStyles } from '../../ui/dom.js';
@@ -29,6 +35,7 @@ import { waveformView, parseDump, analyze, AXES } from './waveform.js';
 import { t, N_, fmt } from '../../i18n/index.js';
 import { springStatus, resetSpring } from './spring-config.js';
 import { tuneSpring } from './tune.js';
+import { rawView } from './raw-view.js';
 
 loadStyles(new URL('./snapback.css', import.meta.url));
 
@@ -53,7 +60,7 @@ function stat(label, value, tip) {
  * Auto, on firmware with the spring model: whether it's tuned to this stick, and the way to tune it.
  * @returns {{el: HTMLElement, paint: () => void}}
  */
-function springPanel(stick, { session, device, onTuned }) {
+function springPanel(stick, { session, device, onTuned, onTuning }) {
   const state = h('div.sb-spring-state');
   let tuning = false;
   const reset = asyncButton({
@@ -65,7 +72,8 @@ function springPanel(stick, { session, device, onTuned }) {
     onClick: async () => {
       if (tuning) return; // a second press while the dialog opens
       tuning = true;
-      try { if (await tuneSpring({ session, device, stick })) { paint(); onTuned(stick); } } finally { tuning = false; }
+      onTuning(true);
+      try { if (await tuneSpring({ session, device, stick })) { paint(); onTuned(stick); } } finally { tuning = false; onTuning(false); }
     },
   });
   function paint() {
@@ -98,7 +106,7 @@ function springPanel(stick, { session, device, onTuned }) {
  * One stick's column: header, filter card, analyzer card.
  * @returns {{el: HTMLElement, add: (c: object) => void, destroy: () => void}}
  */
-function stickColumn(stick, { session, device, onTuned }) {
+function stickColumn(stick, { session, device, onTuned, onTuning }) {
   const right = stick === 'right';
   const stickName = t(STICK_NAME[stick]);
 
@@ -115,7 +123,7 @@ function stickColumn(stick, { session, device, onTuned }) {
   };
   const type = settingField(`snapback.${stick}Type`, { tone: TONE, stacked: true, onChange: syncMode });
   cutoff = settingField(`snapback.${stick}Intensity`, { tone: TONE, stacked: true });
-  spring = springPanel(stick, { session, device, onTuned });
+  spring = springPanel(stick, { session, device, onTuned, onTuning });
   syncMode(type.control.value);
 
   const filterCard = card({
@@ -163,6 +171,7 @@ function stickColumn(stick, { session, device, onTuned }) {
     }));
   }
 
+  const raw = session.caps.snapbackSpring ? rawView({ session, stick }) : null;
   const analyzerCard = card({
     title: t('Analyzer'), subtitle: right ? t('What the right stick does in the 31 ms after you let go.') : t('What the left stick does in the 31 ms after you let go.'),
     icon: 'bolt', tone: TONE, actions: status, class: 'sb-analyzer',
@@ -170,7 +179,8 @@ function stickColumn(stick, { session, device, onTuned }) {
   h('div.sb-plot',
     h('div.sb-head', axisBadge, h('span.spacer'), stats),
     wave.el,
-    history));
+    history),
+  raw?.el);
 
   const el = h('section.lr-col', { 'data-side': stick, 'aria-label': stickName },
     h('div.lr-col-head', h('span.lr-tag', stick === 'left' ? 'L' : 'R'), stickName),
@@ -180,6 +190,7 @@ function stickColumn(stick, { session, device, onTuned }) {
   return {
     el,
     analyzer: analyzerCard,
+    raw,
     refresh() { type.refresh(); syncMode(type.control.value); spring.paint(); },
     add(c) {
       captures.unshift(c);
@@ -207,7 +218,17 @@ export function mount(root, ctx) {
     pick(s);
     card.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'center' });
   };
-  const columns = Object.fromEntries(sticks.map((s) => [s, stickColumn(s, { session, device, onTuned })]));
+  // The full-speed recording: one stick at a time, the one picked; the tuning dialog has it while open
+  const rawOn = !!session.caps.snapbackSpring;
+  let tuningOpen = false;
+  function arm() {
+    if (!rawOn || tuningOpen) return;
+    device.springCaptureHint?.({ stick: active, step: 'analyzer' });
+    device.armSpringCapture(active)?.catch?.(() => {});
+    for (const s of sticks) columns[s]?.raw?.setArmed(s === active);
+  }
+  const onTuning = (open) => { tuningOpen = open; if (!open) arm(); };
+  const columns = Object.fromEntries(sticks.map((s) => [s, stickColumn(s, { session, device, onTuned, onTuning })]));
 
   // ---- Left/right switch (narrow pages only; CSS hides it on wide ones) ------------------------
   // A capture for the hidden stick would otherwise go unnoticed on a phone, so offer a shortcut to it.
@@ -231,6 +252,7 @@ export function mount(root, ctx) {
     for (const s of sticks) columns[s].el.toggleAttribute('data-active', s === side);
     if (stickSeg) stickSeg.value = side;
     if (newCapture.dataset.side === side) newCapture.hidden = true;
+    if (changed) arm();
     return changed;
   }
 
@@ -277,6 +299,15 @@ export function mount(root, ctx) {
     }
   };
   device.addEventListener('snapback', onDump);
+  const onRaw = (e) => {
+    if (tuningOpen) return;
+    columns[e.detail.stick === 0 ? 'left' : 'right']?.raw?.add(e.detail);
+  };
+  if (rawOn) {
+    device.addEventListener('spring-capture', onRaw);
+    device.setInputMode(true)?.catch?.(() => {}); // the controller records only while the app streams
+    arm();
+  }
 
   setActive(active);
   root.append(h('div.stack',
@@ -298,6 +329,10 @@ export function mount(root, ctx) {
       cancelAnimationFrame(highlightFrame);
       clearTimeout(highlightTimer);
       device.removeEventListener('snapback', onDump);
+      if (rawOn) {
+        device.removeEventListener('spring-capture', onRaw);
+        if (session.connected) device.armSpringCapture(null)?.catch?.(() => {});
+      }
       for (const s of sticks) columns[s].destroy();
     },
   };

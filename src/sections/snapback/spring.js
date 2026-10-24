@@ -564,6 +564,38 @@ export function flickMs(c) {
 }
 
 /**
+ * Replay the gate over one capture, for the Analyzer: the stick and the output along the direction the
+ * stick was pushed (its furthest point before coming back), the stretches where the output is held at
+ * centre while the stick is past the deadzone, and the delay on the side the stick ends up: when the
+ * output gets past the deadzone there, minus when the stick does for good. A stick that ends inside the
+ * deadzone (a let-go) has no side and no delay. The replay starts fresh at the capture's first sample.
+ * @returns {{raw: number[], out: number[], held: [number, number][], side: -1|0|1, rawAt: number,
+ *   outAt: number, delayMs: number}}
+ */
+export function replay(c, p, dz = DEFAULT_DEADZONE) {
+  const g = runGate(c.x, c.y, p, { deadzone: dz });
+  const { ux, uy } = edgeDir(c);
+  const n = c.x.length;
+  const raw = Array.from(c.x, (x, i) => x * ux + c.y[i] * uy);
+  const out = Array.from(g.x, (x, i) => x * ux + g.y[i] * uy);
+  const held = [];
+  let from = -1;
+  for (let i = 0; i <= n; i++) {
+    const on = i < n && g.x[i] === 0 && g.y[i] === 0 && Math.hypot(c.x[i], c.y[i]) > dz;
+    if (on && from < 0) from = i;
+    else if (!on && from >= 0) { held.push([from, i]); from = -1; }
+  }
+  const side = Math.abs(raw[n - 1]) > dz ? Math.sign(raw[n - 1]) : 0;
+  let rawAt = -1; let outAt = -1; let delayMs = 0;
+  if (side) {
+    for (let i = n - 1; i >= 0 && raw[i] * side > dz; i--) rawAt = i;
+    for (let i = rawAt; i < n; i++) if (out[i] * side > dz) { outAt = i; break; }
+    delayMs = ((outAt < 0 ? n : outAt) - rawAt) * SAMPLE_MS;
+  }
+  return { raw, out, held, side, rawAt, outAt, delayMs };
+}
+
+/**
  * Run a tuning over every capture. `deadzone`: the stick's inner deadzone (what a game sees as centre).
  * @returns {{releases: {pass: number, of: number}, turnarounds: {pass: number, of: number},
  *   thumbs: {pass: number, of: number, moves: ReturnType<typeof thumbEffect>[]}, delayMs: number,

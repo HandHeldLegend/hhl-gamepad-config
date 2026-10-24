@@ -102,6 +102,14 @@ const ease = (a, b, n) => Array.from({ length: n }, (_, i) => a + (b - a) * (1 -
 
 function makeCapture(stick) {
   made++;
+  if (hint.step === 'analyzer') {
+    // The Analyzer page: a let-go, a fast flick or a dash across, in turn
+    const o = Math.floor(Math.random() * 8);
+    const kind = ['releases', 'flicks', 'thumbs'][made % 3];
+    const asked = hint;
+    hint = { step: kind, octant: o, kind: kind === 'flicks' ? 'flick' : kind === 'thumbs' ? 'across' : undefined };
+    try { return makeCapture(stick); } finally { hint = asked; }
+  }
   const step = hint.step;
   if (step === 'releases') {
     const o = hint.octant >= 0 ? hint.octant : Math.floor(Math.random() * 8);

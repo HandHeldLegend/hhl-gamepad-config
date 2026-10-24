@@ -35,6 +35,22 @@ export function springStatus(session, stick) {
 }
 
 /**
+ * The tuning Auto is using on this stick right now, as the gate takes it, or null when it isn't using one
+ * (not tuned, or not on Auto).
+ * @returns {{a1: number[], a2: number[], decide_step: number, grab_err: number, stiff_den: number, cross_speed: number}|null}
+ */
+export function springParams(session, stick) {
+  const cfg = session.config.analog;
+  const c = cfg?.[FIELD[stick]];
+  if (!c || c.version !== VERSION || !(c.flags & TUNED)) return null;
+  if (cfg[TYPE[stick]] !== AUTO_TYPE && cfg[TYPE[stick]] !== 3) return null;
+  return {
+    a1: Array.from(c.a1), a2: Array.from(c.a2),
+    decide_step: c.decide_step, grab_err: c.grab_err, stiff_den: c.stiff_den, cross_speed: c.cross_speed,
+  };
+}
+
+/**
  * Store a fitted tuning for one stick and switch it to Auto, then save to the controller.
  * @param {{a1: number[], a2: number[], decide_step: number, grab_err: number, stiff_den: number, cross_speed: number}} p
  * @returns {Promise<boolean>} saved
