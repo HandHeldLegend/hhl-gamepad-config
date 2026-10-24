@@ -18,6 +18,11 @@
  *     as the spring) arrives later. CROSS_MARGIN samples after the predicted crossing without the stick
  *     crossing, it's the thumb: the release check or hold ends at once, and that same sample is looked at
  *     as an idle one (its crossing can still be checked: a slowly eased-back turnaround can look thrown).
+ *   - A hand, by the physics of a free spring: after a centre crossing at speed v it turns back within a
+ *     quarter swing and gets no further out than v/θ (θ: the spring's swing, radians a sample). Further out
+ *     than PEAK_MARGIN × that, or still going out QUARTER_MARGIN × a quarter swing on, is a hand: the
+ *     release check or hold (layer 1, from the release line's crossing) or the crossing check or its hold
+ *     (layer 2) ends at once.
  *   - A hold ends when the thumb takes the stick back (one-step error over grab_err, 3 samples running),
  *     when it's parked far out (STILL_N samples barely moving past STILL_MIN), when it's pushed (speeding
  *     away from centre past PUSH_MIN, PUSH_N running: a spring only ever pulls it back), or once it settles
@@ -62,6 +67,27 @@ const SETTLED_RANGE = [40, 200];
 /** The firmware's default inner deadzone (analogConfig_s l/r_deadzone), used when none is given. */
 export const DEFAULT_DEADZONE = 144;
 const SETTLE_COUNT = 20;
+/** Margins on a free spring's swing after a crossing: how far out (× v/θ) and how long (× a quarter swing). */
+const PEAK_MARGIN = 1.5;
+const QUARTER_MARGIN = 1.4;
+
+/** Per octant: how far out a free spring can get for its crossing speed (Q8) and for how many samples. */
+function swingTables(p) {
+  const peak = []; const quarter = [];
+  for (let o = 0; o < 8; o++) {
+    const a1 = p.a1[o] / 65536; const a2 = p.a2[o] / 65536;
+    const th = Math.max(0.01, Math.acos(Math.max(-1, Math.min(1, a1 / (2 * Math.sqrt(-a2))))));
+    peak.push(Math.trunc((256 * PEAK_MARGIN) / th));
+    quarter.push(Math.ceil((QUARTER_MARGIN * (Math.PI / 2)) / th));
+  }
+  return { peak, quarter };
+}
+
+/** Past a crossing (`fall` its speed, `n` samples ago): further out, or still going out too long, is a hand. */
+function isHand(q, qPrev, fall, n, turned, o, tabs) {
+  return -q * 256 > fall * tabs.peak[o] || (!turned && q < 0 && q < qPrev && n > tabs.quarter[o]);
+}
+
 /** The release check carries on through a layer-1 hold this many samples after the release line (7 ms). */
 const FREE_CHECK_UNTIL = 14;
 /** A hold ends when the stick is parked: this far out, moving under 1/STILL_DIV of its distance a
@@ -111,10 +137,12 @@ export function runGate(xs, ys, p, o = {}) {
   const checks = [];
   const crossSpeed = o.measure ? 5 : p.cross_speed;
   const settled = clamp(o.deadzone ?? DEFAULT_DEADZONE, SETTLED_RANGE);
+  const tabs = swingTables(p);
   const s = {
     state: GATE.IDLE, oct: 0, step: 0, grab: 0, settle: 0, hold: 0, ex: 0, ey: 0,
     x1: 0, y1: 0, x2: 0, y2: 0, fx1: 0, fy1: 0, fx2: 0, fy2: 0, rx: 0, ry: 0, p1: 0, p2: 0, num: 0, den: 0, at: 0, speed: 0,
     layer: 1, crossed: false, fcross: -1, still: 0, push: 0, dprev: 0, dprev2: 0,
+    q1: 0, l1x: false, l1fall: 0, l1n: 0, l1turned: false, xfall: 0, xn: 0, xoct: 0, xturned: false,
   };
   for (let i = 0; i < n; i++) {
     const x = xs[i] | 0;
@@ -144,6 +172,27 @@ export function runGate(xs, ys, p, o = {}) {
         st = GATE.IDLE;
       }
     }
+    // A hand, by a free spring's swing after a crossing (layer 1: the release line's; layer 2: the checked one)
+    const q0 = x * s.ex + y * s.ey;
+    if ((st === GATE.DECIDING || st === GATE.HOLDING) && s.layer === 1) {
+      if (!s.l1x) {
+        if (s.q1 >= 0 && q0 < 0) { s.l1x = true; s.l1fall = s.q1 - q0; s.l1n = 0; s.l1turned = false; }
+      } else {
+        s.l1n++;
+        if (q0 < 0 && q0 > s.q1) s.l1turned = true;
+        if (isHand(q0, s.q1, s.l1fall, s.l1n, s.l1turned, s.oct, tabs)) {
+          s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
+          st = -1; // this sample passes; nothing below runs
+        }
+      }
+    } else if ((st === GATE.CHECKING && !o.measure) || (st === GATE.HOLDING && s.layer === 2)) {
+      s.xn++;
+      if (p0 < 0 && p0 > s.p1) s.xturned = true;
+      if (isHand(p0, s.p1, s.xfall, s.xn, s.xturned, s.xoct, tabs)) {
+        s.state = GATE.IDLE;
+        st = -1;
+      }
+    }
     switch (st) {
       case GATE.IDLE:
         if (d >= EDGE) s.state = GATE.EDGE;
@@ -151,6 +200,7 @@ export function runGate(xs, ys, p, o = {}) {
           s.state = GATE.CHECKING;
           s.step = 0; s.num = 0; s.den = 0;
           s.at = i; s.speed = fall / Math.sqrt(outSq);
+          s.xfall = fall; s.xn = 0; s.xoct = octant(s.rx, s.ry); s.xturned = false;
           neutral = true; // this sample is already past centre
         }
         break;
@@ -160,7 +210,7 @@ export function runGate(xs, ys, p, o = {}) {
           s.fx2 = s.x1; s.fy2 = s.y1; s.fx1 = x; s.fy1 = y;
           s.step = 0;
           s.state = GATE.DECIDING;
-          s.crossed = false; s.fcross = -1; s.layer = 1;
+          s.crossed = false; s.fcross = -1; s.layer = 1; s.l1x = false;
         }
         break;
       case GATE.DECIDING: {
@@ -227,6 +277,7 @@ export function runGate(xs, ys, p, o = {}) {
       s.p2 = s.p1; s.p1 = p0;
     }
     s.dprev2 = s.dprev; s.dprev = d;
+    s.q1 = x * s.ex + y * s.ey;
     s.x2 = s.x1; s.y2 = s.y1; s.x1 = x; s.y1 = y;
     outX[i] = neutral ? 0 : x;
     outY[i] = neutral ? 0 : y;
