@@ -778,15 +778,20 @@ export class HojaDevice extends EventTarget {
     const blockIdx = view.getUint8(1);
     const size = view.getUint8(2);
     const idx = view.getUint8(3);
-    const reading = this.#read.kind === kind && this.#read.block === blockIdx;
+    // Only a read in progress fills a block. The firmware sends blocks only when asked, so anything else
+    // is a late answer to a read that already finished or timed out: storing it would put old bytes back
+    // over edits made since, and the next write would send them to the controller.
+    const reading = this.#read.kind === kind && this.#read.block === blockIdx && !this.#read.done;
+    if (!reading) {
+      if (idx === 0xff) console.warn(`[device] ignored a late answer for ${kind} block ${blockIdx}`);
+      return;
+    }
     if (size > 0) {
       const chunk = new Uint8Array(view.buffer, view.byteOffset + 4, size);
       if (!this.#storeChunk(kind, blockIdx, idx, chunk)) return;
-      if (reading) this.#read.parts.push([idx * CHUNK_MAX, chunk.slice()]); // the block's bytes, for the cache
+      this.#read.parts.push([idx * CHUNK_MAX, chunk.slice()]); // the block's bytes, for the cache
     }
-    if (idx === 0xff && reading) {
-      this.#read.done = true;
-    }
+    if (idx === 0xff) this.#read.done = true;
   }
 
   /** One chunk of a block into its struct: from the controller, or from the cache (#applyCached). */
@@ -872,9 +877,13 @@ export class HojaDevice extends EventTarget {
   async #readBlock(kind, index, timeout = 5000) {
     const read = { kind, block: index, done: false, parts: [] };
     this.#read = read;
-    await this.#out([kind === 'config' ? REPORT.READ_CONFIG : REPORT.READ_STATIC, index]);
-    if (!(await waitFor(() => read.done, timeout))) {
-      throw new Error(`Timed out reading ${kind} block ${index}`);
+    try {
+      await this.#out([kind === 'config' ? REPORT.READ_CONFIG : REPORT.READ_STATIC, index]);
+      if (!(await waitFor(() => read.done, timeout))) {
+        throw new Error(`Timed out reading ${kind} block ${index}`);
+      }
+    } finally {
+      read.done = true; // a late answer to this read is ignored (#onChunk)
     }
     const bytes = new Uint8Array(read.parts.reduce((n, [at, c]) => Math.max(n, at + c.length), 0));
     for (const [at, c] of read.parts) bytes.set(c, at);
@@ -961,6 +970,17 @@ export class HojaDevice extends EventTarget {
     if (this.missing.config.includes(entry.key)) {
       console.warn(`[device] not writing ${entry.key}: it was never read from this controller`);
       return Promise.resolve();
+    }
+    // TEMPORARY (Spring tuning test, remove before merging): every analog write, what it carries and
+    // who sent it, to find any write that puts an old spring back
+    if (entry.key === 'analog') {
+      const a = this.config.analog;
+      console.info('[device] analog write', {
+        types: [a.l_snapback_type, a.r_snapback_type],
+        l_spring: { version: a.l_spring?.version, flags: a.l_spring?.flags, a1_0: a.l_spring?.a1?.[0], decide: a.l_spring?.decide_step },
+        r_spring: { version: a.r_spring?.version, flags: a.r_spring?.flags, a1_0: a.r_spring?.a1?.[0], decide: a.r_spring?.decide_step },
+        bytes: !!bytes,
+      }, new Error('sent from').stack);
     }
     return this.#exclusive(async () => {
       const buf = this.config[entry.key].buffer;
