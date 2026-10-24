@@ -121,21 +121,53 @@ function deviceCard(session) {
  * gets a dot; one that needs a controller waits dimmed. The icons are made once and only updated
  * (dot, dimming), so nothing blinks while the controller connects and its checks report in.
  */
-function simpleTop(session) {
-  const connecting = session.state === 'connecting';
-  const fw = firmwareStatus();
-  if (session.state === 'dongle') return dongleCard(session);
-  return session.connected
-    ? h('div.simple-bar',
-      face('gamepad', 'lavender', 40),
-      h('div.simple-bar-text', h('strong.ellipsis', session.info.name),
-        h('span.small.muted', isDemo() ? t('Demo controller') : fw.state === 'available' ? t('Update available') : t('Connected'))),
-      fw.state === 'available' && !session.caps.noCable
-        ? updateButton()
-        : button({ label: t('Firmware'), icon: 'firmware', variant: 'ghost', size: 'sm', onClick: () => { location.hash = '#/firmware'; } }))
-    : h('div.simple-bar.simple-connect',
-      button({ label: connecting ? t('Connecting…') : t('Connect controller'), icon: 'usb', variant: 'primary', disabled: connecting, onClick: () => connectController() }),
-      button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() }));
+/**
+ * The simple layout's top line, made once per kind (connect, controller, dongle) and then updated in
+ * place: the firmware check, the mode and the rest report in after connecting, and redrawing the line
+ * for each made it blink.
+ */
+function simpleTop() {
+  let kind = '';
+  let parts = null;
+  const el = h('div.simple-top');
+  el.update = (session) => {
+    const k = session.state === 'dongle' ? 'dongle' : session.connected ? 'pad' : 'connect';
+    if (k !== kind) {
+      kind = k;
+      parts = null;
+      if (k === 'dongle') { replace(el, dongleCard(session)); return; }
+      if (k === 'pad') {
+        const sub = h('span.small.muted');
+        const name = h('strong.ellipsis');
+        const action = h('div.simple-bar-action');
+        parts = { sub, name, action, update: '' };
+        replace(el, h('div.simple-bar', face('gamepad', 'lavender', 40), h('div.simple-bar-text', name, sub), action));
+      } else {
+        const connect = button({ label: t('Connect controller'), icon: 'usb', variant: 'primary', onClick: () => connectController() });
+        parts = { connect };
+        replace(el, h('div.simple-bar.simple-connect', connect,
+          button({ label: t('Try the demo'), icon: 'play', variant: 'ghost', onClick: () => startDemo() })));
+      }
+    }
+    if (k === 'dongle') return;
+    if (k === 'connect') {
+      const connecting = session.state === 'connecting';
+      parts.connect.setLabel(connecting ? t('Connecting…') : t('Connect controller'));
+      parts.connect.disabled = connecting;
+      return;
+    }
+    const fw = firmwareStatus();
+    if (parts.name.textContent !== session.info.name) parts.name.textContent = session.info.name;
+    const sub = isDemo() ? t('Demo controller') : fw.state === 'available' ? t('Update available') : t('Connected');
+    if (parts.sub.textContent !== sub) parts.sub.textContent = sub;
+    const upd = fw.state === 'available' && !session.caps.noCable ? 'update' : 'firmware';
+    if (parts.update !== upd) {
+      parts.update = upd;
+      replace(parts.action, upd === 'update' ? updateButton()
+        : button({ label: t('Firmware'), icon: 'firmware', variant: 'ghost', size: 'sm', onClick: () => { location.hash = '#/firmware'; } }));
+    }
+  };
+  return el;
 }
 
 function simpleGrid() {
@@ -172,6 +204,7 @@ function draw(slot, sig, build) {
 export function mount(root, { session, device }) {
   let hub = null;
   let grid = null;
+  let top = null;
   // Home stays mounted through connecting and disconnecting (registry: stable) and redraws itself when
   // the state changes, the attention check or the firmware check reports in. Each part is redrawn only
   // when what it shows changed, and the quick settings stay the same element (never taken out and put
@@ -190,13 +223,17 @@ export function mount(root, { session, device }) {
       hub?.destroy();
       hub = null;
       grid ||= simpleGrid();
-      draw(before, `simple|${who}`, () => simpleTop(session));
+      top ||= simpleTop();
+      top.update(session);
       grid.update(session);
-      place([before, grid]);
+      place([top, grid]);
       return;
     }
     const dongleOnly = session.state === 'dongle';
-    if (!session.connected) { hub?.destroy(); hub = null; } else if (!hub) hub = quickHub(session, device);
+    if (!session.connected) { hub?.destroy(); hub = null; } else if (!hub) {
+      hub = quickHub(session, device);
+      hub.classList.add('rise-in'); // arrives with a fade, once (it then stays the same element)
+    }
     draw(before, `std|${who}|${attention}`, () => (session.connected ? deviceCard(session) : dongleOnly ? dongleCard(session) : hero(session)));
     draw(after, `std|${session.state}|${attention}|${SECTIONS.map((x) => unavailableReason(x) || '').join(',')}`, () => [
       !session.connected && !dongleOnly && connectTips(),
