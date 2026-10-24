@@ -132,4 +132,9 @@ export default {
   'Watch the ghost on the circle, then do the same move. Keep your thumb on the stick the whole time and never let it snap back.': '円の上のガイドを見て、同じ動きをします。親指をずっとスティックに乗せたまま、勝手に戻らせないでください。',
   'Start each move with the stick pushed all the way to the edge the guide shows.': '毎回、ガイドが示す端までスティックを倒した状態から始めてください。',
   'That looked like a let-go. Keep your thumb on the stick until it’s back at the center.': '離したように見えました。中心に戻るまで親指をスティックに乗せたままにしてください。',
+  'Each thumb move': '親指の操作ごと',
+  'Other': 'その他',
+  '{time} added': '{time} 追加',
+  'Untouched': '影響なし',
+  'Download tuning data': '調整データをダウンロード',
 };

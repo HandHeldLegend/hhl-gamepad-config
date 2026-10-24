@@ -117,4 +117,9 @@ export default {
   "Watch the ghost on the circle, then do the same move. Keep your thumb on the stick the whole time and never let it snap back.": "看圆上的引导，然后做同样的动作。拇指一直放在摇杆上，不要让它自己弹回。",
   "Start each move with the stick pushed all the way to the edge the guide shows.": "每个动作都要从把摇杆推到引导所示的边缘开始。",
   "That looked like a let-go. Keep your thumb on the stick until it’s back at the center.": "这看起来像是松开了。拇指要一直放在摇杆上，直到它回到中心。",
+  "Each thumb move": "每个拇指操作",
+  "Other": "其他",
+  "{time} added": "增加 {time}",
+  "Untouched": "未受影响",
+  "Download tuning data": "下载调校数据",
 };

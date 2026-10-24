@@ -16,6 +16,10 @@
  * that fails can be redone on its own. Save writes l_spring / r_spring (flagged tuned) and the Spring
  * type, then saves to the controller.
  *
+ * Download tuning data saves the whole run as JSON for checking it against the firmware tools: every
+ * capture (taken or turned away, in the bench recorder's fields: label, stick, x, y, pre, period_us),
+ * the fitted values, and what the scorecard found per thumb move.
+ *
  * The compass shows the live stick (joystick stream; the capture only runs while the app streams) and
  * draws each capture's path, so every push and let-go visibly lands somewhere.
  */
@@ -26,7 +30,7 @@ import { icon } from '../../ui/icons.js';
 import { prefersReducedMotion } from '../../ui/canvas-surface.js';
 import { onInputReport } from '../../device/reports.js';
 import { t, N_, fmt } from '../../i18n/index.js';
-import { readRelease, readTurnaround, readThumb, fitSpring, scorecard } from './spring.js';
+import { readRelease, readTurnaround, readThumb, fitSpring, scorecard, CAPTURE_PRE, SAMPLE_MS } from './spring.js';
 import { writeSpring } from './spring-config.js';
 
 const PER_OCTANT = 3;
@@ -260,12 +264,20 @@ export function tuneSpring({ session, device, stick }) {
 
   // ---- Captures --------------------------------------------------------------------------------
   let lastMoveAt = -Infinity;
+  /** Every capture of the run, taken or not, for the export. */
+  const log = [];
+  const thumbKinds = [];   // the move asked for, per thumb move taken
   function onCapture(e) {
     const c = e.detail;
     if (c.stick !== stickIdx || step === 'results' || advanceTimer) return;
+    const entry = { label: { releases: 'release', turnarounds: 'turnaround', thumbs: 'thumb' }[step], c, time: Date.now() / 1000, accepted: false, why: null };
+    if (step === 'thumbs') entry.kind = THUMB_PLAN[Math.min(caps.thumbs.length, THUMBS - 1)][0];
+    log.push(entry);
+    const took = (c2) => { entry.accepted = true; entry.c = c2; };
     if (step === 'releases') {
       const r = readRelease(c);
       trail(c, r.ok && perOctant[r.octant] < PER_OCTANT);
+      entry.why = r.ok ? null : r.why;
       if (!r.ok) {
         say(r.why === 'edge' ? t('Push it all the way to the edge first.')
           : r.why === 'guided' ? t('Let go completely. Don’t guide it back.')
@@ -273,15 +285,18 @@ export function tuneSpring({ session, device, stick }) {
         return;
       }
       if (perOctant[r.octant] >= PER_OCTANT) {
+        entry.why = 'direction-done';
         say(t('That direction is done. Try one that’s still lit.'), 'warn');
         return;
       }
       perOctant[r.octant]++;
       caps.releases.push(c);
+      took(c);
       asked = r.octant;
       say(t('Got it: {direction} ({n} of {of})', { direction: t(DIRECTIONS[r.octant]), n: fmt.number(perOctant[r.octant]), of: fmt.number(PER_OCTANT) }), 'good');
     } else if (step === 'turnarounds') {
       const r = readTurnaround(c);
+      entry.why = r.ok ? null : r.why;
       trail(c, r.ok);
       if (!r.ok) {
         say(r.why === 'release' ? t('That was a full release from the edge. Tilt only partway this time.')
@@ -289,11 +304,13 @@ export function tuneSpring({ session, device, stick }) {
         return;
       }
       caps.turnarounds.push(c);
+      took(c);
       say(t('Got it.'), 'good');
     } else {
       const r = readThumb(c);
+      entry.why = r.ok ? null : r.why;
       // Let go after the last move: the stick snapped back on its own, that's fine
-      if (!r.ok && r.why === 'released' && performance.now() - lastMoveAt < AFTER_MOVE_MS) return;
+      if (!r.ok && r.why === 'released' && performance.now() - lastMoveAt < AFTER_MOVE_MS) { entry.why = 'let-go-after-move'; return; }
       trail(c, r.ok);
       if (!r.ok) {
         say(r.why === 'edge' ? t('Start each move with the stick pushed all the way to the edge the guide shows.')
@@ -301,6 +318,8 @@ export function tuneSpring({ session, device, stick }) {
         return;
       }
       caps.thumbs.push(c);
+      thumbKinds.push(entry.kind);
+      took(c);
       lastMoveAt = performance.now();
       say(t('Got it.'), 'good');
     }
@@ -316,7 +335,7 @@ export function tuneSpring({ session, device, stick }) {
   // ---- Results ---------------------------------------------------------------------------------
   function showResults() {
     fit = fitSpring(caps);
-    score = scorecard(fit.params, caps);
+    score = scorecard(fit.params, caps, session.config.analog?.[stick === 'left' ? 'l_deadzone' : 'r_deadzone']);
     const hz = fit.shape.filter(Boolean).map((s) => s.hz);
     const row = (ok, label, value) => h('div.spr-row', { class: ok ? 'good' : 'warn' },
       h('span.spr-row-icon', icon(ok ? 'check' : 'warning')), h('span.spr-row-label', label), h('strong.spr-row-value', value));
@@ -339,15 +358,56 @@ export function tuneSpring({ session, device, stick }) {
         row(score.releases.pass === score.releases.of, t('Releases held back'), ratio(score.releases)),
         row(score.turnarounds.pass === score.turnarounds.of, t('Turnarounds held back'), ratio(score.turnarounds)),
         row(score.thumbs.pass === score.thumbs.of, t('Thumb moves left alone'), ratio(score.thumbs)),
+        thumbList(ms),
         row(score.delayOk, t('Most delay added to a thumb move'), ms(score.delayMs)),
         hz.length ? row(true, t('Your stick’s spring'), t('{low} to {high} Hz', { low: fmt.number(Math.min(...hz), { maximumFractionDigits: 0 }), high: fmt.number(Math.max(...hz), { maximumFractionDigits: 0 }) })) : null),
-      ...(score.redo.length ? [callout({ tone: 'yellow', icon: 'warning' }, ...score.redo.map((id) => h('p', t(REDO[id]))))] : []));
+      ...(score.redo.length ? [callout({ tone: 'yellow', icon: 'warning' }, ...score.redo.map((id) => h('p', t(REDO[id]))))] : []),
+      exportRow());
     swap(resultPanel);
     setActions();
   }
 
+  /** Each thumb move: what it was and the delay it got. Open when one of them failed. */
+  function thumbList(ms) {
+    const moves = score.thumbs.moves;
+    if (!moves.length) return null;
+    return h('details.spr-moves', { open: moves.some((m) => !m.pass) },
+      h('summary', t('Each thumb move')),
+      h('ol.spr-move-list', moves.map((m, i) => h('li', { class: m.pass ? 'good' : 'warn' },
+        h('span.spr-move-kind', thumbKinds[i] ? t(THUMB_MOVES[thumbKinds[i]].name) : t('Other')),
+        h('span.spr-move-ms', m.delayMs ? t('{time} added', { time: ms(m.delayMs) }) : t('Untouched'))))));
+  }
+
+  function exportRow() {
+    return h('div.spr-export', button({ label: t('Download tuning data'), icon: 'download', variant: 'ghost', size: 'sm', onClick: exportData }));
+  }
+
+  /** The whole run as JSON: captures in the bench recorder's fields, the fit, and the scorecard. */
+  function exportData() {
+    const dz = score.deadzone;
+    const data = {
+      format: 'hoja-spring-tuning', version: 1, created: new Date().toISOString(),
+      controller: session.info?.name || null, stick, deadzone: dz,
+      params: fit.params,
+      shape: fit.shape, notes: fit.notes,
+      score: { ...score, thumbs: { pass: score.thumbs.pass, of: score.thumbs.of } },
+      thumbs: score.thumbs.moves.map((m, i) => ({ index: i, kind: thumbKinds[i] || 'other', ...m })),
+      captures: log.map((e) => ({
+        label: e.label, stick, number: e.c.number, period_us: SAMPLE_MS * 1000, pre: CAPTURE_PRE, time: e.time,
+        accepted: e.accepted, why: e.why, ...(e.kind ? { kind: e.kind } : {}), x: Array.from(e.c.x), y: Array.from(e.c.y),
+      })),
+    };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const a = h('a', { href: URL.createObjectURL(blob), download: `spring-tuning-${stick}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.json` });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
   function redo(id) {
     caps[id] = [];
+    if (id === 'thumbs') thumbKinds.length = 0;
     if (id === 'releases') perOctant.fill(0);
     returnTo = 'results';
     enterStep(id);
@@ -366,7 +426,8 @@ export function tuneSpring({ session, device, stick }) {
     resultPanel.replaceChildren(h('div.spr-done',
       h('span.spr-done-art', icon('check')),
       h('h3', t('Saved')),
-      h('p.muted', t('This stick now uses Spring with its own tuning. Flick it in the Analyzer to see the rebound held back.'))));
+      h('p.muted', t('This stick now uses Spring with its own tuning. Flick it in the Analyzer to see the rebound held back.')),
+      exportRow()));
     replay(resultPanel);
     saved = true;
     setActions();

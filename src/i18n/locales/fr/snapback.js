@@ -132,4 +132,9 @@ export default {
   'Watch the ghost on the circle, then do the same move. Keep your thumb on the stick the whole time and never let it snap back.': 'Regarde le guide sur le cercle, puis fais le même mouvement. Garde le pouce sur le stick tout du long et ne le laisse jamais revenir tout seul.',
   'Start each move with the stick pushed all the way to the edge the guide shows.': 'Commence chaque mouvement avec le stick poussé jusqu’au bord indiqué par le guide.',
   'That looked like a let-go. Keep your thumb on the stick until it’s back at the center.': 'On aurait dit un relâchement. Garde le pouce sur le stick jusqu’à ce qu’il soit revenu au centre.',
+  'Each thumb move': 'Chaque mouvement du pouce',
+  'Other': 'Autre',
+  '{time} added': '{time} ajoutées',
+  'Untouched': 'Intact',
+  'Download tuning data': 'Télécharger les données du réglage',
 };

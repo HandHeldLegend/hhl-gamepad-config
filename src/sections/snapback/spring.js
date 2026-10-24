@@ -390,48 +390,73 @@ export function fitSpring({ releases, turnarounds, thumbs }) {
 
 // ---- The scorecard ---------------------------------------------------------------------------
 
-const DEADZONE = 144;        // what a game would treat as centre: past it, a rebound is a flick the other way
+/** The firmware's default inner deadzone (analogConfig_s l/r_deadzone), used when none is given. */
+export const DEFAULT_DEADZONE = 144;
 const DELAY_OK_MS = 3;
 
-/** Did the gate keep this capture's rebound inside the deadzone? */
-function blocked(c, g) {
+/** Position along the direction the stick left from (its furthest point before coming back). */
+function edgeDir(c) {
   const pk = peak(c);
   const n = Math.hypot(pk.x, pk.y) || 1;
-  for (let i = pk.at; i < c.x.length; i++) {
-    if ((g.x[i] * pk.x + g.y[i] * pk.y) / n < -DEADZONE) return false;
-  }
+  return { pk, ux: pk.x / n, uy: pk.y / n };
+}
+
+/** Did the gate keep this capture's rebound inside the deadzone (what a game sees as centre)? */
+function blocked(c, g, dz) {
+  const { pk, ux, uy } = edgeDir(c);
+  for (let i = pk.at; i < c.x.length; i++) if (g.x[i] * ux + g.y[i] * uy < -dz) return false;
   return true;
 }
 
-/** Longest stretch in the move that the gate held the output at centre while the stick was out (ms). */
-function heldMs(c, g) {
+/**
+ * What the gate did to a thumb move that a game could see, within the move (until 30 ms after the stick
+ * fell under 500; a release after the move is the gate doing its job):
+ *   changedMs   longest run of samples where the output differs from the stick and either is outside
+ *               the deadzone (a hold that keeps a stick inside the deadzone at neutral changes nothing)
+ *   farDelayMs  a move that crosses to the far side: when the output leaves the deadzone there, minus
+ *               when the stick does (null if the stick never does)
+ *   delayMs     the larger of the two: the move's added delay
+ */
+export function thumbEffect(c, p, dz = DEFAULT_DEADZONE) {
+  const g = runGate(c.x, c.y, p);
+  const end = Math.min(MOVE_END, c.x.length);
   let run = 0; let worst = 0;
-  for (let i = 0; i < Math.min(MOVE_END, c.x.length); i++) {
-    const out = g.x[i] === 0 && g.y[i] === 0 && Math.hypot(c.x[i], c.y[i]) > SETTLED;
-    run = out ? run + 1 : 0;
+  for (let i = 0; i < end; i++) {
+    const changed = (g.x[i] !== c.x[i] || g.y[i] !== c.y[i]) &&
+      (Math.hypot(c.x[i], c.y[i]) > dz || Math.hypot(g.x[i], g.y[i]) > dz);
+    run = changed ? run + 1 : 0;
     worst = Math.max(worst, run);
   }
-  return worst * SAMPLE_MS;
+  const { pk, ux, uy } = edgeDir(c);
+  const far = (xs, ys) => {
+    for (let i = pk.at; i < c.x.length; i++) if (xs[i] * ux + ys[i] * uy < -dz) return i;
+    return -1;
+  };
+  const rawAt = far(c.x, c.y);
+  const outAt = rawAt < 0 ? -1 : far(g.x, g.y);
+  const farDelayMs = rawAt < 0 ? null : outAt < 0 ? (c.x.length - rawAt) * SAMPLE_MS : (outAt - rawAt) * SAMPLE_MS;
+  const changedMs = worst * SAMPLE_MS;
+  const delayMs = Math.max(changedMs, farDelayMs ?? 0);
+  return { changedMs, farDelayMs, delayMs, pass: delayMs <= DELAY_OK_MS };
 }
 
 /**
- * Run a tuning over every capture.
+ * Run a tuning over every capture. `deadzone`: the stick's inner deadzone (what a game sees as centre).
  * @returns {{releases: {pass: number, of: number}, turnarounds: {pass: number, of: number},
- *   thumbs: {pass: number, of: number}, delayMs: number, delayOk: boolean, redo: ('releases'|'turnarounds'|'thumbs')[], ok: boolean}}
+ *   thumbs: {pass: number, of: number, moves: ReturnType<typeof thumbEffect>[]}, delayMs: number,
+ *   delayOk: boolean, redo: ('releases'|'turnarounds'|'thumbs')[], ok: boolean, deadzone: number}}
  */
-export function scorecard(p, { releases, turnarounds, thumbs }) {
+export function scorecard(p, { releases, turnarounds, thumbs }, deadzone = DEFAULT_DEADZONE) {
+  const dz = deadzone || DEFAULT_DEADZONE;
   const count = (list, f) => ({ pass: list.filter(f).length, of: list.length });
-  const rel = count(releases, (c) => blocked(c, runGate(c.x, c.y, p)));
-  const turn = count(turnarounds, (c) => blocked(c, runGate(c.x, c.y, p)));
-  let delayMs = 0;
-  const thumb = count(thumbs, (c) => {
-    const ms = heldMs(c, runGate(c.x, c.y, p));
-    delayMs = Math.max(delayMs, ms);
-    return ms <= DELAY_OK_MS;
-  });
+  const rel = count(releases, (c) => blocked(c, runGate(c.x, c.y, p), dz));
+  const turn = count(turnarounds, (c) => blocked(c, runGate(c.x, c.y, p), dz));
+  const moves = thumbs.map((c) => thumbEffect(c, p, dz));
+  const thumb = { pass: moves.filter((m) => m.pass).length, of: moves.length, moves };
+  const delayMs = Math.max(0, ...moves.map((m) => m.delayMs));
   const redo = [];
   if (rel.pass < rel.of) redo.push('releases');
   if (turn.pass < turn.of) redo.push('turnarounds');
   if (thumb.pass < thumb.of) redo.push('thumbs');
-  return { releases: rel, turnarounds: turn, thumbs: thumb, delayMs, delayOk: delayMs <= DELAY_OK_MS, redo, ok: !redo.length };
+  return { releases: rel, turnarounds: turn, thumbs: thumb, delayMs, delayOk: delayMs <= DELAY_OK_MS, redo, ok: !redo.length, deadzone: dz };
 }
