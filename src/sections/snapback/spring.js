@@ -242,7 +242,8 @@ const MOVE_END = CAPTURE_PRE + 60;
 const FREE_SAMPLES = 120;   // 60 ms of the free swing after the first centre crossing
 /** decide_step stays this far under the closest thumb move (ratio), so none of them is held. */
 const THUMB_MARGIN = 1.1;
-/** grab_err's ceiling: past this the thumb taking the stick back takes too long to pass. */
+/** grab_err's range: past the ceiling the thumb taking the stick back takes too long to pass. */
+const GRAB_MIN = 60;
 const GRAB_MAX = 100;
 const RELEASE_MAX_MS = 4;   // release line to centre: real releases take 1.5-3 ms, guided returns 5.5+
 const FIT_RMS_MAX = 30;
@@ -375,17 +376,20 @@ export function fitSpring({ releases, turnarounds, thumbs }, deadzone = DEFAULT_
   }
   const p = { ...SPRING_DEFAULTS, a1, a2 };
 
-  // decide_step: what the releases need (the default, or their worst + 20 % if smaller, but never under
-  // their worst + 5 %), kept THUMB_MARGIN under the closest thumb move so none is held. Thumb data only
-  // ever tightens it. When the releases need more than that, the two overlap: the releases win (a held
-  // rebound matters more), and the thumb moves inside it are flagged unclear, to be done again.
+  // decide_step: as high as the thumb moves allow, THUMB_MARGIN under the closest one, so releases wider
+  // than any seen in one round are still held (a thumb move never comes near it, so that costs nothing).
+  // At least what the releases need (the default, or their worst + 20 % if smaller, never under their
+  // worst + 5 %); with no thumb moves, just that. When the releases need more than the thumb moves allow,
+  // the two overlap: the releases win (a held rebound matters more), and the thumb moves inside are
+  // flagged unclear, to be done again.
   const relWorst = Math.max(0, ...releases.map((c) => decideRatio(c, p) ?? 0));
   const thumbRatios = thumbs.map((c) => decideRatio(c, p)).filter((v) => v != null);
   const thumbBest = thumbRatios.length ? Math.min(...thumbRatios) : null;
   const need = Math.max(relWorst * 1.05, Math.min(SPRING_DEFAULTS.decide_step, relWorst * 1.2));
   const thumbCap = thumbBest == null ? Infinity : thumbBest / THUMB_MARGIN;
   const overlap = relWorst * 1.05 > thumbCap;
-  p.decide_step = clamp(Math.ceil(overlap ? relWorst * 1.05 : Math.min(need, thumbCap)), SPRING_LIMITS.decide_step);
+  const decide = overlap ? Math.ceil(relWorst * 1.05) : Number.isFinite(thumbCap) ? Math.max(Math.ceil(need), Math.floor(thumbCap)) : Math.ceil(need);
+  p.decide_step = clamp(decide, SPRING_LIMITS.decide_step);
 
   // cross_speed: below the slowest turnaround's crossing, but never under the default: each crossing checked
   // costs 3 ms of hold by design, so a lower one would add that to more thumb moves. Turnarounds too slow
@@ -406,10 +410,11 @@ export function fitSpring({ releases, turnarounds, thumbs }, deadzone = DEFAULT_
     p.stiff_den = clamp(Math.round(1 / k), SPRING_LIMITS.stiff_den);
   }
 
-  // grab_err: above the spring's own one-step miss while the releases are held (3 samples running, as the
-  // grab counts), with 20 % to spare: a stick that swings far or swirls off-axis misses by more
+  // grab_err: twice the spring's own one-step miss while the releases are held (3 samples running, as the
+  // grab counts), GRAB_MIN..GRAB_MAX: one round doesn't show all of a stick's swing and swirl. It only acts
+  // during a hold, which thumb moves never enter; a higher one notices a real grab a sample or two later.
   const miss = Math.max(0, ...releases.map((c) => holdMiss(c, p, deadzone)));
-  p.grab_err = Math.min(GRAB_MAX, Math.max(SPRING_DEFAULTS.grab_err, Math.ceil(miss * 1.2)));
+  p.grab_err = Math.min(GRAB_MAX, Math.max(GRAB_MIN, Math.ceil(miss * 2)));
 
   return {
     params: p,
