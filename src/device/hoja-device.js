@@ -971,17 +971,6 @@ export class HojaDevice extends EventTarget {
       console.warn(`[device] not writing ${entry.key}: it was never read from this controller`);
       return Promise.resolve();
     }
-    // TEMPORARY (Spring tuning test, remove before merging): every analog write, what it carries and
-    // who sent it, to find any write that puts an old spring back
-    if (entry.key === 'analog') {
-      const a = this.config.analog;
-      console.info('[device] analog write', {
-        types: [a.l_snapback_type, a.r_snapback_type],
-        l_spring: { version: a.l_spring?.version, flags: a.l_spring?.flags, a1_0: a.l_spring?.a1?.[0], decide: a.l_spring?.decide_step },
-        r_spring: { version: a.r_spring?.version, flags: a.r_spring?.flags, a1_0: a.r_spring?.a1?.[0], decide: a.r_spring?.decide_step },
-        bytes: !!bytes,
-      }, new Error('sent from').stack);
-    }
     return this.#exclusive(async () => {
       const buf = this.config[entry.key].buffer;
       if (bytes) buf.set(bytes);

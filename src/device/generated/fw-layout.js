@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@00aa773)
+// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@787f5e3)
 // Validated 9 size assertion(s) from the firmware headers.
 export default {
  "source": {
   "kind": "local",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "00aa773"
+  "ref": "787f5e3"
  },
  "blocks": {
   "config": [
