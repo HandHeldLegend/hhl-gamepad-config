@@ -274,8 +274,8 @@ export function readRelease(c) {
 /**
  * Is this capture a turnaround (pushed out, then let go partway back)? Its first fast centre crossing,
  * measured the way the gate measures it. A clean release from the edge is the release step's. One that
- * crosses slower than TURN_MIN_SPEED (the default cross_speed + 10 %) is turned away: the gate would only
- * catch it with a lower cross_speed, which checks (and holds) more thumb moves.
+ * crosses no faster than the default cross_speed is turned away: the gate wouldn't check it, and catching
+ * it would take a lower cross_speed, which checks (and holds) more thumb moves.
  * @returns {{ok: true, speed: number, k: number} | {ok: false, why: 'release'|'slow'|'slow-crossing', speed?: number}}
  */
 export function readTurnaround(c) {
@@ -283,10 +283,9 @@ export function readTurnaround(c) {
   const { checks } = runGate(c.x, c.y, SPRING_DEFAULTS, { measure: true });
   const first = checks.find((ch) => ch.at < MOVE_END && ch.speed >= 10);
   if (!first) return { ok: false, why: 'slow' };
-  if (first.speed < TURN_MIN_SPEED) return { ok: false, why: 'slow-crossing', speed: first.speed };
+  if (first.speed <= SPRING_DEFAULTS.cross_speed) return { ok: false, why: 'slow-crossing', speed: first.speed };
   return { ok: true, speed: first.speed, k: first.k };
 }
-const TURN_MIN_SPEED = 22;
 
 /**
  * A thumb move: anything the thumb guides, starting from the edge (where the release check runs). One
@@ -387,7 +386,7 @@ export function fitSpring({ releases, turnarounds, thumbs }, deadzone = DEFAULT_
 
   // cross_speed: below the slowest turnaround's crossing, but never under the default: each crossing checked
   // costs 3 ms of hold by design, so a lower one would add that to more thumb moves. Turnarounds too slow
-  // for the default to catch with a margin are turned away when recorded (readTurnaround), to be redone.
+  // for the default to catch are turned away when recorded (readTurnaround), to be redone.
   const turns = turnarounds.map(readTurnaround).filter((r) => r.ok);
   if (turns.length) {
     const slowest = Math.min(...turns.map((r) => r.speed));
