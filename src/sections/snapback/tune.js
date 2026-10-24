@@ -34,7 +34,7 @@ import { openDialog } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
 import { prefersReducedMotion } from '../../ui/canvas-surface.js';
 import { onInputReport } from '../../device/reports.js';
-import { t, N_, fmt } from '../../i18n/index.js';
+import { t, N_, fmt, plural } from '../../i18n/index.js';
 import { isDemo } from '../../device/mock.js';
 import { readRelease, readTurnaround, readThumb, fitSpring, scorecard, CAPTURE_PRE, SAMPLE_MS } from './spring.js';
 import { writeSpring } from './spring-config.js';
@@ -287,7 +287,7 @@ export function tuneSpring({ session, device, stick }) {
   function finishMove() {
     const { c, entry, slot } = pending;
     pending = null;
-    thumbSlots[slot] = { c, kind: THUMB_PLAN[slot][0] };
+    thumbSlots[slot] = { c, kind: THUMB_PLAN[slot][0], entry };
     entry.accepted = true;
     entry.why = null;
     lastMoveAt = performance.now();
@@ -424,19 +424,18 @@ export function tuneSpring({ session, device, stick }) {
       h('span.spr-row-icon', icon(ok ? 'check' : 'warning')), h('span.spr-row-label', label), h('strong.spr-row-value', value));
     const ratio = (r) => t('{n} of {of}', { n: fmt.number(r.pass), of: fmt.number(r.of) });
     const ms = (v) => t('{n} ms', { n: fmt.number(v, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) });
-    const REDO = {
-      releases: N_('Some releases still bounced through. Redo the releases.'),
-      turnarounds: N_('Some turnarounds still bounced through. Redo the turnarounds.'),
-      thumbs: N_('Some thumb moves were held back or unclear. Do those moves again.'),
-    };
+    // Rebounds that still get through, with nothing to redo: the best this stick allows
+    const leaks = score.releases.of - score.releases.pass + score.turnarounds.of - score.turnarounds.pass;
+    const limit = !score.ok && !score.redo.length;
     resultPanel.replaceChildren(
       h('div.spr-verdict', { class: score.ok ? 'good' : 'warn' },
         h('span.spr-verdict-art', icon(score.ok ? 'sparkle' : 'warning')),
         h('div',
-          h('strong', score.ok ? t('Your stick’s spring is learned') : t('Almost there')),
+          h('strong', score.ok ? t('Your stick’s spring is learned') : limit ? t('Learned as well as this stick allows') : t('Almost there')),
           h('p.muted.small', score.ok
             ? t('Every rebound was held back and every thumb move went through. Save it to the controller to use it.')
-            : t('One step needs another go before this tuning holds up.')))),
+            : limit ? t('Some rebounds still get through, even with the best tuning for this stick. Redoing the steps won’t change that. Save it to use it.')
+              : t('A few thumb moves need another go before this tuning holds up.')))),
       h('div.spr-rows',
         row(score.releases.pass === score.releases.of, t('Releases held back'), ratio(score.releases)),
         row(score.turnarounds.pass === score.turnarounds.of, t('Turnarounds held back'), ratio(score.turnarounds)),
@@ -444,7 +443,10 @@ export function tuneSpring({ session, device, stick }) {
         thumbList(ms),
         row(score.delayOk, t('Most delay added to a thumb move'), ms(score.delayMs)),
         hz.length ? row(true, t('Your stick’s spring'), t('{low} to {high} Hz', { low: fmt.number(Math.min(...hz), { maximumFractionDigits: 0 }), high: fmt.number(Math.max(...hz), { maximumFractionDigits: 0 }) })) : null),
-      ...(score.redo.length ? [callout({ tone: 'yellow', icon: 'warning' }, ...score.redo.map((id) => h('p', t(REDO[id]))))] : []),
+      ...(score.redo.length ? [callout({ tone: 'yellow', icon: 'warning' },
+        h('p', t('Some thumb moves were held back or unclear. Do those moves again.')))] : []),
+      ...(limit && leaks ? [callout({ tone: 'blue', icon: 'info' },
+        h('p', plural(leaks, '{n} rebound still gets through.', '{n} rebounds still get through.')))] : []),
       exportRow());
     swap(resultPanel);
     setActions();
@@ -479,7 +481,7 @@ export function tuneSpring({ session, device, stick }) {
       thumbs: score.thumbs.moves.map((m, i) => ({ index: i, kind: thumbKinds[i] || 'other', ...m })),
       captures: log.map((e) => ({
         label: e.label, stick, number: e.c.number, period_us: SAMPLE_MS * 1000, pre: CAPTURE_PRE, time: e.time,
-        accepted: e.accepted, why: e.why, ...(e.kind ? { kind: e.kind } : {}), x: Array.from(e.c.x), y: Array.from(e.c.y),
+        accepted: e.accepted, superseded: !!e.superseded, why: e.why, ...(e.kind ? { kind: e.kind } : {}), x: Array.from(e.c.x), y: Array.from(e.c.y),
       })),
     };
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
@@ -494,8 +496,17 @@ export function tuneSpring({ session, device, stick }) {
     if (id === 'thumbs') {
       // Only the moves that were held back or unclear (in the order they were asked)
       const done = thumbSlots.map((x, i) => (x ? i : -1)).filter((i) => i >= 0);
-      done.forEach((slot, k) => { if (!score.thumbs.moves[k]?.pass) thumbSlots[slot] = null; });
-    } else caps[id] = [];
+      done.forEach((slot, k) => {
+        if (score.thumbs.moves[k]?.pass) return;
+        thumbSlots[slot].entry.superseded = true;
+        thumbSlots[slot] = null;
+      });
+    } else {
+      // Redone captures replace the step's earlier ones (the export keeps those, marked superseded)
+      const label = { releases: 'release', turnarounds: 'turnaround' }[id];
+      for (const e of log) if (e.label === label && e.accepted) e.superseded = true;
+      caps[id] = [];
+    }
     if (id === 'releases') perOctant.fill(0);
     returnTo = 'results';
     enterStep(id);
@@ -537,7 +548,7 @@ export function tuneSpring({ session, device, stick }) {
       cancel,
       ...(redoFirst ? [{ label: t('Save anyway'), variant: 'ghost', onClick: save }] : []),
       redoFirst
-        ? { label: t('Redo this step'), icon: 'refresh', variant: 'primary', onClick: () => { redo(redoFirst); return false; } }
+        ? { label: t('Redo those moves'), icon: 'refresh', variant: 'primary', onClick: () => { redo(redoFirst); return false; } }
         : { label: t('Save to controller'), icon: 'save', variant: 'primary', onClick: save },
     ]);
   }
