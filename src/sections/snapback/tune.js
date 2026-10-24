@@ -7,8 +7,10 @@
  *   1. Releases: push to the edge and let go completely, 3 times in each of 8 directions (a compass
  *      with a target per direction). These give the stick's spring per direction (a1, a2).
  *   2. Turnarounds: tilt partway and let go, 10 times. These give the crossing speed and stiffness.
- *   3. Thumb moves: quick moves with the thumb on the stick the whole time, 10 times. These give the
- *      upper side of the thresholds.
+ *   3. Thumb moves: 9 set moves with the thumb on the stick the whole time (dash across, dash back and
+ *      forth, pull back to the center), each from a given edge. A ghost on the compass acts the move out
+ *      first. These give the upper side of the thresholds. Letting go at the end of one makes the stick
+ *      snap back, which records a release; one right after a move counted is ignored, not scolded.
  * Then the fit, and a scorecard from running the firmware's gate (ported exactly) over every capture
  * with the fitted values: rebounds held back, thumb moves left alone, the worst delay added. A step
  * that fails can be redone on its own. Save writes l_spring / r_spring (flagged tuned) and the Spring
@@ -29,7 +31,18 @@ import { writeSpring } from './spring-config.js';
 
 const PER_OCTANT = 3;
 const TURNAROUNDS = 10;
-const THUMBS = 10;
+/** Thumb moves, in order: the move and the edge it starts from (octant). */
+const THUMB_PLAN = [['across', 0], ['pull', 2], ['back', 4], ['across', 6], ['pull', 1], ['back', 3], ['across', 5], ['pull', 7], ['back', 2]];
+const THUMBS = THUMB_PLAN.length;
+const THUMB_MOVES = {
+  across: { name: N_('Dash across'), how: N_('From the edge the guide starts at, sweep straight across to the opposite edge, then ease it back to the center.') },
+  back: { name: N_('Dash back and forth'), how: N_('From the edge the guide starts at, flick to the opposite edge and straight back, then ease it back to the center.') },
+  pull: { name: N_('Pull back'), how: N_('From the edge the guide starts at, bring it back to the center with your thumb and hold it there.') },
+};
+/** After a thumb move counts, a release this soon is the stick being let go afterwards. */
+const AFTER_MOVE_MS = 3000;
+/** One showing of a move by the ghost. */
+const GUIDE_MS = 2600;
 /** How long a finished step's last "Got it" shows before the next step. */
 const STEP_PAUSE_MS = 900;
 const TRAIL_MS = 1400;
@@ -73,10 +86,15 @@ export function tuneSpring({ session, device, stick }) {
   const partRing = h('circle.spr-part', { cx: 0, cy: 0, r: R * 0.55 });
   const trails = h('g.spr-trails');
   const stickDot = h('circle.spr-stick', { cx: 0, cy: 0, r: 7 });
+  // Thumb moves: the move's path and a ghost stick acting it out
+  const guideLine = h('line.spr-guide-line');
+  const guideStart = h('circle.spr-guide-start', { r: 12 });
+  const ghost = h('circle.spr-ghost', { r: 7 });
+  const guide = h('g.spr-guide', {}, guideLine, guideStart, ghost);
   const compass = h('svg.spr-compass', { viewBox: '-128 -128 256 256', role: 'img', 'aria-label': t('Your stick, live') },
     h('circle.spr-gate', { cx: 0, cy: 0, r: R }),
     h('line.spr-axis', { x1: -R, y1: 0, x2: R, y2: 0 }), h('line.spr-axis', { x1: 0, y1: -R, x2: 0, y2: R }),
-    partRing, ...targets.map((x) => x.g), trails, stickDot);
+    partRing, ...targets.map((x) => x.g), guide, trails, stickDot);
 
   /** Draw a capture's path; it fades out on its own. */
   function trail(c, good) {
@@ -93,7 +111,10 @@ export function tuneSpring({ session, device, stick }) {
   const counter = h('div.spr-count', { 'aria-hidden': 'true' });
   const countDots = h('div.spr-dots');
   const feedback = h('p.spr-feedback', { role: 'status', 'aria-live': 'polite' });
-  const capturePanel = h('div.spr-capture', compass, h('div.spr-side', stepTitle, howTo, counter, countDots, feedback));
+  const moveName = h('strong.spr-move-name');
+  const moveHow = h('span.spr-move-how');
+  const moveCard = h('div.spr-move', moveName, moveHow);
+  const capturePanel = h('div.spr-capture', compass, h('div.spr-side', stepTitle, howTo, moveCard, counter, countDots, feedback));
   const resultPanel = h('div.spr-results');
   const stage = h('div.spr-stage', capturePanel);
   const body = h('div.spr', h('ol.spr-steps', pills), stage);
@@ -150,7 +171,57 @@ export function tuneSpring({ session, device, stick }) {
       [...countDots.children].forEach((d, i) => d.classList.toggle('on', i < n));
     }
     capturePanel.dataset.step = step;
-    device.springCaptureHint?.({ stick, step, octant: step === 'releases' ? nextOctant() : -1 });
+    const move = step === 'thumbs' ? THUMB_PLAN[Math.min(caps.thumbs.length, THUMBS - 1)] : null;
+    moveCard.hidden = !move;
+    if (move) showMove(move);
+    device.springCaptureHint?.({ stick, step, octant: step === 'releases' ? nextOctant() : move ? move[1] : -1, kind: move?.[0] });
+  }
+
+  // ---- The thumb move guide --------------------------------------------------------------------
+  let guideMove = null;
+  let guideFrame = 0;
+  let guideT0 = 0;
+  const E = 1900;
+  const ease = (a, b, u) => a + (b - a) * (1 - Math.cos(Math.PI * Math.min(1, Math.max(0, u)))) / 2;
+  /** Where the move has the stick at phase u (0..1), along its edge direction: +E is the starting edge. */
+  function along(kind, u) {
+    const seg = (from, to, a, b) => ease(from, to, (u - a) / (b - a));
+    if (kind === 'pull') return u < 0.2 ? E : seg(E, 0, 0.2, 0.55);
+    if (kind === 'across') return u < 0.15 ? E : u < 0.5 ? seg(E, -E, 0.15, 0.5) : u < 0.65 ? -E : seg(-E, 0, 0.65, 1);
+    return u < 0.12 ? E : u < 0.35 ? seg(E, -E, 0.12, 0.35) : u < 0.58 ? seg(-E, E, 0.35, 0.58) : u < 0.68 ? E : seg(E, 0, 0.68, 1);
+  }
+  function showMove([kind, o]) {
+    if (guideMove && guideMove[0] === kind && guideMove[1] === o) return;
+    const first = !guideMove;
+    guideMove = [kind, o];
+    moveName.textContent = t(THUMB_MOVES[kind].name);
+    moveHow.textContent = t(THUMB_MOVES[kind].how);
+    if (!first) replay(moveCard);
+    const a = (o * Math.PI) / 4;
+    const [sx, sy] = [Math.cos(a) * R, -Math.sin(a) * R];
+    const end = kind === 'pull' ? 0 : -1;
+    Object.entries({ x1: sx, y1: sy, x2: sx * end, y2: sy * end }).forEach(([k, v]) => guideLine.setAttribute(k, v.toFixed(1)));
+    guideStart.setAttribute('cx', sx.toFixed(1));
+    guideStart.setAttribute('cy', sy.toFixed(1));
+    guideT0 = performance.now();
+    if (prefersReducedMotion()) { placeGhost(0.1); return; }
+    if (!guideFrame) guideFrame = requestAnimationFrame(animateGuide);
+  }
+  function placeGhost(u) {
+    const [kind, o] = guideMove;
+    const a = (o * Math.PI) / 4;
+    const s = along(kind, u);
+    const [x, y] = pos(Math.cos(a) * s, Math.sin(a) * s);
+    ghost.setAttribute('cx', x.toFixed(1));
+    ghost.setAttribute('cy', y.toFixed(1));
+    // Fade in at the start of each showing, out at its end
+    ghost.style.opacity = String(Math.min(1, u * 12, (1 - u) * 8));
+  }
+  function animateGuide(now) {
+    guideFrame = 0;
+    if (step !== 'thumbs' || !guideMove) return;
+    placeGhost(((now - guideT0) % GUIDE_MS) / GUIDE_MS);
+    guideFrame = requestAnimationFrame(animateGuide);
   }
 
   function enterStep(id) {
@@ -167,8 +238,8 @@ export function tuneSpring({ session, device, stick }) {
       stepTitle.textContent = t('Tilt partway, then let go');
       howTo.textContent = t('Tilt the stick about halfway out (the dashed ring), then let go. Mix it up: different directions, small and bigger tilts.');
     } else {
-      stepTitle.textContent = t('Quick moves, thumb on the stick');
-      howTo.textContent = t('Keep your thumb on the stick the whole time: dash from one side to the other, dash back and forth, and pull it back to the center. Don’t let go.');
+      stepTitle.textContent = t('Copy the moves, thumb on the stick');
+      howTo.textContent = t('Watch the ghost on the circle, then do the same move. Keep your thumb on the stick the whole time and never let it snap back.');
     }
     say('');
     paintCapture();
@@ -188,6 +259,7 @@ export function tuneSpring({ session, device, stick }) {
   }
 
   // ---- Captures --------------------------------------------------------------------------------
+  let lastMoveAt = -Infinity;
   function onCapture(e) {
     const c = e.detail;
     if (c.stick !== stickIdx || step === 'results' || advanceTimer) return;
@@ -220,12 +292,16 @@ export function tuneSpring({ session, device, stick }) {
       say(t('Got it.'), 'good');
     } else {
       const r = readThumb(c);
+      // Let go after the last move: the stick snapped back on its own, that's fine
+      if (!r.ok && r.why === 'released' && performance.now() - lastMoveAt < AFTER_MOVE_MS) return;
       trail(c, r.ok);
       if (!r.ok) {
-        say(t('That looked like a let-go. Keep your thumb on the stick the whole time.'), 'warn');
+        say(r.why === 'edge' ? t('Start each move with the stick pushed all the way to the edge the guide shows.')
+          : t('That looked like a let-go. Keep your thumb on the stick until it’s back at the center.'), 'warn');
         return;
       }
       caps.thumbs.push(c);
+      lastMoveAt = performance.now();
       say(t('Got it.'), 'good');
     }
     paintCapture();
@@ -342,6 +418,7 @@ export function tuneSpring({ session, device, stick }) {
   dlg.result.finally(() => {
     clearTimeout(advanceTimer);
     cancelAnimationFrame(frame);
+    cancelAnimationFrame(guideFrame);
     stopInput();
     offState();
     device.removeEventListener('spring-capture', onCapture);

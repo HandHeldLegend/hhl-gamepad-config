@@ -275,10 +275,12 @@ export function readTurnaround(c) {
 }
 
 /**
- * A thumb move: anything the thumb guides. One that looks like a let-go is turned away.
- * @returns {{ok: true} | {ok: false, why: 'released'}}
+ * A thumb move: anything the thumb guides, starting from the edge (where the release check runs). One
+ * that looks like a let-go is turned away.
+ * @returns {{ok: true} | {ok: false, why: 'edge'|'released'}}
  */
 export function readThumb(c) {
+  if (peak(c).d < EDGE) return { ok: false, why: 'edge' };
   const t = readTurnaround(c);
   if (t.why === 'release' || (t.ok && t.k >= 2 / SPRING_DEFAULTS.stiff_den)) return { ok: false, why: 'released' };
   return { ok: true };

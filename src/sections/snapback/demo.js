@@ -112,15 +112,17 @@ function makeCapture(stick) {
     return toCapture([...hold(edge, 80), ...springPath(o, edge, edge, 300)], angle, stick);
   }
   const o = Math.floor(Math.random() * 8);
-  const angle = (o * Math.PI) / 4 + noise(0.3);
+  let angle = (o * Math.PI) / 4 + noise(0.3);
   if (step === 'turnarounds') {
     // A partial tilt, let go
     const out = 800 + Math.random() * 600;
     return toCapture([...hold(0, 30), ...ease(0, out, 40), ...hold(out, 30), ...springPath(o, out, out, 300)], angle, stick);
   }
-  // Thumb moves: a dash to the other side, a dash back and forth, or a pull back to the centre
+  // Thumb moves: the one asked for (a dash to the other side, a dash back and forth, or a pull back to the
+  // center) from the edge asked for
   const edge = 1900 + noise(80);
-  const kind = made % 3;
+  const kind = { across: 0, back: 1, pull: 2 }[hint.kind] ?? made % 3;
+  if (hint.octant >= 0) angle = (hint.octant * Math.PI) / 4 + noise(0.15);
   if (kind === 0) return toCapture([...hold(edge, 80), ...ease(edge, -edge, 60), ...hold(-edge, 200)], angle, stick);
   if (kind === 1) return toCapture([...hold(edge, 80), ...ease(edge, -edge, 50), ...ease(-edge, edge, 50), ...hold(edge, 150)], angle, stick);
   return toCapture([...hold(edge, 80), ...ease(edge, 0, 44), ...hold(0, 200)], angle, stick);
