@@ -8,9 +8,14 @@
  *      with a target per direction). These give the stick's spring per direction (a1, a2).
  *   2. Turnarounds: tilt partway and let go, 10 times. These give the crossing speed and stiffness.
  *   3. Thumb moves: 9 set moves with the thumb on the stick the whole time (dash across, dash back and
- *      forth, pull back to the center), each from a given edge. A ghost on the compass acts the move out
- *      first. These give the upper side of the thresholds. Letting go at the end of one makes the stick
- *      snap back, which records a release; one right after a move counted is ignored, not scolded.
+ *      forth, pull back to the center), each from a marked edge and each ending held still at a target
+ *      (the far edge, the starting edge, or the center). A ghost on the compass acts the move out. A move
+ *      counts once its capture has arrived and the stick has then been held in the target for 300 ms (the
+ *      target fills as it's held), so every move gives clean data whatever the player's skill: a move that
+ *      ends in a hold can't be a release. These give the upper side of the thresholds.
+ *      Letting go after a move makes the stick snap back, which records a release; one right after a
+ *      move counted is ignored, not scolded. Moves the results flag (unclear, or held back) are redone
+ *      on their own.
  * Then the fit, and a scorecard from running the firmware's gate (ported exactly) over every capture
  * with the fitted values: rebounds held back, thumb moves left alone, the worst delay added. A step
  * that fails can be redone on its own. Save writes l_spring / r_spring (flagged tuned) and the Spring
@@ -30,6 +35,7 @@ import { icon } from '../../ui/icons.js';
 import { prefersReducedMotion } from '../../ui/canvas-surface.js';
 import { onInputReport } from '../../device/reports.js';
 import { t, N_, fmt } from '../../i18n/index.js';
+import { isDemo } from '../../device/mock.js';
 import { readRelease, readTurnaround, readThumb, fitSpring, scorecard, CAPTURE_PRE, SAMPLE_MS } from './spring.js';
 import { writeSpring } from './spring-config.js';
 
@@ -38,11 +44,16 @@ const TURNAROUNDS = 10;
 /** Thumb moves, in order: the move and the edge it starts from (octant). */
 const THUMB_PLAN = [['across', 0], ['pull', 2], ['back', 4], ['across', 6], ['pull', 1], ['back', 3], ['across', 5], ['pull', 7], ['back', 2]];
 const THUMBS = THUMB_PLAN.length;
+/** end: where the move finishes, held: the far edge, the starting edge, or the center. */
 const THUMB_MOVES = {
-  across: { name: N_('Dash across'), how: N_('From the edge the guide starts at, sweep straight across to the opposite edge, then ease it back to the center.') },
-  back: { name: N_('Dash back and forth'), how: N_('From the edge the guide starts at, flick to the opposite edge and straight back, then ease it back to the center.') },
-  pull: { name: N_('Pull back'), how: N_('From the edge the guide starts at, bring it back to the center with your thumb and hold it there.') },
+  across: { end: 'far', name: N_('Dash across'), how: N_('Push to the marked edge, sweep all the way across, and keep holding at the far edge until the target fills.') },
+  back: { end: 'start', name: N_('Dash back and forth'), how: N_('Push to the marked edge, flick to the far edge and straight back, and keep holding at the marked edge until the target fills.') },
+  pull: { end: 'center', name: N_('Pull back'), how: N_('Push to the marked edge, then slowly bring it back to the center and hold it there until the target fills.') },
 };
+/** Holding in the end target this long finishes a move. */
+const HOLD_MS = 300;
+/** A move's capture waits this long for the hold, then the move has to be done again. */
+const HOLD_WAIT_MS = 3000;
 /** After a thumb move counts, a release this soon is the stick being let go afterwards. */
 const AFTER_MOVE_MS = 3000;
 /** One showing of a move by the ghost. */
@@ -94,7 +105,10 @@ export function tuneSpring({ session, device, stick }) {
   const guideLine = h('line.spr-guide-line');
   const guideStart = h('circle.spr-guide-start', { r: 12 });
   const ghost = h('circle.spr-ghost', { r: 7 });
-  const guide = h('g.spr-guide', {}, guideLine, guideStart, ghost);
+  // Where the move ends: hold the stick in it until it fills
+  const endFill = h('circle.spr-end-fill', { r: 14, pathLength: 100 });
+  const endTarget = h('g.spr-end', {}, h('circle.spr-end-ring', { r: 14 }), endFill);
+  const guide = h('g.spr-guide', {}, guideLine, guideStart, endTarget, ghost);
   const compass = h('svg.spr-compass', { viewBox: '-128 -128 256 256', role: 'img', 'aria-label': t('Your stick, live') },
     h('circle.spr-gate', { cx: 0, cy: 0, r: R }),
     h('line.spr-axis', { x1: -R, y1: 0, x2: R, y2: 0 }), h('line.spr-axis', { x1: 0, y1: -R, x2: 0, y2: R }),
@@ -137,7 +151,7 @@ export function tuneSpring({ session, device, stick }) {
   function count() {
     if (step === 'releases') return { n: perOctant.reduce((a, v) => a + Math.min(v, PER_OCTANT), 0), of: 8 * PER_OCTANT };
     if (step === 'turnarounds') return { n: caps.turnarounds.length, of: TURNAROUNDS };
-    return { n: caps.thumbs.length, of: THUMBS };
+    return { n: thumbSlots.filter(Boolean).length, of: THUMBS };
   }
 
   /** The direction to ask for next: the first one still short, going round from the last one asked. */
@@ -172,10 +186,10 @@ export function tuneSpring({ session, device, stick }) {
     } else {
       const want = step === 'turnarounds' ? TURNAROUNDS : THUMBS;
       if (countDots.children.length !== want) countDots.replaceChildren(...Array.from({ length: want }, () => h('span.spr-dot')));
-      [...countDots.children].forEach((d, i) => d.classList.toggle('on', i < n));
+      [...countDots.children].forEach((d, i) => d.classList.toggle('on', step === 'thumbs' ? !!thumbSlots[i] : i < n));
     }
     capturePanel.dataset.step = step;
-    const move = step === 'thumbs' ? THUMB_PLAN[Math.min(caps.thumbs.length, THUMBS - 1)] : null;
+    const move = step === 'thumbs' ? THUMB_PLAN[nextSlot()] ?? null : null;
     moveCard.hidden = !move;
     if (move) showMove(move);
     device.springCaptureHint?.({ stick, step, octant: step === 'releases' ? nextOctant() : move ? move[1] : -1, kind: move?.[0] });
@@ -190,9 +204,10 @@ export function tuneSpring({ session, device, stick }) {
   /** Where the move has the stick at phase u (0..1), along its edge direction: +E is the starting edge. */
   function along(kind, u) {
     const seg = (from, to, a, b) => ease(from, to, (u - a) / (b - a));
-    if (kind === 'pull') return u < 0.2 ? E : seg(E, 0, 0.2, 0.55);
-    if (kind === 'across') return u < 0.15 ? E : u < 0.5 ? seg(E, -E, 0.15, 0.5) : u < 0.65 ? -E : seg(-E, 0, 0.65, 1);
-    return u < 0.12 ? E : u < 0.35 ? seg(E, -E, 0.12, 0.35) : u < 0.58 ? seg(-E, E, 0.35, 0.58) : u < 0.68 ? E : seg(E, 0, 0.68, 1);
+    // Each ends held still where the move finishes
+    if (kind === 'pull') return u < 0.2 ? E : seg(E, 0, 0.2, 0.65);
+    if (kind === 'across') return u < 0.15 ? E : seg(E, -E, 0.15, 0.45);
+    return u < 0.12 ? E : u < 0.32 ? seg(E, -E, 0.12, 0.32) : seg(-E, E, 0.32, 0.55);
   }
   function showMove([kind, o]) {
     if (guideMove && guideMove[0] === kind && guideMove[1] === o) return;
@@ -207,6 +222,9 @@ export function tuneSpring({ session, device, stick }) {
     Object.entries({ x1: sx, y1: sy, x2: sx * end, y2: sy * end }).forEach(([k, v]) => guideLine.setAttribute(k, v.toFixed(1)));
     guideStart.setAttribute('cx', sx.toFixed(1));
     guideStart.setAttribute('cy', sy.toFixed(1));
+    const endAt = { far: -1, start: 1, center: 0 }[THUMB_MOVES[kind].end];
+    endTarget.setAttribute('transform', `translate(${(sx * endAt).toFixed(1)} ${(sy * endAt).toFixed(1)})`);
+    setHold(0);
     guideT0 = performance.now();
     if (prefersReducedMotion()) { placeGhost(0.1); return; }
     if (!guideFrame) guideFrame = requestAnimationFrame(animateGuide);
@@ -228,6 +246,55 @@ export function tuneSpring({ session, device, stick }) {
     guideFrame = requestAnimationFrame(animateGuide);
   }
 
+  // ---- Holding at the end of a thumb move --------------------------------------------------------
+  // pending: the move's capture, taken, waiting for the hold. zoneSince: since when the live stick has
+  // been in the end target (null: it isn't).
+  let pending = null;
+  let zoneSince = null;
+  let holdShown = -1;
+  let holdTimer = 0;
+  function setHold(f) {
+    if (f === holdShown) return;
+    holdShown = f;
+    endFill.style.strokeDashoffset = String(100 - f * 100);
+    endTarget.classList.toggle('done', f >= 1);
+  }
+  /** Is the live stick inside the current move's end target? */
+  function inEndZone(x, y) {
+    if (!guideMove) return false;
+    const [kind, o] = guideMove;
+    const d = Math.hypot(x, y);
+    const end = THUMB_MOVES[kind].end;
+    if (end === 'center') return d < 350;
+    const a = (o * Math.PI) / 4 + (end === 'far' ? Math.PI : 0);
+    return d > 1400 && (x * Math.cos(a) + y * Math.sin(a)) / d > Math.cos(Math.PI / 6);
+  }
+  function paintHold(now) {
+    if (!pending) { setHold(0); return; }
+    if (now - pending.at > HOLD_WAIT_MS) {
+      pending.entry.why = 'not-held';
+      pending = null;
+      say(t('Keep holding at the end of the move until the target fills.'), 'warn');
+      setHold(0);
+      return;
+    }
+    // The demo has no thumb to hold with: its captures stand in for the hold
+    const since = isDemo() ? pending.at : zoneSince;
+    const f = since == null ? 0 : Math.min(1, (now - Math.max(since, pending.at - HOLD_MS)) / HOLD_MS);
+    setHold(f);
+    if (f >= 1) finishMove();
+  }
+  function finishMove() {
+    const { c, entry, slot } = pending;
+    pending = null;
+    thumbSlots[slot] = { c, kind: THUMB_PLAN[slot][0] };
+    entry.accepted = true;
+    entry.why = null;
+    lastMoveAt = performance.now();
+    say(t('Got it.'), 'good');
+    afterTake();
+  }
+
   function enterStep(id) {
     clearTimeout(advanceTimer);
     step = id;
@@ -243,7 +310,8 @@ export function tuneSpring({ session, device, stick }) {
       howTo.textContent = t('Tilt the stick about halfway out (the dashed ring), then let go. Mix it up: different directions, small and bigger tilts.');
     } else {
       stepTitle.textContent = t('Copy the moves, thumb on the stick');
-      howTo.textContent = t('Watch the ghost on the circle, then do the same move. Keep your thumb on the stick the whole time and never let it snap back.');
+      howTo.textContent = t('Watch the ghost on the circle, then do the same move. Keep your thumb on the stick the whole time, and end each move holding still until the target fills.');
+      pending = null;
     }
     say('');
     paintCapture();
@@ -266,12 +334,14 @@ export function tuneSpring({ session, device, stick }) {
   let lastMoveAt = -Infinity;
   /** Every capture of the run, taken or not, for the export. */
   const log = [];
-  const thumbKinds = [];   // the move asked for, per thumb move taken
+  /** The thumb moves done, by place in THUMB_PLAN ({c, kind}; null: still to do). */
+  const thumbSlots = Array(THUMBS).fill(null);
+  const nextSlot = () => thumbSlots.findIndex((x) => !x);
   function onCapture(e) {
     const c = e.detail;
     if (c.stick !== stickIdx || step === 'results' || advanceTimer) return;
     const entry = { label: { releases: 'release', turnarounds: 'turnaround', thumbs: 'thumb' }[step], c, time: Date.now() / 1000, accepted: false, why: null };
-    if (step === 'thumbs') entry.kind = THUMB_PLAN[Math.min(caps.thumbs.length, THUMBS - 1)][0];
+    if (step === 'thumbs') entry.kind = THUMB_PLAN[nextSlot()]?.[0];
     log.push(entry);
     const took = (c2) => { entry.accepted = true; entry.c = c2; };
     if (step === 'releases') {
@@ -310,19 +380,28 @@ export function tuneSpring({ session, device, stick }) {
       const r = readThumb(c);
       entry.why = r.ok ? null : r.why;
       // Let go after the last move: the stick snapped back on its own, that's fine
-      if (!r.ok && r.why === 'released' && performance.now() - lastMoveAt < AFTER_MOVE_MS) { entry.why = 'let-go-after-move'; return; }
+      if (!r.ok && r.why === 'released' && !pending && performance.now() - lastMoveAt < AFTER_MOVE_MS) { entry.why = 'let-go-after-move'; return; }
       trail(c, r.ok);
       if (!r.ok) {
+        if (pending) { pending.entry.why = 'not-held'; pending = null; }
         say(r.why === 'edge' ? t('Start each move with the stick pushed all the way to the edge the guide shows.')
-          : t('That looked like a let-go. Keep your thumb on the stick until it’s back at the center.'), 'warn');
+          : t('That one was let go. Keep your thumb on the stick and hold still at the end until the target fills.'), 'warn');
         return;
       }
-      caps.thumbs.push(c);
-      thumbKinds.push(entry.kind);
-      took(c);
-      lastMoveAt = performance.now();
-      say(t('Got it.'), 'good');
+      // Taken once the stick is held still at the end of the move (paintHold)
+      if (pending) pending.entry.why = 'replaced';
+      entry.why = 'waiting-for-hold';
+      pending = { c, entry, slot: nextSlot(), at: performance.now() };
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => paintHold(performance.now()), HOLD_WAIT_MS + 50);
+      say(t('Now hold it still in the target…'), '');
+      return;
     }
+    afterTake();
+  }
+
+  /** A capture was taken: repaint, and move on once the step is complete. */
+  function afterTake() {
     paintCapture();
     const { n, of } = count();
     if (n >= of) {
@@ -334,6 +413,8 @@ export function tuneSpring({ session, device, stick }) {
 
   // ---- Results ---------------------------------------------------------------------------------
   function showResults() {
+    caps.thumbs = thumbSlots.filter(Boolean).map((x) => x.c);
+    thumbKinds = thumbSlots.filter(Boolean).map((x) => x.kind);
     fit = fitSpring(caps);
     score = scorecard(fit.params, caps, session.config.analog?.[stick === 'left' ? 'l_deadzone' : 'r_deadzone']);
     const hz = fit.shape.filter(Boolean).map((s) => s.hz);
@@ -344,7 +425,7 @@ export function tuneSpring({ session, device, stick }) {
     const REDO = {
       releases: N_('Some releases still bounced through. Redo the releases.'),
       turnarounds: N_('Some turnarounds still bounced through. Redo the turnarounds.'),
-      thumbs: N_('Some thumb moves were held back. Redo the thumb moves.'),
+      thumbs: N_('Some thumb moves were held back or unclear. Do those moves again.'),
     };
     resultPanel.replaceChildren(
       h('div.spr-verdict', { class: score.ok ? 'good' : 'warn' },
@@ -375,8 +456,10 @@ export function tuneSpring({ session, device, stick }) {
       h('summary', t('Each thumb move')),
       h('ol.spr-move-list', moves.map((m, i) => h('li', { class: m.pass ? 'good' : 'warn' },
         h('span.spr-move-kind', thumbKinds[i] ? t(THUMB_MOVES[thumbKinds[i]].name) : t('Other')),
-        h('span.spr-move-ms', m.delayMs ? t('{time} added', { time: ms(m.delayMs) }) : t('Untouched'))))));
+        h('span.spr-move-ms', m.unclear ? t('Unclear, do it again')
+          : m.delayMs ? t('{time} added', { time: ms(m.delayMs) }) : t('Untouched'))))));
   }
+  let thumbKinds = [];
 
   function exportRow() {
     return h('div.spr-export', button({ label: t('Download tuning data'), icon: 'download', variant: 'ghost', size: 'sm', onClick: exportData }));
@@ -406,8 +489,11 @@ export function tuneSpring({ session, device, stick }) {
   }
 
   function redo(id) {
-    caps[id] = [];
-    if (id === 'thumbs') thumbKinds.length = 0;
+    if (id === 'thumbs') {
+      // Only the moves that were held back or unclear (in the order they were asked)
+      const done = thumbSlots.map((x, i) => (x ? i : -1)).filter((i) => i >= 0);
+      done.forEach((slot, k) => { if (!score.thumbs.moves[k]?.pass) thumbSlots[slot] = null; });
+    } else caps[id] = [];
     if (id === 'releases') perOctant.fill(0);
     returnTo = 'results';
     enterStep(id);
@@ -459,6 +545,12 @@ export function tuneSpring({ session, device, stick }) {
     const s = r.sticks?.snapback;
     if (!s) return;
     live = stick === 'left' ? [s.lx, s.ly] : [s.rx, s.ry];
+    if (step === 'thumbs') {
+      const inZone = inEndZone(live[0], live[1]);
+      if (!inZone) zoneSince = null;
+      else if (zoneSince == null) zoneSince = performance.now();
+      paintHold(performance.now()); // on every report, not per frame: frames pause in a background tab
+    }
     if (!frame) frame = requestAnimationFrame(drawStick);
   });
   function drawStick() {
@@ -478,6 +570,7 @@ export function tuneSpring({ session, device, stick }) {
 
   dlg.result.finally(() => {
     clearTimeout(advanceTimer);
+    clearTimeout(holdTimer);
     cancelAnimationFrame(frame);
     cancelAnimationFrame(guideFrame);
     stopInput();

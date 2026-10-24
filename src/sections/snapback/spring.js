@@ -232,7 +232,10 @@ export function springShape(a1, a2) {
 // The move a capture was made for: from its start until 30 ms after the stick fell back under 500. A
 // thumb move is often followed by letting go, which the gate rightly holds; that isn't the move.
 const MOVE_END = CAPTURE_PRE + 60;
-const FREE_SAMPLES = 120;   // 60 ms of the free swing after the first centre crossing
+const FREE_SAMPLES = 120;
+/** The fit's upper bounds: wider tolerances let the gate hold real thumb moves. */
+const DECIDE_MAX = 60;
+const GRAB_MAX = 50;   // 60 ms of the free swing after the first centre crossing
 const RELEASE_MAX_MS = 4;   // release line to centre: real releases take 1.5-3 ms, guided returns 5.5+
 const FIT_RMS_MAX = 30;
 
@@ -288,14 +291,21 @@ export function readThumb(c) {
 
 // ---- The fit ---------------------------------------------------------------------------------
 
-/** How far a capture strays from the free spring after the release line: the worst err_k / k, k = 2..6. */
-function decideRatio(c, p) {
+/**
+ * Each time a capture leaves the edge (past 1600, then under 1200): where it crossed the release line and
+ * how far it strayed from the free spring from there, the worst err_k / k over k = 2..6 (what the gate's
+ * release check compares with decide_step). A release stays close; the thumb strays.
+ * @returns {{at: number, ratio: number}[]}
+ */
+function edgeExits(c, p) {
   const n = c.x.length;
+  const out = [];
   let ex = 0; let ey = 0; let edge = false;
-  for (let i = 0; i < n; i++) {
+  for (let i = 1; i < n; i++) {
     const d = Math.hypot(c.x[i], c.y[i]);
     if (d >= EDGE) { edge = true; ex = c.x[i]; ey = c.y[i]; continue; }
-    if (!edge || d >= RELEASE || i < 1) continue;
+    if (!edge || d >= RELEASE) continue;
+    edge = false;
     const o = octant(ex, ey);
     let fx2 = c.x[i - 1]; let fy2 = c.y[i - 1]; let fx1 = c.x[i]; let fy1 = c.y[i];
     let worst = 0;
@@ -305,9 +315,14 @@ function decideRatio(c, p) {
       fx2 = fx1; fy2 = fy1; fx1 = fx; fy1 = fy;
       if (k >= 2) worst = Math.max(worst, Math.hypot(c.x[i + k] - fx, c.y[i + k] - fy) / k);
     }
-    return worst;
+    out.push({ at: i, ratio: worst });
   }
-  return null; // never left the edge
+  return out;
+}
+
+/** How far the capture's first exit from the edge strays from the free spring (null: it never left one). */
+function decideRatio(c, p) {
+  return edgeExits(c, p)[0]?.ratio ?? null;
 }
 
 /** The worst one-step miss the spring makes while a release is held (3 samples running). */
@@ -349,14 +364,14 @@ export function fitSpring({ releases, turnarounds, thumbs }) {
   }
   const p = { ...SPRING_DEFAULTS, a1, a2 };
 
-  // decide_step: between the release that strays furthest from its spring and the thumb that stays closest
+  // decide_step: from the releases alone. Thumb data never widens it: a wider tolerance lets the gate hold
+  // real thumb moves (lag). It is the default, or the releases' worst with a 20 % margin if that is
+  // smaller, but never below the releases' worst (+5 %), and at most DECIDE_MAX. Thumb moves that land
+  // inside it are flagged as unclear in the scorecard, to be done again.
   const relWorst = Math.max(0, ...releases.map((c) => decideRatio(c, p) ?? 0));
   const thumbRatios = thumbs.map((c) => decideRatio(c, p)).filter((v) => v != null);
   const thumbBest = thumbRatios.length ? Math.min(...thumbRatios) : null;
-  let decide;
-  if (thumbBest == null) decide = Math.max(SPRING_DEFAULTS.decide_step, relWorst * 1.2);
-  else if (thumbBest > relWorst) decide = (relWorst + thumbBest) / 2;
-  else decide = relWorst * 1.05; // they overlap: let the releases through, the scorecard shows the cost
+  const decide = Math.min(DECIDE_MAX, Math.max(relWorst * 1.05, Math.min(SPRING_DEFAULTS.decide_step, relWorst * 1.2)));
   p.decide_step = clamp(Math.ceil(decide), SPRING_LIMITS.decide_step);
 
   // cross_speed: below the slowest turnaround's crossing, and never above the default (slower turnarounds
@@ -379,7 +394,8 @@ export function fitSpring({ releases, turnarounds, thumbs }) {
 
   // grab_err: comfortably above the spring's own miss while a release is held
   const miss = Math.max(0, ...releases.map((c) => holdMiss(c, p)));
-  p.grab_err = clamp(Math.max(SPRING_DEFAULTS.grab_err, Math.ceil(miss * 1.5)), SPRING_LIMITS.grab_err);
+  // (kept near the default: a higher one makes the thumb taking the stick back slower to pass)
+  p.grab_err = Math.min(GRAB_MAX, Math.max(SPRING_DEFAULTS.grab_err, Math.ceil(miss * 1.5)));
 
   return {
     params: p,
@@ -409,17 +425,23 @@ function blocked(c, g, dz) {
 }
 
 /**
- * What the gate did to a thumb move that a game could see, within the move (until 30 ms after the stick
- * fell under 500; a release after the move is the gate doing its job):
+ * What the gate did to a thumb move that a game could see. Only the thumb's part counts: if the stick was
+ * let go after the move (a later exit from the edge that follows the free spring as closely as the
+ * releases did, `letGo`), scoring stops there, since holding that rebound is the gate doing its job.
  *   changedMs   longest run of samples where the output differs from the stick and either is outside
  *               the deadzone (a hold that keeps a stick inside the deadzone at neutral changes nothing)
  *   farDelayMs  a move that crosses to the far side: when the output leaves the deadzone there, minus
  *               when the stick does (null if the stick never does)
  *   delayMs     the larger of the two: the move's added delay
+ *   ratio       how far the move's exit from the edge strayed from the free spring (err_k / k)
+ *   unclear     that exit is within decide_step: the gate can't tell it from a release
+ *   endMs       where scoring stopped (ms into the capture)
  */
-export function thumbEffect(c, p, dz = DEFAULT_DEADZONE) {
+export function thumbEffect(c, p, dz = DEFAULT_DEADZONE, letGo = p.decide_step) {
   const g = runGate(c.x, c.y, p);
-  const end = Math.min(MOVE_END, c.x.length);
+  const exits = edgeExits(c, p);
+  const cut = exits.slice(1).find((e) => e.ratio <= letGo);
+  const end = cut ? cut.at : c.x.length;
   let run = 0; let worst = 0;
   for (let i = 0; i < end; i++) {
     const changed = (g.x[i] !== c.x[i] || g.y[i] !== c.y[i]) &&
@@ -429,15 +451,17 @@ export function thumbEffect(c, p, dz = DEFAULT_DEADZONE) {
   }
   const { pk, ux, uy } = edgeDir(c);
   const far = (xs, ys) => {
-    for (let i = pk.at; i < c.x.length; i++) if (xs[i] * ux + ys[i] * uy < -dz) return i;
+    for (let i = pk.at; i < end; i++) if (xs[i] * ux + ys[i] * uy < -dz) return i;
     return -1;
   };
   const rawAt = far(c.x, c.y);
   const outAt = rawAt < 0 ? -1 : far(g.x, g.y);
-  const farDelayMs = rawAt < 0 ? null : outAt < 0 ? (c.x.length - rawAt) * SAMPLE_MS : (outAt - rawAt) * SAMPLE_MS;
+  const farDelayMs = rawAt < 0 ? null : outAt < 0 ? (end - rawAt) * SAMPLE_MS : (outAt - rawAt) * SAMPLE_MS;
   const changedMs = worst * SAMPLE_MS;
   const delayMs = Math.max(changedMs, farDelayMs ?? 0);
-  return { changedMs, farDelayMs, delayMs, pass: delayMs <= DELAY_OK_MS };
+  const ratio = exits[0]?.ratio ?? null;
+  const unclear = ratio != null && ratio <= p.decide_step;
+  return { changedMs, farDelayMs, delayMs, ratio, unclear, endMs: end * SAMPLE_MS, pass: !unclear && delayMs <= DELAY_OK_MS };
 }
 
 /**
@@ -448,15 +472,19 @@ export function thumbEffect(c, p, dz = DEFAULT_DEADZONE) {
  */
 export function scorecard(p, { releases, turnarounds, thumbs }, deadzone = DEFAULT_DEADZONE) {
   const dz = deadzone || DEFAULT_DEADZONE;
+  // A let-go after a thumb move strays from the spring no more than the releases did
+  const relWorst = Math.max(0, ...releases.map((c) => decideRatio(c, p) ?? 0));
+  const letGo = Math.min(p.decide_step, (relWorst || p.decide_step) * 1.2);
   const count = (list, f) => ({ pass: list.filter(f).length, of: list.length });
   const rel = count(releases, (c) => blocked(c, runGate(c.x, c.y, p), dz));
   const turn = count(turnarounds, (c) => blocked(c, runGate(c.x, c.y, p), dz));
-  const moves = thumbs.map((c) => thumbEffect(c, p, dz));
+  const moves = thumbs.map((c) => thumbEffect(c, p, dz, letGo));
   const thumb = { pass: moves.filter((m) => m.pass).length, of: moves.length, moves };
   const delayMs = Math.max(0, ...moves.map((m) => m.delayMs));
   const redo = [];
   if (rel.pass < rel.of) redo.push('releases');
   if (turn.pass < turn.of) redo.push('turnarounds');
   if (thumb.pass < thumb.of) redo.push('thumbs');
-  return { releases: rel, turnarounds: turn, thumbs: thumb, delayMs, delayOk: delayMs <= DELAY_OK_MS, redo, ok: !redo.length, deadzone: dz };
+  const unclear = moves.filter((m) => m.unclear).length;
+  return { releases: rel, turnarounds: turn, thumbs: thumb, unclear, delayMs, delayOk: delayMs <= DELAY_OK_MS, redo, ok: !redo.length, deadzone: dz };
 }

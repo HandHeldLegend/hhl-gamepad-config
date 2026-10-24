@@ -96,6 +96,10 @@
 .spr-guide-line { stroke: var(--tone); stroke-width: 10; stroke-linecap: round; opacity: 0.18; }
 .spr-guide-start { fill: none; stroke: var(--tone); stroke-width: 2; stroke-dasharray: 3 3; }
 .spr-ghost { fill: var(--tone); opacity: 0.45; }
+.spr-end-ring { fill: var(--surface); stroke: var(--tone); stroke-width: 2; }
+.spr-end-fill { fill: none; stroke: var(--tone); stroke-width: 6; stroke-dasharray: 100; stroke-dashoffset: 100;
+  transform: rotate(-90deg); transform-box: fill-box; transform-origin: center; transition: stroke-dashoffset 60ms linear; }
+.spr-end.done .spr-end-ring { fill: var(--tone); transition: fill var(--dur-med); }
 .spr-move { display: grid; gap: 2px; padding: 8px 12px; border-radius: var(--radius-md); background: var(--tone-soft); }
 .spr-move[hidden] { display: none; }
 .spr-move-name { color: var(--tone); }

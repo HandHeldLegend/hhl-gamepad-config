@@ -123,9 +123,10 @@ function makeCapture(stick) {
   const edge = 1900 + noise(80);
   const kind = { across: 0, back: 1, pull: 2 }[hint.kind] ?? made % 3;
   if (hint.octant >= 0) angle = (hint.octant * Math.PI) / 4 + noise(0.15);
+  // (each ends held still, as the flow asks)
   if (kind === 0) return toCapture([...hold(edge, 80), ...ease(edge, -edge, 60), ...hold(-edge, 200)], angle, stick);
   if (kind === 1) return toCapture([...hold(edge, 80), ...ease(edge, -edge, 50), ...ease(-edge, edge, 50), ...hold(edge, 150)], angle, stick);
-  return toCapture([...hold(edge, 80), ...ease(edge, 0, 44), ...hold(0, 200)], angle, stick);
+  return toCapture([...hold(edge, 80), ...ease(edge, 0, 80), ...hold(0, 200)], angle, stick);
 }
 
 export function springArm(device, stick) {
