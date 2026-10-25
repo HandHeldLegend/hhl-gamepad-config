@@ -10,7 +10,8 @@
  * Auto) shows the stick alone and "filter not active".
  *
  * The last MAX_KEPT recordings stay in a list, worst delay first, and download as JSON lines in the tuning
- * recordings' format, so a bad one seen here can be replayed against the firmware's tools.
+ * recordings' format, with the tuning and deadzone they were replayed with, so a bad one seen here can be
+ * replayed against the firmware's tools.
  */
 import { h } from '../../ui/dom.js';
 import { button } from '../../ui/controls.js';
@@ -93,7 +94,7 @@ export function rawView({ session, stick }) {
   function save() {
     const lines = kept.map((e) => JSON.stringify({
       label: 'analyzer', stick, number: e.c.number, period_us: SAMPLE_MS * 1000, pre: CAPTURE_PRE, time: e.time / 1000,
-      deadzone: e.dz, tuned: !!e.params, delayMs: e.r ? e.r.delayMs : null, x: Array.from(e.c.x), y: Array.from(e.c.y),
+      deadzone: e.dz, tuned: !!e.params, params: e.params, delayMs: e.r ? e.r.delayMs : null, x: Array.from(e.c.x), y: Array.from(e.c.y),
     }));
     const blob = new Blob([`${lines.join('\n')}\n`], { type: 'application/x-ndjson' });
     const a = h('a', { href: URL.createObjectURL(blob), download: `analyzer-${stick}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.jsonl` });
