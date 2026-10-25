@@ -14,7 +14,7 @@
  * Language changes rebuild the frame and remount the current page in place, so the controller
  * connection and any unsaved changes survive (src/i18n/index.js).
  */
-import { h, replace } from '../ui/dom.js';
+import { h, replace, stylesLoaded, stylesPending } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
 import { button, emptyState, dot, face } from '../ui/controls.js';
 import { toast, confirmDialog } from '../ui/overlay.js';
@@ -406,6 +406,9 @@ export function createShell(root) {
     let view;
     try {
       view = await section.load();
+      // Its stylesheet (loadStyles) first: mounting before it lands draws the page unstyled, then it jumps
+      // into shape. Content that had to wait fades in (the page itself has already risen in).
+      if (stylesPending()) { await stylesLoaded(); content.classList.add('page-body-late'); }
     } catch (err) {
       console.error(`[shell] failed to load ${section.id}`, err);
       content.append(emptyState({ icon: 'warning', tone: 'red', title: t('This page failed to load'), text: String(err?.message || err),
