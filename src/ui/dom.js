@@ -92,13 +92,30 @@ export function fillNodes(text, nodes = {}) {
 /** Clamp a number. */
 export const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
+/** Stylesheets loadStyles started that haven't arrived yet. */
+const pendingStyles = new Set();
+
 /**
  * Load a stylesheet once (for section-specific CSS that lives next to the view).
  *   loadStyles(new URL('./joysticks.css', import.meta.url))
+ * The shell waits for it (stylesLoaded) before mounting the view, so a page never shows unstyled.
  */
 export function loadStyles(url) {
   const href = String(url);
   if (document.querySelector(`link[data-href="${href}"]`)) return;
-  document.head.append(Object.assign(document.createElement('link'), { rel: 'stylesheet', href }));
-  document.head.lastElementChild.dataset.href = href;
+  const link = Object.assign(document.createElement('link'), { rel: 'stylesheet', href });
+  link.dataset.href = href;
+  const done = new Promise((resolve) => { link.onload = link.onerror = resolve; });
+  pendingStyles.add(done);
+  done.then(() => pendingStyles.delete(done));
+  document.head.append(link);
+}
+
+/** Whether a stylesheet loadStyles started is still on its way. */
+export const stylesPending = () => pendingStyles.size > 0;
+
+/** Resolves once every stylesheet loadStyles started has loaded (or failed), or after `timeoutMs`. */
+export function stylesLoaded(timeoutMs = 3000) {
+  if (!pendingStyles.size) return Promise.resolve();
+  return Promise.race([Promise.all(pendingStyles), new Promise((r) => setTimeout(r, timeoutMs))]);
 }
