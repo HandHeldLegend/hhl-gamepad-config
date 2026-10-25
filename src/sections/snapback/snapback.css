@@ -159,102 +159,144 @@
 .an { container: an / inline-size; }
 .an-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; justify-content: flex-end; }
 .an-actions .select { max-width: 220px; }
+.an-body { display: grid; gap: var(--space-3); }
 .an-empty { margin: 0; }
-.an-nav[hidden] { display: none; }
-.an-empty[hidden] { display: none; }
-.an-body { display: grid; gap: var(--space-3); animation: fade-in var(--dur-med) var(--ease-out); }
-.an-body[hidden] { display: none; }
-.an-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--space-3); }
+.an-details { display: grid; gap: var(--space-3); overflow: hidden; }
+.an-empty[hidden], .an-nav[hidden], .an-timeline[hidden] { display: none; }
+.an-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--space-3); font-size: var(--text-md); }
+.an-title:empty { display: none; }
 .an-stick { font-weight: 800; color: var(--tone); }
 .an-kind { font-weight: 800; }
-.an-fact { font-family: var(--font-mono); font-size: var(--text-sm); }
-.an-fact.muted { font-family: inherit; color: var(--text-muted); }
-.an-fact.good { color: var(--tone); font-weight: 700; }
-.an-fact.warn { color: var(--yellow); font-weight: 700; }
+
+/* Stats: small tiles, the number big, its name small */
+.an-stats { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.an-stats:empty { display: none; }
+.an-stat { display: grid; gap: 1px; padding: 6px 12px; border-radius: var(--radius-md); background: var(--surface-2); min-width: 92px; }
+.an-stat.wide { flex: 1 1 200px; }
+.an-stat-label { font-size: var(--text-xs); color: var(--text-muted); }
+.an-stat-value { font-weight: 800; font-variant-numeric: tabular-nums; }
+.an-stat.good .an-stat-value { color: var(--tone); }
+.an-stat.warn .an-stat-value { color: var(--yellow); }
+.an-stat.muted .an-stat-value { color: var(--text-muted); font-weight: 600; }
+.an-stat.wide .an-stat-value { font-weight: 700; font-size: var(--text-sm); }
+
 .an-nav { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }
 .an-nav .select { max-width: 200px; }
 .an-pos { min-width: 5.5em; text-align: center; font-variant-numeric: tabular-nums; color: var(--text-muted); }
 .an-flip .icon { transform: rotate(180deg); }
 
-/* Three views: one large, two small beside it (under it on a narrow card) */
-.an-views { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "big big" "s1 s2"; }
-@container an (min-width: 700px) {
-  .an-views { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); grid-template-areas: "big s1" "big s2"; }
+/* Three views in fixed places, in a box of fixed height: the stick path on the left over both rows, the
+ * wave top right, X and Y under it. The large view's row and column grow while the others shrink, all
+ * smoothly, and the box never changes height (so nothing below it moves). One column on a narrow card. */
+.an-views { display: grid; gap: var(--space-3); height: clamp(440px, 50cqw, 620px);
+  grid-template-areas: "path wave" "path xy"; grid-template-columns: 1.3fr 1fr; grid-template-rows: 1fr 1fr;
+  transition: grid-template-columns var(--dur-slow) var(--ease-out), grid-template-rows var(--dur-slow) var(--ease-out); }
+.an-views[data-big="wave"] { grid-template-columns: 1fr 1.7fr; grid-template-rows: 1.6fr 1fr; }
+.an-views[data-big="xy"] { grid-template-columns: 1fr 1.7fr; grid-template-rows: 1fr 1.6fr; }
+@container an (max-width: 619px) {
+  .an-views { height: 880px; grid-template-areas: "path" "wave" "xy"; grid-template-columns: 1fr; grid-template-rows: 1.5fr 1fr 1fr; }
+  .an-views[data-big="wave"] { grid-template-columns: 1fr; grid-template-rows: 1fr 1.5fr 1fr; }
+  .an-views[data-big="xy"] { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1.5fr; }
 }
-@container an (max-width: 420px) {
-  .an-views { grid-template-columns: minmax(0, 1fr); grid-template-areas: "big" "s1" "s2"; }
+.an-panel { container: anp / inline-size; min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 6px;
+  padding: var(--space-2) var(--space-3) var(--space-3); border-radius: var(--radius-md); background: var(--surface-2); }
+.an-panel[data-view="path"] { grid-area: path; }
+.an-panel[data-view="wave"] { grid-area: wave; }
+.an-panel[data-view="xy"] { grid-area: xy; }
+/* Too narrow for labels on the charts: the keys and the readout carry them */
+@container anp (max-width: 280px) {
+  .an-line-label, .an-side, .an-game-line text { display: none; }
+  .an-axis-labels span:nth-child(2), .an-play .btn-label { display: none; }
 }
-.an-panel { display: grid; align-content: start; gap: 4px; min-width: 0; padding: var(--space-2); border-radius: var(--radius-md); background: var(--surface-2); }
-.an-panel[data-slot="big"] { grid-area: big; }
-.an-panel[data-slot="s1"] { grid-area: s1; }
-.an-panel[data-slot="s2"] { grid-area: s2; }
-.an-panel-head { display: flex; align-items: center; justify-content: space-between; min-height: 28px; }
-.an-panel[data-slot="big"] .an-grow { visibility: hidden; }
+.an-panel-head { display: flex; align-items: center; gap: var(--space-1); min-height: 30px; flex: none; }
+.an-panel-head .spacer { flex: 1; }
+.an-panel-title { font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.an-key { flex: none; }
+.an-grow { transition: opacity var(--dur-med); }
+.an-grow:disabled { opacity: 0; pointer-events: none; }
 .an-grow .icon { width: 16px; height: 16px; }
-.an-pathview { width: 100%; aspect-ratio: 1; overflow: visible; justify-self: center; }
-.an-panel[data-slot="big"] .an-pathview { max-width: 420px; }
-.an-panel:not([data-slot="big"]) .an-pathview { max-width: 220px; }
+.an-play .icon { width: 14px; height: 14px; }
+/* The path fills its view and stays round (the viewBox keeps it square, centred) */
+.an-pathview { flex: 1 1 0; min-height: 0; width: 100%; overflow: visible; }
+/* Time charts stretch to fill what the view has left */
+.an-times { flex: 1 1 0; min-height: 0; display: grid; gap: 3px; min-width: 0; touch-action: pan-y; cursor: crosshair; user-select: none; }
+.an-times.wave { grid-template-rows: minmax(0, 1fr) auto auto; }
+.an-times.xy { grid-template-rows: auto minmax(0, 1fr) auto minmax(0, 1fr) auto auto; }
+.an-chart-wrap { position: relative; min-height: 0; }
+.an-chart { width: 100%; display: block; border-radius: var(--radius-sm); background: var(--surface); }
+.an-chart.wave, .an-chart.xy { position: absolute; inset: 0; height: 100%; }
+.an-chart.strip { height: 10px; }
+.an-chart-label { margin-top: 2px; }
+.an-axis-labels { display: flex; justify-content: space-between; gap: var(--space-2); font-variant-numeric: tabular-nums; }
+
+/* Path */
 .an-gate { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
 .an-dz-ring { fill: var(--border); opacity: 0.4; }
 .an-axis { stroke: var(--border); stroke-width: 0.75; stroke-dasharray: 2 4; }
 .an-path-out { fill: none; stroke: var(--tone); stroke-width: 4; opacity: 0.45; stroke-linejoin: round; stroke-linecap: round; }
 .an-path-raw line { stroke-width: 1.5; stroke-linecap: round; }
-/* Slow-motion playback: the part of the path still to come stays faint */
 .an-path-raw line.ahead { opacity: 0.12; }
-/* Where the stick is now */
-.an-live circle { fill: none; stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 2 2; }
-.an-live .an-live-core { fill: var(--text-muted); stroke: none; }
-.an-panel-head .spacer { flex: 1; }
-.an-play .icon { width: 14px; height: 14px; }
 .an-start { fill: var(--surface); stroke: var(--blue); stroke-width: 2; }
 .an-end { fill: var(--red); }
 .an-mark-raw { fill: none; stroke: var(--text); stroke-width: 2; }
-.an-mark-out { fill: var(--tone); opacity: 0.8; }
-.an-times { display: grid; gap: 3px; min-width: 0; touch-action: pan-y; cursor: crosshair; user-select: none; }
-.an-chart { width: 100%; display: block; border-radius: var(--radius-sm); background: var(--surface); }
-.an-chart.dist { height: 110px; }
-.an-panel[data-slot="big"] .an-chart.dist { height: 260px; }
-.an-chart.xy { height: 52px; }
-.an-panel[data-slot="big"] .an-chart.xy { height: 120px; }
-.an-chart.strip { height: 12px; }
-.an-chart-label { margin-top: 2px; }
-.an-axis-labels { display: flex; justify-content: space-between; gap: var(--space-2); }
-.an-dz { fill: var(--border); opacity: 0.4; }
-.an-mid { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.an-held { fill: var(--yellow); opacity: 0.18; }
+.an-mark-out { fill: var(--tone); opacity: 0.85; }
+.an-live circle { fill: none; stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 2 2; }
+.an-live .an-live-core { fill: var(--text-muted); stroke: none; }
+
+/* Time charts */
+.an-dz { fill: var(--border); opacity: 0.45; }
+.an-mid { stroke: var(--border-strong); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.an-held { fill: var(--yellow); opacity: 0.16; }
+.an-area { stroke: none; }
+.an-area.pushed { fill: var(--blue); opacity: 0.22; }
+.an-area.other { fill: var(--red); opacity: 0.24; }
 .an-line { fill: none; stroke-width: 1.75; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
 .an-line.raw { stroke: var(--text-muted); }
-.an-line.out { stroke: var(--tone); }
+.an-line.out { stroke: var(--tone); stroke-width: 2.25; }
 .an-cursor { stroke: var(--text); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .an-state.edge { fill: var(--border-strong); }
 .an-state.decide { fill: var(--blue); }
 .an-state.check { fill: var(--accent); }
 .an-state.hold { fill: var(--yellow); }
 .an-tick { stroke: var(--text); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+/* Labels on the charts (HTML over the stretched SVG) */
+.an-labels { position: absolute; inset: 0; pointer-events: none; }
+.an-side { position: absolute; left: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; }
+.an-side.pushed { color: var(--blue); }
+.an-side.other { color: var(--red); }
+.an-line-label { position: absolute; right: 4px; transform: translateY(-50%); font-size: 10px; font-weight: 700; padding: 0 4px;
+  border-radius: 4px; background: color-mix(in srgb, var(--surface) 80%, transparent); }
+.an-line-label.deadzone { color: var(--blue); }
+.an-line-label.action { color: var(--red); }
+
 /* A game's lines: its deadzone, and where a rebound becomes an input */
 .an-game-line { fill: none; stroke-width: 1.25; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
-.an-game-line line { stroke-width: 1.25; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
-.an-game-line.deadzone, .an-game-line.deadzone line { stroke: var(--blue); }
-.an-game-line.action, .an-game-line.action line { stroke: var(--red); }
+.an-game-line line, .an-game-line circle { fill: none; stroke-width: 1.25; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+.an-game-line.deadzone, .an-game-line.deadzone line, .an-game-line.deadzone circle { stroke: var(--blue); }
+.an-game-line.action, .an-game-line.action line, .an-game-line.action circle { stroke: var(--red); }
+.an-game-line text { font-size: 7px; font-weight: 700; stroke: none; }
+.an-game-line.deadzone text { fill: var(--blue); }
+.an-game-line.action text { fill: var(--red); }
+
+/* Keys: one short row per view, only what it draws */
+.an-key { display: flex; flex-wrap: wrap; gap: 2px var(--space-3); color: var(--text-muted); }
+.an-swatch::before { content: ""; display: inline-block; width: 12px; height: 3px; margin-right: 5px; vertical-align: middle; border-radius: 2px; }
+.an-swatch.raw::before { background: linear-gradient(90deg, var(--blue), var(--red)); }
+.an-swatch.raw-line::before { background: var(--text-muted); }
+.an-swatch.out::before { background: var(--tone); height: 4px; }
+.an-swatch.live::before { width: 8px; height: 8px; border-radius: 50%; border: 1.5px dashed var(--text-muted); background: none; }
+.an-swatch.held::before { height: 9px; background: color-mix(in srgb, var(--yellow) 35%, transparent); }
+.an-swatch.decide::before, .an-swatch.check::before, .an-swatch.hold::before { height: 8px; }
+.an-swatch.decide::before { background: var(--blue); }
+.an-swatch.check::before { background: var(--accent); }
+.an-swatch.hold::before { background: var(--yellow); }
+
 .an-readout { margin: 0; min-height: 1.4em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-muted); overflow-wrap: anywhere; }
-.an-legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); color: var(--text-muted); }
-.an-key::before { content: ""; display: inline-block; width: 14px; height: 3px; margin-right: 6px; vertical-align: middle; border-radius: 2px; }
-.an-key.raw::before { background: linear-gradient(90deg, var(--blue), var(--red)); }
-.an-key.out::before { background: var(--tone); }
-.an-key.held::before { height: 10px; background: color-mix(in srgb, var(--yellow) 35%, transparent); }
-.an-key.state::before { height: 8px; }
-.an-key.state.decide::before { background: var(--blue); }
-.an-key.state.check::before { background: var(--accent); }
-.an-key.state.hold::before { background: var(--yellow); }
-.an-key.game::before { height: 0; border-top: 2px dashed; background: none; }
-.an-key.game.deadzone::before { border-color: var(--blue); }
-.an-key.game.action::before { border-color: var(--red); }
-.an-key-game { font-weight: 700; color: var(--text); }
-.an-exits { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 2px; }
-.an-exits[hidden] { display: none; }
-.an-exits li { display: flex; gap: var(--space-2); }
-.an-exits li.start { color: var(--text-muted); }
-.an-exit-t { font-family: var(--font-mono); font-variant-numeric: tabular-nums; min-width: 5.5em; text-align: right; color: var(--text-muted); }
+/* The filter's decisions in one line */
+.an-timeline { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; color: var(--text-muted); }
+.an-event.end { color: var(--text); }
+.an-event-t { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.an-arrow { color: var(--text-faint); }
 
 .sb-history { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .sb-history:empty { display: none; }
