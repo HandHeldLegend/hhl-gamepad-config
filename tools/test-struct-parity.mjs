@@ -21,6 +21,7 @@ const CHANGED = {
   'gamepadConfig_s.reserved': 'shrank from 25 to 19 bytes: host_mac_wii (Wii mode) took the first 6',
   'inputConfig_s.reserved': 'moved and shrank: the three Wii input profiles and wii_profile_version took its start',
   'imuConfig_s.reserved': 'shrank from 12 to 10 bytes: imu_mode_disable_mask (per-mode motion, IMU block 0x13) took the first 2',
+  'analogConfig_s.reserved': 'shrank from 326 to 178 bytes: l_spring and r_spring (Auto tuning, 74 bytes each) took the first 148',
 };
 
 function same(a, b) {
