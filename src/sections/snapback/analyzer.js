@@ -22,7 +22,8 @@
  *     colour, with the deadzone band and the game's output over it.
  *   - X and Y over time: each axis on its own.
  * Under the time views, a strip with what the filter was doing (deciding, checking, holding), and a
- * scrubber: dragging across a time view moves a marker on every view, with a readout. A summary gives the
+ * scrubber: dragging across a time view moves a marker on every view, with a readout (each value in a slot
+ * of its own, fixed width, so nothing shifts as the numbers change). A summary gives the
  * kind of move (from the stick's path), the delay, the time held, the furthest rebound held back and what
  * ended the hold, and a one-line timeline of the filter's decisions.
  *
@@ -228,7 +229,17 @@ export function analyzer({ session, tone }) {
   }
   setBig('wave');
 
-  const readout = h('p.an-readout.small', { 'aria-live': 'polite' }, t('Push either stick out and let it go, or flick it across: it shows up here.'));
+  // The readout: every value in its own fixed slot (the numbers change, their places don't)
+  const slot = (key) => { const v = h('span.an-read-n', NONE); return { el: h('span.an-read-v', key ? h('span.an-read-k', key) : null, v), v }; };
+  const read = {
+    time: slot(), sx: slot('x'), sy: slot('y'), sd: slot(t('dist')), gx: slot('x'), gy: slot('y'), gd: slot(t('dist')), state: slot(),
+  };
+  const readGroup = (label, ...slots) => h('div.an-read-group', { style: { '--n': slots.length } }, h('span.an-read-label', label), ...slots.map((s) => s.el));
+  read.state.el.classList.add('text');
+  read.time.el.classList.add('time');
+  const readout = h('div.an-readout.small', { 'aria-live': 'polite' },
+    readGroup(t('Time'), read.time), readGroup(t('Stick'), read.sx, read.sy, read.sd),
+    readGroup(t('Game'), read.gx, read.gy, read.gd), readGroup(t('Filter'), read.state));
 
   // ---- Navigator --------------------------------------------------------------------------------
   const prev = button({ icon: 'chevron-right', variant: 'ghost', size: 'sm', title: t('Newer'), class: 'an-flip', onClick: () => step(-1) });
@@ -296,7 +307,7 @@ export function analyzer({ session, tone }) {
     title.replaceChildren(e ? h('span.an-stick', t(STICK_NAME[e.stick])) : h('span.an-stick.muted', t('No recording yet')),
       h('span.an-kind', { class: e ? '' : 'muted' }, e ? t(KINDS[a.kind]) : NONE),
       e ? h('span.an-filter.small.muted', filterName(e.filter)) : null);
-    kindInfo.textContent = e ? t(KIND_INFO[a.kind]) : t('Each recording is named by the move you made, with what it means here.');
+    kindInfo.textContent = e ? t(KIND_INFO[a.kind]) : t('Push either stick out and let it go, or flick it across: it shows up here.');
     const stat = (label, value, cls = '') => h('div.an-stat', { class: value === NONE ? `${cls} muted` : cls }, h('span.an-stat-label', label), h('span.an-stat-value', value));
     const on = !!a?.g;
     const d = on ? a.r.delayMs : undefined;
@@ -441,18 +452,20 @@ export function analyzer({ session, tone }) {
     }
     markRaw.style.display = on ? '' : 'none';
     markOut.style.display = on && e.a.g ? '' : 'none';
-    if (!on) { readout.textContent = t('Drag across a time chart to follow the stick sample by sample.'); return; }
-    const { c, a } = e;
+    const put = (s, v) => { if (s.v.textContent !== v) s.v.textContent = v; };
+    const num = (v) => fmt.number(Math.round(v));
+    const c = on ? e.c : null;
+    const g = on ? e.a.g : null;
+    put(read.time, on ? ms(span(i)) : NONE);
+    put(read.sx, on ? num(c.x[i]) : NONE); put(read.sy, on ? num(c.y[i]) : NONE); put(read.sd, on ? num(Math.hypot(c.x[i], c.y[i])) : NONE);
+    put(read.gx, g ? num(g.x[i]) : NONE); put(read.gy, g ? num(g.y[i]) : NONE); put(read.gd, g ? num(Math.hypot(g.x[i], g.y[i])) : NONE);
+    put(read.state, g ? t(STATES[g.state[i]]) : on ? filterName(e.filter) : NONE);
+    if (!on) return;
     markRaw.setAttribute('cx', px(c.x[i]).toFixed(1)); markRaw.setAttribute('cy', (-px(c.y[i])).toFixed(1));
-    const pos = (x, y) => t('({x}, {y}) {d}', { x: fmt.number(x), y: fmt.number(y), d: fmt.number(Math.round(Math.hypot(x, y))) });
-    const parts = [ms(span(i)), t('Stick {pos}', { pos: pos(c.x[i], c.y[i]) })];
-    if (a.g) {
-      markOut.setAttribute('cx', px(a.g.x[i]).toFixed(1)); markOut.setAttribute('cy', (-px(a.g.y[i])).toFixed(1));
-      parts.push(t('Game {pos}', { pos: pos(a.g.x[i], a.g.y[i]) }), t(STATES[a.g.state[i]]));
-    }
-    readout.textContent = parts.join(' · ');
+    if (g) { markOut.setAttribute('cx', px(g.x[i]).toFixed(1)); markOut.setAttribute('cy', (-px(g.y[i])).toFixed(1)); }
   }
   for (const box of [panels.wave.querySelector('.an-times'), panels.xy.querySelector('.an-times')]) {
+    box.title = t('Drag across a time chart to follow the stick sample by sample.');
     const from = (ev) => {
       const r = box.getBoundingClientRect();
       if (!shown || !r.width) return;

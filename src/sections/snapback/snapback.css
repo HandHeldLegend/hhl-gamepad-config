@@ -306,7 +306,18 @@
 .an-swatch.check::before { background: var(--accent); }
 .an-swatch.hold::before { background: var(--yellow); }
 
-.an-readout { margin: 0; min-height: 1.4em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-muted); overflow-wrap: anywhere; }
+/* The readout: groups of fixed slots, each number right-aligned in a fixed width with even digits, so
+ * nothing moves as the values change (a group wraps whole on a narrow card) */
+.an-readout { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md); background: var(--surface-2); }
+.an-read-group { display: grid; grid-template-columns: repeat(var(--n), auto); column-gap: var(--space-3); row-gap: 1px; }
+.an-read-label { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--text-muted); }
+.an-read-v { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
+.an-read-k { font-size: var(--text-xs); color: var(--text-faint); }
+.an-read-n { display: inline-block; min-width: 6ch; text-align: right; font-weight: 700; color: var(--text);
+  font-variant-numeric: tabular-nums lining-nums; }
+.an-read-v.text .an-read-n { min-width: 11ch; text-align: left; font-weight: 600; }
+.an-read-v.time .an-read-n { min-width: 9ch; }
 /* The filter's decisions in one line */
 .an-timeline { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; color: var(--text-muted); }
 .an-event.end { color: var(--text); }
