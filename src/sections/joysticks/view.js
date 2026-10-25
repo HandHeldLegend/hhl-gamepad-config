@@ -45,6 +45,7 @@ import { expStoredToMultiplier } from './settings.js';
 import { getSetting } from '../../settings/schema.js';
 import { t, N_, fmt, i18n } from '../../i18n/index.js';
 import { richText } from './rich-text.js';
+import { springStatus } from '../snapback/spring-config.js';
 
 loadStyles(new URL('./joysticks.css', import.meta.url));
 
@@ -183,6 +184,9 @@ export function mount(root, ctx) {
         ? t('It should reach the edge of the circle in every direction and rest in the center.')
         : t('They should reach the edge of the circle in every direction and rest in the center.'),
       ' ', t('Calibration is active now. Press Save to keep it after unplugging.'),
+      // Auto snapback tuned to a stick learned it as it was calibrated: a hint to tune it again
+      sticks.some((s) => springStatus(session, s) === 'tuned')
+        ? h('p.small', t('Auto snapback learned how your stick springs back. Tune it again on the Snapback page so it fits the new calibration.')) : null,
       h('div.row.js-check-actions',
         saveBtn,
         button({ label: t('Dismiss'), variant: 'ghost', size: 'sm', onClick: clearCheckNote }))));

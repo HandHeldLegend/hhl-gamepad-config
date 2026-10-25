@@ -1,0 +1,108 @@
+/**
+ * spring-config.js: Reading and writing a stick's tuning for Auto snapback (analogConfig_s.l_spring /
+ * r_spring, snapbackSpringCfg_s). No DOM. On firmware with the spring model, Auto on a stick whose tuning is
+ * flagged TUNED holds back only the rebound its own spring makes; untuned, Auto works as it always did.
+ *
+ * The tuning belongs to the stick, not the profile: it sits past the per-profile part of the analog
+ * block. The firmware loads it whenever the analog block is written, so a write takes effect at once;
+ * a tuning it can't use (version 0 included) is replaced with defaults (flags 0: not tuned) and written
+ * back, which is how "Reset tuning" works.
+ *
+ * A tuning is saved only once the controller holds it: after writing, the block is read back and the
+ * stick's spring bytes and type compared with what was written (writes aren't acknowledged, and a write
+ * that doesn't arrive whole leaves the firmware's defaults in place). A mismatch is written again, a few
+ * times at most; only a match is saved to flash, so "tuned" is never shown for a tuning that isn't there.
+ */
+import { LAYOUT } from '../../device/struct.js';
+
+const VERSION = LAYOUT.defines?.SNAPBACK_SPRING_CFG_VERSION ?? 1;
+const TUNED = LAYOUT.defines?.SNAPBACK_SPRING_FLAG_TUNED ?? 1;
+const FIELD = { left: 'l_spring', right: 'r_spring' };
+const TYPE = { left: 'l_snapback_type', right: 'r_snapback_type' };
+/** Snapback type 1: Auto (settings.js SNAPBACK_TYPES), which uses the tuning. (3, the spring model's own type
+ *  for a while, also runs as Auto; it is never written now.) */
+export const AUTO_TYPE = 1;
+/** After a write, how long to give the firmware to load it (and fill in defaults) before reading it back. */
+const RELOAD_MS = 250;
+const WRITE_TRIES = 3;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** 'tuned' (fitted to this stick, Auto uses it), 'defaults' (not tuned: standard Auto), or null (none stored). */
+export function springStatus(session, stick) {
+  const c = session.config.analog?.[FIELD[stick]];
+  if (!c || c.version !== VERSION) return null;
+  return c.flags & TUNED ? 'tuned' : 'defaults';
+}
+
+/**
+ * The tuning Auto is using on this stick right now, as the gate takes it, or null when it isn't using one
+ * (not tuned, or not on Auto).
+ * @returns {{a1: number[], a2: number[], decide_step: number, grab_err: number, stiff_den: number, cross_speed: number}|null}
+ */
+export function springParams(session, stick) {
+  const cfg = session.config.analog;
+  const c = cfg?.[FIELD[stick]];
+  if (!c || c.version !== VERSION || !(c.flags & TUNED)) return null;
+  if (cfg[TYPE[stick]] !== AUTO_TYPE && cfg[TYPE[stick]] !== 3) return null;
+  return {
+    a1: Array.from(c.a1), a2: Array.from(c.a2),
+    decide_step: c.decide_step, grab_err: c.grab_err, stiff_den: c.stiff_den, cross_speed: c.cross_speed,
+  };
+}
+
+/**
+ * Store a fitted tuning for one stick and switch it to Auto, then save to the controller.
+ * @param {{a1: number[], a2: number[], decide_step: number, grab_err: number, stiff_den: number, cross_speed: number}} p
+ * @returns {Promise<boolean>} saved
+ */
+export async function writeSpring(session, stick, p) {
+  const cfg = session.config.analog;
+  const c = cfg[FIELD[stick]];
+  c.version = VERSION;
+  c.flags = TUNED;
+  c.a1 = p.a1;
+  c.a2 = p.a2;
+  c.decide_step = p.decide_step;
+  c.grab_err = p.grab_err;
+  c.stiff_den = p.stiff_den;
+  c.cross_speed = p.cross_speed;
+  const want = c.buffer.slice();
+  const put = () => { cfg[FIELD[stick]] = new c.constructor(want.slice()); cfg[TYPE[stick]] = AUTO_TYPE; };
+  const held = () => cfg[TYPE[stick]] === AUTO_TYPE && want.every((b, i) => cfg[FIELD[stick]].buffer[i] === b);
+  try {
+    for (let n = 1; n <= WRITE_TRIES; n++) {
+      put();
+      await session.commit('analog', { immediate: true });
+      await sleep(RELOAD_MS);
+      await session.refresh('analog');
+      if (held()) return await session.save();
+      console.warn(`[snapback] spring write ${n} didn't arrive whole; the controller holds`, Array.from(cfg[FIELD[stick]].buffer));
+    }
+    return false;
+  } catch (err) {
+    console.warn('[snapback] spring save failed', err);
+    return false;
+  }
+}
+
+/**
+ * Clear one stick's tuning (Auto goes back to standard): write version 0, let the firmware fill in its
+ * defaults (not tuned), read them back and save.
+ * @returns {Promise<boolean>} saved
+ */
+export async function resetSpring(session, stick) {
+  const cfg = session.config.analog;
+  const c = cfg[FIELD[stick]];
+  c.version = 0;
+  c.flags = 0;
+  cfg[FIELD[stick]] = c;
+  try {
+    await session.commit('analog', { immediate: true });
+    await new Promise((r) => setTimeout(r, RELOAD_MS));
+    await session.refresh('analog');
+    return await session.save();
+  } catch (err) {
+    console.warn('[snapback] spring reset failed', err);
+    return false;
+  }
+}

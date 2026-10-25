@@ -26,7 +26,7 @@ Key facts:
 |---|---|---|---|---|
 | `#/` | Home | Connect a controller and see its status at a glance. | – | `connect`: Set to 1 to open the controller picker immediately (needs a click in most browsers). |
 | `#/whats-new` | What’s new | Firmware changes, newest first. With a controller connected, shows what its update brings. | – | `changes`: Changelog section to show: input \| joysticks \| snapback \| motion \| rgb \| haptics \| battery \| wireless \| modes \| system |
-| `#/input` | Input | Remap buttons per output mode, analog trigger thresholds and rapid trigger. | Controller | `mode`: Output profile to edit (wii-* only on controllers with Wii mode): switch \| xinput \| snes \| n64 \| gamecube \| sinput \| wii-nunchuk (alias upright) \| wii-sideways \| wii-classic<br>`input`: Input to open in the editor: INPUT_CODE name (e.g. south, lt_analog), the build’s input name, or its number<br>`tab`: remap \| calibrate |
+| `#/input` | Input | Remap buttons per output mode, analog trigger thresholds and rapid trigger. | Controller | `mode`: Output profile to edit (wii-* only on controllers with Wii mode): switch \| xinput \| snes \| n64 \| gamecube \| sinput \| wii-nunchuk (alias upright) \| wii-sideways \| wii-classic<br>`input`: Input to open in the editor: INPUT_CODE name (e.g. south, lt_analog), the build’s input name, or its number<br>`tab`: remap \| calibrate \| triggers (controllers that take mechanical triggers) |
 | `#/joysticks` | Joysticks | Calibrate sticks, set deadzones, response curve, invert axes and angle maps. | Controller + analog | `stick`: left \| right<br>`tab`: Sub-view to open: calibrate \| sensitivity \| angles \| axes (deadzone = old alias) |
 | `#/snapback` | Snapback | Tune the snapback filter that removes stick "bounce" when you let go. | Controller + analog | `stick`: left \| right |
 | `#/motion` | Motion | Gyro and accelerometer calibration, sensitivity and live view. | Controller + imu | – |
@@ -81,9 +81,9 @@ Capability flags used in “Needs” columns (detected from the connected contro
 
 | Key | Label | Values | Needs | Description |
 |---|---|---|---|---|
-| `snapback.leftType` | Filter mode | 0 = Low-pass (also: lpf, low-pass filter, lowpass, filter, default); 1 = Auto (also: automatic, detect); 2 = Off (also: disabled, none, raw) | leftStick | How the left stick suppresses the rebound past center after you let go. |
+| `snapback.leftType` | Filter mode | 0 = Low-pass (also: lpf, low-pass filter, lowpass, filter, default); 1 = Auto (also: automatic, detect, spring, tuned); 2 = Off (also: disabled, none, raw) | leftStick | How the left stick suppresses the rebound past center after you let go. |
 | `snapback.leftIntensity` | Filter cutoff | number 30 Hz – 150 Hz, step 0.5 | leftStick | Low-pass cutoff frequency for the left stick. Lower = stronger smoothing. |
-| `snapback.rightType` | Filter mode | 0 = Low-pass (also: lpf, low-pass filter, lowpass, filter, default); 1 = Auto (also: automatic, detect); 2 = Off (also: disabled, none, raw) | rightStick | How the right stick suppresses the rebound past center after you let go. |
+| `snapback.rightType` | Filter mode | 0 = Low-pass (also: lpf, low-pass filter, lowpass, filter, default); 1 = Auto (also: automatic, detect, spring, tuned); 2 = Off (also: disabled, none, raw) | rightStick | How the right stick suppresses the rebound past center after you let go. |
 | `snapback.rightIntensity` | Filter cutoff | number 30 Hz – 150 Hz, step 0.5 | rightStick | Low-pass cutoff frequency for the right stick. Lower = stronger smoothing. |
 
 ### Motion (`motion`)

@@ -12,7 +12,8 @@
  *   0x02 WRITE_CONFIG_BLOCK  out: [2, block, size, idx, data...] then [2, block, 0, 0xFF]
  *   0x03 READ_STATIC_BLOCK   out: [3, block]                in: same shape as 0x01
  *   0x04 CONFIG_COMMAND      out: [4, block, cmd]           in: [4, block, cmd, ok, data...]
- *   0x05 INPUT MODE/FOCUS    out: [5, 0, 254|255] (joystick|hover stream), [5, 1, inputCode]
+ *   0x05 INPUT MODE/FOCUS    out: [5, 0, 254|255] (joystick|hover stream), [5, 1, inputCode],
+ *                            [5, 2, stick] (record a stick coming back from a push: 0 left, 1 right, 0xFF stops)
  *   0x06 BLOCK_FINGERPRINTS  out: [6]                       in: [6, 0, count, CRC32 LE × count] (config blocks),
  *                                                                then [6, 1, count, CRC32 LE × count] (static blocks)
  *                            Each CRC32 covers exactly the bytes a read of that block sends; older firmware
@@ -24,6 +25,8 @@
  *                            (HOJA-LIB-RP2040 utilities/profiles.h). Switching stores everything live first.
  *   0xFE / 0xFF              in: live input reports (joystick / raw hover)
  *   0xFA                     in: analog (snapback) dump
+ *   0xF9                     in: a stick capture once armed ([5, 2, stick]): 256 samples of x, y (int16 LE) at
+ *                            2 kHz in 19 packets [0xF9, stick, capture number, packet, packet count, samples, x/y…]
  *   0xAF                     in/out: legacy firmware version probe
  *   0xD0 DONGLE_INFO         out: [0xD0]                    in: dongle status (see decodeDongleInfo)
  *   0xD1 DONGLE_BOOTLOADER   out: [0xD1]                    the dongle reboots into BOOTSEL (no reply)
@@ -52,6 +55,8 @@
  *                                                     disconnect() was called (not an unplug or re-enumeration)
  *   'input'       DataView                            live input report (0xFE/0xFF)
  *   'snapback'    DataView                            analog dump (0xFA)
+ *   'spring-capture' { stick, number, x, y }          a whole stick capture (0xF9): stick 0 left / 1 right,
+ *                                                     x and y Int16Array(256); incomplete ones are dropped
  *   'legacy'      { deviceId, url }                   pre-HOJA2 firmware detected
  *   'dongle'      { dongle }                          a dongle with no controller connected to it
  *   'bootloader'  {}                                  user picked a bare RP2040/RP2350 bootloader
@@ -209,6 +214,7 @@ const REPORT = {
   INPUT_MODE: 5,
   FINGERPRINTS: 6,
   PROFILE: 7,
+  SPRING_CAPTURE: 249,
   SNAPBACK_DUMP: 250,
   INPUT_JOYSTICKS: 254,
   INPUT_RAW: 255,
@@ -292,6 +298,7 @@ export class HojaDevice extends EventTarget {
   #switching = false;  // a live mode change was asked for: the device leaves and comes back
   #opening = null;
   #connected = false;
+  #capture = null;         // the stick capture (0xF9) being assembled
   #queue = Promise.resolve();
   #lastReportAt = 0;   // performance.now() of the last IN report of any kind
   #inputJoysticks = false; // last stream chosen with setInputMode (re-sent by the watchdog)
@@ -736,6 +743,7 @@ export class HojaDevice extends EventTarget {
         case REPORT.INPUT_JOYSTICKS:
         case REPORT.INPUT_RAW: return this.#emit('input', view);
         case REPORT.SNAPBACK_DUMP: return this.#emit('snapback', view);
+        case REPORT.SPRING_CAPTURE: return this.#onCapture(view);
         case REPORT.LEGACY_FW: return this.#onLegacy(view);
         case REPORT.DONGLE_INFO: return this.#onDongleInfo(view);
         default: return;
@@ -745,19 +753,45 @@ export class HojaDevice extends EventTarget {
     }
   }
 
+  /** One packet of a stick capture: collect them by capture number, emit once all have arrived. */
+  #onCapture(view) {
+    const [stick, number, packet, count, samples] = [1, 2, 3, 4, 5].map((i) => view.getUint8(i));
+    let c = this.#capture;
+    if (!c || c.stick !== stick || c.number !== number) {
+      c = this.#capture = { stick, number, count, got: 0, seen: new Set(), x: [], y: [] };
+    }
+    if (c.seen.has(packet) || packet >= count) return;
+    c.seen.add(packet);
+    const per = 14; // x/y pairs in a full packet
+    for (let i = 0; i < samples && 6 + i * 4 + 3 < view.byteLength; i++) {
+      c.x[packet * per + i] = view.getInt16(6 + i * 4, true);
+      c.y[packet * per + i] = view.getInt16(8 + i * 4, true);
+    }
+    c.got += samples;
+    if (c.seen.size < count) return;
+    this.#capture = null;
+    if (c.x.length !== c.got || c.x.includes(undefined)) return; // a packet went missing
+    this.#emit('spring-capture', { stick, number, x: Int16Array.from(c.x), y: Int16Array.from(c.y) });
+  }
+
   #onChunk(view, kind) {
     const blockIdx = view.getUint8(1);
     const size = view.getUint8(2);
     const idx = view.getUint8(3);
-    const reading = this.#read.kind === kind && this.#read.block === blockIdx;
+    // Only a read in progress fills a block. The firmware sends blocks only when asked, so anything else
+    // is a late answer to a read that already finished or timed out: storing it would put old bytes back
+    // over edits made since, and the next write would send them to the controller.
+    const reading = this.#read.kind === kind && this.#read.block === blockIdx && !this.#read.done;
+    if (!reading) {
+      if (idx === 0xff) console.warn(`[device] ignored a late answer for ${kind} block ${blockIdx}`);
+      return;
+    }
     if (size > 0) {
       const chunk = new Uint8Array(view.buffer, view.byteOffset + 4, size);
       if (!this.#storeChunk(kind, blockIdx, idx, chunk)) return;
-      if (reading) this.#read.parts.push([idx * CHUNK_MAX, chunk.slice()]); // the block's bytes, for the cache
+      this.#read.parts.push([idx * CHUNK_MAX, chunk.slice()]); // the block's bytes, for the cache
     }
-    if (idx === 0xff && reading) {
-      this.#read.done = true;
-    }
+    if (idx === 0xff) this.#read.done = true;
   }
 
   /** One chunk of a block into its struct: from the controller, or from the cache (#applyCached). */
@@ -843,9 +877,13 @@ export class HojaDevice extends EventTarget {
   async #readBlock(kind, index, timeout = 5000) {
     const read = { kind, block: index, done: false, parts: [] };
     this.#read = read;
-    await this.#out([kind === 'config' ? REPORT.READ_CONFIG : REPORT.READ_STATIC, index]);
-    if (!(await waitFor(() => read.done, timeout))) {
-      throw new Error(`Timed out reading ${kind} block ${index}`);
+    try {
+      await this.#out([kind === 'config' ? REPORT.READ_CONFIG : REPORT.READ_STATIC, index]);
+      if (!(await waitFor(() => read.done, timeout))) {
+        throw new Error(`Timed out reading ${kind} block ${index}`);
+      }
+    } finally {
+      read.done = true; // a late answer to this read is ignored (#onChunk)
     }
     const bytes = new Uint8Array(read.parts.reduce((n, [at, c]) => Math.max(n, at + c.length), 0));
     for (const [at, c] of read.parts) bytes.set(c, at);
@@ -1118,6 +1156,16 @@ export class HojaDevice extends EventTarget {
     this.#inputJoysticks = !!joysticks;
     this.#streaming = true;
     return this.sendReport(REPORT.INPUT_MODE, [0x00, joysticks ? 254 : 255]);
+  }
+
+  /**
+   * Record a stick each time it comes back from a push ('spring-capture' events), for tuning the Spring
+   * snapback filter: 'left', 'right', or null to stop. Not remembered across reconnects. `hint` is only
+   * read by the demo controller (what the flow is asking for, so its fake captures match).
+   */
+  armSpringCapture(stick) {
+    this.#capture = null;
+    return this.sendReport(REPORT.INPUT_MODE, [0x02, stick === 'left' ? 0 : stick === 'right' ? 1 : 0xff]);
   }
 
   /** Highlight/focus an input on the device (used during remapping). */

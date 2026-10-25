@@ -5,17 +5,23 @@
  * Fields (HOJA-LIB-RP2040 src/input/snapback.c, snapback/snapback_lpf.c):
  *   l/r_snapback_type       u8: how snapback.c actually dispatches it (and what hoja2 showed):
  *                             0 = low-pass filter (default), 1 = auto (rebound detection), 2 = off.
+ *                           On firmware with the spring model (caps.snapbackSpring), Auto on a stick tuned
+ *                           to it (l/r_spring flagged TUNED; tune.js) holds back only the rebound the stick's
+ *                           own spring makes; untuned, it is the old Auto. 3 (the spring model's own type for
+ *                           a while) behaves as Auto: it reads as Auto and is written as 1.
  *                           NOTE: the header enum `snapback_type_t` names these DISABLED/ZERO/POST, which does
  *                           not match the runtime switch; we follow the runtime behavior, like hoja2 did.
  *   l/r_snapback_intensity  u16: low-pass cutoff in tenths of a Hz (600 = 60.0 Hz). The firmware clamps it
  *                           to 300..1500 (30–150 Hz). Only used by the low-pass mode.
+ *   l/r_spring              snapbackSpringCfg_s: Auto's tuning for that stick, global (not per profile).
+ *                           Written by the tuning flow (tune.js), not a setting here.
  */
 import { clampInt } from '../../settings/schema.js';
 
 /** Snapback modes in firmware order (index = stored value). */
 export const SNAPBACK_TYPES = [
   { value: 0, label: 'Low-pass', aliases: ['lpf', 'low-pass filter', 'lowpass', 'filter', 'default'] },
-  { value: 1, label: 'Auto', aliases: ['automatic', 'detect'] },
+  { value: 1, label: 'Auto', aliases: ['automatic', 'detect', 'spring', 'tuned'] },
   { value: 2, label: 'Off', aliases: ['disabled', 'none', 'raw'] },
 ];
 
@@ -38,6 +44,7 @@ function stickSettings(stick) {
       requires: CAP[stick],
       get: (s) => {
         const v = s.config.analog[`${p}_snapback_type`];
+        if (v === 3) return 1; // the spring model's old type: the firmware runs it as Auto
         return v <= 2 ? v : 0; // firmware treats unknown values as low-pass (switch default)
       },
       set: (s, v) => { s.config.analog[`${p}_snapback_type`] = clampInt(v, 0, 2); },

@@ -94,6 +94,11 @@ export function computeCaps(s, c) {
   // The Switch 2 GameCube buttons (GAMECUBE_CODE_ZL to RS): firmware that has them marks the input
   // block once it added them to the GameCube profile. Older firmware keeps that byte reserved (0).
   caps.switch2Buttons = (c?.input?.gamecube_ns2_version ?? 0) === LAYOUT.defines?.CFG_INPUT_GAMECUBE_NS2_VERSION;
+  // The Spring snapback filter (type 3): firmware that has it fills in each stick's tuning (version 1)
+  // when it loads; older firmware keeps those bytes reserved (0).
+  const springVersion = LAYOUT.defines?.SNAPBACK_SPRING_CFG_VERSION;
+  caps.snapbackSpring = springVersion != null &&
+    (c?.analog?.l_spring?.version === springVersion || c?.analog?.r_spring?.version === springVersion);
   return caps;
 }
 

@@ -39,7 +39,8 @@ export function settingField(keyOrDef, o = {}) {
       control = toggle({ checked: value, label: t(def.label), tone: o.tone, onChange: write });
       break;
     case 'enum': {
-      const options = def.options.map((opt) => ({ ...opt, label: t(opt.label) }));
+      const options = def.options.filter((opt) => !opt.requires || session.caps[opt.requires])
+        .map((opt) => ({ ...opt, label: t(opt.label) }));
       control = (o.control === 'select' || def.options.length > 5)
         ? select({ options, value, ariaLabel: t(def.label), onChange: write })
         : segmented({ options, value, tone: o.tone, ariaLabel: t(def.label), onChange: write });
