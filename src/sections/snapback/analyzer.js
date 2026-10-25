@@ -208,7 +208,7 @@ export function analyzer({ session, tone }) {
       growButtons[k].disabled = k === key;
     }
   }
-  setBig('path');
+  setBig('wave');
 
   const readout = h('p.an-readout.small', { 'aria-live': 'polite' }, t('Push either stick out and let it go, or flick it across: it shows up here.'));
 
