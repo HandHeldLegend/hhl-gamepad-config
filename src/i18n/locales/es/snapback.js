@@ -203,7 +203,6 @@ export default {
   'Run turnaround': 'Giro en carrera',
   'Game': 'Juego',
   'Now': 'Ahora',
-  'Filter': 'Filtro',
   'Delay': 'Retardo',
   'None (let go)': 'Ninguno (soltado)',
   'Not held': 'No retenido',
@@ -217,4 +216,6 @@ export default {
   'Stick path': 'Recorrido del joystick',
   'Snapback wave': 'Onda de rebote',
   'X and Y over time': 'X e Y en el tiempo',
+  'No recording yet': 'Aún no hay grabaciones',
+  'The filter’s decisions show up here.': 'Aquí aparecen las decisiones del filtro.',
 };

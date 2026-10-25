@@ -188,7 +188,6 @@ export default {
   "Run turnaround": "跑动转身",
   "Game": "游戏",
   "Now": "当前",
-  "Filter": "滤波",
   "Delay": "延迟",
   "None (let go)": "无（松开）",
   "Not held": "未保持",
@@ -202,4 +201,6 @@ export default {
   "Stick path": "摇杆轨迹",
   "Snapback wave": "回弹波形",
   "X and Y over time": "X 与 Y 随时间变化",
+  "No recording yet": "暂无记录",
+  "The filter’s decisions show up here.": "滤波的判断会显示在这里。",
 };

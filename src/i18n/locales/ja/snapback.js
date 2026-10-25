@@ -203,7 +203,6 @@ export default {
   'Run turnaround': '走行反転',
   'Game': 'ゲーム',
   'Now': '現在',
-  'Filter': 'フィルター',
   'Delay': '遅延',
   'None (let go)': 'なし（離した）',
   'Not held': '保持なし',
@@ -217,4 +216,6 @@ export default {
   'Stick path': 'スティックの軌跡',
   'Snapback wave': '跳ね返りの波形',
   'X and Y over time': 'XとYの時間変化',
+  'No recording yet': 'まだ記録がありません',
+  'The filter’s decisions show up here.': 'フィルターの判断がここに表示されます。',
 };

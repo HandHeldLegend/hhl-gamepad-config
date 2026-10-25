@@ -160,17 +160,14 @@
 .an-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; justify-content: flex-end; }
 .an-actions .select { max-width: 220px; }
 .an-body { display: grid; gap: var(--space-3); }
-.an-empty { margin: 0; }
 .an-details { display: grid; gap: var(--space-3); overflow: hidden; }
-.an-empty[hidden], .an-nav[hidden], .an-timeline[hidden] { display: none; }
+.an-timeline { min-height: 1.5em; }
 .an-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--space-3); font-size: var(--text-md); }
-.an-title:empty { display: none; }
 .an-stick { font-weight: 800; color: var(--tone); }
 .an-kind { font-weight: 800; }
 
 /* Stats: small tiles, the number big, its name small */
 .an-stats { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.an-stats:empty { display: none; }
 .an-stat { display: grid; gap: 1px; padding: 6px 12px; border-radius: var(--radius-md); background: var(--surface-2); min-width: 92px; }
 .an-stat.wide { flex: 1 1 200px; }
 .an-stat-label { font-size: var(--text-xs); color: var(--text-muted); }
@@ -178,6 +175,7 @@
 .an-stat.good .an-stat-value { color: var(--tone); }
 .an-stat.warn .an-stat-value { color: var(--yellow); }
 .an-stat.muted .an-stat-value { color: var(--text-muted); font-weight: 600; }
+.an-title .muted { color: var(--text-muted); }
 .an-stat.wide .an-stat-value { font-weight: 700; font-size: var(--text-sm); }
 
 .an-nav { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }
@@ -186,20 +184,29 @@
 .an-flip .icon { transform: rotate(180deg); }
 
 /* Three views in fixed places, in a box of fixed height: the stick path on the left over both rows, the
- * wave top right, X and Y under it. The large view's row and column grow while the others shrink, all
- * smoothly, and the box never changes height (so nothing below it moves). One column on a narrow card. */
-.an-views { display: grid; gap: var(--space-3); height: clamp(440px, 50cqw, 620px);
-  grid-template-areas: "path wave" "path xy"; grid-template-columns: 1.3fr 1fr; grid-template-rows: 1fr 1fr;
+ * wave top right, X and Y under it. Expanding the wave or X and Y gives it the whole right side and folds
+ * the other down to its title; expanding the path widens its column. Rows and columns ease between these,
+ * and the box never changes height (so nothing below it moves). One column on a narrow card.
+ * (Every row is minmax(a folded card, Nfr) so the sizes interpolate: a folded row is 0fr, at its minimum.) */
+.an-views { --fold: 46px; display: grid; gap: var(--space-3); height: clamp(440px, 50cqw, 620px);
+  grid-template-areas: "path wave" "path xy"; grid-template-columns: 1.3fr 1fr;
+  grid-template-rows: minmax(var(--fold), 1fr) minmax(var(--fold), 1fr);
   transition: grid-template-columns var(--dur-slow) var(--ease-out), grid-template-rows var(--dur-slow) var(--ease-out); }
-.an-views[data-big="wave"] { grid-template-columns: 1fr 1.7fr; grid-template-rows: 1.6fr 1fr; }
-.an-views[data-big="xy"] { grid-template-columns: 1fr 1.7fr; grid-template-rows: 1fr 1.6fr; }
+.an-views[data-big="wave"] { grid-template-columns: 1fr 1.7fr; grid-template-rows: minmax(var(--fold), 1fr) minmax(var(--fold), 0fr); }
+.an-views[data-big="xy"] { grid-template-columns: 1fr 1.7fr; grid-template-rows: minmax(var(--fold), 0fr) minmax(var(--fold), 1fr); }
 @container an (max-width: 619px) {
-  .an-views { height: 880px; grid-template-areas: "path" "wave" "xy"; grid-template-columns: 1fr; grid-template-rows: 1.5fr 1fr 1fr; }
-  .an-views[data-big="wave"] { grid-template-columns: 1fr; grid-template-rows: 1fr 1.5fr 1fr; }
-  .an-views[data-big="xy"] { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1.5fr; }
+  .an-views { height: 880px; grid-template-areas: "path" "wave" "xy"; grid-template-columns: 1fr;
+    grid-template-rows: minmax(var(--fold), 1.5fr) minmax(var(--fold), 1fr) minmax(var(--fold), 1fr); }
+  .an-views[data-big="wave"] { grid-template-columns: 1fr; grid-template-rows: minmax(var(--fold), 1fr) minmax(var(--fold), 1.6fr) minmax(var(--fold), 0fr); }
+  .an-views[data-big="xy"] { grid-template-columns: 1fr; grid-template-rows: minmax(var(--fold), 1fr) minmax(var(--fold), 0fr) minmax(var(--fold), 1.6fr); }
 }
 .an-panel { container: anp / inline-size; min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 6px;
-  padding: var(--space-2) var(--space-3) var(--space-3); border-radius: var(--radius-md); background: var(--surface-2); }
+  padding: var(--space-2) var(--space-3) var(--space-3); border-radius: var(--radius-md); background: var(--surface-2);
+  transition: padding-bottom var(--dur-slow) var(--ease-out); }
+/* Folded to its title: the rest fades out as the row closes (and back in as it opens) */
+.an-panel > :not(.an-panel-head) { transition: opacity var(--dur-med) var(--ease-out); }
+.an-panel.is-folded { padding-bottom: var(--space-2); }
+.an-panel.is-folded > :not(.an-panel-head) { opacity: 0; pointer-events: none; }
 .an-panel[data-view="path"] { grid-area: path; }
 .an-panel[data-view="wave"] { grid-area: wave; }
 .an-panel[data-view="xy"] { grid-area: xy; }

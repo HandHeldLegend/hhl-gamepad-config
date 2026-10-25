@@ -8,7 +8,9 @@
  *
  * Three views in fixed places, in a box that keeps its height: the stick path on the left, the wave and
  * X and Y stacked beside it (all three stacked on a narrow card). The expand button on one grows it
- * smoothly while the others shrink:
+ * smoothly: the path widens its column; the wave or X and Y takes the whole right side and the other folds
+ * to its title. Under the views, the summary always shows all its parts (placeholders until the first
+ * recording), so nothing changes height when one arrives:
  *   - Stick path: the stick coloured early to late, the game's output, where the stick is now (live),
  *     and a slow-motion replay of each recording, PLAY_SLOWER times slower, over and over: the path draws
  *     itself as the stick and the game's output move along it. Play/pause is on the view; dragging a time
@@ -130,13 +132,14 @@ export function analyzer({ session, tone }) {
     onChange: (v) => {
       game = v;
       try { localStorage.setItem(GAME_KEY, v); } catch { /* the choice just isn't kept */ }
-      if (shown) draw(shown, { keepPlaying: true });
+      if (shown) draw(shown, { keepPlaying: true }); else paintSummary(null, gameLines(), null);
     },
   });
   const title = h('div.an-title');
   const stats = h('div.an-stats');
   const timeline = h('p.an-timeline.small');
-  const empty = h('p.an-empty.muted', t('Push either stick out and let it go, or flick it across: it shows up here.'));
+  /** Shown where a value will be, until there is one (so nothing changes height when it arrives). */
+  const NONE = '–';
 
   // ---- Path view ------------------------------------------------------------------------------
   const R = 100;
@@ -197,14 +200,17 @@ export function analyzer({ session, tone }) {
   /** One view grows (smoothly, in place) and the others shrink beside it. */
   function setBig(key) {
     views.dataset.big = key;
+    // The wave and X and Y share the right side: the large one takes it, the other folds to its title
+    const folded = key === 'wave' ? 'xy' : key === 'xy' ? 'wave' : null;
     for (const [k, p] of Object.entries(panels)) {
       p.classList.toggle('is-big', k === key);
+      p.classList.toggle('is-folded', k === folded);
       growButtons[k].disabled = k === key;
     }
   }
   setBig('path');
 
-  const readout = h('p.an-readout.small', { 'aria-live': 'polite' });
+  const readout = h('p.an-readout.small', { 'aria-live': 'polite' }, t('Push either stick out and let it go, or flick it across: it shows up here.'));
 
   // ---- Navigator --------------------------------------------------------------------------------
   const prev = button({ icon: 'chevron-right', variant: 'ghost', size: 'sm', title: t('Newer'), class: 'an-flip', onClick: () => step(-1) });
@@ -217,7 +223,6 @@ export function analyzer({ session, tone }) {
     onChange: (v) => { filter = v; const list = visible(); if (list.length && !list.includes(shown)) draw(list[0]); else paintNav(); },
   });
   const nav = h('div.an-nav', prev, position, next, worst, h('span.spacer'), kindSelect);
-  nav.hidden = true;
   const visible = () => kept.filter((e) => filter === 'all' || e.a.kind === filter);
   function step(d) {
     const list = visible();
@@ -235,8 +240,9 @@ export function analyzer({ session, tone }) {
     download.disabled = !kept.length;
   }
 
-  // The views stay put at the top; what a recording adds goes under them, and grows into place
-  const details = h('div.an-details', empty, title, stats, timeline, nav);
+  // The views stay put at the top; the summary goes under them, every part of it always there (with
+  // placeholders until the first recording), so nothing changes height when a recording arrives
+  const details = h('div.an-details', title, stats, timeline, nav);
   const body = h('div.an-body', views, readout, details);
   /** Animate the details' height from h0 to what it is now (a recording changes what they hold). */
   let grow = null;
@@ -266,6 +272,31 @@ export function analyzer({ session, tone }) {
   /** A label on a chart's line, at its height (the chart stretches, so these are HTML over it). */
   const lineLabel = (text, v, height, kind) => h('span', { class: `an-line-label ${kind}`, style: { top: `${(yAt(v, height) / height) * 100}%` } }, text);
 
+  /** Title and stats: always the same tiles, a placeholder where there's nothing (yet) to show. */
+  function paintSummary(e, lines, dir) {
+    const a = e?.a;
+    title.replaceChildren(e ? h('span.an-stick', t(STICK_NAME[e.stick])) : h('span.an-stick.muted', t('No recording yet')),
+      h('span.an-kind', { class: e ? '' : 'muted' }, e ? t(KINDS[a.kind]) : NONE));
+    const stat = (label, value, cls = '') => h('div.an-stat', { class: value === NONE ? `${cls} muted` : cls }, h('span.an-stat-label', label), h('span.an-stat-value', value));
+    const on = !!a?.g;
+    const d = on ? a.r.delayMs : undefined;
+    const g = GAMES.find((x) => x.id === game);
+    // A let-go with a game picked: would its rebound have counted there?
+    let verdict = [NONE, ''];
+    if (!lines.length) verdict = [t('No game lines'), 'muted'];
+    else if (on && (a.kind === 'letgo' || a.kind === 'turnaround')) {
+      const worstLine = reboundPast(a.g, dir, lines).filter((v) => v.samples).pop();
+      verdict = worstLine ? [t('Past {line} for {time}', { line: t(LINE_NAMES[worstLine.line.label]), time: ms(worstLine.samples * SAMPLE_MS) }), worstLine.line.kind === 'action' ? 'warn' : '']
+        : [t('No input: the rebound stays under every line'), 'good'];
+    }
+    stats.replaceChildren(
+      stat(t('Delay'), !on ? NONE : d == null ? t('None (let go)') : d ? ms(d) : t('None'), d > DELAY_WARN_MS ? 'warn' : d == null ? 'muted' : 'good'),
+      stat(t('Held'), !on ? NONE : a.heldMs ? ms(a.heldMs) : t('Not held')),
+      stat(t('Rebound held back'), on && a.heldMs ? t('{n}%', { n: fmt.number(Math.round((a.peakBlocked / FULL) * 100)) }) : NONE),
+      stat(t('How the hold ended'), e && !on ? t('Filter not active') : on && a.main ? t(REASONS[a.main]) : NONE, `wide${e && !on ? ' muted' : ''}`),
+      stat(g && lines.length ? g.name : t('Game'), verdict[0], `wide ${verdict[1]}`));
+  }
+
   function draw(e, { keepPlaying = false } = {}) {
     shown = e;
     const { c, a, dz } = e;
@@ -274,30 +305,7 @@ export function analyzer({ session, tone }) {
     const dir = pushDirection(c);
     grow?.cancel();
     const h0 = details.offsetHeight;
-    empty.hidden = true;
-    nav.hidden = false;
-
-    // Title and stats
-    title.replaceChildren(h('span.an-stick', t(STICK_NAME[e.stick])), h('span.an-kind', t(KINDS[a.kind])));
-    const stat = (label, value, cls = '') => h('div.an-stat', { class: cls }, h('span.an-stat-label', label), h('span.an-stat-value', value));
-    const tiles = [];
-    if (!a.g) tiles.push(stat(t('Filter'), t('Filter not active'), 'muted'));
-    else {
-      const d = a.r.delayMs;
-      tiles.push(stat(t('Delay'), d == null ? t('None (let go)') : d ? ms(d) : t('None'), d > DELAY_WARN_MS ? 'warn' : d == null ? 'muted' : 'good'));
-      tiles.push(stat(t('Held'), a.heldMs ? ms(a.heldMs) : t('Not held')));
-      if (a.heldMs) tiles.push(stat(t('Rebound held back'), t('{n}%', { n: fmt.number(Math.round((a.peakBlocked / FULL) * 100)) })));
-      if (a.main) tiles.push(stat(t('How the hold ended'), t(REASONS[a.main]), 'wide'));
-      // A let-go with a game picked: would its rebound have counted there?
-      if (lines.length && (a.kind === 'letgo' || a.kind === 'turnaround')) {
-        const verdicts = reboundPast(a.g, dir, lines);
-        const worstLine = verdicts.filter((v) => v.samples).pop();
-        const g = GAMES.find((x) => x.id === game);
-        tiles.push(stat(g.name, worstLine ? t('Past {line} for {time}', { line: t(LINE_NAMES[worstLine.line.label]), time: ms(worstLine.samples * SAMPLE_MS) })
-          : t('No input: the rebound stays under every line'), worstLine?.line.kind === 'action' ? 'warn wide' : worstLine ? 'wide' : 'good wide'));
-      }
-    }
-    stats.replaceChildren(...tiles);
+    paintSummary(e, lines, dir);
 
     // Path: the game's lines, the output under the stick, the stick coloured from early (blue) to late (red)
     dzCircle.setAttribute('r', px(dz).toFixed(1));
@@ -375,7 +383,7 @@ export function analyzer({ session, tone }) {
     timeline.replaceChildren(...(a.g ? a.exits : []).flatMap((ex, i) => [
       i ? h('span.an-arrow', '→') : null,
       h('span.an-event', { class: ex.start ? 'start' : 'end' }, h('span.an-event-t', ms(span(ex.at))), ' ', t(REASONS[ex.why]))]).filter(Boolean));
-    timeline.hidden = !a.g || !a.exits.length;
+    if (!a.g || !a.exits.length) timeline.replaceChildren(h('span.faint', t('The filter’s decisions show up here.')));
 
     paintNav();
     settle(h0);
@@ -486,6 +494,9 @@ export function analyzer({ session, tone }) {
     link.remove();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   }
+
+  paintSummary(null, gameLines(), null);
+  paintNav();
 
   return {
     el,

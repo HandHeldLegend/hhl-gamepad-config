@@ -203,7 +203,6 @@ export default {
   'Run turnaround': 'Demi-tour en course',
   'Game': 'Jeu',
   'Now': 'Maintenant',
-  'Filter': 'Filtre',
   'Delay': 'Délai',
   'None (let go)': 'Aucun (relâché)',
   'Not held': 'Non retenu',
@@ -217,4 +216,6 @@ export default {
   'Stick path': 'Trajet du stick',
   'Snapback wave': 'Onde de rebond',
   'X and Y over time': 'X et Y dans le temps',
+  'No recording yet': 'Aucun enregistrement',
+  'The filter’s decisions show up here.': 'Les décisions du filtre s’affichent ici.',
 };
