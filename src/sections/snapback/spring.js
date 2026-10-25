@@ -646,7 +646,10 @@ export function flickMs(c) {
  *   outAt: number, delayMs: number|null}}
  */
 export function replay(c, p, dz = DEFAULT_DEADZONE) {
-  const g = runGate(c.x, c.y, p, { deadzone: dz });
+  return replayOutput(c, runGate(c.x, c.y, p, { deadzone: dz }), dz);
+}
+/** replay() for any filter's output g ({x, y}, one per sample). */
+export function replayOutput(c, g, dz = DEFAULT_DEADZONE) {
   const { ux, uy } = edgeDir(c);
   const n = c.x.length;
   const raw = Array.from(c.x, (x, i) => x * ux + c.y[i] * uy);
@@ -710,6 +713,24 @@ export function inspectCapture(c, p, dz = DEFAULT_DEADZONE) {
   const longest = r.held.reduce((best, s) => (!best || s[1] - s[0] > best[1] - best[0] ? s : best), null);
   if (longest) main = exits.find((e) => !e.start && e.at >= longest[1] - 1)?.why ?? null;
   return { kind, rawD, outD, g, r, heldMs, peakBlocked, exits, main };
+}
+
+/**
+ * inspectCapture() for one of the older filters (legacy-filters.js), from its output: no trace, so no
+ * decisions; `holding` (Auto's, one per sample) marks where it held the output at centre.
+ * @param {{x: ArrayLike<number>, y: ArrayLike<number>}} out
+ * @param {ArrayLike<number>} [holding]
+ */
+export function inspectOutput(c, out, dz = DEFAULT_DEADZONE, holding = null) {
+  const rawD = Array.from(c.x, (x, i) => Math.hypot(x, c.y[i]));
+  const kind = captureKind(c, dz);
+  const g = { x: out.x, y: out.y, state: Array.from(c.x, (_, i) => (holding?.[i] ? GATE.HOLDING : GATE.IDLE)) };
+  const outD = Array.from(g.x, (x, i) => Math.hypot(x, g.y[i]));
+  const r = replayOutput(c, g, dz);
+  const heldMs = r.held.reduce((sum, [a, b]) => sum + (b - a), 0) * SAMPLE_MS;
+  let peakBlocked = 0;
+  for (const [a, b] of r.held) for (let i = a; i < b; i++) peakBlocked = Math.max(peakBlocked, rawD[i]);
+  return { kind, rawD, outD, g, r, heldMs, peakBlocked, exits: [], main: null };
 }
 
 /**

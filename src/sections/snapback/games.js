@@ -8,6 +8,9 @@
  * and y separately, 'radial' the distance from centre. The lines assume the stick's full travel reaches
  * the game's full range; HOJA's own deadzone and output scaling shift them a little.
  *
+ * `hz` is how often the game reads the stick (its frame rate; Rocket League's physics tick), for the
+ * Analyzer's frame lines.
+ *
  * Sources (Oct 2026):
  *   Melee: deadzone 0.2875 and dash/smash 0.8 of Melee's range (80 units), tested per axis
  *     (smashboards.com/ucf, ssbwiki.com/Turn, sites.google.com/view/kadanosnapback). In GameCube mode HOJA
@@ -21,7 +24,8 @@
  *     HOJA's full travel.
  *   Rivals of Aether II: hard press (tap: dash, platform drop, tap jump) at 0.80 by default, per coordinate
  *     (dragdown.wiki/wiki/RoA2/Controls).
- *   Rocket League: 0.30 controller deadzone by default (commonly cited).
+ *   Rocket League: 0.30 controller deadzone by default (commonly cited); physics and input at 120 Hz.
+ *   The Smash games and Rivals II run at 60 frames a second.
  */
 const GC_UNIT = 1 / 110; // one GameCube unit, as a fraction of HOJA's full travel in GameCube mode
 const ULTIMATE = 80 * GC_UNIT; // Ultimate's 1.0 (80 GameCube units)
@@ -29,14 +33,14 @@ const ULTIMATE = 80 * GC_UNIT; // Ultimate's 1.0 (80 GameCube units)
 export const GAMES = [
   { id: 'none' },
   {
-    id: 'melee', name: 'Smash Bros. Melee',
+    id: 'melee', name: 'Smash Bros. Melee', hz: 60,
     lines: [
       { v: 23 * GC_UNIT, kind: 'deadzone', shape: 'axis', label: 'deadzone' },
       { v: 64 * GC_UNIT, kind: 'action', shape: 'axis', label: 'dash' },
     ],
   },
   {
-    id: 'ultimate', name: 'Smash Bros. Ultimate',
+    id: 'ultimate', name: 'Smash Bros. Ultimate', hz: 60,
     lines: [
       { v: 0.18 * ULTIMATE, kind: 'deadzone', shape: 'axis', label: 'walk' },
       { v: 0.6 * ULTIMATE, kind: 'action', shape: 'axis', label: 'runturn' },
@@ -44,11 +48,11 @@ export const GAMES = [
     ],
   },
   {
-    id: 'rivals2', name: 'Rivals of Aether II',
+    id: 'rivals2', name: 'Rivals of Aether II', hz: 60,
     lines: [{ v: 0.8, kind: 'action', shape: 'axis', label: 'hard' }],
   },
   {
-    id: 'rocketleague', name: 'Rocket League',
+    id: 'rocketleague', name: 'Rocket League', hz: 120,
     lines: [{ v: 0.3, kind: 'deadzone', shape: 'radial', label: 'deadzone' }],
   },
 ];

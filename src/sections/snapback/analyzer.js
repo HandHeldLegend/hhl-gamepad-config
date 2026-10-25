@@ -4,7 +4,9 @@
  * The page records whichever stick was last pushed out (view.js arms it from the live stream) each time it
  * comes back from a push, a let-go or a flick across: 256 samples of x/y at 2 kHz, 48 of them before it fell
  * under 500. Each recording shows what the stick did against what the game sees: the app's exact copy of
- * Auto's filter (spring.js) replayed with that stick's tuning and deadzone as they are now.
+ * stick's filter replayed with its settings and deadzone as they were when it was recorded: Auto with a
+ * tuning (spring.js), or the low-pass filter or untuned Auto (legacy-filters.js), all bit-exact; Off has
+ * nothing to replay.
  *
  * Three views in fixed places, in a box that keeps its height: the stick path on the left, the wave and
  * X and Y stacked beside it (all three stacked on a narrow card). The expand button on one grows it
@@ -25,19 +27,23 @@
  * ended the hold, and a one-line timeline of the filter's decisions.
  *
  * Game lines: a game's deadzone and the thresholds where a rebound turns into an input (games.js), drawn and
- * labelled on every view; for a let-go the summary says whether the rebound would have counted there.
+ * labelled on every view; for a let-go the summary says whether the rebound would have counted there. The
+ * time views also mark the game's frames (it reads the stick once a frame), counted from 0; where a real
+ * game's frames fall against the stick isn't known, so they show the spacing, not the exact moments.
+ *
+ * Each recording is named by the kind of move (captureKind) with a sentence on what that move was.
  *
  * Recordings: the last MAX_KEPT, stepped through with back and forward (newest first), "Worst" for the
- * largest delay, and a kind filter. Download saves them as JSON lines in the tuning recordings' format with
- * the tuning and deadzone they were replayed with. A stick that isn't using a tuning (not tuned, or not on
- * Auto) shows the stick alone and "Filter not active".
+ * largest delay, and a kind filter (a new recording of another kind puts it back to all kinds). Download saves them as JSON lines in the tuning recordings' format with
+ * the filter, tuning and deadzone they were replayed with. A stick with its filter off shows the stick alone.
  */
 import { h } from '../../ui/dom.js';
 import { card, button, select, dot } from '../../ui/controls.js';
 import { icon } from '../../ui/icons.js';
 import { prefersReducedMotion } from '../../ui/canvas-surface.js';
 import { t, N_, fmt } from '../../i18n/index.js';
-import { inspectCapture, GATE, CAPTURE_PRE, SAMPLE_MS, DEFAULT_DEADZONE } from './spring.js';
+import { inspectCapture, inspectOutput, GATE, CAPTURE_PRE, SAMPLE_MS, DEFAULT_DEADZONE } from './spring.js';
+import { lowPass, autoLegacy } from './legacy-filters.js';
 import { springParams } from './spring-config.js';
 import { GAMES, reboundPast } from './games.js';
 
@@ -53,11 +59,19 @@ const PLAY_SLOWER = 20;
 const PLAY_REST_MS = 900;
 
 const KINDS = {
-  letgo: N_('Let-go'),
-  turnaround: N_('Turnaround'),
-  flick: N_('Flick to the far edge'),
-  dashback: N_('Dash and return'),
-  other: N_('Other'),
+  letgo: N_('Let go from the edge'),
+  turnaround: N_('Let go from partway'),
+  flick: N_('Flick across'),
+  dashback: N_('Across and back'),
+  other: N_('Other move'),
+};
+/** What each kind of move was, in plain words. */
+const KIND_INFO = {
+  letgo: N_('You pushed the stick all the way out and let go. It springs back and bounces past center: that bounce is snapback, and the filter should hide it.'),
+  turnaround: N_('You let go before the stick reached the edge. Same as a let-go, with a smaller bounce.'),
+  flick: N_('You moved the stick from one side to the other and held it there, like a dash back. The filter must let this through right away.'),
+  dashback: N_('You flicked to the other side and back again, like a dash dance. Both moves should come through right away.'),
+  other: N_('A move that isn’t a let-go or a flick, such as a slow push or a circle.'),
 };
 const REASONS = {
   release: N_('Held: let go'),
@@ -136,6 +150,7 @@ export function analyzer({ session, tone }) {
     },
   });
   const title = h('div.an-title');
+  const kindInfo = h('p.an-kind-info.small.muted');
   const stats = h('div.an-stats');
   const timeline = h('p.an-timeline.small');
   /** Shown where a value will be, until there is one (so nothing changes height when it arrives). */
@@ -177,9 +192,12 @@ export function analyzer({ session, tone }) {
 
   // A tiny key in each view's corner: only what that view draws
   const pathKey = h('div.an-key.small', h('span.an-swatch.raw', t('Stick')), h('span.an-swatch.out', t('Game')), h('span.an-swatch.live', t('Now')));
-  const waveKey = h('div.an-key.small', h('span.an-swatch.raw-line', t('Stick')), h('span.an-swatch.out', t('Game')), h('span.an-swatch.held', t('Held')));
-  const xyKey = h('div.an-key.small', h('span.an-swatch.raw-line', t('Stick')), h('span.an-swatch.out', t('Game')));
+  // The game's frames: in the keys of the time views while a game is picked
+  const frameKeys = [0, 1].map(() => h('span.an-swatch.frame', { title: t('The game reads the stick once a frame. Where its frames fall against your stick varies, so this shows their spacing.') }));
+  const waveKey = h('div.an-key.small', h('span.an-swatch.raw-line', t('Stick')), h('span.an-swatch.out', t('Game')), h('span.an-swatch.held', t('Held')), frameKeys[0]);
+  const xyKey = h('div.an-key.small', h('span.an-swatch.raw-line', t('Stick')), h('span.an-swatch.out', t('Game')), frameKeys[1]);
 
+  const waveStateKey = stateKey();
   const playBtn = button({ icon: 'play', variant: 'ghost', size: 'sm', label: t('Slow motion'), class: 'an-play', disabled: true, onClick: () => (playing ? pause() : play()) });
   const growButtons = {};
   function panel(key, heading, tools, ...body) {
@@ -192,7 +210,7 @@ export function analyzer({ session, tone }) {
   const panels = {
     path: panel('path', t('Stick path'), playBtn, pathSvg, pathKey),
     wave: panel('wave', t('Snapback wave'), null,
-      h('div.an-times.wave', wave.wrap, strips[0].wrap, axisLabels()), waveKey, stateKey()),
+      h('div.an-times.wave', wave.wrap, strips[0].wrap, axisLabels()), waveKey, waveStateKey),
     xy: panel('xy', t('X and Y over time'), null,
       h('div.an-times.xy', h('span.an-chart-label.small.faint', 'X'), xs.wrap, h('span.an-chart-label.small.faint', 'Y'), ys.wrap, strips[1].wrap, axisLabels()), xyKey),
   };
@@ -242,7 +260,7 @@ export function analyzer({ session, tone }) {
 
   // The views stay put at the top; the summary goes under them, every part of it always there (with
   // placeholders until the first recording), so nothing changes height when a recording arrives
-  const details = h('div.an-details', title, stats, timeline, nav);
+  const details = h('div.an-details', h('div.an-head', title, kindInfo), stats, timeline, nav);
   const body = h('div.an-body', views, readout, details);
   /** Animate the details' height from h0 to what it is now (a recording changes what they hold). */
   let grow = null;
@@ -276,7 +294,9 @@ export function analyzer({ session, tone }) {
   function paintSummary(e, lines, dir) {
     const a = e?.a;
     title.replaceChildren(e ? h('span.an-stick', t(STICK_NAME[e.stick])) : h('span.an-stick.muted', t('No recording yet')),
-      h('span.an-kind', { class: e ? '' : 'muted' }, e ? t(KINDS[a.kind]) : NONE));
+      h('span.an-kind', { class: e ? '' : 'muted' }, e ? t(KINDS[a.kind]) : NONE),
+      e ? h('span.an-filter.small.muted', filterName(e.filter)) : null);
+    kindInfo.textContent = e ? t(KIND_INFO[a.kind]) : t('Each recording is named by the move you made, with what it means here.');
     const stat = (label, value, cls = '') => h('div.an-stat', { class: value === NONE ? `${cls} muted` : cls }, h('span.an-stat-label', label), h('span.an-stat-value', value));
     const on = !!a?.g;
     const d = on ? a.r.delayMs : undefined;
@@ -293,7 +313,7 @@ export function analyzer({ session, tone }) {
       stat(t('Delay'), !on ? NONE : d == null ? t('None (let go)') : d ? ms(d) : t('None'), d > DELAY_WARN_MS ? 'warn' : d == null ? 'muted' : 'good'),
       stat(t('Held'), !on ? NONE : a.heldMs ? ms(a.heldMs) : t('Not held')),
       stat(t('Rebound held back'), on && a.heldMs ? t('{n}%', { n: fmt.number(Math.round((a.peakBlocked / FULL) * 100)) }) : NONE),
-      stat(t('How the hold ended'), e && !on ? t('Filter not active') : on && a.main ? t(REASONS[a.main]) : NONE, `wide${e && !on ? ' muted' : ''}`),
+      stat(t('How the hold ended'), e && !on ? t('Filter off') : on && a.main ? t(REASONS[a.main]) : on && e.filter.mode === 'lowpass' ? t('Low-pass: smooths, never holds') : NONE, `wide${e && !on ? ' muted' : ''}`),
       stat(g && lines.length ? g.name : t('Game'), verdict[0], `wide ${verdict[1]}`));
   }
 
@@ -337,12 +357,26 @@ export function analyzer({ session, tone }) {
     startMark.setAttribute('cx', px(c.x[0]).toFixed(1)); startMark.setAttribute('cy', (-px(c.y[0])).toFixed(1));
     endMark.setAttribute('cx', px(c.x[n - 1]).toFixed(1)); endMark.setAttribute('cy', (-px(c.y[n - 1])).toFixed(1));
 
+    // The game's frames, counted from 0 (back under 500) both ways
+    const hz = GAMES.find((x) => x.id === game)?.hz;
+    const frameAt = [];
+    if (hz) {
+      const step = 1000 / hz / SAMPLE_MS;
+      for (let i = CAPTURE_PRE % step; i < n; i += step) frameAt.push(i);
+    }
+    for (const k of frameKeys) {
+      k.hidden = !hz;
+      k.textContent = hz ? t('Frames ({time} each)', { time: ms(1000 / hz) }) : '';
+    }
+    const frames = (height) => frameAt.map((i) => h('line.an-frame', { x1: xAt(i, n), x2: xAt(i, n), y1: 0, y2: height }));
+
     // Along the push: the wave, each side shaded its own colour, the deadzone band, the game's lines
     const along = (xs2, ys2) => Array.from(xs2, (x, i) => x * dir.ux + ys2[i] * dir.uy);
     const rawA = along(c.x, c.y);
     const wParts = [
       h('rect.an-dz', { x: 0, width: W, y: yAt(dz, wave.height), height: yAt(-dz, wave.height) - yAt(dz, wave.height) }),
       h('line.an-mid', { x1: 0, x2: W, y1: wave.height / 2, y2: wave.height / 2 }),
+      ...frames(wave.height),
     ];
     if (a.g) for (const [s0, s1] of a.r.held) wParts.push(h('rect.an-held', { x: xAt(s0, n), width: Math.max(1, xAt(s1, n) - xAt(s0, n)), y: 0, height: wave.height }));
     wParts.push(area(rawA, wave.height, 1, 'an-area pushed'), area(rawA, wave.height, -1, 'an-area other'));
@@ -357,7 +391,7 @@ export function analyzer({ session, tone }) {
 
     // X and Y over time, with the game's lines either side of centre
     for (const [chart, axisVals, outVals] of [[xs, c.x, a.g?.x], [ys, c.y, a.g?.y]]) {
-      chart.svg.replaceChildren(h('line.an-mid', { x1: 0, x2: W, y1: chart.height / 2, y2: chart.height / 2 }),
+      chart.svg.replaceChildren(h('line.an-mid', { x1: 0, x2: W, y1: chart.height / 2, y2: chart.height / 2 }), ...frames(chart.height),
         ...lines.flatMap((l) => [-1, 1].map((s) => h('line', { class: `an-game-line ${l.kind}`, x1: 0, x2: W, y1: yAt(s * l.v * FULL, chart.height), y2: yAt(s * l.v * FULL, chart.height) }))),
         polyline(Array.from(axisVals), chart.height, 'an-line raw'),
         ...(outVals ? [polyline(Array.from(outVals), chart.height, 'an-line out')] : []), chart.cursor);
@@ -377,9 +411,11 @@ export function analyzer({ session, tone }) {
         for (const ex of a.exits) parts.push(h('line.an-tick', { x1: xAt(ex.at, n), x2: xAt(ex.at, n), y1: 0, y2: strip.height }));
       }
       strip.svg.replaceChildren(...parts, strip.cursor);
-      strip.wrap.style.display = a.g ? '' : 'none';
+      // (the low-pass filter has no states: it only smooths)
+      strip.wrap.style.display = a.g && e.filter.mode !== 'lowpass' ? '' : 'none';
     }
     // The filter's decisions in one line: time, what happened, in order
+    waveStateKey.hidden = !a.g || e.filter.mode === 'lowpass';
     timeline.replaceChildren(...(a.g ? a.exits : []).flatMap((ex, i) => [
       i ? h('span.an-arrow', '→') : null,
       h('span.an-event', { class: ex.start ? 'start' : 'end' }, h('span.an-event-t', ms(span(ex.at))), ' ', t(REASONS[ex.why]))]).filter(Boolean));
@@ -481,11 +517,27 @@ export function analyzer({ session, tone }) {
     if (p) liveDot.setAttribute('transform', `translate(${px(p[0]).toFixed(1)} ${(-px(p[1])).toFixed(1)})`);
   }
 
+  /** The filter a stick is on (l/r_snapback_type: 0 low-pass, 1 or 3 Auto, 2 off; anything else the
+   *  firmware runs as low-pass), and with Auto whether it has a tuning. */
+  function stickFilter(stick, params) {
+    const s = stick === 'left' ? 'l' : 'r';
+    const type = session.config.analog?.[`${s}_snapback_type`];
+    if (type === 2) return { mode: 'off' };
+    if (type === 1 || type === 3) return { mode: params ? 'spring' : 'auto' };
+    return { mode: 'lowpass', cutoff: session.config.analog?.[`${s}_snapback_intensity`] ?? 600 };
+  }
+  function filterName(f) {
+    if (f.mode === 'spring') return t('Auto, tuned');
+    if (f.mode === 'auto') return t('Auto, not tuned');
+    if (f.mode === 'lowpass') return t('Low-pass {hz} Hz', { hz: fmt.number(Math.max(300, Math.min(1500, f.cutoff)) / 10, { maximumFractionDigits: 1 }) });
+    return t('Filter off');
+  }
+
   /** Download every kept recording: JSON lines, the tuning recordings' format plus the replay's delay. */
   function save() {
     const out = kept.map((e) => JSON.stringify({
       label: 'analyzer', stick: e.stick, number: e.c.number, period_us: SAMPLE_MS * 1000, pre: CAPTURE_PRE, time: e.time / 1000,
-      deadzone: e.dz, tuned: !!e.params, params: e.params, delayMs: e.a.r ? e.a.r.delayMs : null, x: Array.from(e.c.x), y: Array.from(e.c.y),
+      deadzone: e.dz, filter: e.filter, tuned: !!e.params, params: e.params, delayMs: e.a.r ? e.a.r.delayMs : null, x: Array.from(e.c.x), y: Array.from(e.c.y),
     }));
     const blob = new Blob([`${out.join('\n')}\n`], { type: 'application/x-ndjson' });
     const link = h('a', { href: URL.createObjectURL(blob), download: `analyzer-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.jsonl` });
@@ -514,12 +566,18 @@ export function analyzer({ session, tone }) {
       const stick = c.stick === 1 ? 'right' : 'left';
       const params = springParams(session, stick);
       const dz = session.config.analog?.[stick === 'left' ? 'l_deadzone' : 'r_deadzone'] || DEFAULT_DEADZONE;
-      const e = { c, stick, time: Date.now(), params, dz, a: inspectCapture(c, params, dz) };
+      const sf = stickFilter(stick, params);
+      const a = sf.mode === 'spring' ? inspectCapture(c, params, dz)
+        : sf.mode === 'lowpass' ? inspectOutput(c, lowPass(c.x, c.y, { cutoff: sf.cutoff }), dz)
+        : sf.mode === 'auto' ? (({ x, y, holding }) => inspectOutput(c, { x, y }, dz, holding))(autoLegacy(c.x, c.y))
+        : inspectCapture(c, null, dz);
+      const e = { c, stick, time: Date.now(), params, dz, filter: sf, a };
       kept.unshift(e);
       if (kept.length > MAX_KEPT) kept.pop();
-      // The newest is shown unless it's filtered out
-      if (filter === 'all' || e.a.kind === filter || !shown) draw(e);
-      else paintNav();
+      // The newest is always shown: one of another kind puts the kind filter back to all kinds (else a
+      // filter left on would hide every new move)
+      if (filter !== 'all' && e.a.kind !== filter) { filter = 'all'; kindSelect.value = 'all'; }
+      draw(e);
     },
     destroy() {
       pause();

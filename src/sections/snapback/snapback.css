@@ -176,6 +176,9 @@
 .an-stat.warn .an-stat-value { color: var(--yellow); }
 .an-stat.muted .an-stat-value { color: var(--text-muted); font-weight: 600; }
 .an-title .muted { color: var(--text-muted); }
+/* The move's name and what it means; room for two lines so a longer one doesn't move what's below */
+.an-head { display: grid; gap: 2px; }
+.an-kind-info { margin: 0; min-height: 2.8em; max-width: 80ch; }
 .an-stat.wide .an-stat-value { font-weight: 700; font-size: var(--text-sm); }
 
 .an-nav { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }
@@ -265,6 +268,8 @@
 .an-state.decide { fill: var(--blue); }
 .an-state.check { fill: var(--accent); }
 .an-state.hold { fill: var(--yellow); }
+/* The game's frames */
+.an-frame { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; opacity: 0.55; }
 .an-tick { stroke: var(--text); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 /* Labels on the charts (HTML over the stretched SVG) */
 .an-labels { position: absolute; inset: 0; pointer-events: none; }
@@ -291,6 +296,9 @@
 .an-swatch.raw::before { background: linear-gradient(90deg, var(--blue), var(--red)); }
 .an-swatch.raw-line::before { background: var(--text-muted); }
 .an-swatch.out::before { background: var(--tone); height: 4px; }
+.an-swatch.frame::before { width: 2px; height: 10px; border-radius: 0; background: var(--text-muted); opacity: 0.7; }
+.an-key[hidden] { display: none; }
+.an-swatch.frame[hidden] { display: none; }
 .an-swatch.live::before { width: 8px; height: 8px; border-radius: 50%; border: 1.5px dashed var(--text-muted); background: none; }
 .an-swatch.held::before { height: 9px; background: color-mix(in srgb, var(--yellow) 35%, transparent); }
 .an-swatch.decide::before, .an-swatch.check::before, .an-swatch.hold::before { height: 8px; }
