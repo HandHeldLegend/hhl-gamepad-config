@@ -83,9 +83,14 @@ function swingTables(p) {
   return { peak, quarter };
 }
 
-/** Past a crossing (`fall` its speed, `n` samples ago): further out, or still going out too long, is a hand. */
+/**
+ * Past a crossing (`fall` its speed, `n` samples ago): further out, or still going out too long, is a hand.
+ * @returns {'beyond'|'late'|null} which (for the trace), or null
+ */
 function isHand(q, qPrev, fall, n, turned, o, tabs) {
-  return -q * 256 > fall * tabs.peak[o] || (!turned && q < 0 && q < qPrev && n > tabs.quarter[o]);
+  if (-q * 256 > fall * tabs.peak[o]) return 'beyond';
+  if (!turned && q < 0 && q < qPrev && n > tabs.quarter[o]) return 'late';
+  return null;
 }
 
 /** The release check carries on through a layer-1 hold this many samples after the release line (7 ms). */
@@ -124,10 +129,13 @@ const clamp = (v, [lo, hi]) => Math.min(hi, Math.max(lo, v));
  * @param {ArrayLike<number>} xs
  * @param {ArrayLike<number>} ys
  * @param {typeof SPRING_DEFAULTS} p  the tuning
- * @param {{measure?: boolean, deadzone?: number}} [o]  measure: check every centre crossing faster than 5
+ * @param {{measure?: boolean, deadzone?: number, trace?: boolean}} [o]  measure: check every centre crossing faster than 5
  *   counts a sample and never hold on one (each check's stiffness and speed are reported in `checks`); for
- *   the fit. deadzone: the stick's inner deadzone, which the firmware settles a hold within
- * @returns {{x: Int16Array, y: Int16Array, state: Uint8Array, checks: {at: number, speed: number, k: number}[]}}
+ *   the fit. deadzone: the stick's inner deadzone, which the firmware settles a hold within. trace: also
+ *   return, per sample, the layer and why a decision or hold ended or a hold began there (TRACE_REASONS);
+ *   it only records, the outputs are the same
+ * @returns {{x: Int16Array, y: Int16Array, state: Uint8Array, checks: {at: number, speed: number, k: number}[],
+ *   layer?: Uint8Array, why?: (string|null)[]}}
  */
 export function runGate(xs, ys, p, o = {}) {
   const n = Math.min(xs.length, ys.length);
@@ -135,6 +143,9 @@ export function runGate(xs, ys, p, o = {}) {
   const outY = new Int16Array(n);
   const trace = new Uint8Array(n);
   const checks = [];
+  const layers = o.trace ? new Uint8Array(n) : null;
+  const why = o.trace ? new Array(n).fill(null) : null;
+  const note = (i, reason) => { if (why) why[i] = reason; };
   const crossSpeed = o.measure ? 5 : p.cross_speed;
   const settled = clamp(o.deadzone ?? DEFAULT_DEADZONE, SETTLED_RANGE);
   const tabs = swingTables(p);
@@ -170,6 +181,7 @@ export function runGate(xs, ys, p, o = {}) {
       if (!s.crossed && s.fcross >= CROSS_MARGIN) {
         s.state = GATE.IDLE; // thrown by the thumb: it passes, and this sample is an idle one
         st = GATE.IDLE;
+        note(i, 'thrown');
       }
     }
     // A hand, by a free spring's swing after a crossing (layer 1: the release line's; layer 2: the checked one)
@@ -180,7 +192,9 @@ export function runGate(xs, ys, p, o = {}) {
       } else {
         s.l1n++;
         if (q0 < 0 && q0 > s.q1) s.l1turned = true;
-        if (isHand(q0, s.q1, s.l1fall, s.l1n, s.l1turned, s.oct, tabs)) {
+        const hand = isHand(q0, s.q1, s.l1fall, s.l1n, s.l1turned, s.oct, tabs);
+        if (hand) {
+          note(i, hand);
           s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
           st = -1; // this sample passes; nothing below runs
         }
@@ -188,7 +202,9 @@ export function runGate(xs, ys, p, o = {}) {
     } else if ((st === GATE.CHECKING && !o.measure) || (st === GATE.HOLDING && s.layer === 2)) {
       s.xn++;
       if (p0 < 0 && p0 > s.p1) s.xturned = true;
-      if (isHand(p0, s.p1, s.xfall, s.xn, s.xturned, s.xoct, tabs)) {
+      const hand = isHand(p0, s.p1, s.xfall, s.xn, s.xturned, s.xoct, tabs);
+      if (hand) {
+        note(i, hand);
         s.state = GATE.IDLE;
         st = -1;
       }
@@ -217,9 +233,8 @@ export function runGate(xs, ys, p, o = {}) {
         s.step++;
         s.fx2 = s.fx1; s.fy2 = s.fy1; s.fx1 = fx; s.fy1 = fy;
         const limit = p.decide_step * s.step;
-        if (s.step >= 2 && freeErr > limit * limit) s.state = GATE.IDLE;
-        else {
-          if (s.step >= DECIDE) { holdStart(s); s.layer = 1; }
+        if (s.step >= 2 && freeErr > limit * limit) { s.state = GATE.IDLE; note(i, 'thumb'); } else {
+          if (s.step >= DECIDE) { holdStart(s); s.layer = 1; note(i, 'release'); }
           neutral = past || s.state === GATE.HOLDING;
         }
         break;
@@ -237,7 +252,8 @@ export function runGate(xs, ys, p, o = {}) {
             s.oct = octant(s.rx, s.ry);
             holdStart(s);
             s.layer = 2;
-          } else s.state = GATE.IDLE;
+            note(i, 'rebound');
+          } else { s.state = GATE.IDLE; note(i, 'passed'); }
         }
         neutral = s.state === GATE.CHECKING || s.state === GATE.HOLDING;
         break;
@@ -247,6 +263,7 @@ export function runGate(xs, ys, p, o = {}) {
         if (freeCheck && s.step + 1 >= 2 && freeErr > freeLimit * freeLimit) {
           // Strayed from the free spring within 7 ms of the line: the hand had it after all
           s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
+          note(i, 'free');
           break;
         }
         // A layer-1 hold keeps the free spring running until the stick crosses (the thrown check above)
@@ -260,9 +277,13 @@ export function runGate(xs, ys, p, o = {}) {
         s.still = d >= STILL_MIN && Math.abs(d - s.dprev) * STILL_DIV <= d ? s.still + 1 : 0;
         // Speeding up away from centre: pushed, as a spring only pulls it back
         s.push = d >= PUSH_MIN && d > s.dprev && d - 2 * s.dprev + s.dprev2 > 0 ? s.push + 1 : 0;
-        if (s.push >= PUSH_N || s.still >= STILL_N || s.grab >= GRAB_COUNT) s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
-        else if (s.settle >= SETTLE_COUNT || s.hold >= HOLD_MAX) s.state = GATE.IDLE;
-        else neutral = true;
+        if (s.push >= PUSH_N || s.still >= STILL_N || s.grab >= GRAB_COUNT) {
+          s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
+          note(i, s.push >= PUSH_N ? 'push' : s.still >= STILL_N ? 'still' : 'grab');
+        } else if (s.settle >= SETTLE_COUNT || s.hold >= HOLD_MAX) {
+          s.state = GATE.IDLE;
+          note(i, s.settle >= SETTLE_COUNT ? 'settled' : 'max');
+        } else neutral = true;
         break;
       }
       default:
@@ -282,8 +303,9 @@ export function runGate(xs, ys, p, o = {}) {
     outX[i] = neutral ? 0 : x;
     outY[i] = neutral ? 0 : y;
     trace[i] = s.state;
+    if (layers) layers[i] = s.layer;
   }
-  return { x: outX, y: outY, state: trace, checks };
+  return { x: outX, y: outY, state: trace, checks, ...(o.trace ? { layer: layers, why } : {}) };
 }
 
 function holdStart(s) {
@@ -644,6 +666,50 @@ export function replay(c, p, dz = DEFAULT_DEADZONE) {
     delayMs = ((outAt < 0 ? n : outAt) - rawAt) * SAMPLE_MS;
   }
   return { raw, out, held, side, rawAt, outAt, delayMs };
+}
+
+/** What a capture was, from the stick's own path: a let-go from the edge, a turnaround (let go from partway),
+ *  a flick to the far edge, a dash out and back, or something else. */
+export function captureKind(c, dz = DEFAULT_DEADZONE) {
+  const { pk, ux, uy } = edgeDir(c);
+  const n = c.x.length;
+  const along = (i) => c.x[i] * ux + c.y[i] * uy;
+  let farthest = 0;
+  for (let i = pk.at; i < n; i++) farthest = Math.min(farthest, along(i));
+  const end = along(n - 1);
+  if (Math.hypot(c.x[n - 1], c.y[n - 1]) <= dz) return pk.d >= EDGE ? 'letgo' : 'turnaround';
+  if (end < -dz) return farthest < -FAR_SIDE ? 'flick' : 'other';
+  if (end > dz) return farthest < -FAR_SIDE ? 'dashback' : 'other';
+  return 'other';
+}
+const FAR_SIDE = 1400;
+
+/** Reasons the trace gives that start a hold (the others end a decision, check or hold). */
+const HOLD_STARTS = new Set(['release', 'rebound']);
+
+/**
+ * Everything the Analyzer shows about one capture: its kind, the stick's distance from centre and the
+ * output's, the gate's trace (state, layer, reasons), the delay (replay), the time held while out, the
+ * furthest the stick got while held (the rebound blocked), the exits, and the reason that ended the
+ * longest hold. Without a tuning (p null) only the stick's side is there.
+ */
+export function inspectCapture(c, p, dz = DEFAULT_DEADZONE) {
+  const rawD = Array.from(c.x, (x, i) => Math.hypot(x, c.y[i]));
+  const kind = captureKind(c, dz);
+  if (!p) return { kind, rawD, g: null };
+  const g = runGate(c.x, c.y, p, { deadzone: dz, trace: true });
+  const outD = Array.from(g.x, (x, i) => Math.hypot(x, g.y[i]));
+  const r = replay(c, p, dz);
+  const heldMs = r.held.reduce((sum, [a, b]) => sum + (b - a), 0) * SAMPLE_MS;
+  let peakBlocked = 0;
+  for (const [a, b] of r.held) for (let i = a; i < b; i++) peakBlocked = Math.max(peakBlocked, rawD[i]);
+  const exits = [];
+  g.why.forEach((why, at) => { if (why) exits.push({ at, why, start: HOLD_STARTS.has(why) }); });
+  // The reason that ended the longest stretch held: the first ending at or after it
+  let main = null;
+  const longest = r.held.reduce((best, s) => (!best || s[1] - s[0] > best[1] - best[0] ? s : best), null);
+  if (longest) main = exits.find((e) => !e.start && e.at >= longest[1] - 1)?.why ?? null;
+  return { kind, rawD, outD, g, r, heldMs, peakBlocked, exits, main };
 }
 
 /**
