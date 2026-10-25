@@ -1,29 +1,23 @@
 /**
- * Snapback view: port of hoja2/modules/snapback-md.js (+ components/waveform-display.js).
+ * Snapback view.
  *
  * "Snapback" is the rebound past center when you let go of a stick: the spring flings it to the other
  * side for a few milliseconds, which games can read as a flick in the opposite direction.
  *
- * Layout: the shared left/right split (docs/SECTIONS.md "Left/right layouts"). Each stick gets a column
- * with the same two cards in the same order, so they line up side by side on wide pages:
- *   1. Snapback filter: filter mode (l/r_snapback_type: Low-pass / Auto / Off) and the low-pass cutoff
- *      (l/r_snapback_intensity, tenths of a Hz), written live through settingField (settings.js). On
- *      firmware with the spring model, Auto shows the stick's tuning in place of the cutoff: tuned to this
- *      stick or not (standard Auto), Tune (tune.js) and Reset tuning (spring-config.js).
- *   2. Analyzer: that stick's latest capture (X or Y axis), its stats and a short capture history.
- * Narrow pages show one column at a time with a Left/Right switch; single-stick builds show one column.
+ * Layout: the shared left/right split (docs/SECTIONS.md "Left/right layouts") with each stick's
+ * Snapback filter card: filter mode (l/r_snapback_type: Low-pass / Auto / Off) and the low-pass cutoff
+ * (l/r_snapback_intensity, tenths of a Hz), written live through settingField (settings.js). On firmware
+ * with the spring model, Auto shows the stick's tuning in place of the cutoff: tuned to this stick or not
+ * (standard Auto), Tune (tune.js) and Reset tuning (spring-config.js). Narrow pages show one column at a
+ * time with a Left/Right switch; single-stick builds show one column.
  *
- * Analyzer: the controller sends an analog dump (report 0xFA → device 'snapback' event) on its own
- * whenever an axis is pushed to the edge and released; see waveform.js for the format. Nothing has to be
- * requested; like hoja2 we just listen. Each capture goes to its stick's column (LX/LY → left,
- * RX/RY → right), which keeps the last few so they can be compared. The filter and the result it
- * produces sit together, and on wide pages the two sticks can be compared directly.
+ * Analyzer, on firmware that records a stick at full rate (analyzer.js): one card under both columns. The
+ * controller records one stick at a time (device.armSpringCapture), so the page watches both on the live
+ * stream and records whichever was last pushed out (while the other is near centre): the Analyzer follows
+ * the stick that was last flicked or let go. The tuning dialog takes the recording over while it's open.
  *
- * Full-speed view (raw-view.js, firmware that records a stick at full rate): while the page is open the
- * viewed stick is recorded (device.armSpringCapture) each time it comes back from a push, and the app's copy
- * of Auto's filter is replayed over each recording with the stick's tuning: what the stick did against what
- * the game sees, and any delay. One stick is recorded at a time, the one picked (the narrow page's switch, or
- * the column worked in on a wide page); the tuning dialog takes the recording over while it's open.
+ * Older firmware has only the controller's own analog dump (report 0xFA, waveform.js): there each column
+ * keeps the previous Analyzer, that stick's latest dump (X or Y axis) with its stats and a short history.
  *
  * Deep link: #/snapback?stick=right selects that column (narrow) or scrolls to and highlights it (wide).
  */
@@ -35,12 +29,16 @@ import { waveformView, parseDump, analyze, AXES } from './waveform.js';
 import { t, N_, fmt } from '../../i18n/index.js';
 import { springStatus, resetSpring } from './spring-config.js';
 import { tuneSpring } from './tune.js';
-import { rawView } from './raw-view.js';
+import { analyzer as fullAnalyzer } from './analyzer.js';
+import { onInputReport } from '../../device/reports.js';
 
 loadStyles(new URL('./snapback.css', import.meta.url));
 
 const TONE = 'green';
-const HISTORY = 6;            // captures kept per stick
+const HISTORY = 6;            // captures kept per stick (older firmware's Analyzer)
+/** The live stream: a stick this far out, with the recorded one near centre, takes the recording over. */
+const TAKE_OVER = 1100;
+const NEAR_CENTER = 600;
 const WIDE_PX = 640;          // matches the .lr-split container query in css/components.css
 const HIGHLIGHT_MS = 1200;    // matches the lr-flash animation
 const NAME = { left: N_('Left'), right: N_('Right') };
@@ -103,10 +101,10 @@ function springPanel(stick, { session, device, onTuned, onTuning }) {
 }
 
 /**
- * One stick's column: header, filter card, analyzer card.
+ * One stick's column: header, filter card, and (older firmware) its own analyzer card.
  * @returns {{el: HTMLElement, add: (c: object) => void, destroy: () => void}}
  */
-function stickColumn(stick, { session, device, onTuned, onTuning }) {
+function stickColumn(stick, { session, device, onTuned, onTuning, fullSpeed }) {
   const right = stick === 'right';
   const stickName = t(STICK_NAME[stick]);
 
@@ -131,7 +129,14 @@ function stickColumn(stick, { session, device, onTuned, onTuning }) {
     icon: 'snapback', tone: TONE, class: 'sb-filter',
   }, type, cutoff, spring.el, note);
 
-  // ---- Analyzer --------------------------------------------------------------------------------
+  if (fullSpeed) {
+    // The Analyzer is one card under both columns (analyzer.js)
+    const el = h('section.lr-col', { 'data-side': stick, 'aria-label': stickName },
+      h('div.lr-col-head', h('span.lr-tag', stick === 'left' ? 'L' : 'R'), stickName), filterCard);
+    return { el, refresh() { type.refresh(); syncMode(type.control.value); spring.paint(); }, add() {}, destroy() {} };
+  }
+
+  // ---- Analyzer (older firmware: the controller's own analog dump) -------------------------------
   const wave = waveformView({
     label: t('{stick}: snapback waveform', { stick: stickName }),
     emptyText: right ? t('Flick the right stick…') : t('Flick the left stick…'),
@@ -171,7 +176,6 @@ function stickColumn(stick, { session, device, onTuned, onTuning }) {
     }));
   }
 
-  const raw = session.caps.snapbackSpring ? rawView({ session, stick }) : null;
   const analyzerCard = card({
     title: t('Analyzer'), subtitle: right ? t('What the right stick does in the 31 ms after you let go.') : t('What the left stick does in the 31 ms after you let go.'),
     icon: 'bolt', tone: TONE, actions: status, class: 'sb-analyzer',
@@ -179,8 +183,7 @@ function stickColumn(stick, { session, device, onTuned, onTuning }) {
   h('div.sb-plot',
     h('div.sb-head', axisBadge, h('span.spacer'), stats),
     wave.el,
-    history),
-  raw?.el);
+    history));
 
   const el = h('section.lr-col', { 'data-side': stick, 'aria-label': stickName },
     h('div.lr-col-head', h('span.lr-tag', stick === 'left' ? 'L' : 'R'), stickName),
@@ -190,7 +193,6 @@ function stickColumn(stick, { session, device, onTuned, onTuning }) {
   return {
     el,
     analyzer: analyzerCard,
-    raw,
     refresh() { type.refresh(); syncMode(type.control.value); spring.paint(); },
     add(c) {
       captures.unshift(c);
@@ -211,24 +213,42 @@ export function mount(root, ctx) {
   let highlightTimer = 0;
   let highlightFrame = 0;
 
-  // After tuning, bring that stick's Analyzer into view (a completion step: the next thing to do is flick it)
+  // After tuning, bring the Analyzer into view (a completion step: the next thing to do is flick it)
   const onTuned = (s) => {
-    const card = columns[s]?.analyzer;
+    const card = full?.el || columns[s]?.analyzer;
     if (!card) return;
     pick(s);
     card.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'center' });
   };
-  // The full-speed recording: one stick at a time, the one picked; the tuning dialog has it while open
+  // The full-speed recording: one stick at a time, whichever was last pushed out; the tuning dialog has
+  // it while open
   const rawOn = !!session.caps.snapbackSpring;
+  const full = rawOn ? fullAnalyzer({ session, tone: TONE }) : null;
   let tuningOpen = false;
-  function arm() {
-    if (!rawOn || tuningOpen) return;
-    device.springCaptureHint?.({ stick: active, step: 'analyzer' });
-    device.armSpringCapture(active)?.catch?.(() => {});
-    for (const s of sticks) columns[s]?.raw?.setArmed(s === active);
+  let armed = null;
+  function arm(stick) {
+    if (!rawOn || tuningOpen || !stick) return;
+    armed = stick;
+    device.springCaptureHint?.({ stick, step: 'analyzer' });
+    device.armSpringCapture(stick)?.catch?.(() => {});
+    full.setArmed(stick);
   }
-  const onTuning = (open) => { tuningOpen = open; if (!open) arm(); };
-  const columns = Object.fromEntries(sticks.map((s) => [s, stickColumn(s, { session, device, onTuned, onTuning })]));
+  const onTuning = (open) => {
+    tuningOpen = open;
+    if (open) full?.setArmed(null);
+    else arm(armed || sticks[0]);
+  };
+  const columns = Object.fromEntries(sticks.map((s) => [s, stickColumn(s, { session, device, onTuned, onTuning, fullSpeed: rawOn })]));
+  // The live stream: where the sticks are now (the Analyzer's live dot), and following the stick being
+  // used: one pushed far out while the recorded one rests takes the recording over
+  const stopLive = rawOn ? onInputReport(device, (r) => {
+    const sb = r.sticks?.snapback;
+    if (!sb) return;
+    full.live({ left: [sb.lx, sb.ly], right: [sb.rx, sb.ry] });
+    if (tuningOpen || sticks.length < 2) return;
+    const d = { left: Math.hypot(sb.lx, sb.ly), right: Math.hypot(sb.rx, sb.ry) };
+    for (const s of sticks) if (s !== armed && d[s] > TAKE_OVER && (!armed || d[armed] < NEAR_CENTER)) arm(s);
+  }) : null;
 
   // ---- Left/right switch (narrow pages only; CSS hides it on wide ones) ------------------------
   // A capture for the hidden stick would otherwise go unnoticed on a phone, so offer a shortcut to it.
@@ -252,7 +272,6 @@ export function mount(root, ctx) {
     for (const s of sticks) columns[s].el.toggleAttribute('data-active', s === side);
     if (stickSeg) stickSeg.value = side;
     if (newCapture.dataset.side === side) newCapture.hidden = true;
-    if (changed) arm();
     return changed;
   }
 
@@ -298,23 +317,25 @@ export function mount(root, ctx) {
       newCapture.hidden = false;
     }
   };
-  device.addEventListener('snapback', onDump);
   const onRaw = (e) => {
     if (tuningOpen) return;
-    columns[e.detail.stick === 0 ? 'left' : 'right']?.raw?.add(e.detail);
+    full.add(e.detail);
   };
   if (rawOn) {
     device.addEventListener('spring-capture', onRaw);
     device.setInputMode(true)?.catch?.(() => {}); // the controller records only while the app streams
-    arm();
-  }
+    arm(sticks.includes(active) ? active : sticks[0]);
+  } else device.addEventListener('snapback', onDump);
 
   setActive(active);
   root.append(h('div.stack',
     callout({ tone: 'blue' },
       h('strong', t('How to test:')), ' ',
-      t('Push a stick all the way to one side and let it snap back. The controller records the moment it returns and shows it under that stick. Try each filter mode to compare.')),
-    split));
+      rawOn
+        ? t('Push either stick all the way out and let it snap back, or flick it across. The Analyzer below shows the last one, from the stick you used. Try each filter mode to compare.')
+        : t('Push a stick all the way to one side and let it snap back. The controller records the moment it returns and shows it under that stick. Try each filter mode to compare.')),
+    split,
+    full?.el));
 
   // Wait one frame for layout so we know whether the page is wide.
   if (sticks.includes(ctx.params.stick)) highlightFrame = requestAnimationFrame(() => highlight(ctx.params.stick));
@@ -329,6 +350,8 @@ export function mount(root, ctx) {
       cancelAnimationFrame(highlightFrame);
       clearTimeout(highlightTimer);
       device.removeEventListener('snapback', onDump);
+      stopLive?.();
+      full?.destroy();
       if (rawOn) {
         device.removeEventListener('spring-capture', onRaw);
         if (session.connected) device.armSpringCapture(null)?.catch?.(() => {});

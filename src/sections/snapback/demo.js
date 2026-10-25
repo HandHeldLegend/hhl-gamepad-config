@@ -150,7 +150,9 @@ export function springArm(device, stick) {
   if (stick == null) return;
   capTimer = setInterval(() => {
     if (!device.isConnected) { clearInterval(capTimer); return; }
-    device.dispatchEvent(new CustomEvent('spring-capture', { detail: makeCapture(capStick === 'right' ? 1 : 0) }));
+    // On the Analyzer the demo plays both sticks in turn, to show it following the one used
+    const which = hint.step === 'analyzer' ? Math.floor(made / 2) % 2 : capStick === 'right' ? 1 : 0;
+    device.dispatchEvent(new CustomEvent('spring-capture', { detail: makeCapture(which) }));
   }, CAPTURE_MS);
 }
 
