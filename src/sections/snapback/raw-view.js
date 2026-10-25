@@ -71,7 +71,7 @@ export function rawView({ session, stick }) {
     svg.replaceChildren(...parts);
     legend.classList.toggle('no-replay', !e.r);
     plot.hidden = false;
-    delay.className = `sb-raw-delay ${!e.r ? 'muted' : e.r.delayMs > DELAY_WARN_MS ? 'warn' : 'good'}`;
+    delay.className = `sb-raw-delay ${!e.r || e.r.side === 0 ? 'muted' : e.r.delayMs > DELAY_WARN_MS ? 'warn' : 'good'}`;
     delay.textContent = !e.r ? t('Filter not active')
       : e.r.side === 0 ? t('Let go: no delay to measure')
         : e.r.delayMs ? t('Delay: {time}', { time: t('{n} ms', { n: fmt.number(e.r.delayMs, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }) })
