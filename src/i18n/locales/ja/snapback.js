@@ -156,6 +156,7 @@ export default {
   'Held: rebound': '保持：跳ね返り',
   'Passed: the thumb had it': '通過：親指が操作していた',
   'Passed: thrown by the hand': '通過：手で弾いた',
+  'Passed: guided back by the thumb': '通過：親指で戻した',
   'Passed: not a rebound': '通過：跳ね返りではない',
   'Released: the thumb took it back': '解除：親指が取り戻した',
   'Released: pushed away from center': '解除：中心から押し出された',

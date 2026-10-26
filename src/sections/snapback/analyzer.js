@@ -79,6 +79,7 @@ const REASONS = {
   rebound: N_('Held: rebound'),
   thumb: N_('Passed: the thumb had it'),
   thrown: N_('Passed: thrown by the hand'),
+  slow: N_('Passed: guided back by the thumb'),
   passed: N_('Passed: not a rebound'),
   grab: N_('Released: the thumb took it back'),
   push: N_('Released: pushed away from center'),

@@ -4,7 +4,8 @@
  *
  * The filter (HOJA-LIB-RP2040 src/input/snapback/snapback_spring.c) holds back only the rebound after
  * a release:
- *   - Releases from the edge: a stick past 1600 falls through 1200. The free spring
+ *   - Releases from the edge: a stick past 1600 falls through 1200, faster than LINE_SPEED (slower is the
+ *     thumb guiding it back, and it passes at once). The free spring
  *     s[n+1] = a1 s[n] + a2 s[n-1] (a1, a2 in Q16 for the octant it left from) runs on from there; if the
  *     stick stays within decide_step × k counts of it at sample k (k = 2..6, 3 ms), it was let go and the
  *     output holds at neutral. Otherwise the thumb has it and it passes. The check carries on through the
@@ -59,6 +60,9 @@ export const SPRING_LIMITS = Object.freeze({
 
 const EDGE = 1600;
 const RELEASE = 1200;
+/** A release falls through the release line faster than this (counts a sample, along the direction it
+ *  left the edge): 105-229 on every stick recorded. Slower is the thumb guiding it back, passed at once. */
+const LINE_SPEED = 90;
 const DECIDE = 6;
 const OUT = 300;
 const CHECK = 5;
@@ -71,6 +75,13 @@ const SETTLE_COUNT = 20;
 /** Margins on a free spring's swing after a crossing: how far out (× v/θ) and how long (× a quarter swing). */
 const PEAK_MARGIN = 1.5;
 const QUARTER_MARGIN = 1.4;
+
+/** Falling (dx, dy since the last sample, towards centre) through the release line slower than LINE_SPEED
+ *  along the edge direction (ex, ey). Integer, as the firmware's _spring_slow_fall. */
+function slowFall(dx, dy, ex, ey) {
+  const fall = dx * ex + dy * ey;
+  return fall <= 0 || fall * fall < LINE_SPEED * LINE_SPEED * (ex * ex + ey * ey);
+}
 
 /**
  * Per octant: how far out a free spring can get for its crossing speed (Q8) and for how many samples, and
@@ -234,7 +245,10 @@ export function runGate(xs, ys, p, o = {}) {
         }
         break;
       case GATE.EDGE:
-        if (d >= EDGE) { s.ex = x; s.ey = y; } else if (d < RELEASE) {
+        if (d >= EDGE) { s.ex = x; s.ey = y; } else if (d < RELEASE && slowFall(s.x1 - x, s.y1 - y, s.ex, s.ey)) {
+          // Guided back through the line: the thumb has it
+          s.state = GATE.IDLE; note(i, 'slow');
+        } else if (d < RELEASE) {
           s.oct = octant(s.ex, s.ey);
           s.fx2 = s.x1; s.fy2 = s.y1; s.fx1 = x; s.fy1 = y;
           s.step = 0;
@@ -448,8 +462,9 @@ export function readThumb(c) {
 /**
  * Each time a capture leaves the edge (past 1600, then under 1200): where it crossed the release line and
  * how far it strayed from the free spring from there, the worst err_k / k over k = 2..6 (what the gate's
- * release check compares with decide_step). A release stays close; the thumb strays.
- * @returns {{at: number, ratio: number}[]}
+ * release check compares with decide_step). A release stays close; the thumb strays. `slow`: it fell through
+ * the line slower than LINE_SPEED, so the gate passes it without the release check (decide_step never applies).
+ * @returns {{at: number, ratio: number, slow: boolean}[]}
  */
 function edgeExits(c, p) {
   const n = c.x.length;
@@ -469,7 +484,7 @@ function edgeExits(c, p) {
       fx2 = fx1; fy2 = fy1; fx1 = fx; fy1 = fy;
       if (k >= 2) worst = Math.max(worst, Math.hypot(c.x[i + k] - fx, c.y[i + k] - fy) / k);
     }
-    out.push({ at: i, ratio: worst });
+    out.push({ at: i, ratio: worst, slow: slowFall(c.x[i - 1] - c.x[i], c.y[i - 1] - c.y[i], ex, ey) });
   }
   return out;
 }
@@ -532,8 +547,9 @@ export function fitSpring({ releases, turnarounds, thumbs: moves, flicks = [], t
   // close to the spring as the releases came is taken as letting go after the move, and left out.
   const thumbRatios = thumbs.flatMap((c) => {
     const exits = edgeExits(c, p);
-    const cut = thumbsHeld ? -1 : exits.findIndex((e, i) => i > 0 && e.ratio <= relWorst * 1.2);
-    return exits.slice(0, cut < 0 ? exits.length : cut).map((e) => e.ratio);
+    const cut = thumbsHeld ? -1 : exits.findIndex((e, i) => i > 0 && !e.slow && e.ratio <= relWorst * 1.2);
+    // A slow exit is passed before decide_step applies, so it doesn't limit it
+    return exits.slice(0, cut < 0 ? exits.length : cut).filter((e) => !e.slow).map((e) => e.ratio);
   });
   const thumbBest = thumbRatios.length ? Math.min(...thumbRatios) : null;
   const need = Math.max(relWorst * 1.05, Math.min(SPRING_DEFAULTS.decide_step, relWorst * 1.2));
@@ -613,7 +629,7 @@ function blocked(c, g, dz) {
 export function thumbEffect(c, p, dz = DEFAULT_DEADZONE, letGo = p.decide_step) {
   const g = runGate(c.x, c.y, p, { deadzone: dz });
   const exits = edgeExits(c, p);
-  const cut = exits.slice(1).find((e) => e.ratio <= letGo);
+  const cut = exits.slice(1).find((e) => !e.slow && e.ratio <= letGo);
   const end = cut ? cut.at : c.x.length;
   let run = 0; let worst = 0;
   for (let i = 0; i < end; i++) {
@@ -633,7 +649,9 @@ export function thumbEffect(c, p, dz = DEFAULT_DEADZONE, letGo = p.decide_step) 
   const farDelayMs = rawAt < 0 ? null : outAt < 0 ? (end - rawAt) * SAMPLE_MS : (outAt - rawAt) * SAMPLE_MS;
   const changedMs = worst * SAMPLE_MS;
   const delayMs = Math.max(changedMs, farDelayMs ?? 0);
-  const ratio = exits.length ? Math.min(...exits.slice(0, cut ? exits.indexOf(cut) : exits.length).map((e) => e.ratio)) : null;
+  // Slow exits are passed before the release check, so they can't be taken for a let-go (unclear)
+  const decided = exits.slice(0, cut ? exits.indexOf(cut) : exits.length).filter((e) => !e.slow);
+  const ratio = decided.length ? Math.min(...decided.map((e) => e.ratio)) : null;
   const unclear = ratio != null && ratio <= p.decide_step;
   return { changedMs, farDelayMs, delayMs, ratio, unclear, endMs: end * SAMPLE_MS, pass: !unclear && delayMs <= DELAY_OK_MS };
 }

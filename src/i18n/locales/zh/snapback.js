@@ -141,6 +141,7 @@ export default {
   "Held: rebound": "保持：回弹",
   "Passed: the thumb had it": "放行：拇指在控制",
   "Passed: thrown by the hand": "放行：手拨出去的",
+  "Passed: guided back by the thumb": "放行：拇指带回来的",
   "Passed: not a rebound": "放行：不是回弹",
   "Released: the thumb took it back": "解除：拇指接回了",
   "Released: pushed away from center": "解除：被推离中心",

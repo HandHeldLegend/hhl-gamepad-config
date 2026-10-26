@@ -156,6 +156,7 @@ export default {
   'Held: rebound': 'Retenido: rebote',
   'Passed: the thumb had it': 'Pasó: lo tenía el pulgar',
   'Passed: thrown by the hand': 'Pasó: lo lanzó la mano',
+  'Passed: guided back by the thumb': 'Pasó: el pulgar lo llevó de vuelta',
   'Passed: not a rebound': 'Pasó: no era un rebote',
   'Released: the thumb took it back': 'Liberado: el pulgar lo retomó',
   'Released: pushed away from center': 'Liberado: empujado lejos del centro',
