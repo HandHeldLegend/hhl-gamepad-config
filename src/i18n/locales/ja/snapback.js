@@ -160,6 +160,7 @@ export default {
   'Passed: not a rebound': '通過：跳ね返りではない',
   'Released: the thumb took it back': '解除：親指が取り戻した',
   'Released: pushed away from center': '解除：中心から押し出された',
+  'Released: moved by the hand': '解除：手で動かした',
   'Released: held still far out': '解除：中心から離れた位置で静止',
   'Released: stopped moving like a let-go': '解除：離したときの動きではなくなった',
   'Released: turned back too late': '解除：戻り始めが遅すぎた',

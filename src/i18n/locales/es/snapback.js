@@ -160,6 +160,7 @@ export default {
   'Passed: not a rebound': 'Pasó: no era un rebote',
   'Released: the thumb took it back': 'Liberado: el pulgar lo retomó',
   'Released: pushed away from center': 'Liberado: empujado lejos del centro',
+  'Released: moved by the hand': 'Soltado: lo movió la mano',
   'Released: held still far out': 'Liberado: quieto lejos del centro',
   'Released: stopped moving like a let-go': 'Liberado: dejó de moverse como una soltada',
   'Released: turned back too late': 'Liberado: volvió demasiado tarde',

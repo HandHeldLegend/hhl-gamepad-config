@@ -160,6 +160,7 @@ export default {
   'Passed: not a rebound': 'Passé : pas un rebond',
   'Released: the thumb took it back': 'Relâché : le pouce l’a repris',
   'Released: pushed away from center': 'Relâché : poussé loin du centre',
+  'Released: moved by the hand': 'Relâché : déplacé par la main',
   'Released: held still far out': 'Relâché : immobile loin du centre',
   'Released: stopped moving like a let-go': 'Relâché : ne bougeait plus comme un lâcher',
   'Released: turned back too late': 'Relâché : revenu trop tard',

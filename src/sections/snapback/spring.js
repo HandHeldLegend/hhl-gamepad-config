@@ -27,8 +27,8 @@
  *   - A hold ends when the thumb takes the stick back (one-step error over grab_err, 3 samples running),
  *     when it's parked far out (barely moving past STILL_MIN for STILL_SWING of a quarter swing, STILL_N
  *     samples at least), when it's pushed (speeding away from centre past PUSH_MIN, PUSH_N running: a
- *     spring only ever pulls it back), or once it settles within the stick's deadzone (clamped to
- *     40..200) for 10 ms, 100 ms at most.
+ *     spring only ever pulls it back), when the hand moves it after the ringing dies (DRAG_RISE), or once
+ *     it settles within the stick's deadzone (clamped to 40..200) for 10 ms, 100 ms at most.
  *   - The sample a fast crossing is found on is already past centre, so it is held too.
  *
  * Captures (device 'spring-capture'): 256 samples of x and y at 2 kHz, ±2048, as the filter sees them,
@@ -88,15 +88,16 @@ function slowFall(dx, dy, ex, ey) {
  * how many samples held still make it the hand (STILL_SWING of a quarter swing, STILL_N at least).
  */
 function swingTables(p) {
-  const peak = []; const quarter = []; const still = [];
+  const peak = []; const quarter = []; const still = []; const invTh2 = [];
   for (let o = 0; o < 8; o++) {
     const a1 = p.a1[o] / 65536; const a2 = p.a2[o] / 65536;
     const th = Math.max(0.01, Math.acos(Math.max(-1, Math.min(1, a1 / (2 * Math.sqrt(-a2))))));
     peak.push(Math.trunc((256 * PEAK_MARGIN) / th));
     quarter.push(Math.ceil((QUARTER_MARGIN * (Math.PI / 2)) / th));
     still.push(Math.max(STILL_N, Math.ceil((STILL_SWING * (Math.PI / 2)) / th)));
+    invTh2.push(Math.trunc(256 / (th * th)));
   }
-  return { peak, quarter, still };
+  return { peak, quarter, still, invTh2 };
 }
 
 /**
@@ -127,6 +128,11 @@ const STILL_SWING = 0.45;
  *  stick passes beside centre, which read as a push while the spring was still pulling it in. */
 const PUSH_MIN = 300;
 const PUSH_N = 3;
+/** A hold ends when the hand moves the stick: its energy (distance^2 + (speed / theta)^2, a free spring only
+ *  loses it) back up by DRAG_RISE once the hold's ringing has died under DRAG_QUIET. A slow steady drag
+ *  sideways after a let-go escapes the grab and push checks. */
+const DRAG_QUIET = 250;
+const DRAG_RISE = 300;
 /** Samples past the free spring's predicted centre crossing that say a thumb threw it, not the spring. */
 const CROSS_MARGIN = 3;
 const HOLD_MAX = 200;
@@ -307,10 +313,14 @@ export function runGate(xs, ys, p, o = {}) {
         // Accelerating away from centre: pushed, as a spring only pulls it back
         const accOut = (x - 2 * s.x1 + s.x2) * x + (y - 2 * s.y1 + s.y2) * y;
         s.push = s.dprev2 >= PUSH_MIN && d > s.dprev && accOut > 0 ? s.push + 1 : 0;
+        // Moved by the hand once the ringing has died down: the energy back up (integer, as the firmware's)
+        const energy = Math.floor(Math.sqrt(x * x + y * y + Math.floor((((x - s.x2) ** 2 + (y - s.y2) ** 2) * tabs.invTh2[s.oct]) / 1024)));
+        let drag = false;
+        if (s.hold > 2) { s.emin = Math.min(s.emin, energy); drag = s.emin < DRAG_QUIET && energy > s.emin + DRAG_RISE; }
         const stillN = tabs.still[s.oct];
-        if (s.push >= PUSH_N || s.still >= stillN || s.grab >= GRAB_COUNT) {
+        if (s.push >= PUSH_N || s.still >= stillN || s.grab >= GRAB_COUNT || drag) {
           s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
-          note(i, s.push >= PUSH_N ? 'push' : s.still >= stillN ? 'still' : 'grab');
+          note(i, s.push >= PUSH_N ? 'push' : s.still >= stillN ? 'still' : s.grab >= GRAB_COUNT ? 'grab' : 'drag');
         } else if (s.settle >= SETTLE_COUNT || s.hold >= HOLD_MAX) {
           s.state = GATE.IDLE;
           note(i, s.settle >= SETTLE_COUNT ? 'settled' : 'max');
@@ -341,7 +351,7 @@ export function runGate(xs, ys, p, o = {}) {
 
 function holdStart(s) {
   s.state = GATE.HOLDING;
-  s.hold = 0; s.grab = 0; s.settle = 0; s.still = 0; s.push = 0;
+  s.hold = 0; s.grab = 0; s.settle = 0; s.still = 0; s.push = 0; s.emin = Infinity;
 }
 
 // ---- Reading a capture -----------------------------------------------------------------------

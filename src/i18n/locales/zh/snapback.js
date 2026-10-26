@@ -145,6 +145,7 @@ export default {
   "Passed: not a rebound": "放行：不是回弹",
   "Released: the thumb took it back": "解除：拇指接回了",
   "Released: pushed away from center": "解除：被推离中心",
+  "Released: moved by the hand": "释放：手在移动摇杆",
   "Released: held still far out": "解除：在远离中心处静止",
   "Released: stopped moving like a let-go": "解除：不再像松开那样移动",
   "Released: turned back too late": "解除：回头太晚",
