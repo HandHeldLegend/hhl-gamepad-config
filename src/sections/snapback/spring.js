@@ -24,9 +24,10 @@
  *     release check or hold (layer 1, from the release line's crossing) or the crossing check or its hold
  *     (layer 2) ends at once.
  *   - A hold ends when the thumb takes the stick back (one-step error over grab_err, 3 samples running),
- *     when it's parked far out (STILL_N samples barely moving past STILL_MIN), when it's pushed (speeding
- *     away from centre past PUSH_MIN, PUSH_N running: a spring only ever pulls it back), or once it settles
- *     within the stick's deadzone (clamped to 40..200) for 10 ms, 100 ms at most.
+ *     when it's parked far out (barely moving past STILL_MIN for STILL_SWING of a quarter swing, STILL_N
+ *     samples at least), when it's pushed (speeding away from centre past PUSH_MIN, PUSH_N running: a
+ *     spring only ever pulls it back), or once it settles within the stick's deadzone (clamped to
+ *     40..200) for 10 ms, 100 ms at most.
  *   - The sample a fast crossing is found on is already past centre, so it is held too.
  *
  * Captures (device 'spring-capture'): 256 samples of x and y at 2 kHz, ±2048, as the filter sees them,
@@ -71,16 +72,20 @@ const SETTLE_COUNT = 20;
 const PEAK_MARGIN = 1.5;
 const QUARTER_MARGIN = 1.4;
 
-/** Per octant: how far out a free spring can get for its crossing speed (Q8) and for how many samples. */
+/**
+ * Per octant: how far out a free spring can get for its crossing speed (Q8) and for how many samples, and
+ * how many samples held still make it the hand (STILL_SWING of a quarter swing, STILL_N at least).
+ */
 function swingTables(p) {
-  const peak = []; const quarter = [];
+  const peak = []; const quarter = []; const still = [];
   for (let o = 0; o < 8; o++) {
     const a1 = p.a1[o] / 65536; const a2 = p.a2[o] / 65536;
     const th = Math.max(0.01, Math.acos(Math.max(-1, Math.min(1, a1 / (2 * Math.sqrt(-a2))))));
     peak.push(Math.trunc((256 * PEAK_MARGIN) / th));
     quarter.push(Math.ceil((QUARTER_MARGIN * (Math.PI / 2)) / th));
+    still.push(Math.max(STILL_N, Math.ceil((STILL_SWING * (Math.PI / 2)) / th)));
   }
-  return { peak, quarter };
+  return { peak, quarter, still };
 }
 
 /**
@@ -93,14 +98,21 @@ function isHand(q, qPrev, fall, n, turned, o, tabs) {
   return null;
 }
 
-/** The release check carries on through a layer-1 hold this many samples after the release line (7 ms). */
+/** The release check carries on through a layer-1 hold this many samples after the release line (7 ms).
+ *  Past the decision it allows FREE_SLACK × decide_step: a worn stick's full swing drifts off its fitted
+ *  spring 4-5 ms on. */
 const FREE_CHECK_UNTIL = 14;
+const FREE_SLACK_NUM = 5;
+const FREE_SLACK_DEN = 4;
 /** A hold ends when the stick is parked: this far out, moving under 1/STILL_DIV of its distance a
- *  sample, STILL_N samples running. */
+ *  sample, for STILL_SWING of a quarter swing and STILL_N samples at least (swingTables): a slow stick
+ *  lingers longer at the top of a swing. */
 const STILL_MIN = 600;
 const STILL_DIV = 64;
 const STILL_N = 4;
-/** A hold ends when the stick speeds up away from centre past PUSH_MIN, PUSH_N samples running. */
+const STILL_SWING = 0.45;
+/** A hold ends when the stick speeds up away from centre, PUSH_N samples running with all three of each
+ *  past PUSH_MIN (nearer centre, the distance turning as it passes through centre reads as speeding up). */
 const PUSH_MIN = 300;
 const PUSH_N = 3;
 /** Samples past the free spring's predicted centre crossing that say a thumb threw it, not the spring. */
@@ -259,7 +271,9 @@ export function runGate(xs, ys, p, o = {}) {
         break;
       case GATE.HOLDING: {
         const freeCheck = s.layer === 1 && s.step < FREE_CHECK_UNTIL;
-        const freeLimit = p.decide_step * (s.step + 1);
+        const freeLimit = s.step + 1 > DECIDE
+          ? Math.trunc((p.decide_step * (s.step + 1) * FREE_SLACK_NUM) / FREE_SLACK_DEN)
+          : p.decide_step * (s.step + 1);
         if (freeCheck && s.step + 1 >= 2 && freeErr > freeLimit * freeLimit) {
           // Strayed from the free spring within 7 ms of the line: the hand had it after all
           s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
@@ -276,10 +290,11 @@ export function runGate(xs, ys, p, o = {}) {
         // Parked far out by the hand (the grab check can miss a stick held still)
         s.still = d >= STILL_MIN && Math.abs(d - s.dprev) * STILL_DIV <= d ? s.still + 1 : 0;
         // Speeding up away from centre: pushed, as a spring only pulls it back
-        s.push = d >= PUSH_MIN && d > s.dprev && d - 2 * s.dprev + s.dprev2 > 0 ? s.push + 1 : 0;
-        if (s.push >= PUSH_N || s.still >= STILL_N || s.grab >= GRAB_COUNT) {
+        s.push = s.dprev2 >= PUSH_MIN && d > s.dprev && d - 2 * s.dprev + s.dprev2 > 0 ? s.push + 1 : 0;
+        const stillN = tabs.still[s.oct];
+        if (s.push >= PUSH_N || s.still >= stillN || s.grab >= GRAB_COUNT) {
           s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
-          note(i, s.push >= PUSH_N ? 'push' : s.still >= STILL_N ? 'still' : 'grab');
+          note(i, s.push >= PUSH_N ? 'push' : s.still >= stillN ? 'still' : 'grab');
         } else if (s.settle >= SETTLE_COUNT || s.hold >= HOLD_MAX) {
           s.state = GATE.IDLE;
           note(i, s.settle >= SETTLE_COUNT ? 'settled' : 'max');
