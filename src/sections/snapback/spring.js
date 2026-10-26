@@ -398,6 +398,8 @@ const MOVE_END = CAPTURE_PRE + 60;
 const FREE_SAMPLES = 120;   // 60 ms of the free swing after the first centre crossing
 /** decide_step stays this far under the closest thumb move (ratio), so none of them is held. */
 const THUMB_MARGIN = 1.1;
+/** decide_step when no thumb move is close enough to limit it. */
+const UNCAPPED_DECIDE = 70;
 /** grab_err's range: past the ceiling the thumb taking the stick back takes too long to pass. */
 const GRAB_MIN = 60;
 const GRAB_MAX = 100;
@@ -555,7 +557,10 @@ export function fitSpring({ releases, turnarounds, thumbs: moves, flicks = [], t
   const need = Math.max(relWorst * 1.05, Math.min(SPRING_DEFAULTS.decide_step, relWorst * 1.2));
   const thumbCap = thumbBest == null ? Infinity : thumbBest / THUMB_MARGIN;
   const overlap = relWorst * 1.05 > thumbCap;
-  const decide = overlap ? Math.ceil(relWorst * 1.05) : Number.isFinite(thumbCap) ? Math.max(Math.ceil(need), Math.floor(thumbCap)) : Math.ceil(need);
+  // Nothing caps it (every thumb move passed the release line too slowly to be checked): as high as
+  // UNCAPPED_DECIDE, as a round's releases don't show how wide a let-go can get (a worn ProGCC 3+: 29 in
+  // one round, 51 in the next, up to 63 in play)
+  const decide = overlap ? Math.ceil(relWorst * 1.05) : Number.isFinite(thumbCap) ? Math.max(Math.ceil(need), Math.floor(thumbCap)) : Math.max(Math.ceil(need), UNCAPPED_DECIDE);
   p.decide_step = clamp(decide, SPRING_LIMITS.decide_step);
 
   // cross_speed: below the slowest turnaround's crossing, but never under the default: each crossing checked
