@@ -111,8 +111,9 @@ const STILL_MIN = 600;
 const STILL_DIV = 64;
 const STILL_N = 4;
 const STILL_SWING = 0.45;
-/** A hold ends when the stick speeds up away from centre, PUSH_N samples running with all three of each
- *  past PUSH_MIN (nearer centre, the distance turning as it passes through centre reads as speeding up). */
+/** A hold ends when the stick accelerates away from centre (its own acceleration, along where it is),
+ *  PUSH_N samples running with all three of each past PUSH_MIN. The distance from centre curves up as a
+ *  stick passes beside centre, which read as a push while the spring was still pulling it in. */
 const PUSH_MIN = 300;
 const PUSH_N = 3;
 /** Samples past the free spring's predicted centre crossing that say a thumb threw it, not the spring. */
@@ -289,8 +290,9 @@ export function runGate(xs, ys, p, o = {}) {
         s.settle = d < settled ? s.settle + 1 : 0;
         // Parked far out by the hand (the grab check can miss a stick held still)
         s.still = d >= STILL_MIN && Math.abs(d - s.dprev) * STILL_DIV <= d ? s.still + 1 : 0;
-        // Speeding up away from centre: pushed, as a spring only pulls it back
-        s.push = s.dprev2 >= PUSH_MIN && d > s.dprev && d - 2 * s.dprev + s.dprev2 > 0 ? s.push + 1 : 0;
+        // Accelerating away from centre: pushed, as a spring only pulls it back
+        const accOut = (x - 2 * s.x1 + s.x2) * x + (y - 2 * s.y1 + s.y2) * y;
+        s.push = s.dprev2 >= PUSH_MIN && d > s.dprev && accOut > 0 ? s.push + 1 : 0;
         const stillN = tabs.still[s.oct];
         if (s.push >= PUSH_N || s.still >= stillN || s.grab >= GRAB_COUNT) {
           s.state = d >= EDGE ? GATE.EDGE : GATE.IDLE;
