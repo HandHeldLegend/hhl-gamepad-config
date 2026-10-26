@@ -118,10 +118,10 @@ const FREE_SLACK_NUM = 5;
 const FREE_SLACK_DEN = 4;
 /** A hold ends when the stick is parked: this far out, moving under 1/STILL_DIV of its distance a
  *  sample, for STILL_SWING of a quarter swing and STILL_N samples at least (swingTables): a slow stick
- *  lingers longer at the top of a swing. */
+ *  lingers longer at the top of a swing, and some fast sticks' swings top out flat. */
 const STILL_MIN = 600;
 const STILL_DIV = 64;
-const STILL_N = 4;
+const STILL_N = 5;
 const STILL_SWING = 0.45;
 /** A hold ends when the stick accelerates away from centre (its own acceleration, along where it is),
  *  PUSH_N samples running with all three of each past PUSH_MIN. The distance from centre curves up as a
