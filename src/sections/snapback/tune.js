@@ -7,7 +7,7 @@
  *   1. Releases: push to the edge and let go completely, 3 times in each of 8 directions (a compass
  *      with a target per direction). These give the stick's spring per direction (a1, a2).
  *   2. Turnarounds: tilt partway and let go, 10 times. These give the crossing speed and stiffness.
- *   3. Thumb moves: 9 set moves with the thumb on the stick the whole time (dash across, dash back and
+ *   3. Thumb moves: 9 set moves at normal speed, thumb on the stick the whole time (sweep across, back and
  *      forth, pull back to the center), each from a marked edge and each ending held still at a target
  *      (the far edge, the starting edge, or the center). A ghost on the compass acts the move out. A move
  *      counts once its capture has arrived and the stick has then been held in the target for 300 ms (the
@@ -50,8 +50,8 @@ const THUMB_PLAN = [['across', 0], ['pull', 2], ['back', 4], ['across', 6], ['pu
 const THUMBS = THUMB_PLAN.length;
 /** end: where the move finishes, held: the far edge, the starting edge, or the center. */
 const THUMB_MOVES = {
-  across: { end: 'far', name: N_('Dash across'), how: N_('Push to the marked edge, sweep all the way across, and keep holding at the far edge until the target fills.') },
-  back: { end: 'start', name: N_('Dash back and forth'), how: N_('Push to the marked edge, flick to the far edge and straight back, and keep holding at the marked edge until the target fills.') },
+  across: { end: 'far', name: N_('Sweep across'), how: N_('Push to the marked edge, sweep across to the far edge at your normal speed, and keep holding there until the target fills.') },
+  back: { end: 'start', name: N_('Back and forth'), how: N_('Push to the marked edge, go to the far edge and straight back at your normal speed, and keep holding at the marked edge until the target fills.') },
   pull: { end: 'center', name: N_('Pull back'), how: N_('Push to the marked edge, then slowly bring it back to the center and hold it there until the target fills.') },
   flick: { end: 'far', name: N_('Fast flick across'), how: N_('Push to the marked edge, then flick straight across to the far edge as fast as you can, and hold it there until the target fills.') },
 };
@@ -337,7 +337,7 @@ export function tuneSpring({ session, device, stick }) {
       pending = null;
     } else {
       stepTitle.textContent = t('Copy the moves, thumb on the stick');
-      howTo.textContent = t('Watch the ghost on the circle, then do the same move. Keep your thumb on the stick the whole time, and end each move holding still until the target fills.');
+      howTo.textContent = t('Watch the ghost on the circle, then do the same move at your normal speed, not as fast as you can (that comes next). Keep your thumb on the stick the whole time, and end each move holding still until the target fills.');
       pending = null;
     }
     say('');
