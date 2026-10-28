@@ -6,8 +6,9 @@
  *     build  the line's models (build ids, comma separated). Every unit is identified on its own: a
  *            HOJA unit by the build it reports (checked against this list, updated to the newest
  *            firmware of ITS build); a blank board in bootloader mode by the operator when the line
- *            has more than one model. Without it any HOJA unit is accepted (blank boards can't be
- *            flashed). Each model's firmware is fetched once and cached.
+ *            has more than one model. Without it any HOJA unit of a listed build is accepted (blank
+ *            boards can't be flashed). A unit whose build isn't listed fails. Each model's firmware is
+ *            fetched once and cached.
  *     skip   comma list of steps to leave out: flash, calibrate, inputs, operator
  *     sku    color SKU id (skus.js); kept between units
  *     triggers  the line's trigger build on controllers that take mechanical triggers (GCU 1):
@@ -391,6 +392,13 @@ async function onUnitConnected(session) {
   // A blank board was flashed as the model the operator picked: it must come back as that model.
   if (u.boardModel && u.build && u.build !== u.boardModel) {
     setResult('firmware', N_('Firmware'), 'fail', t('Came back as {unit}, but was flashed as {model}.', { unit: humanizeBuildId(u.build), model: humanizeBuildId(u.boardModel) }));
+    finish();
+    return;
+  }
+  // A build this station can't identify (none reported, or a folder it doesn't list) leaves nothing to
+  // check the firmware against or update it from: fail the unit rather than pass whatever it runs.
+  if (!isDemo() && !(u.build && (await listBuilds()).builds.some((b) => b.id === u.build))) {
+    setResult('firmware', N_('Firmware'), 'fail', u.build ? t('Unknown build “{id}”.', { id: u.build }) : t('The firmware doesn’t say which model it is.'));
     finish();
     return;
   }

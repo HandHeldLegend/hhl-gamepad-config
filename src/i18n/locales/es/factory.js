@@ -11,6 +11,7 @@ export default {
   "Fail": "Falla",
   "Not fitted": "No instalado",
   "Unknown build “{id}”.": "Compilación desconocida “{id}”.",
+  "The firmware doesn’t say which model it is.": "El firmware no indica qué modelo es.",
   "Couldn’t read the firmware manifest (offline?).": "No se pudo leer el manifiesto de firmware (¿sin conexión?).",
   "A board in bootloader mode needs a target build: add ?build= to the address.": "Una placa en modo bootloader necesita una compilación de destino: agrega ?build= a la dirección.",
   "Written. Waiting for the controller to restart…": "Escrito. Esperando a que el control se reinicie…",

@@ -11,6 +11,7 @@ export default {
   "Fail": "不合格",
   "Not fitted": "非搭載",
   "Unknown build “{id}”.": "不明なビルド「{id}」です。",
+  "The firmware doesn’t say which model it is.": "ファームウェアが機種を示していません。",
   "Couldn’t read the firmware manifest (offline?).": "ファームウェアのマニフェストを読み込めませんでした（オフラインですか？）。",
   "A board in bootloader mode needs a target build: add ?build= to the address.": "ブートローダーモードのボードには対象ビルドの指定が必要です。アドレスに ?build= を追加してください。",
   "Written. Waiting for the controller to restart…": "書き込み完了。コントローラーの再起動を待っています…",

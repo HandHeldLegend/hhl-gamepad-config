@@ -14,6 +14,7 @@ export default {
   "Fail": "不通过",
   "Not fitted": "未安装",
   "Unknown build “{id}”.": "未知的固件版本“{id}”。",
+  "The firmware doesn’t say which model it is.": "固件未标明这是哪个型号。",
   "Couldn’t read the firmware manifest (offline?).": "无法读取固件清单（是否已断网？）。",
   "A board in bootloader mode needs a target build: add ?build= to the address.": "处于引导程序模式的主板需要指定目标固件：请在网址后加上 ?build=。",
   "Written. Waiting for the controller to restart…": "已写入。正在等待手柄重启…",

@@ -11,6 +11,7 @@ export default {
   "Fail": "Échec",
   "Not fitted": "Non équipé",
   "Unknown build “{id}”.": "Build inconnu « {id} ».",
+  "The firmware doesn’t say which model it is.": "Le firmware n’indique pas de quel modèle il s’agit.",
   "Couldn’t read the firmware manifest (offline?).": "Impossible de lire le manifeste du firmware (hors ligne ?).",
   "A board in bootloader mode needs a target build: add ?build= to the address.": "Une carte en mode bootloader nécessite un build cible : ajoutez ?build= à l’adresse.",
   "Written. Waiting for the controller to restart…": "Écrit. En attente du redémarrage de la manette…",
