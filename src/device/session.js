@@ -36,6 +36,7 @@ import { device, USB_FILTERS, LIVE_MODES, isPicoBootloader, isCh340 } from './ho
 import { decodeText, LAYOUT } from './struct.js';
 import { liveStatus } from './live-status.js';
 import { needsTriggerCheck, triggerState, TRIGGER_SIDES } from './triggers.js';
+import { currentBuildUrls } from '../firmware/builds.js';
 import { N_ } from '../i18n/index.js'; // attention texts are translated where displayed
 
 /** Static block indexes by name, for refreshStatic */
@@ -270,12 +271,12 @@ class Session extends EventTarget {
     const viaDongle = !!device.dongle;
     const viaBluetooth = device.transport === 'ble';
     this.caps = { ...computeCaps(s, device.config), viaDongle, viaBluetooth, noCable: viaDongle || viaBluetooth };
+    const name = decodeText(s.device.name) || 'HOJA Controller';
     this.info = {
-      name: decodeText(s.device.name) || 'HOJA Controller',
+      name,
       maker: decodeText(s.device.maker),
       fwVersion: s.device.fw_version,
-      manifestUrl: decodeText(s.device.manifest_url),
-      firmwareUrl: decodeText(s.device.firmware_url),
+      ...currentBuildUrls({ name, manifestUrl: decodeText(s.device.manifest_url), firmwareUrl: decodeText(s.device.firmware_url) }),
       manualUrl: decodeText(s.device.manual_url),
     };
     this.dirty.clear();

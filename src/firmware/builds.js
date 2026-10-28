@@ -44,6 +44,13 @@ export const HIDDEN_BUILDS = new Set(['gcu_r5', 'gcu_s1', 'gcu_r4k']);
 const visible = (ids) => ids.filter((id) => !HIDDEN_BUILDS.has(id));
 
 /**
+ * Build folders removed from GitHub that shipped firmware still reports, and the folder those
+ * controllers update from now. ProGCC 3S firmware before July 2026 reports progcc_3.3, the folder of
+ * an RP2040 board named "ProGCC 3.3", so the reported name has to match as well.
+ */
+const MOVED_BUILDS = [{ from: 'progcc_3.3', name: 'ProGCC 3S', to: 'progcc_3s' }];
+
+/**
  * Dongle builds, keyed by the board the dongle reports (0xD0 reply byte 2). `chip` is the
  * bootloader that runs it: RP2040 (USB PID 0x0003) or RP2350 (0x000f). `howTo`: how to put that
  * dongle in its bootloader, for the installer. Labels and howTo: t() them where shown.
@@ -100,6 +107,18 @@ function toBuild(id) {
     binUrl: `${RAW_BASE}/${id}/${id}.bin`,
     manifestUrl: `${RAW_BASE}/${id}/manifest.json`,
   };
+}
+
+/**
+ * A controller's reported manifest and firmware URLs, pointed at the folder it updates from now when
+ * its firmware names a removed one (MOVED_BUILDS). Without this the manifest is missing, so no update
+ * is offered, and the build id changes across the update, so its settings aren't carried over.
+ */
+export function currentBuildUrls({ name, manifestUrl, firmwareUrl }) {
+  const move = MOVED_BUILDS.find((m) => m.name === name && manifestUrl === `${RAW_BASE}/${m.from}/manifest.json`);
+  if (!move) return { manifestUrl, firmwareUrl };
+  const build = toBuild(move.to);
+  return { manifestUrl: build.manifestUrl, firmwareUrl: build.uf2Url };
 }
 
 /** The firmware build for a dongle board (1 HOJA, 2 Pico W, 3 Pico 2 W, 4 RP2350B-Plus-W), or null when unknown. */
