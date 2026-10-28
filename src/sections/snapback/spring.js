@@ -410,6 +410,8 @@ const FREE_SAMPLES = 120;   // 60 ms of the free swing after the first centre cr
 const THUMB_MARGIN = 1.1;
 /** decide_step when no thumb move is close enough to limit it. */
 const UNCAPPED_DECIDE = 70;
+/** stiff_den's threshold stays this far over the stiffest thumb crossing (3S thumb moves: 0.02 at most). */
+const STIFF_THUMB_MARGIN = 1.5;
 /** grab_err's range: past the ceiling the thumb taking the stick back takes too long to pass. */
 const GRAB_MIN = 60;
 const GRAB_MAX = 100;
@@ -582,13 +584,17 @@ export function fitSpring({ releases, turnarounds, thumbs: moves, flicks = [], t
     p.cross_speed = clamp(Math.max(SPRING_DEFAULTS.cross_speed, Math.floor(slowest * 0.7)), SPRING_LIMITS.cross_speed);
   }
 
-  // stiff_den: the stiffness threshold between the softest turnaround and the stiffest fast thumb crossing
+  // stiff_den: the stiffness threshold between the softest turnaround and the stiffest fast thumb crossing.
+  // Played turnarounds cross faster and measure softer than the Tune's (a ProGCC 3S: 0.036-0.052 in play,
+  // its Tune's softest about 0.1), so the threshold goes as low as STIFF_THUMB_MARGIN over the stiffest thumb
+  // crossing allows, never above the midpoint (geometric) it sat at before
   const thumbK = thumbs.flatMap((c) => runGate(c.x, c.y, p, { measure: true }).checks)
     .filter((ch) => ch.at < MOVE_END && ch.speed >= p.cross_speed).map((ch) => ch.k);
   const hi = turns.length ? Math.min(...turns.map((r) => r.k)) : null;
   const lo = thumbK.length ? Math.max(...thumbK) : null;
   if (hi != null && hi > 0) {
-    const k = lo == null || lo < hi ? Math.sqrt(Math.max(lo ?? 0, hi / 4) * hi) : hi * 0.95;
+    const mid = Math.sqrt(Math.max(lo ?? 0, hi / 4) * hi);
+    const k = lo == null || lo < hi ? Math.min(mid, Math.max((lo ?? 0) * STIFF_THUMB_MARGIN, hi / 4)) : hi * 0.95;
     p.stiff_den = clamp(Math.round(1 / k), SPRING_LIMITS.stiff_den);
   }
 
