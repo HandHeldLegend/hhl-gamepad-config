@@ -12,8 +12,8 @@
  *     hold until FREE_CHECK_UNTIL samples after the line: a hand that carried the stick like the spring for
  *     3 ms and then pauses near centre (a free spring never does) is let go then.
  *   - Turnarounds (let go partway): a centre crossing faster than cross_speed counts a sample is held for
- *     5 samples while the stiffness along the last direction out is measured. At 1/stiff_den or more it is
- *     the spring (hold), else the thumb (pass).
+ *     5 samples while the stiffness along the last direction out is measured. Stiffness x crossing speed
+ *     at STIFF_SPEED or more is the spring (hold), else the thumb (pass).
  *   - Thrown by the thumb: from the release line the free spring runs on and predicts when the stick
  *     crosses centre. A release crosses no more than a sample after it; a thumb flick (no thumb is as quick
  *     as the spring) arrives later. CROSS_MARGIN samples after the predicted crossing without the stick
@@ -63,6 +63,10 @@ const RELEASE = 1200;
 /** A release falls through the release line faster than this (counts a sample, along the direction it
  *  left the edge): 105-229 on every stick recorded. Slower is the thumb guiding it back, passed at once. */
 const LINE_SPEED = 90;
+/** A turnaround's crossing brakes like a spring when stiffness x crossing speed is 3 or more (Q16): played
+ *  turnarounds 3.9 and up, thumb moves 2.2 at most on every stick recorded. The same for every stick, so
+ *  stiff_den is no longer fitted or used. */
+const STIFF_SPEED_Q16 = 3n << 16n;
 const DECIDE = 6;
 const OUT = 300;
 const CHECK = 5;
@@ -75,6 +79,16 @@ const SETTLE_COUNT = 20;
 /** Margins on a free spring's swing after a crossing: how far out (× v/θ) and how long (× a quarter swing). */
 const PEAK_MARGIN = 1.5;
 const QUARTER_MARGIN = 1.4;
+
+/** The crossing check: stiffness x crossing speed at least STIFF_SPEED (Q16). */
+function braking(num, den, fall, rx, ry) {
+  if (den <= 0 || num >= 0) return false;
+  const outLen = Math.floor(Math.sqrt(rx * rx + ry * ry));
+  if (outLen === 0) return false;
+  const stiffness = (BigInt(-num) << 16n) / BigInt(den);
+  const speed = BigInt(Math.trunc(fall / outLen));
+  return stiffness * speed >= STIFF_SPEED_Q16;
+}
 
 /** Falling (dx, dy since the last sample, towards centre) through the release line slower than LINE_SPEED
  *  along the edge direction (ex, ey). Integer, as the firmware's _spring_slow_fall. */
@@ -276,8 +290,9 @@ export function runGate(xs, ys, p, o = {}) {
         s.step++;
         if (s.step >= 2) { s.num += acc * s.p1; s.den += s.p1 * s.p1; }
         if (s.step >= CHECK) {
-          // -num × stiff_den >= den, in BigInt: the product passes 2^53
-          const spring = s.den > 0 && BigInt(-s.num) * BigInt(p.stiff_den) >= BigInt(s.den);
+          // Stiffness (Q16) x crossing speed (counts a sample) of a spring, integer as the firmware's
+          // _spring_braking (BigInt: the products pass 2^53)
+          const spring = braking(s.num, s.den, s.xfall, s.rx, s.ry);
           if (o.measure) {
             checks.push({ at: s.at, speed: s.speed, k: s.den > 0 ? -s.num / s.den : 0 });
             s.state = GATE.IDLE;
@@ -410,8 +425,6 @@ const FREE_SAMPLES = 120;   // 60 ms of the free swing after the first centre cr
 const THUMB_MARGIN = 1.1;
 /** decide_step when no thumb move is close enough to limit it. */
 const UNCAPPED_DECIDE = 70;
-/** stiff_den's threshold stays this far over the stiffest thumb crossing (3S thumb moves: 0.02 at most). */
-const STIFF_THUMB_MARGIN = 1.5;
 /** grab_err's range: past the ceiling the thumb taking the stick back takes too long to pass. */
 const GRAB_MIN = 60;
 const GRAB_MAX = 100;
@@ -584,19 +597,12 @@ export function fitSpring({ releases, turnarounds, thumbs: moves, flicks = [], t
     p.cross_speed = clamp(Math.max(SPRING_DEFAULTS.cross_speed, Math.floor(slowest * 0.7)), SPRING_LIMITS.cross_speed);
   }
 
-  // stiff_den: the stiffness threshold between the softest turnaround and the stiffest fast thumb crossing.
-  // Played turnarounds cross faster and measure softer than the Tune's (a ProGCC 3S: 0.036-0.052 in play,
-  // its Tune's softest about 0.1), so the threshold goes as low as STIFF_THUMB_MARGIN over the stiffest thumb
-  // crossing allows, never above the midpoint (geometric) it sat at before
+  // stiff_den isn't fitted: the crossing check is the same for every stick (STIFF_SPEED). The softest Tune
+  // turnaround and the stiffest thumb crossing are still noted, for checking runs against it.
   const thumbK = thumbs.flatMap((c) => runGate(c.x, c.y, p, { measure: true }).checks)
     .filter((ch) => ch.at < MOVE_END && ch.speed >= p.cross_speed).map((ch) => ch.k);
   const hi = turns.length ? Math.min(...turns.map((r) => r.k)) : null;
   const lo = thumbK.length ? Math.max(...thumbK) : null;
-  if (hi != null && hi > 0) {
-    const mid = Math.sqrt(Math.max(lo ?? 0, hi / 4) * hi);
-    const k = lo == null || lo < hi ? Math.min(mid, Math.max((lo ?? 0) * STIFF_THUMB_MARGIN, hi / 4)) : hi * 0.95;
-    p.stiff_den = clamp(Math.round(1 / k), SPRING_LIMITS.stiff_den);
-  }
 
   // grab_err: twice the spring's own one-step miss while the releases are held (3 samples running, as the
   // grab counts), GRAB_MIN..GRAB_MAX: one round doesn't show all of a stick's swing and swirl. It only acts
