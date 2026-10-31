@@ -8,8 +8,8 @@
  *
  * Draws: travel circle, inner/outer deadzone bands, angle-map spokes (with their "sticky" angular
  * deadzone wedges), the optional max-reach trace (180 × 2° buckets, keeps the furthest point), and both dots.
- * Readouts convert the output into what a console would see: the "Full / GC / Melee / N64" modes and
- * the scaling constants are exactly hoja2's.
+ * Readouts convert the output into what a console would see ("Full / GC / Melee / N64", as in hoja2), bit for
+ * bit with the firmware's report conversion and Melee's own stick clamp.
  */
 import { h } from '../../ui/dom.js';
 import { segmented, toggle, button } from '../../ui/controls.js';
@@ -39,25 +39,35 @@ const MODES = [
   { value: 'n64', label: 'N64', tip: N_('N64 units (×0.0415, whole numbers)') },
 ];
 
-/** Melee's coordinate conversion (hoja2 getMeleeCoordinates). x, y already in GC units clamped to ±80. */
+/**
+ * The stick value the console reads, origin subtracted. The firmware truncates into the report byte, so this
+ * floors (core_gamecube.c: v × 110/2048 + 128 into 0..255, origin 128) or truncates toward zero (core_n64.c:
+ * v × 85/2048 into an int8). hoja2 rounded, one unit off at about half of all positions.
+ */
+const gcUnits = (v) => Math.max(-128, Math.min(127, Math.floor(v * 0.0537109375)));
+const n64Units = (v) => Math.max(-128, Math.min(127, Math.trunc(v * 0.04150390625)));
+
+/**
+ * Melee's stick clamp (HSD_PadClampCheck3, max 80, in single precision): a point past the 80-unit circle is
+ * pulled onto it along its own angle, each axis truncated toward zero; the game reads units / 80. x, y are raw
+ * GC units: clamping each axis to ±80 first (as hoja2 did) bends the angle anywhere one axis passes 80.
+ */
 function meleeCoordinates(x, y) {
-  const CLAMP_RADIUS = 80;
-  const magnitude = Math.sqrt(x * x + y * y);
-  const scale = magnitude > CLAMP_RADIUS ? CLAMP_RADIUS / magnitude : 1.0;
-  const cx = Math.trunc(x * scale);
-  const cy = Math.trunc(y * scale);
-  return { x: cx / CLAMP_RADIUS, y: cy / CLAMP_RADIUS, decimals: 4 };
+  const f = Math.fround;
+  const r = f(Math.sqrt(x * x + y * y));
+  if (r > 80) {
+    x = Math.trunc(f(f(x * 80) / r));
+    y = Math.trunc(f(f(y * 80) / r));
+  }
+  return { x: x / 80, y: y / 80, decimals: 4 };
 }
 
-/** Convert centered ±2048 coordinates into a mode's units (hoja2 updateDisplays). */
+/** Convert centered ±2048 coordinates into a mode's units. */
 function convert(mode, fullX, fullY) {
-  if (mode === 'melee') {
-    const c = (v) => Math.max(-80, Math.min(80, Math.round(v * 0.0537109375)));
-    return meleeCoordinates(c(fullX), c(fullY));
-  }
-  const [scaler, decimals] = { full: [1, 1], gc: [0.0537109375, 0], n64: [0.04150390625, 0] }[mode] || [1, 1];
-  const p = 10 ** decimals;
-  return { x: Math.round(fullX * scaler * p) / p, y: Math.round(fullY * scaler * p) / p, decimals };
+  if (mode === 'melee') return meleeCoordinates(gcUnits(fullX), gcUnits(fullY));
+  if (mode === 'gc') return { x: gcUnits(fullX), y: gcUnits(fullY), decimals: 0 };
+  if (mode === 'n64') return { x: n64Units(fullX), y: n64Units(fullY), decimals: 0 };
+  return { x: Math.round(fullX * 10) / 10, y: Math.round(fullY * 10) / 10, decimals: 1 };
 }
 
 /** Locale-aware fixed-decimal number without grouping (so values don't change width); never "-0". */
