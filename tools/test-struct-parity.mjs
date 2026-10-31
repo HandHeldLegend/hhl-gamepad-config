@@ -22,6 +22,8 @@ const CHANGED = {
   'inputConfig_s.reserved': 'moved and shrank: the three Wii input profiles and wii_profile_version took its start',
   'imuConfig_s.reserved': 'shrank from 12 to 10 bytes: imu_mode_disable_mask (per-mode motion, IMU block 0x13) took the first 2',
   'analogConfig_s.reserved': 'shrank from 326 to 178 bytes: l_spring and r_spring (Auto tuning, 74 bytes each) took the first 148',
+  'deviceInfoStatic_s.reserved_bits': 'shrank from 6 to 5 bits: mechanical_triggers_supported (GCU 1 triggers) took the first',
+  'hoverConfig_s.reserved': 'shrank from 110 to 107 bytes: trigger_hw_version and trigger_hw (GCU 1 triggers) took the first 3',
 };
 
 function same(a, b) {
@@ -64,9 +66,10 @@ export async function run() {
       }
       if (trial === 0) for (const n of newFields) if (!proto.includes(n)) console.log(`parity: ${structName}.${n} new in firmware layout`);
 
-      // Write path: set every scalar via both, buffers must match.
+      // Write path: set every scalar via both, buffers must match. A CHANGED field sits at a different place
+      // or size on each side, so writing it would differ by design.
       for (const f of LAYOUT.structs[structName].fields) {
-        if (f.count != null || f.struct || !proto.includes(f.name)) continue;
+        if (f.count != null || f.struct || !proto.includes(f.name) || CHANGED[`${structName}.${f.name}`]) continue;
         const v = f.bits ? (trial * 7) % (1 << f.bits.width) : f.type === 'f32' ? 1.5 * trial : trial * 3;
         oldObj[f.name] = v;
         newObj[f.name] = v;
