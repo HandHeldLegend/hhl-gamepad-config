@@ -31,6 +31,7 @@ export const DISPLAY_NAMES = {
   'progcc_3.1': 'ProGCC 3.1',
   'progcc_3.2': 'ProGCC 3.2',
   progcc_3s: 'ProGCC 3S',
+  progcc_4: 'ProGCC 4',
   super_gamepad: 'Super Gamepad+',
 };
 
@@ -67,11 +68,11 @@ export const DONGLE_BUILDS = {
 };
 
 /**
- * Controller builds for the RP2350, from the UF2 family IDs on hoja-device-fw main (Oct 2026). Every
+ * Controller builds for the RP2350, from the UF2 family IDs on hoja-device-fw main (Nov 2026). Every
  * other controller build is for the RP2040. A new build missing here counts as unknown and is offered
  * for both chips until it's added.
  */
-const RP2350_BUILDS = new Set(['hoverboard', 'latte_pro', 'progcc_3s']);
+const RP2350_BUILDS = new Set(['hoverboard', 'latte_pro', 'progcc_3s', 'progcc_4']);
 const RP2040_BUILDS = new Set(['gcu_1', 'gcu_2', 'gcu_2s', 'gcu_proto', 'gcu_r4k', 'gcu_r5', 'gcu_s1', 'padbox_gs_c', 'phob_2', 'pico_w',
   'progcc_3', 'progcc_3p', 'progcc_3.1', 'progcc_3.2', 'super_gamepad']);
 
