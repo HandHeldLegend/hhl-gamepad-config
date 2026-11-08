@@ -187,6 +187,13 @@ function findConfigPort(usb) {
   return null;
 }
 const CHUNK_MAX = 32;
+
+/** a[from..to) equals b[from..to). */
+function sameBytes(a, b, from, to) {
+  for (let i = from; i < to; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
 /**
  * How long to wait for an answer older firmware never gives (the block fingerprints, the first profile
  * request): that is what asking costs it.
@@ -315,6 +322,9 @@ export class HojaDevice extends EventTarget {
   #profileReply = null;
   #fingerprints = null;    // { config: [crc…] | null, static: [crc…] | null } while asking
   #cacheKey = null;        // this controller's entry in the block cache, once known
+  // What the controller holds of each config block (by index), as last read or written whole: a write
+  // sends only the chunks that differ. Forgotten when a command may have changed the block there.
+  #held = new Map();
 
   /** Dongle status (decodeDongleInfo) when connected through one, else null. */
   dongle = null;
@@ -346,6 +356,7 @@ export class HojaDevice extends EventTarget {
     for (const b of this.#configTable) this.config[b.key] = createStruct(b.struct);
     for (const b of this.#staticTable) this.static[b.key] = createStruct(b.struct);
     this.missing = { config: [], static: [] };
+    this.#held.clear();
   }
 
   get isConnected() { return this.#connected; }
@@ -816,6 +827,7 @@ export class HojaDevice extends EventTarget {
     for (let idx = 0, pos = 0; pos < bytes.length; idx++, pos += CHUNK_MAX) {
       this.#storeChunk(kind, index, idx, bytes.subarray(pos, pos + CHUNK_MAX));
     }
+    if (kind === 'config') this.#held.set(index, bytes.slice());
   }
 
   #onCommand(view) {
@@ -887,6 +899,7 @@ export class HojaDevice extends EventTarget {
     }
     const bytes = new Uint8Array(read.parts.reduce((n, [at, c]) => Math.max(n, at + c.length), 0));
     for (const [at, c] of read.parts) bytes.set(c, at);
+    if (kind === 'config') this.#held.set(index, bytes.slice());
     if (this.#cacheKey) storeCacheBlocks(this.#cacheKey, [{ kind, index, bytes }]);
     return bytes;
   }
@@ -974,16 +987,26 @@ export class HojaDevice extends EventTarget {
     return this.#exclusive(async () => {
       const buf = this.config[entry.key].buffer;
       if (bytes) buf.set(bytes);
-      for (let idx = 0, pos = 0; pos < buf.length; idx++, pos += CHUNK_MAX) {
-        const chunk = buf.subarray(pos, Math.min(pos + CHUNK_MAX, buf.length));
+      // These bytes go out; an edit made while they do goes with the next write
+      const sent = buf.slice();
+      // Only the chunks the controller doesn't hold yet. An angle edit changes one or two of the analog
+      // block's 32, and over Bluetooth beside a game (a 30-50 ms link) each chunk costs a round trip.
+      const held = this.#held.get(index);
+      const whole = !held || held.length !== sent.length;
+      for (let idx = 0, pos = 0; pos < sent.length; idx++, pos += CHUNK_MAX) {
+        const end = Math.min(pos + CHUNK_MAX, sent.length);
+        if (!whole && sameBytes(held, sent, pos, end)) continue;
+        const chunk = sent.subarray(pos, end);
         const out = new Uint8Array(4 + chunk.length);
         out.set([REPORT.WRITE_CONFIG, index, chunk.length, idx]);
         out.set(chunk, 4);
         await this.#out(out);
       }
+      // Always sent: the controller takes the block in (re-initialises) on it, changed chunks or not
       await this.#out([REPORT.WRITE_CONFIG, index, 0, 0xff]);
       // The controller holds these bytes now; if it keeps them differently, the next fingerprint says so
-      if (this.#cacheKey) storeCacheBlocks(this.#cacheKey, [{ kind: 'config', index, bytes: buf.slice() }]);
+      this.#held.set(index, sent);
+      if (this.#cacheKey) storeCacheBlocks(this.#cacheKey, [{ kind: 'config', index, bytes: sent.slice() }]);
     });
   }
 
@@ -998,6 +1021,8 @@ export class HojaDevice extends EventTarget {
     const index = typeof block === 'string' ? this.blockIndex(block) : block;
     const cmd = typeof command === 'string' ? this.commandId(blockKey, command) : command;
     return this.#exclusive(async () => {
+      // A command may change the block on the controller (calibration does): the next write sends it whole
+      this.#held.delete(index);
       this.#cmd = { block: index, command: cmd, done: false, ok: false, data: null };
       await this.#out(arg == null ? [REPORT.COMMAND, index, cmd] : [REPORT.COMMAND, index, cmd, arg]);
       const done = await waitFor(() => this.#cmd.done, timeout ?? 5000);
@@ -1018,6 +1043,8 @@ export class HojaDevice extends EventTarget {
   /** One profile exchange about `profile`. Resolves the reply, or null when nothing answered. */
   #profileOp(op, profile, extra = [], timeout = PROFILE_REPLY_WAIT_MS) {
     return this.#exclusive(async () => {
+      // A switch or a copy puts other settings live: the next writes send their blocks whole
+      if (op !== PROFILE_OP.INFO) this.#held.clear();
       const r = { op, profile, reply: null };
       this.#profileReply = r;
       try {
