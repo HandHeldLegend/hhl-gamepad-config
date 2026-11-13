@@ -429,7 +429,14 @@ const UNCAPPED_DECIDE = 70;
 const GRAB_MIN = 60;
 const GRAB_MAX = 100;
 const RELEASE_MAX_MS = 4;   // release line to centre: real releases take 1.5-3 ms, guided returns 5.5+
+/** How far a release's free swing may stray from the spring fitted to it (rms, counts): 30, or 5 % of its
+ *  first swing past centre if that is more. GameCube-style sticks fit within 7-12 at any swing (3S); a
+ *  stiff, light stick whose bounce quickens as it dies down (a Steam Controller stick: about 145 Hz at
+ *  first, 235 Hz by the end) fits at 25-47 on swings of 820-1400, and Auto still holds its rebound. */
 const FIT_RMS_MAX = 30;
+const FIT_RMS_OF_SWING = 0.05;
+/** A stick's bounce: GameCube-style sticks 50-95 Hz, a Steam Controller stick 140-175 Hz. */
+const SPRING_HZ = [25, 200];
 
 /**
  * Is this capture a clean release from the edge? If so, its spring.
@@ -448,9 +455,11 @@ export function readRelease(c) {
   if (cross < 0) return { ok: false, why: 'guided' };
   const ms = (cross + 1 - line) * SAMPLE_MS;
   if (ms > RELEASE_MAX_MS) return { ok: false, why: 'guided', ms };
-  const fit = fitAr2(p.slice(cross, cross + FREE_SAMPLES));
+  const free = p.slice(cross, cross + FREE_SAMPLES);
+  const fit = fitAr2(free);
   const shape = fit && springShape(fit.a1, fit.a2);
-  if (!fit || !shape || fit.rms > FIT_RMS_MAX || shape.hz < 25 || shape.hz > 150 || shape.zeta > 0.5) {
+  const rmsMax = Math.max(FIT_RMS_MAX, -Math.min(...free) * FIT_RMS_OF_SWING);
+  if (!fit || !shape || fit.rms > rmsMax || shape.hz < SPRING_HZ[0] || shape.hz > SPRING_HZ[1] || shape.zeta > 0.5) {
     return { ok: false, why: 'spring' };
   }
   return { ok: true, octant: octant(pk.x, pk.y), ms, ...fit, ...shape };
