@@ -17,6 +17,10 @@
  * (./carry-over.js). Calibration (stick centers and angle maps, hall trigger ranges, gyro and
  * accelerometer offsets) belongs to one physical controller: restoring it is opt-in.
  *
+ * Gyro sensitivity is the one value whose meaning changed between firmware versions (IMU block 0x14,
+ * motion/settings.js): a backup from the other side of that change is converted to the same turn
+ * speed as it is restored, the way the firmware converts its own saved settings.
+ *
  * Self-contained on purpose: ./card.js is the only UI, hooked into the Firmware page and updater.
  */
 import { LAYOUT, createStruct, enumValues } from '../../device/struct.js';
@@ -25,6 +29,7 @@ import { buildIdFromManifestUrl } from '../../firmware/changelog.js';
 import { loadVersion } from '../../app/pwa.js';
 import { t } from '../../i18n/index.js';
 import { OUTPUT_MODE } from '../input/mapping.js';
+import { convertGyroSensitivity } from '../motion/gyro-scale.js';
 
 export const BACKUP_FORMAT = 'hoja-config-backup';
 export const BACKUP_FORMAT_VERSION = 1;
@@ -222,7 +227,10 @@ export async function planRestore(backup, session, { calibration = false, identi
     const next = createStruct(b.struct, current.buffer.slice());
     const byName = new Map(next.constructor.fields.map((f) => [f.name, f]));
     const changed = { settings: [], calibration: [] };
-    for (const [name, value] of Object.entries(saved.fields)) {
+    for (const [name, raw] of Object.entries(saved.fields)) {
+      const value = b.key === 'imu' && name === 'imu_gyro_sensitivity'
+        ? convertGyroSensitivity(raw, saved.version, current.imu_config_version)
+        : raw;
       const field = byName.get(name);
       if (!field) { skipped.push(`${b.key}.${name}`); continue; }
       if ((!identity && IDENTITY.has(name)) || HARDWARE.has(name) || isVersionField(name) || isReserved(name)) continue;

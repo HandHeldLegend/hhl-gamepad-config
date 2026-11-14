@@ -11,15 +11,24 @@
  *
  * Sensitivities are stored as integer percent (120 = 1.20×) and shown as a multiplier. The firmware
  * multiplies each raw IMU sample by value / IMU_SENSITIVITY_UNITY before sending it to games.
+ *
+ * Gyro scale: from IMU block 0x14 the firmware reads the gyro at its real 70 mdps a count, so 1.00×
+ * turns 1:1 with a Switch Pro Controller and is the default. Older firmware read it at 61 mdps and
+ * made up for that with a 1.20× default. The firmware converts its own saved settings when it
+ * updates; the app only has to use the right default and convert values that cross the two scales
+ * in a backup (./gyro-scale.js).
  */
-import { fwDefine, enumValues } from '../../device/struct.js';
+import { enumValues } from '../../device/struct.js';
+import {
+  SENSITIVITY_MIN, SENSITIVITY_MAX, SENSITIVITY_UNITY, GYRO_SENSITIVITY_DEFAULT, ACCEL_SENSITIVITY_DEFAULT,
+  GYRO_SCALE_VERSION, GYRO_SENSITIVITY_DEFAULT_OLD, clampSens, gyroDefault, convertGyroSensitivity,
+} from './gyro-scale.js';
 import { clampInt } from '../../settings/schema.js';
 
-export const SENSITIVITY_MIN = fwDefine('IMU_SENSITIVITY_MIN', 50);
-export const SENSITIVITY_MAX = fwDefine('IMU_SENSITIVITY_MAX', 200);
-export const SENSITIVITY_UNITY = fwDefine('IMU_SENSITIVITY_UNITY', 100);
-export const GYRO_SENSITIVITY_DEFAULT = fwDefine('IMU_GYRO_SENSITIVITY_DEFAULT', 120);
-export const ACCEL_SENSITIVITY_DEFAULT = fwDefine('IMU_ACCEL_SENSITIVITY_DEFAULT', 100);
+export {
+  SENSITIVITY_MIN, SENSITIVITY_MAX, SENSITIVITY_UNITY, GYRO_SENSITIVITY_DEFAULT, ACCEL_SENSITIVITY_DEFAULT,
+  GYRO_SCALE_VERSION, GYRO_SENSITIVITY_DEFAULT_OLD, gyroDefault, convertGyroSensitivity,
+};
 
 export const AXES = ['x', 'y', 'z'];
 
@@ -34,7 +43,7 @@ export function readSensitivity(values, fallback) {
   return AXES.map((_, i) => {
     const v = values?.[i];
     if (!v) return fallback;
-    return Math.max(SENSITIVITY_MIN, Math.min(SENSITIVITY_MAX, v));
+    return clampSens(v);
   });
 }
 
@@ -42,12 +51,13 @@ export function readSensitivity(values, fallback) {
 function axisDefs(sensor) {
   const gyro = sensor === 'gyro';
   const field = gyro ? 'imu_gyro_sensitivity' : 'imu_accel_sensitivity';
-  const fallback = gyro ? GYRO_SENSITIVITY_DEFAULT : ACCEL_SENSITIVITY_DEFAULT;
+  const listed = gyro ? GYRO_SENSITIVITY_DEFAULT : ACCEL_SENSITIVITY_DEFAULT;
+  const fallback = (s) => (gyro ? gyroDefault(s) : ACCEL_SENSITIVITY_DEFAULT);
   const name = gyro ? 'Gyro' : 'Accelerometer';
   return AXES.map((axis, i) => ({
     key: `motion.${sensor}Sensitivity${axis.toUpperCase()}`,
     label: `${axis.toUpperCase()} axis`,
-    description: `${name} ${axis.toUpperCase()}-axis multiplier (default ${(fallback / SENSITIVITY_UNITY).toFixed(2)}×).`,
+    description: `${name} ${axis.toUpperCase()}-axis multiplier (default ${(listed / SENSITIVITY_UNITY).toFixed(2)}×).`,
     tip: gyro
       ? 'Scales how far the in-game camera or cursor turns when you rotate the controller. 1.00× is the sensor\'s natural response; higher feels faster.'
       : 'Scales the tilt and shake strength games see. 1.00× is the sensor\'s natural response.',
@@ -58,10 +68,10 @@ function axisDefs(sensor) {
     step: 0.01,
     unit: '×',
     requires: 'imu',
-    get: (s) => readSensitivity(s.config.imu[field], fallback)[i] / SENSITIVITY_UNITY,
+    get: (s) => readSensitivity(s.config.imu[field], fallback(s))[i] / SENSITIVITY_UNITY,
     // Same as hoja2 setSensitivityAxis(): normalize all three axes, then replace one.
     set: (s, v) => {
-      const next = readSensitivity(s.config.imu[field], fallback);
+      const next = readSensitivity(s.config.imu[field], fallback(s));
       next[i] = clampInt(v * SENSITIVITY_UNITY, SENSITIVITY_MIN, SENSITIVITY_MAX);
       s.config.imu[field] = next;
     },
@@ -103,9 +113,9 @@ export const modeSwitchDefs = MODE_SWITCHES.map((m) => {
   };
 });
 
-/** Reset every sensitivity axis to the firmware defaults (hoja2 "Defaults → Reset"). */
+/** Reset every sensitivity axis to the connected firmware's defaults (hoja2 "Defaults → Reset"). */
 export function resetSensitivity(s) {
-  s.config.imu.imu_gyro_sensitivity = AXES.map(() => GYRO_SENSITIVITY_DEFAULT);
+  s.config.imu.imu_gyro_sensitivity = AXES.map(() => gyroDefault(s));
   s.config.imu.imu_accel_sensitivity = AXES.map(() => ACCEL_SENSITIVITY_DEFAULT);
 }
 
