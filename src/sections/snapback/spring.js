@@ -428,7 +428,13 @@ const UNCAPPED_DECIDE = 70;
 /** grab_err's range: past the ceiling the thumb taking the stick back takes too long to pass. */
 const GRAB_MIN = 60;
 const GRAB_MAX = 100;
-const RELEASE_MAX_MS = 4;   // release line to centre: real releases take 1.5-3 ms, guided returns 5.5+
+// Release line to centre: real releases take 1-4 ms on most sticks, guided returns 6.5+. A softer stick let
+// go from the very edge takes up to 5 (a ProGCC 3.2 at 47-52 Hz: 4-5 on 28 of 30, and Auto holds them all),
+// so those get the longer limit; from short of the edge it stays 4, where a slower one is a turnaround
+// (3S turnarounds from 1800-1860: 4.5-5).
+const RELEASE_MAX_MS = 4;
+const RELEASE_MAX_MS_FULL = 5;
+const FULL_EDGE = 1900;
 /** How far a release's free swing may stray from the spring fitted to it (rms, counts): 30, or 5 % of its
  *  first swing past centre if that is more. GameCube-style sticks fit within 7-12 at any swing (3S); a
  *  stiff, light stick whose bounce quickens as it dies down (a Steam Controller stick: about 145 Hz at
@@ -454,7 +460,7 @@ export function readRelease(c) {
   for (let i = line; i < p.length - 1; i++) if (p[i] > 0 && p[i + 1] <= 0) { cross = i; break; }
   if (cross < 0) return { ok: false, why: 'guided' };
   const ms = (cross + 1 - line) * SAMPLE_MS;
-  if (ms > RELEASE_MAX_MS) return { ok: false, why: 'guided', ms };
+  if (ms > (pk.d >= FULL_EDGE ? RELEASE_MAX_MS_FULL : RELEASE_MAX_MS)) return { ok: false, why: 'guided', ms };
   const free = p.slice(cross, cross + FREE_SAMPLES);
   const fit = fitAr2(free);
   const shape = fit && springShape(fit.a1, fit.a2);
