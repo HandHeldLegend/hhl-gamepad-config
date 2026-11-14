@@ -105,7 +105,7 @@ function seed() {
   c.rgb.rgb_speed = 1000;
   c.rgb.rgb_brightness = 2048;
   c.rgb.rgb_colors = [0x2f6bd8, 0xe23b3b, 0xf4b41a, 0x23a35a, ...new Array(28).fill(0x8e7cc3)];
-  c.imu.imu_gyro_sensitivity = [120, 120, 120];
+  c.imu.imu_gyro_sensitivity = new Array(3).fill(LAYOUT.defines.IMU_GYRO_SENSITIVITY_DEFAULT ?? 100);
   c.imu.imu_accel_sensitivity = [100, 100, 100];
 }
 
