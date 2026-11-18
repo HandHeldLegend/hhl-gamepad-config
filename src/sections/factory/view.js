@@ -2,15 +2,14 @@
  * Factory station (#/factory?build=<id>): flash or update, self-check, calibrate and test one unit
  * after another, with a PASS / FAIL per unit and a CSV log for the shift.
  *
- *   #/factory?build=gcu_2,gcu_2s&lang=zh
+ *   ?lang=zh#/factory?build=gcu_2,gcu_2s
  *     build  the line's models (build ids, comma separated). Every unit is identified on its own: a
  *            HOJA unit by the build it reports (checked against this list, updated to the newest
  *            firmware of ITS build); a blank board in bootloader mode by the operator when the line
- *            has more than one model. Without it any HOJA unit of a listed build is accepted (blank
- *            boards can't be flashed). A unit whose build isn't listed fails. Each model's firmware is
+ *            has more than one model. Without it every model is accepted (a blank board asks which
+ *            model it is). A unit whose build isn't listed fails. Each model's firmware is
  *            fetched once and cached.
  *     skip   comma list of steps to leave out: flash, calibrate, inputs, operator
- *     sku    color SKU id (skus.js); kept between units
  *     triggers  the line's trigger build on controllers that take mechanical triggers (GCU 1):
  *            analog | mechanical | left | right (mechanical on that side only). Without it the operator
  *            picks it once; it's kept between units.
@@ -35,7 +34,7 @@ import { h, loadStyles } from '../../ui/dom.js';
 import { button, badge, progressBar, colorField } from '../../ui/controls.js';
 import { confirmDialog } from '../../ui/overlay.js';
 import { icon } from '../../ui/icons.js';
-import { t, N_ } from '../../i18n/index.js';
+import { t, N_, i18n } from '../../i18n/index.js';
 import { device, isPicoBootloader, USB_FILTERS } from '../../device/hoja-device.js';
 import { onInputReport } from '../../device/reports.js';
 import { isDemo } from '../../device/mock.js';
@@ -85,8 +84,8 @@ const COLOR_PARTS = [
   ['gamepad.leftGripColor', 'leftGrip', N_('Left grip')],
   ['gamepad.rightGripColor', 'rightGrip', N_('Right grip')],
 ];
-/** Station setup guide (browser policy scripts for Chrome and Edge). */
-const SETUP_URL = 'https://github.com/HandHeldLegend/hhl-gamepad-config/blob/main/docs/FACTORY.md';
+/** Station setup guide (setup scripts for Chrome and Edge), in Chinese for a station set to Chinese. */
+const setupUrl = () => `https://github.com/HandHeldLegend/hhl-gamepad-config/blob/main/docs/FACTORY${i18n.lang === 'zh' ? '.zh' : ''}.md`;
 const RESULT_TEXT = { pass: N_('Pass'), fail: N_('Fail'), na: N_('Not fitted') };
 const RESULT_TONE = { pass: 'green', fail: 'red', na: null };
 const RGB_STATIC = 1; // rgb_mode Static (RGB page)
@@ -579,7 +578,7 @@ export function mount(root, { session, params = {} }) {
 ),
         h('div.fac-head-group',
           languagePicker(),
-          h('a.btn.btn-ghost.btn-sm', { href: SETUP_URL, target: '_blank', rel: 'noopener' }, h('span.btn-label', t('Station setup'))))),
+          h('a.btn.btn-ghost.btn-sm', { href: setupUrl(), target: '_blank', rel: 'noopener' }, h('span.btn-label', t('Station setup'))))),
       // Row 2: this shift's counts and the log.
       h('div.fac-head-row',
         h('div.fac-stats', stat(t('Tested'), station.log.length, ''), stat(t('Pass'), passed, 'is-pass'), stat(t('Fail'), station.log.length - passed, 'is-fail')),

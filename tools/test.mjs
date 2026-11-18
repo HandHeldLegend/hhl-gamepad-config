@@ -103,6 +103,12 @@ console.log('5. Syntax');
   if (!bad) ok(`${files.length} files parse`);
 }
 
+console.log('5b. Factory setup download');
+{
+  const r = run(['tools/factory-zip.mjs', '--check']);
+  if (r.status === 0) ok(r.stdout.trim()); else fail((r.stderr || r.stdout).trim());
+}
+
 console.log('6. MCP server');
 {
   if (await exists(path.join(ROOT, 'tools/test-mcp.mjs'))) {
