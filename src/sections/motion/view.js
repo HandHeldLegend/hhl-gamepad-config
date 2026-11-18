@@ -21,7 +21,7 @@ import { onInputReport } from '../../device/reports.js';
 import { createModelView } from './model-view.js';
 import { createImuReadout } from './imu-readout.js';
 import { t, fmt } from '../../i18n/index.js';
-import { AXES, resetSensitivity, modeSwitchDefs, GYRO_SENSITIVITY_DEFAULT, ACCEL_SENSITIVITY_DEFAULT, SENSITIVITY_UNITY } from './settings.js';
+import { AXES, resetSensitivity, modeSwitchDefs, gyroDefault, ACCEL_SENSITIVITY_DEFAULT, SENSITIVITY_UNITY } from './settings.js';
 
 loadStyles(new URL('./motion.css', import.meta.url));
 
@@ -123,7 +123,7 @@ export function mount(root, { session, device }) {
   },
   h('div.motion-sens-cols',
   h('div.motion-sens-group',
-    h('h4.motion-sens-title', t('Gyro'), h('span.faint.xs', ' · ', t('default {value}', { value: mult(GYRO_SENSITIVITY_DEFAULT) }))),
+    h('h4.motion-sens-title', t('Gyro'), h('span.faint.xs', ' · ', t('default {value}', { value: mult(gyroDefault(session)) }))),
     axisRows('gyro')),
   h('div.motion-sens-group',
     h('h4.motion-sens-title', t('Accelerometer'), h('span.faint.xs', ' · ', t('default {value}', { value: mult(ACCEL_SENSITIVITY_DEFAULT) }))),

@@ -1,12 +1,12 @@
 // GENERATED FILE: do not edit by hand.
 // Source of truth: HOJA-LIB-RP2040 headers (include/hoja_shared_types.h, include/input_shared_types.h, include/settings_shared_types.h, include/utilities/static_config.h).
-// Regenerate with: node tools/sync-firmware.mjs   (source: local HandHeldLegend/HOJA-LIB-RP2040@787f5e3)
+// Regenerate with: node tools/sync-firmware.mjs   (source: github HandHeldLegend/HOJA-LIB-RP2040@5f76d3b)
 // Validated 9 size assertion(s) from the firmware headers.
 export default {
  "source": {
-  "kind": "local",
+  "kind": "github",
   "repo": "HandHeldLegend/HOJA-LIB-RP2040",
-  "ref": "787f5e3"
+  "ref": "5f76d3b"
  },
  "blocks": {
   "config": [
@@ -246,7 +246,7 @@ export default {
      "offset": 14,
      "type": "u8",
      "count": 3,
-     "doc": "X, Y, Z — default 120 (1.20x)"
+     "doc": "X, Y, Z — default 100 (1.00x)"
     },
     {
      "name": "imu_accel_sensitivity",
@@ -2926,8 +2926,7 @@ export default {
   "CFG_BLOCK_ANALOG_VERSION": 19,
   "CFG_BLOCK_RGB_VERSION": 18,
   "CFG_BLOCK_TRIGGER_VERSION": 17,
-  "CFG_BLOCK_IMU_VERSION": 19,
-  "CFG_BLOCK_IMU_VERSION_PREV": 18,
+  "CFG_BLOCK_IMU_VERSION": 20,
   "CFG_BLOCK_HAPTIC_VERSION": 17,
   "CFG_BLOCK_USER_VERSION": 17,
   "CFG_BLOCK_INPUT_VERSION": 20,
@@ -2937,7 +2936,7 @@ export default {
   "IMU_SENSITIVITY_MIN": 50,
   "IMU_SENSITIVITY_MAX": 200,
   "IMU_SENSITIVITY_UNITY": 100,
-  "IMU_GYRO_SENSITIVITY_DEFAULT": 120,
+  "IMU_GYRO_SENSITIVITY_DEFAULT": 100,
   "IMU_ACCEL_SENSITIVITY_DEFAULT": 100,
   "ANALOG_EXP_STORED_MIN": 1,
   "ANALOG_EXP_STORED_MAX": 251,
