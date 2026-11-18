@@ -3,6 +3,7 @@
 *.ico binary
 *.stl binary
 *.uf2 binary
+*.zip binary
 # Station setup scripts are downloaded as-is from GitHub: .bat/.ps1 stored byte for byte (CRLF), .sh as LF.
 docs/factory/*.bat -text
 docs/factory/*.ps1 -text
