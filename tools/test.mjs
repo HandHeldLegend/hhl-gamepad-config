@@ -77,6 +77,18 @@ console.log('3. Settings schema');
     } catch (err) { fail(`${where}: ${err.message}`); }
   }
   ok(`${SETTINGS.length} settings checked`);
+
+  // Gyro sensitivity across the IMU block 0x14 scale change (the firmware's own migration).
+  const { convertGyroSensitivity, gyroDefault } = await import('../src/sections/motion/gyro-scale.js');
+  const same = (got, want, what) => { if (JSON.stringify(got) !== JSON.stringify(want)) fail(`gyro scale: ${what} → ${JSON.stringify(got)}, expected ${JSON.stringify(want)}`); };
+  same(convertGyroSensitivity([120, 120, 120], 0x13, 0x14), [100, 100, 100], 'old default onto new firmware');
+  same(convertGyroSensitivity([200, 50, 137], 0x13, 0x14), [174, 50, 119], 'old custom values onto new firmware');
+  same(convertGyroSensitivity([100, 100, 100], 0x14, 0x13), [120, 120, 120], 'new default onto old firmware');
+  same(convertGyroSensitivity([120, 120, 120], 0x13, 0x13), [120, 120, 120], 'same scale');
+  same(convertGyroSensitivity([120, 120, 120], null, 0x14), [120, 120, 120], 'backup without a version');
+  const imuAt = (v) => ({ config: { imu: { imu_config_version: v } } });
+  same([gyroDefault(imuAt(0x13)), gyroDefault(imuAt(0x14))], [120, 100], 'default by firmware');
+  ok('gyro sensitivity converts across the 0x14 scale change');
 }
 
 console.log('4. Section registry');
