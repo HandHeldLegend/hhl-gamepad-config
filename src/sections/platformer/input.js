@@ -12,7 +12,8 @@
  *   camera    left bumper or right-stick press = put the camera behind the hero; right stick orbits
  *   pause     Start                   respawn   Select
  */
-import { CODE, RAW_JOYSTICK_FULL, PressLatch } from '../arena/input.js';
+import { CODE, PressLatch } from '../arena/input.js';
+import { RawSticks } from '../arena/raw-sticks.js';
 import { onInputReport } from '../../device/reports.js';
 import { decodeText } from '../../device/struct.js';
 
@@ -43,20 +44,12 @@ export function readButtons(inputs, map) {
   return out;
 }
 
-/** Both sticks from one raw report, unit scale, +x right, +y up. */
-export function readSticks(inputs) {
-  const v = (code) => Math.min(1, (inputs[code]?.value ?? 0) / RAW_JOYSTICK_FULL);
-  return {
-    lx: v(CODE.LX_RIGHT) - v(CODE.LX_LEFT), ly: v(CODE.LY_UP) - v(CODE.LY_DOWN),
-    rx: v(CODE.RX_RIGHT) - v(CODE.RX_LEFT), ry: v(CODE.RY_UP) - v(CODE.RY_DOWN),
-  };
-}
-
 export class PlatformerInput {
   /** @param {{device: any, session: any}} o */
   constructor({ device, session }) {
     this.device = device;
     this.session = session;
+    this.sticks = new RawSticks({ device, session }); // both sticks from a raw report, unit scale
     this.labels = readLabels(session);
     this.names = this.labels.names;
     this.map = defaultBindings(this.labels);
@@ -79,7 +72,7 @@ export class PlatformerInput {
   /** Current held state: {lx, ly, rx, ry, jump, attack, crouch, camera, pause, respawn}. */
   poll() {
     if (!this.live) return { lx: 0, ly: 0, rx: 0, ry: 0, ...Object.fromEntries(BUTTONS.map((k) => [k, false])) };
-    return { ...readSticks(this.inputs), ...readButtons(this.inputs, this.map) };
+    return { ...this.sticks.read(this.inputs), ...readButtons(this.inputs, this.map) };
   }
 
   /** Presses since the last call ({jump: n, …}) or {}. */

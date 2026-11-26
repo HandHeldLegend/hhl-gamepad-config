@@ -89,6 +89,24 @@ console.log('3. Settings schema');
   const imuAt = (v) => ({ config: { imu: { imu_config_version: v } } });
   same([gyroDefault(imuAt(0x13)), gyroDefault(imuAt(0x14))], [120, 100], 'default by firmware');
   ok('gyro sensitivity converts across the 0x14 scale change');
+
+  // Stick scale of the USB raw stream: a mapped direction reads 127 at full deflection, an unmapped one 64.
+  const { RawSticks } = await import('../src/sections/arena/raw-sticks.js');
+  const { enumValues } = await import('../src/device/struct.js');
+  const dir = (n) => enumValues('mapper_input_code_t').find((e) => e.name === `INPUT_CODE_${n}`).value;
+  const report = (vals) => { const a = []; for (const [n, v] of Object.entries(vals)) a[dir(n)] = { value: v }; return a; };
+  const usb = { usbDevice: { vendorId: 0x057e, productId: 0x2009 } };
+  const profile = (out) => ({ config: { input: { input_profile_switch: Array.from({ length: 64 }, () => ({ output_code: out })) } } });
+  const near = (got, want, what) => { if (Math.abs(got - want) > 0.011) fail(`raw sticks: ${what} → ${got}, expected ${want}`); };
+  const mapped = new RawSticks({ device: usb, session: profile(0) });
+  near(mapped.read(report({ LX_RIGHT: 64 })).lx, 0.5, 'mapped stick at half travel');
+  near(mapped.read(report({ LY_DOWN: 127 })).ly, -1, 'mapped stick at full travel');
+  const unmapped = new RawSticks({ device: usb, session: profile(-1) });
+  near(unmapped.read(report({ RX_LEFT: 32 })).rx, -0.5, 'unmapped stick at half travel');
+  near(unmapped.read(report({ RX_LEFT: 64 })).rx, -1, 'unmapped stick at full travel');
+  unmapped.read(report({ RY_UP: 100 }));
+  near(unmapped.read(report({ RY_UP: 64 })).ry, 0.5, 'a value above 64 settles the doubled scale');
+  ok('raw stream stick scale follows the mapping');
 }
 
 console.log('4. Section registry');
