@@ -58,4 +58,13 @@ export default {
   "Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.": "コントローラーをアップデートモードにしてワイヤレス診断を実行します。接続の各ステップをテストし、サポートに送るレポートを作成します。",
   "Wireless diagnostics": "ワイヤレス診断",
   "Taskbar shortcut icons (assets/icons/app/shortcut-*.png, drawn from tools/material-symbols/)": "タスクバーのショートカットアイコン（assets/icons/app/shortcut-*.png、tools/material-symbols/ から描画）",
+  "Something else isn’t working": "ほかの問題がある",
+  "Download a support report below and send it to support with a few words about what went wrong. Connect the controller first if you can.": "下のサポートレポートをダウンロードし、起きたことを簡単に添えてサポートに送ってください。できれば先にコントローラーを接続してください。",
+  "Support report": "サポートレポート",
+  "One file with what support needs to look into a problem.": "サポートが問題を調べるのに必要な情報をまとめた1つのファイルです。",
+  "It holds your controller’s model, firmware and settings, your browser and system details, and the app’s recent errors. It leaves out the controller’s address and its pairings. Connect the controller first if you can.": "コントローラーのモデル、ファームウェア、設定、ブラウザーとシステムの情報、アプリの最近のエラーが含まれます。コントローラーのアドレスとペアリング情報は含まれません。できれば先にコントローラーを接続してください。",
+  "Download support report": "サポートレポートをダウンロード",
+  "Building the report…": "レポートを作成中…",
+  "Report saved: {file}": "レポートを保存しました: {file}",
+  "Couldn’t build the report. Reload the app and try again.": "レポートを作成できませんでした。アプリを再読み込みして、もう一度お試しください。",
 };

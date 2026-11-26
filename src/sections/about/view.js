@@ -7,7 +7,10 @@
  */
 import { h, fillNodes } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
-import { card, kv, button } from '../../ui/controls.js';
+import { card, kv, button, asyncButton } from '../../ui/controls.js';
+import { toast } from '../../ui/overlay.js';
+import { session as liveSession } from '../../device/session.js';
+import { buildSupportReport, saveSupportReport } from './support-report.js';
 import { pwa, loadVersion } from '../../app/pwa.js';
 import { LAYOUT } from '../../device/struct.js';
 import { ATTRIBUTIONS, REFERENCES } from './attributions.js';
@@ -30,6 +33,7 @@ const FAQ = [
     { label: N_('More'), icon: 'info', guide: 'ios' }],
   [N_('The wireless module update won’t connect'), N_('Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.'),
     { label: N_('Wireless diagnostics'), icon: 'wireless', guide: 'diagnostics' }],
+  [N_('Something else isn’t working'), N_('Download a support report below and send it to support with a few words about what went wrong. Connect the controller first if you can.')],
   [N_('A firmware update was interrupted'), N_('Hold BOOTSEL while plugging in, then open Firmware → Install and pick your controller. Your board is very hard to permanently brick.')],
 ];
 
@@ -77,6 +81,23 @@ export function mount(root, ctx = {}) {
       h('div.row',
         link('https://handheldlegend.com', 'handheldlegend.com'),
         link('https://github.com/HandHeldLegend/HOJA-LIB-RP2040', t('Firmware source')))),
+
+    card({ title: t('Support report'), icon: 'save', tone: 'green', subtitle: t('One file with what support needs to look into a problem.') },
+      h('p.muted.small', t('It holds your controller’s model, firmware and settings, your browser and system details, and the app’s recent errors. It leaves out the controller’s address and its pairings. Connect the controller first if you can.')),
+      h('div.row', asyncButton({
+        label: t('Download support report'), icon: 'download', variant: 'tonal', busyLabel: t('Building the report…'),
+        run: async () => {
+          try {
+            const file = saveSupportReport(await buildSupportReport(ctx.session || liveSession));
+            toast(t('Report saved: {file}', { file }), { tone: 'green', icon: 'check' });
+            return true;
+          } catch (err) {
+            console.error('[support-report] failed', err);
+            toast(t('Couldn’t build the report. Reload the app and try again.'), { tone: 'red' });
+            return false;
+          }
+        },
+      }))),
 
     card({ title: t('For AI assistants'), icon: 'link', tone: 'green', subtitle: t('Let an assistant help you set up your controller.') },
       h('p.muted.small', fillNodes(t('Every page and many settings can be opened with a link. Assistants can read the guide at {guide} or use the HHL Gamepad Config MCP server to build links for you. Links that change settings always ask you to confirm first.'),

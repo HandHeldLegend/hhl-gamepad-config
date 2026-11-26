@@ -55,4 +55,13 @@ export default {
   "Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.": "让手柄进入更新模式后运行无线诊断。它会测试连接的每个步骤，并生成发给客服的报告。",
   "Wireless diagnostics": "无线诊断",
   "Taskbar shortcut icons (assets/icons/app/shortcut-*.png, drawn from tools/material-symbols/)": "任务栏快捷方式图标（assets/icons/app/shortcut-*.png，由 tools/material-symbols/ 绘制）",
+  "Something else isn’t working": "其他问题",
+  "Download a support report below and send it to support with a few words about what went wrong. Connect the controller first if you can.": "在下方下载支持报告，并附上几句问题说明发送给客服。如果可以，请先连接手柄。",
+  "Support report": "支持报告",
+  "One file with what support needs to look into a problem.": "一个文件，包含客服排查问题所需的信息。",
+  "It holds your controller’s model, firmware and settings, your browser and system details, and the app’s recent errors. It leaves out the controller’s address and its pairings. Connect the controller first if you can.": "其中包含手柄的型号、固件和设置，浏览器和系统信息，以及应用最近的错误。不包含手柄的地址和配对信息。如果可以，请先连接手柄。",
+  "Download support report": "下载支持报告",
+  "Building the report…": "正在生成报告…",
+  "Report saved: {file}": "报告已保存：{file}",
+  "Couldn’t build the report. Reload the app and try again.": "无法生成报告。请重新加载应用后再试。",
 };

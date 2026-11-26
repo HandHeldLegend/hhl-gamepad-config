@@ -17,11 +17,13 @@ import { initUpdateUi } from './app/update-ui.js';
 import { startDemo } from './device/mock.js';
 import { installBridge } from './agent/bridge.js';
 import { initI18n, t } from './i18n/index.js';
+import { installAppLog } from './app/app-log.js';
 
 const SPLASH_MIN_MS = 450; // long enough to read, short enough not to annoy
 
 async function boot() {
   const t0 = performance.now();
+  installAppLog(session); // first, so the support report has anything that goes wrong while starting
   applyPrefs();
   await initI18n(); // load the active language before anything renders
   installTooltips();
