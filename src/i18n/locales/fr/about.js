@@ -58,4 +58,13 @@ export default {
   "Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.": "Lancez le diagnostic sans fil avec la manette en mode mise à jour. Il teste chaque étape de la connexion et crée un rapport à envoyer au support.",
   "Wireless diagnostics": "Diagnostic sans fil",
   "Taskbar shortcut icons (assets/icons/app/shortcut-*.png, drawn from tools/material-symbols/)": "Icônes des raccourcis de la barre des tâches (assets/icons/app/shortcut-*.png, dessinées à partir de tools/material-symbols/)",
+  "Something else isn’t working": "Autre chose ne fonctionne pas",
+  "Download a support report below and send it to support with a few words about what went wrong. Connect the controller first if you can.": "Téléchargez un rapport d’assistance ci-dessous et envoyez-le à l’assistance avec quelques mots sur ce qui n’a pas marché. Si possible, connectez d’abord la manette.",
+  "Support report": "Rapport d’assistance",
+  "One file with what support needs to look into a problem.": "Un fichier avec ce dont l’assistance a besoin pour étudier un problème.",
+  "It holds your controller’s model, firmware and settings, your browser and system details, and the app’s recent errors. It leaves out the controller’s address and its pairings. Connect the controller first if you can.": "Il contient le modèle, le firmware et les réglages de votre manette, les détails de votre navigateur et de votre système, et les erreurs récentes de l’application. Il n’inclut ni l’adresse de la manette ni ses appairages. Si possible, connectez d’abord la manette.",
+  "Download support report": "Télécharger le rapport d’assistance",
+  "Building the report…": "Création du rapport…",
+  "Report saved: {file}": "Rapport enregistré : {file}",
+  "Couldn’t build the report. Reload the app and try again.": "Impossible de créer le rapport. Rechargez l’application et réessayez.",
 };

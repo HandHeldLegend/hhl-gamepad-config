@@ -58,4 +58,13 @@ export default {
   "Run the wireless diagnostics with the controller in update mode. It tests each step of the connection and builds a report to send to support.": "Ejecuta el diagnóstico inalámbrico con el mando en modo de actualización. Prueba cada paso de la conexión y crea un informe para enviar a soporte.",
   "Wireless diagnostics": "Diagnóstico inalámbrico",
   "Taskbar shortcut icons (assets/icons/app/shortcut-*.png, drawn from tools/material-symbols/)": "Iconos de los accesos directos de la barra de tareas (assets/icons/app/shortcut-*.png, dibujados a partir de tools/material-symbols/)",
+  "Something else isn’t working": "Otra cosa no funciona",
+  "Download a support report below and send it to support with a few words about what went wrong. Connect the controller first if you can.": "Descarga un informe de soporte más abajo y envíalo a soporte con unas palabras sobre lo que falló. Si puedes, conecta antes el mando.",
+  "Support report": "Informe de soporte",
+  "One file with what support needs to look into a problem.": "Un archivo con lo que soporte necesita para investigar un problema.",
+  "It holds your controller’s model, firmware and settings, your browser and system details, and the app’s recent errors. It leaves out the controller’s address and its pairings. Connect the controller first if you can.": "Incluye el modelo, el firmware y los ajustes de tu mando, los datos de tu navegador y sistema, y los errores recientes de la aplicación. No incluye la dirección del mando ni sus emparejamientos. Si puedes, conecta antes el mando.",
+  "Download support report": "Descargar informe de soporte",
+  "Building the report…": "Creando el informe…",
+  "Report saved: {file}": "Informe guardado: {file}",
+  "Couldn’t build the report. Reload the app and try again.": "No se pudo crear el informe. Recarga la aplicación e inténtalo de nuevo.",
 };

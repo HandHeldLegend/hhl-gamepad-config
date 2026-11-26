@@ -47,6 +47,8 @@ import { inspectCapture, inspectOutput, GATE, CAPTURE_PRE, SAMPLE_MS, DEFAULT_DE
 import { lowPass, autoLegacy } from './legacy-filters.js';
 import { springParams } from './spring-config.js';
 import { GAMES, reboundPast } from './games.js';
+import { buildIdFromManifestUrl } from '../../firmware/changelog.js';
+import { unitId } from '../backup/backup.js';
 
 const MAX_KEPT = 30;
 /** A delay past this is shown as a problem (one crossing check's built-in cost, and a sample). */
@@ -549,9 +551,14 @@ export function analyzer({ session, tone }) {
   }
 
   /** Download every kept recording: JSON lines, the tuning recordings' format plus the replay's delay. */
-  function save() {
+  async function save() {
+    // Which controller the recordings are from: its model, firmware and the short unit hash a backup uses.
+    const controller = {
+      name: session.info?.name ?? null, build: buildIdFromManifestUrl(session.info?.manifestUrl), fwVersion: session.info?.fwVersion ?? null,
+      unit: await unitId(session.config).catch(() => null),
+    };
     const out = kept.map((e) => JSON.stringify({
-      label: 'analyzer', stick: e.stick, number: e.c.number, period_us: SAMPLE_MS * 1000, pre: CAPTURE_PRE, time: e.time / 1000,
+      label: 'analyzer', controller, stick: e.stick, number: e.c.number, period_us: SAMPLE_MS * 1000, pre: CAPTURE_PRE, time: e.time / 1000,
       deadzone: e.dz, filter: e.filter, tuned: !!e.params, params: e.params, delayMs: e.a.r ? e.a.r.delayMs : null, x: Array.from(e.c.x), y: Array.from(e.c.y),
     }));
     const blob = new Blob([`${out.join('\n')}\n`], { type: 'application/x-ndjson' });
